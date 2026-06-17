@@ -8,12 +8,14 @@ import { useTheme } from '@/composables/useTheme'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import DesktopTitleBar from '@/components/layout/DesktopTitleBar.vue'
 import { useKeyboard } from '@/composables/useKeyboard'
+import { usePwa } from '@/composables/usePwa'
 import { useAppStore } from '@/stores/hermes/app'
 import SessionSearchModal from '@/components/hermes/chat/SessionSearchModal.vue'
 import AuthEventListener from '@/components/auth/AuthEventListener.vue'
 import DefaultCredentialPrompt from '@/components/auth/DefaultCredentialPrompt.vue'
 
 const { isDark, isComic } = useTheme()
+usePwa()
 const { t } = useI18n()
 const appStore = useAppStore()
 const route = useRoute()
