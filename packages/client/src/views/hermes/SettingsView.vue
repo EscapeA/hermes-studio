@@ -19,6 +19,7 @@ import PrivacySettings from "@/components/hermes/settings/PrivacySettings.vue";
 import ModelSettings from "@/components/hermes/settings/ModelSettings.vue";
 import AccountSettings from "@/components/hermes/settings/AccountSettings.vue";
 import UserManagementSettings from "@/components/hermes/settings/UserManagementSettings.vue";
+import ConnectionSettings from "@/components/hermes/settings/ConnectionSettings.vue";
 import { isStoredSuperAdmin } from "@/api/client";
 import { useProfilesStore } from "@/stores/hermes/profiles";
 
@@ -41,6 +42,7 @@ const validTabs = computed(() => new Set([
   "session",
   "privacy",
   "models",
+  "connection",
 ]));
 
 function normalizeTab(value: unknown): string {
@@ -127,6 +129,9 @@ onMounted(() => {
           </NTabPane>
           <NTabPane name="models" :tab="t('settings.tabs.models')">
             <ModelSettings />
+          </NTabPane>
+          <NTabPane name="connection" :tab="t('settings.tabs.connection')">
+            <ConnectionSettings />
           </NTabPane>
         </NTabs>
       </NSpin>
