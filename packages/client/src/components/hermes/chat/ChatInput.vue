@@ -132,6 +132,17 @@ const messageReferencePreview = computed(() =>
 )
 const isMobileViewport = ref(typeof window !== 'undefined' ? isMobileChatInputViewport(window.innerWidth) : false)
 const manualTextareaResize = ref(false)
+
+// Mobile detection — on mobile, Enter inserts newline instead of sending
+const isMobile = ref(false)
+let mobileQuery: MediaQueryList | null = null
+onMounted(() => {
+  mobileQuery = window.matchMedia("(max-width: 768px)")
+  isMobile.value = mobileQuery.matches
+  const handler = (e: MediaQueryListEvent) => { isMobile.value = e.matches }
+  mobileQuery.addEventListener("change", handler)
+  onUnmounted(() => mobileQuery?.removeEventListener("change", handler))
+})
 const configuredTextareaHeight = computed(() =>
   isMobileViewport.value ? null : clampChatInputHeight(settingsStore.display.chat_input_height),
 )
@@ -1124,7 +1135,7 @@ function handleKeydown(e: KeyboardEvent) {
     }
   }
 
-  if (e.key !== 'Enter' || e.shiftKey) return
+  if (e.key !== 'Enter' || e.shiftKey || isMobile.value) return
   if (isImeEnter(e)) return
 
   e.preventDefault()
