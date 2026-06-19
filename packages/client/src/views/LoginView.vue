@@ -92,6 +92,7 @@ async function handlePasswordLogin() {
       <p class="login-default-hint">{{ t("login.defaultCredentialsHint") }}</p>
 
       <!-- Server URL editor (always visible for custom URL, collapsible for same-origin) -->
+      <div class="server-hint">{{ t('login.serverHint') }}</div>
       <div class="server-section">
         <div class="server-current" @click="showUrlEditor = !showUrlEditor">
           <span class="server-dot" :class="{ connected: !currentServerUrl }"></span>
@@ -198,6 +199,13 @@ async function handlePasswordLogin() {
   font-family: $font-code;
   font-size: 13px;
   color: $text-secondary;
+}
+
+.server-hint {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--n-text-color-3);
+  line-height: 1.5;
 }
 
 .server-section {

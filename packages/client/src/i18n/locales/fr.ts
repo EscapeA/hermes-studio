@@ -1145,6 +1145,8 @@ jobTriggered: 'Job declenche',
     connection: {
       title: 'Connexion backend',
       description: "Configurez l'adresse du serveur backend Hermes Web UI. Laissez vide pour utiliser l'adresse de la page actuelle.",
+      clientCommandHint: 'The remote backend must be running with the hermes-web-ui client command, otherwise it cannot connect.',
+      corsHint: 'When the frontend and backend are on different domains, the backend must configure CORS to allow cross-origin requests (CORS_ORIGINS=*).',
       placeholder: 'ex. http://192.168.1.100:6060',
       namePlaceholder: 'Nom du serveur (optionnel)',
       current: 'Connexion actuelle',

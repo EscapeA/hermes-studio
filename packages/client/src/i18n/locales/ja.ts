@@ -12,7 +12,8 @@ export default {
     tokenLogin: 'トークン',
     usernamePlaceholder: 'ユーザー名',
     passwordPlaceholder: 'パスワード',
-    defaultCredentialsHint: '既定のユーザー名：admin、既定のパスワード：123456',
+    serverHint: 'To connect to a remote backend, expand below to configure the server address. The remote backend must be running with the hermes-web-ui client command.',
+    defaultCredentialsHint: 'デフォルトのユーザー名: admin。デフォルトのパスワード: 123456。',
     credentialsRequired: 'ユーザー名とパスワードを入力してください',
     invalidCredentials: 'ユーザー名またはパスワードが正しくありません',
     tooManyAttempts: 'ログイン試行回数が多すぎます。しばらくしてからお試しください',
@@ -1145,6 +1146,8 @@ export default {
     connection: {
       title: 'バックエンド接続',
       description: 'Hermes Web UI バックエンドサーバーのアドレスを設定します。空にすると現在のページアドレスを使用します。',
+      clientCommandHint: 'The remote backend must be running with the hermes-web-ui client command, otherwise it cannot connect.',
+      corsHint: 'When the frontend and backend are on different domains, the backend must configure CORS to allow cross-origin requests (CORS_ORIGINS=*).',
       placeholder: '例: http://192.168.1.100:6060',
       namePlaceholder: 'サーバー名（任意）',
       current: '現在の接続',

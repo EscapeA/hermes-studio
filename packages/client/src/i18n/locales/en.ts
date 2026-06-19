@@ -12,6 +12,7 @@ export default {
     tokenLogin: 'Token',
     usernamePlaceholder: 'Username',
     passwordPlaceholder: 'Password',
+    serverHint: 'To connect to a remote backend, expand below to configure the server address. The remote backend must be running with the hermes-web-ui client command.',
     defaultCredentialsHint: 'Default username: admin. Default password: 123456.',
     credentialsRequired: 'Please enter username and password',
     invalidCredentials: 'Invalid username or password',
@@ -1425,6 +1426,8 @@ export default {
     connection: {
       title: 'Backend Connection',
       description: 'Configure the Hermes Web UI backend server address. Leave empty to use the current page origin.',
+      clientCommandHint: 'The remote backend must be running with the hermes-web-ui client command, otherwise it cannot connect.',
+      corsHint: 'When the frontend and backend are on different domains, the backend must configure CORS to allow cross-origin requests (CORS_ORIGINS=*).',
       placeholder: 'e.g. http://192.168.1.100:6060',
       namePlaceholder: 'Server name (optional)',
       current: 'Current connection',

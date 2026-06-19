@@ -12,7 +12,8 @@ export default {
     tokenLogin: 'Вход по токену',
     usernamePlaceholder: 'Имя пользователя',
     passwordPlaceholder: 'Пароль',
-    defaultCredentialsHint: 'Логин по умолчанию: admin, пароль по умолчанию: 123456',
+    serverHint: 'To connect to a remote backend, expand below to configure the server address. The remote backend must be running with the hermes-web-ui client command.',
+    defaultCredentialsHint: 'Логин по умолчанию: admin. Пароль по умолчанию: 123456.',
     credentialsRequired: 'Введите имя пользователя и пароль',
     invalidCredentials: 'Неверное имя пользователя или пароль',
     tooManyAttempts: 'Слишком много неудачных попыток входа, повторите попытку позже',
@@ -1280,6 +1281,8 @@ export default {
     connection: {
       title: 'Подключение к бэкенду',
       description: 'Настройте адрес сервера бэкенда Hermes Web UI. Оставьте пустым для использования адреса текущей страницы.',
+      clientCommandHint: 'The remote backend must be running with the hermes-web-ui client command, otherwise it cannot connect.',
+      corsHint: 'When the frontend and backend are on different domains, the backend must configure CORS to allow cross-origin requests (CORS_ORIGINS=*).',
       placeholder: 'напр. http://192.168.1.100:6060',
       namePlaceholder: 'Имя сервера (необязательно)',
       current: 'Текущее подключение',

@@ -12,7 +12,8 @@ export default {
     tokenLogin: '토큰',
     usernamePlaceholder: '사용자 이름',
     passwordPlaceholder: '비밀번호',
-    defaultCredentialsHint: '기본 로그인 이름: admin, 기본 비밀번호: 123456',
+    serverHint: 'To connect to a remote backend, expand below to configure the server address. The remote backend must be running with the hermes-web-ui client command.',
+    defaultCredentialsHint: '기본 사용자 이름: admin. 기본 비밀번호: 123456.',
     credentialsRequired: '사용자 이름과 비밀번호를 입력해 주세요',
     invalidCredentials: '사용자 이름 또는 비밀번호가 올바르지 않습니다',
     tooManyAttempts: '로그인 시도 횟수가 너무 많습니다. 잠시 후 다시 시도해 주세요',
@@ -1145,6 +1146,8 @@ export default {
     connection: {
       title: '백엔드 연결',
       description: 'Hermes Web UI 백엔드 서버 주소를 설정합니다. 비워두면 현재 페이지 주소를 사용합니다.',
+      clientCommandHint: 'The remote backend must be running with the hermes-web-ui client command, otherwise it cannot connect.',
+      corsHint: 'When the frontend and backend are on different domains, the backend must configure CORS to allow cross-origin requests (CORS_ORIGINS=*).',
       placeholder: '예: http://192.168.1.100:6060',
       namePlaceholder: '서버 이름 (선택)',
       current: '현재 연결',

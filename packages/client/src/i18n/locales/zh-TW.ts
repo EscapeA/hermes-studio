@@ -12,7 +12,8 @@ export default {
     tokenLogin: '權杖登入',
     usernamePlaceholder: '使用者名稱',
     passwordPlaceholder: '密碼',
-    defaultCredentialsHint: '預設登入名：admin，預設密碼：123456',
+    serverHint: 'To connect to a remote backend, expand below to configure the server address. The remote backend must be running with the hermes-web-ui client command.',
+    defaultCredentialsHint: '預設使用者名稱：admin。預設密碼：123456。',
     credentialsRequired: '請輸入使用者名稱和密碼',
     invalidCredentials: '使用者名稱或密碼錯誤',
     tooManyAttempts: '登入失敗次數過多，請稍後再試',
@@ -1417,6 +1418,8 @@ export default {
     connection: {
       title: '後端連線',
       description: '設定 Hermes Web UI 後端伺服器位址。留空則使用當前頁面位址。',
+      clientCommandHint: 'The remote backend must be running with the hermes-web-ui client command, otherwise it cannot connect.',
+      corsHint: 'When the frontend and backend are on different domains, the backend must configure CORS to allow cross-origin requests (CORS_ORIGINS=*).',
       placeholder: '例如: http://192.168.1.100:6060',
       namePlaceholder: '伺服器名稱（選填）',
       current: '當前連線',

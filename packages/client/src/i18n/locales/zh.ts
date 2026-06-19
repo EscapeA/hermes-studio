@@ -12,6 +12,7 @@ export default {
     tokenLogin: '令牌登录',
     usernamePlaceholder: '用户名',
     passwordPlaceholder: '密码',
+    serverHint: '如需连接远程后端，请展开下方配置服务器地址。远程后端需要以 hermes-web-ui client 命令运行。',
     defaultCredentialsHint: '默认登录名：admin，默认密码：123456',
     credentialsRequired: '请输入用户名和密码',
     invalidCredentials: '用户名或密码错误',
@@ -1417,6 +1418,8 @@ export default {
     connection: {
       title: '后端连接',
       description: '配置 Hermes Web UI 后端服务器地址。留空则使用当前页面地址。',
+      clientCommandHint: '远程后端需要以 hermes-web-ui client 命令运行，否则无法连接。',
+      corsHint: '前端与后端不在同一域名时，后端需要配置 CORS 允许跨域请求（CORS_ORIGINS=*）。',
       placeholder: '例如: http://192.168.1.100:6060',
       namePlaceholder: '服务器名称（可选）',
       current: '当前连接',
