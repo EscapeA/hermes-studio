@@ -70,6 +70,14 @@ function isActive(url: string): boolean {
         {{ t('settings.connection.description') }}
       </div>
 
+      <NAlert type="info" :bordered="false" style="margin-bottom: 12px;">
+        {{ t('settings.connection.clientCommandHint') }}
+      </NAlert>
+
+      <NAlert type="warning" :bordered="false" style="margin-bottom: 16px;">
+        {{ t('settings.connection.corsHint') }}
+      </NAlert>
+
       <!-- Add new server -->
       <div class="add-server-row">
         <NInput
