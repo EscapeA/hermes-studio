@@ -12,7 +12,7 @@ export default {
     tokenLogin: '令牌登录',
     usernamePlaceholder: '用户名',
     passwordPlaceholder: '密码',
-    serverHint: '如需连接远程后端，请展开下方配置服务器地址。\n远程后端需要以 hermes-web-ui client 命令运行。',
+    serverHint: '如需连接远程后端，请展开下方配置服务器地址。\n远程后端需要允许来自本站跨域请求。',
     defaultCredentialsHint: '默认登录名：admin，默认密码：123456',
     credentialsRequired: '请输入用户名和密码',
     invalidCredentials: '用户名或密码错误',
