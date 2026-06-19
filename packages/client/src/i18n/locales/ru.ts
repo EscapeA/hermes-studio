@@ -1881,6 +1881,23 @@ export default {
         inboxClearFailed: 'Не удалось очистить локальные тестовые события',
       },
     },
+    connection: {
+      title: 'Подключение к бэкенду',
+      description: 'Настройте адрес сервера бэкенда Hermes Web UI. Оставьте пустым для использования адреса текущей страницы.',
+      placeholder: 'напр. http://192.168.1.100:6060',
+      namePlaceholder: 'Имя сервера (необязательно)',
+      current: 'Текущее подключение',
+      same_origin: 'Тот же источник (адрес текущей страницы)',
+      reset: 'Сбросить по умолчанию',
+      saved: 'Сохранено',
+      reload_hint: 'Перезагрузите страницу для применения нового адреса.',
+      saveToList: 'Добавить в список',
+      savedServers: 'Сохранённые серверы',
+      active: 'Активен',
+      switch: 'Переключить',
+      removeConfirm: 'Удалить этот сервер?',
+51ccc514 (fix: move i18n connection section from sidebar to settings)
+    },
     models: {
       apiKey: 'API-ключ',
       apiKeyPlaceholder: 'Введите API-ключ',
