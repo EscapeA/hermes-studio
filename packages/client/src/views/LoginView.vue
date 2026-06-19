@@ -206,6 +206,7 @@ async function handlePasswordLogin() {
   font-size: 12px;
   color: var(--n-text-color-3);
   line-height: 1.5;
+  white-space: pre-line;
 }
 
 .server-section {
