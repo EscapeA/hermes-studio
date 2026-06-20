@@ -133,6 +133,7 @@ export interface CustomProvider {
   context_length?: number
   api_mode?: ProviderApiMode
   providerKey?: string | null
+  setAsDefault?: boolean
 }
 
 export async function checkHealth(): Promise<HealthResponse> {
@@ -233,7 +234,7 @@ export async function updateModelAlias(data: {
 export async function addCustomProvider(data: CustomProvider): Promise<void> {
   await request('/api/hermes/config/providers', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, set_as_default: data.setAsDefault }),
   })
 }
 

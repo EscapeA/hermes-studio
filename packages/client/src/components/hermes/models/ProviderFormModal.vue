@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted, nextTick } from 'vue'
 import { NModal, NForm, NFormItem, NInput, NInputNumber, NButton, NSelect, NRadioGroup, NRadioButton, useMessage, useDialog } from 'naive-ui'
+import { NCheckbox } from 'naive-ui'
 import { useModelsStore } from '@/stores/hermes/models'
 import { useI18n } from 'vue-i18n'
 import CodexLoginModal from './CodexLoginModal.vue'
@@ -45,6 +46,7 @@ const formData = ref({
   context_length: null as number | null,
   api_mode: 'chat_completions' as ProviderApiMode,
 })
+const setAsDefault = ref(true)
 
 const modelOptions = ref<Array<{ label: string; value: string }>>([])
 const apiModeOptions: Array<{ label: string; value: ProviderApiMode }> = [
@@ -312,6 +314,7 @@ async function handleSave() {
       context_length: contextLength,
       api_mode: formData.value.api_mode,
       providerKey,
+      setAsDefault: setAsDefault.value,
     })
     message.success(t('models.providerAdded'))
     emit('saved')
@@ -546,6 +549,10 @@ function handleClose() {
           v-model:value="formData.api_mode"
           :options="apiModeOptions"
         />
+      </NFormItem>
+
+      <NFormItem>
+        <NCheckbox v-model:checked="setAsDefault">{{ t('models.setAsDefaultOnAdd') }}</NCheckbox>
       </NFormItem>
     </NForm>
 

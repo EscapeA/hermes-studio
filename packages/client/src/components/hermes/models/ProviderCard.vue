@@ -43,6 +43,17 @@ function isDefaultModel(model: string) {
   return isDefaultProvider.value && modelsStore.defaultModel === model
 }
 
+async function handleSetDefault() {
+  if (props.provider.models.length === 0) return
+  const model = props.provider.models[0]
+  try {
+    await modelsStore.setDefaultModel(model, props.provider.provider)
+    message.success(t('models.defaultSet'))
+  } catch (e: any) {
+    message.error(e.message || t('models.defaultSetFailed'))
+  }
+}
+
 function modelAlias(model: string) {
   return appStore.getModelAlias(model, props.provider.provider)
 }
@@ -209,6 +220,7 @@ async function handleDelete() {
     </div>
 
     <div class="card-actions">
+      <NButton v-if="!isDefaultProvider && provider.models.length > 0" size="tiny" quaternary @click="handleSetDefault">{{ t('models.setAsDefault') }}</NButton>
       <NButton size="tiny" quaternary @click="showAliasListModal = true">{{ t('models.aliasManage') }}</NButton>
       <NButton size="tiny" quaternary @click="openVisibilityModal">{{ t('models.manageVisibleModels') }}</NButton>
       <NButton size="tiny" quaternary type="error" :loading="deleting" @click="handleDelete">{{ t('common.delete') }}</NButton>

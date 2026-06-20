@@ -100,9 +100,10 @@ function findProviderDictKey(config: any, poolKey: string, requestedProviderKey 
 }
 
 export async function create(ctx: any) {
-  const { name, base_url, api_key, model, context_length, providerKey, api_mode } = ctx.request.body as {
-    name: string; base_url: string; api_key: string; model: string; context_length?: number; providerKey?: string | null; api_mode?: ProviderApiMode
+  const { name, base_url, api_key, model, context_length, providerKey, api_mode, set_as_default } = ctx.request.body as {
+    name: string; base_url: string; api_key: string; model: string; context_length?: number; providerKey?: string | null; api_mode?: ProviderApiMode; set_as_default?: boolean
   }
+  const shouldSetDefault = set_as_default !== false
   const normalizedName = String(name || '').trim()
   const poolKey = providerKey || `custom:${normalizedName.toLowerCase().replace(/ /g, '-')}`
   const isBuiltin = poolKey in PROVIDER_ENV_MAP
@@ -141,18 +142,24 @@ export async function create(ctx: any) {
           if (preset?.api_mode) entry.api_mode = preset.api_mode
           config.custom_providers.push(entry)
         }
-        config.model.default = model
-        config.model.provider = poolKey
+        if (shouldSetDefault) {
+          config.model.default = model
+          config.model.provider = poolKey
+        }
       } else {
         if (PROVIDER_ENV_MAP[poolKey].api_key_env) {
           await saveEnvValueForProfile(profile, PROVIDER_ENV_MAP[poolKey].api_key_env, api_key)
           if (PROVIDER_ENV_MAP[poolKey].base_url_env && shouldPersistBuiltinBaseUrl(poolKey, base_url)) { await saveEnvValueForProfile(profile, PROVIDER_ENV_MAP[poolKey].base_url_env, effectiveBaseUrl) }
-          config.model.default = model
-          config.model.provider = poolKey
+          if (shouldSetDefault) {
+            config.model.default = model
+            config.model.provider = poolKey
+          }
         } else if (DIRECT_CONFIG_PROVIDERS.has(poolKey)) {
           if (PROVIDER_ENV_MAP[poolKey].base_url_env && shouldPersistBuiltinBaseUrl(poolKey, base_url)) { await saveEnvValueForProfile(profile, PROVIDER_ENV_MAP[poolKey].base_url_env, effectiveBaseUrl) }
-          config.model.default = model
-          config.model.provider = poolKey
+          if (shouldSetDefault) {
+            config.model.default = model
+            config.model.provider = poolKey
+          }
         } else {
           if (!Array.isArray(config.custom_providers)) { config.custom_providers = [] }
           const existing = (config.custom_providers as any[]).find(
@@ -176,8 +183,10 @@ export async function create(ctx: any) {
             if (preset?.api_mode) entry.api_mode = preset.api_mode
             config.custom_providers.push(entry)
           }
-          config.model.default = model
-          config.model.provider = `custom:${poolKey}`
+          if (shouldSetDefault) {
+            config.model.default = model
+            config.model.provider = `custom:${poolKey}`
+          }
         }
       }
       delete config.model.base_url
