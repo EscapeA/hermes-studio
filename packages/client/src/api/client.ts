@@ -22,6 +22,56 @@ export function setServerUrl(url: string) {
   localStorage.setItem('hermes_server_url', url)
 }
 
+// --- Multi-server management ---
+
+export interface SavedServer {
+  url: string
+  name: string
+}
+
+const SAVED_SERVERS_KEY = 'hermes_saved_servers'
+
+export function getSavedServers(): SavedServer[] {
+  try {
+    const raw = localStorage.getItem(SAVED_SERVERS_KEY)
+    if (!raw) return []
+    return JSON.parse(raw) as SavedServer[]
+  } catch {
+    return []
+  }
+}
+
+export function saveSavedServers(servers: SavedServer[]) {
+  localStorage.setItem(SAVED_SERVERS_KEY, JSON.stringify(servers))
+}
+
+export function addSavedServer(url: string, name: string): SavedServer[] {
+  const servers = getSavedServers()
+  const cleanUrl = url.trim().replace(/\/+$/, '')
+  if (!cleanUrl) return servers
+  // Avoid duplicates
+  const exists = servers.find(s => s.url === cleanUrl)
+  if (exists) {
+    exists.name = name || exists.name
+  } else {
+    servers.push({ url: cleanUrl, name: name || cleanUrl })
+  }
+  saveSavedServers(servers)
+  return servers
+}
+
+export function removeSavedServer(url: string): SavedServer[] {
+  const servers = getSavedServers().filter(s => s.url !== url)
+  saveSavedServers(servers)
+  return servers
+}
+
+export function switchServer(url: string) {
+  const cleanUrl = url.trim().replace(/\/+$/, '')
+  setServerUrl(cleanUrl)
+  clearApiKey()
+}
+
 export function setApiKey(key: string) {
   localStorage.setItem('hermes_api_key', key)
 }
