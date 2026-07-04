@@ -2363,7 +2363,7 @@ async function handleSessionModelCustomSubmit() {
               v-model:value="newChatModel"
               :options="newChatModelOptions"
               :disabled="newChatLoading || !newChatProvider"
-              filterable
+              :filterable="!isMobile"
             />
           </label>
           <label v-if="isNewChatExternalCodingAgent && effectiveNewChatAgentMode === 'scoped'" class="new-chat-field">
