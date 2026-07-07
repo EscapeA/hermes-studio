@@ -39,6 +39,7 @@ vi.mock('vue-router', () => ({
 }))
 
 vi.mock('@/api/client', () => ({
+  getBaseUrlValue: vi.fn(() => ''),
   request: mockRequest,
 }))
 
