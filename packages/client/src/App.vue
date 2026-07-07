@@ -7,6 +7,7 @@ import { getThemeOverrides } from '@/styles/theme'
 import { useTheme } from '@/composables/useTheme'
 import { useKeyboard } from '@/composables/useKeyboard'
 import { useSessionSearch } from '@/composables/useSessionSearch'
+import { usePwa } from '@/composables/usePwa'
 import { useAppStore } from '@/stores/hermes/app'
 import AuthEventListener from '@/components/auth/AuthEventListener.vue'
 import { desktopBridge } from '@/utils/desktop-bridge'
@@ -92,6 +93,7 @@ onUnmounted(() => {
 })
 
 useKeyboard()
+usePwa()
 </script>
 
 <template>

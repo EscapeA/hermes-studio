@@ -2818,4 +2818,7 @@ export default {
     new_0_6_27_6: 'Default workspace favorites now sit inside the folder picker selected-path row, with completed locale coverage for the workspace picker labels',
     new_0_6_27_7: 'Workspace diff cards now skip zero-byte changes with no patch or line delta, avoiding meaningless +0/-0 changed-file cards',
   },
+  pwa: {
+    install: 'Install App',
+  },
 }
