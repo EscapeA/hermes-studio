@@ -28,6 +28,7 @@ vi.mock('@/api/studio/chat', () => ({
 }))
 
 vi.mock('@/api/client', () => ({
+  getBaseUrlValue: vi.fn(() => ''),
   getActiveProfileName: () => 'default',
   hasApiKey: () => false,
 }))
