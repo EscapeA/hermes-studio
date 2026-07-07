@@ -3825,4 +3825,7 @@ export default {
     new_0_7_31_4: 'Fixed context queries for custom endpoints in the App and added model aliases and reasoning options to shared sessions (#3299)',
     new_0_7_31_5: 'Fixed Comic theme preferences being lost after refresh or restart; saved theme styles now return during loading (#3302)',
   },
+  pwa: {
+    install: 'Install App',
+  },
 }
