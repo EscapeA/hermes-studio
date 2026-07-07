@@ -3578,4 +3578,7 @@ export default {
     new_0_7_0_10: '中英文 README 已更新，完整说明五种运行时、三类 Agent、模块归属、规范 API，以及当前开发和验证流程（#2745）',
     new_0_7_0_11: '“设备互联”现仅显示 Android 和 iOS 下载卡片；Apple 正式版只标记为 App Store，不再显示 TestFlight · App Store',
   },
+  pwa: {
+    install: '安装应用',
+  },
 }

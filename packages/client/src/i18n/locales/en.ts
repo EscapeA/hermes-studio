@@ -3530,4 +3530,7 @@ export default {
     new_0_7_0_10: 'The English and Chinese READMEs now document the five runtimes, three Agent families, module ownership, canonical APIs, and current development and validation workflows (#2745)',
     new_0_7_0_11: 'Device Connections now shows only Android and iOS download cards; official Apple releases are labeled App Store instead of TestFlight · App Store',
   },
+  pwa: {
+    install: 'Install App',
+  },
 }
