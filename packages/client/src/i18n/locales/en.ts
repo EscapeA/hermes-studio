@@ -3766,4 +3766,7 @@ export default {
     new_0_7_29_1: 'Restored file downloads from workspace tree menus and diff toolbars in chats and group chats (#3268)',
     new_0_7_29_2: 'Fixed Antigravity being mislabeled as Ekko in Live Activity notifications (#3272)',
   },
+  pwa: {
+    install: 'Install App',
+  },
 }
