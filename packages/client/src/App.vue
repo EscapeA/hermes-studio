@@ -28,6 +28,7 @@ import AuthEventListener from "@/components/auth/AuthEventListener.vue";
 import { desktopBridge } from "@/utils/desktop-bridge";
 import { naiveLocaleFor } from "@/constants/naiveLocale";
 import { naiveRtlFor } from "@/constants/naiveRtl";
+import { usePwa } from "@/composables/usePwa";
 
 const AppSidebar = defineAsyncComponent(
   async () => (await import("@/components/layout/AppSidebar.vue")).default,
@@ -238,6 +239,7 @@ onUnmounted(() => {
 });
 
 useKeyboard();
+usePwa();
 </script>
 
 <template>
