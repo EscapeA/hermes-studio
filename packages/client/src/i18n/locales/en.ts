@@ -3325,4 +3325,7 @@ export default {
     new_0_6_42_9: 'MiniMax image-to-video generation now supports Global and China official v1 endpoints, URL, base64, and local image inputs, task polling, and automatic download with Profile API keys (#2512)',
     new_0_6_41_1: 'Local STT now works reliably in npm-installed Hermes Web UI by pinning sherpa-onnx native runtimes to the same version as the Node.js wrapper on macOS, Windows, and Linux (#2464)',
   },
+  pwa: {
+    install: 'Install App',
+  },
 }
