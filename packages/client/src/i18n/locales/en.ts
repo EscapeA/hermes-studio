@@ -3767,4 +3767,7 @@ export default {
     new_0_7_28_5: 'Fixed native login credential access for Antigravity global mode on macOS and corrected the sign-in hint (#3266)',
     new_0_7_28_6: 'Updated Device Connections navigation to a monitor and phone icon for a clearer connection entry point (#3262)',
   },
+  pwa: {
+    install: 'Install App',
+  },
 }
