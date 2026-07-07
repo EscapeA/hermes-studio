@@ -60,6 +60,7 @@ const groupChatApiMock = vi.hoisted(() => {
   }
 })
 const clientApiMock = vi.hoisted(() => ({
+  getBaseUrlValue: vi.fn(() => ''),
   getApiKey: vi.fn(() => 'test-token'),
   getActiveProfileName: vi.fn(() => 'research'),
   getStoredUsername: vi.fn(() => null),

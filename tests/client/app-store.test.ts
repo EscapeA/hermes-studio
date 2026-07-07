@@ -14,7 +14,8 @@ const mockSystemApi = vi.hoisted(() => ({
 }))
 
 vi.mock('@/api/hermes/system', () => mockSystemApi)
-vi.mock('@/api/client', () => ({ hasApiKey: () => true }))
+vi.mock('@/api/client', () => ({
+  getBaseUrlValue: vi.fn(() => ''), hasApiKey: () => true }))
 
 import { useAppStore } from '@/stores/hermes/app'
 
