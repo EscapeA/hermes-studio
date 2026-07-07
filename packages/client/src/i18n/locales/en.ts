@@ -3873,4 +3873,7 @@ export default {
     new_0_7_32_7: 'Fixed Linux desktop Open at Login and improved error messages and diagnostics for desktop startup failures (#3307, #3308)',
     new_0_7_32_8: 'Removed the outdated group chat upgrade notice (#3306)',
   },
+  pwa: {
+    install: 'Install App',
+  },
 }
