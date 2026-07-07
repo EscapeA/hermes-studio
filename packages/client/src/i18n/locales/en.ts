@@ -2595,4 +2595,7 @@ export default {
     new_0_6_24_5: 'Plugins can be enabled or disabled from Studio when they are manageable user plugins, and the Plugins page now reflects base and profile plugin state more accurately',
     new_0_6_24_6: 'Models now support default provider and default model actions; bridge terminal error detection is less noisy, Hermes Agent runtime packaging moves to 0.18.0, and the website version manifest was refreshed',
   },
+  pwa: {
+    install: 'Install App',
+  },
 }

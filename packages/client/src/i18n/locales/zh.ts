@@ -2597,4 +2597,7 @@ export default {
     new_0_6_24_5: 'Plugins 页面支持启用或禁用可管理的用户插件，并能更准确地合并显示 Hermes 基础配置和当前 profile 的插件状态',
     new_0_6_24_6: 'Models 页面新增设置默认 provider 和默认模型操作；bridge 终端错误识别减少误报，Hermes Agent runtime 打包升级到 0.18.0，官网版本清单也已刷新',
   },
+  pwa: {
+    install: '安装应用',
+  },
 }
