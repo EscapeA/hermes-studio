@@ -35,6 +35,7 @@ import { navigationRailKey } from "@/composables/useNavigationRail";
 import { pageHeaderTargetKey } from "@/composables/usePageHeader";
 import { mobileNavigationKey } from "@/composables/usePageSidebar";
 import HeaderSidebarToggle from "@/components/layout/HeaderSidebarToggle.vue";
+import { usePwa } from "@/composables/usePwa";
 
 const StudioNavigationRail = defineAsyncComponent(
   async () => (await import("@/components/layout/StudioNavigationRail.vue")).default,
@@ -283,6 +284,7 @@ onUnmounted(() => {
 });
 
 useKeyboard();
+usePwa();
 </script>
 
 <template>
