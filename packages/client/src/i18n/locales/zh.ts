@@ -3295,4 +3295,7 @@ export default {
     new_0_6_42_9: 'MiniMax 图生视频现支持 Global 与中国区官方 v1 接口，可接收 URL、base64 或本地图片，轮询任务并使用 Profile API Key 自动下载结果（#2512）',
     new_0_6_41_1: '修复通过 npm 安装 Hermes Web UI 后本地 STT 无法可靠识别的问题：在 macOS、Windows 和 Linux 上将 sherpa-onnx 原生运行时固定为与 Node.js 封装相同的版本（#2464）',
   },
+  pwa: {
+    install: '安装应用',
+  },
 }
