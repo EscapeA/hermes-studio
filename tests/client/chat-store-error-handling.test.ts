@@ -24,6 +24,7 @@ vi.mock('@/api/hermes/chat', () => ({
 }))
 
 vi.mock('@/api/client', () => ({
+  getBaseUrlValue: vi.fn(() => ''),
   getActiveProfileName: () => 'default',
   hasApiKey: () => false,
 }))
