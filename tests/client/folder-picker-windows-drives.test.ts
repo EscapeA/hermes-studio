@@ -14,6 +14,7 @@ const dialogMock = vi.hoisted(() => ({
 }))
 
 vi.mock('@/api/client', () => ({
+  getBaseUrlValue: vi.fn(() => ''),
   request: requestMock,
 }))
 
