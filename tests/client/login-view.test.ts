@@ -26,6 +26,7 @@ vi.mock('vue-i18n', () => ({
 }))
 
 vi.mock('@/api/client', () => ({
+  getBaseUrlValue: vi.fn(() => ''),
   setApiKey: mockSetApiKey,
   clearApiKey: mockClearApiKey,
   hasApiKey: mockHasApiKey,
