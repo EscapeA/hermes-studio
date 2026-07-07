@@ -23,6 +23,7 @@ vi.mock('@/composables/useToolTraceVisibility', () => ({
 }))
 
 vi.mock('@/api/client', () => ({
+  getBaseUrlValue: vi.fn(() => ''),
   getActiveProfileName: vi.fn(() => 'default'),
   getApiKey: vi.fn(() => 'test-token'),
   getStoredUsername: vi.fn(() => null),
