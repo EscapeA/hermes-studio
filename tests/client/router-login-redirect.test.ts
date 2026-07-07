@@ -5,6 +5,7 @@ const mockHasApiKey = vi.hoisted(() => vi.fn())
 const mockIsStoredSuperAdmin = vi.hoisted(() => vi.fn())
 
 vi.mock('@/api/client', () => ({
+  getBaseUrlValue: vi.fn(() => ''),
   hasApiKey: mockHasApiKey,
   isStoredSuperAdmin: mockIsStoredSuperAdmin,
 }))
