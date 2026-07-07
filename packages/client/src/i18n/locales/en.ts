@@ -2933,4 +2933,7 @@ export default {
     new_0_6_32_9: 'Desktop window controls are integrated into the page chrome: macOS traffic lights live in the sidebar, Windows controls sit above the main content, and Linux keeps native decorations (#2162)',
     new_0_6_32_10: 'Developer documentation now supports both the current checkout and optional isolated Git worktrees (#2155)',
   },
+  pwa: {
+    install: 'Install App',
+  },
 }
