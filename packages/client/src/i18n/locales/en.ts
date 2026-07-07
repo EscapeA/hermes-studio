@@ -3816,4 +3816,7 @@ export default {
     new_0_7_30_7: 'Fixed Claude tool execution without confirmation when running as root, with consistent launch permissions in global and scoped modes (#3287)',
     new_0_7_30_8: 'Removed the retired OpenCode Free provider and its model entry points (#3277)',
   },
+  pwa: {
+    install: 'Install App',
+  },
 }
