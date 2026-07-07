@@ -3873,4 +3873,7 @@ export default {
     new_0_7_33_7: 'Fixed Coding Agent chats being interrupted by dependency debug output, improving DSH and other ACP Agent compatibility (#3327)',
     new_0_7_33_8: 'Fixed clarification question and answer callback compatibility across Hermes kernel versions (#3330)',
   },
+  pwa: {
+    install: 'Install App',
+  },
 }
