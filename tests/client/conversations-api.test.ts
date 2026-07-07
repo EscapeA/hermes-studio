@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mockRequest = vi.hoisted(() => vi.fn())
 
 vi.mock('@/api/client', () => ({
+  getBaseUrlValue: vi.fn(() => ''),
   request: mockRequest,
 }))
 
