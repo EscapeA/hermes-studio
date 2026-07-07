@@ -62,6 +62,7 @@ vi.mock('@/api/studio/sessions', () => ({
 }))
 
 vi.mock('@/api/client', () => ({
+  getBaseUrlValue: vi.fn(() => ''),
   getActiveProfileName: () => 'default',
 }))
 
