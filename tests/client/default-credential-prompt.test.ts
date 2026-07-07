@@ -24,6 +24,7 @@ vi.mock('@/api/studio/auth', () => ({
 }))
 
 vi.mock('@/api/client', () => ({
+  getBaseUrlValue: vi.fn(() => ''),
   getApiKey: mockGetApiKey,
 }))
 
