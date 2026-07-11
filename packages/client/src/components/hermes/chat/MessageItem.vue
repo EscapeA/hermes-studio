@@ -5,7 +5,7 @@ import {
   type Message,
   type ContentBlock,
 } from "@/stores/hermes/chat";
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from "vue";
 import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
 import { downloadFile, getDownloadUrl } from "@/api/hermes/download";
@@ -295,16 +295,28 @@ const thinkingStreamingNow = computed(() => {
 });
 
 const thinkingOverride = ref<boolean | null>(null);
-
 const thinkingExpanded = computed(() => {
   if (thinkingStreamingNow.value) return true;
   if (thinkingOverride.value !== null) return thinkingOverride.value;
   return !!settingsStore.display.show_reasoning;
 });
-
 function toggleThinking() {
   thinkingOverride.value = !thinkingExpanded.value;
 }
+
+// --- Thinking streaming scroll containment ---
+const thinkingBodyRef = ref<HTMLElement | null>(null);
+
+const scrollThinkingToBottom = () => {
+  if (!thinkingStreamingNow.value || !thinkingBodyRef.value) return;
+  nextTick(() => {
+    const el = thinkingBodyRef.value;
+    if (el) el.scrollTop = el.scrollHeight;
+  });
+};
+
+watch(() => props.message.reasoning?.length, scrollThinkingToBottom);
+watch(() => props.message.content?.length, scrollThinkingToBottom);
 
 const nowTick = ref(Date.now());
 let tickTimer: number | null = null;
@@ -1044,7 +1056,7 @@ onBeforeUnmount(() => {
                   · {{ t('chat.thinkingChars', { count: thinkingCharCount }) }}
                 </span>
               </div>
-              <div v-if="thinkingExpanded" class="thinking-body">
+              <div v-if="thinkingExpanded" ref="thinkingBodyRef" class="thinking-body" :class="{ streaming: thinkingStreamingNow }">
                 <MarkdownRenderer :content="thinkingFullText" />
               </div>
             </div>
@@ -1591,6 +1603,10 @@ onBeforeUnmount(() => {
     font-size: 13px;
     opacity: 0.85;
     font-style: italic;
+    &.streaming {
+      max-height: 50vh;
+      overflow-y: auto;
+    }
 
     :deep(p) { margin: 0.3em 0; }
   }
