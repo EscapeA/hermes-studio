@@ -154,6 +154,54 @@ describe('chat store reasoning/tool boundaries', () => {
     ])
   })
 
+  it('creates a post-tool assistant bubble when only reasoning arrives after tool.started', async () => {
+    const store = useChatStore()
+    const session = makeSession()
+    store.sessions = [session]
+    store.activeSessionId = 'session-1'
+    store.activeSession = session
+
+    await store.sendMessage('run a tool')
+
+    const onEvent = chatApi.startRunViaSocket.mock.calls[0][1] as (event: RunEvent) => void
+    onEvent({ event: 'run.started', session_id: 'session-1' })
+    onEvent({ event: 'reasoning.delta', session_id: 'session-1', delta: 'first think. ' })
+    onEvent({ event: 'message.delta', session_id: 'session-1', delta: 'Calling tool.' })
+    onEvent({
+      event: 'tool.started',
+      session_id: 'session-1',
+      tool_call_id: 'tool-2',
+      tool: 'shell',
+      arguments: '{}',
+    } as RunEvent)
+    onEvent({ event: 'reasoning.delta', session_id: 'session-1', delta: 'second think. ' })
+    onEvent({
+      event: 'tool.completed',
+      session_id: 'session-1',
+      tool_call_id: 'tool-2',
+      output: 'ok',
+    } as RunEvent)
+
+    expect(store.messages.map(message => message.role)).toEqual([
+      'user',
+      'assistant',
+      'tool',
+      'assistant',
+    ])
+    expect(store.messages[1]).toEqual(expect.objectContaining({
+      role: 'assistant',
+      content: 'Calling tool.',
+      reasoning: 'first think. ',
+      isStreaming: false,
+    }))
+    expect(store.messages[3]).toEqual(expect.objectContaining({
+      role: 'assistant',
+      content: '',
+      reasoning: 'second think. ',
+      isStreaming: true,
+    }))
+  })
+
   it('restores persisted tool-call reasoning on the expandable tool message', async () => {
     const store = useChatStore()
     const session = makeSession()
