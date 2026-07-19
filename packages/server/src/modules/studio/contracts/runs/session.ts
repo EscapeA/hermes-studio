@@ -174,6 +174,8 @@ export interface SessionState {
   ekkoContext?: { fixedContextTokens: number }
   /** Bound to the actual agent for this turn, including account agents such as Person. */
   ekkoBoundaryInterrupt?: (expectedRunId: string) => { status: string; phase?: string; reason?: string }
+  /** Last real API prompt_tokens (in=) for context-window UI; blocks local estimate overwrite. */
+  apiPromptTokens?: number
   bridgeContext?: BridgeContextState
   isAborting?: boolean
   queue: QueuedRun[]
