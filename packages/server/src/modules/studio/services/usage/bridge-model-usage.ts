@@ -1,4 +1,6 @@
 import { bridgeLogger } from '../../public/logging'
+import type { SessionState } from '../chat-run/types'
+import { applyApiPromptContextTokens } from '../chat-run/usage'
 import { normalizeTokenUsage, recordSessionUsage } from './usage-recorder'
 
 function stringValue(value: unknown): string {
@@ -11,7 +13,11 @@ export function recordBridgeModelUsage(
   event: Record<string, unknown>,
   profile: string,
   modelContext: { model?: string | null; provider?: string | null },
-): void {
+  live?: {
+    state: SessionState
+    emit: (event: string, payload: any) => void
+  },
+): number | undefined {
   const usage = normalizeTokenUsage(event.usage)
   if (usage.isEstimated) {
     bridgeLogger.warn({
@@ -19,7 +25,7 @@ export function recordBridgeModelUsage(
       bridgeRunId,
       apiRequestId: event.api_request_id,
     }, '[chat-run-socket] ignoring incomplete Hermes model usage event')
-    return
+    return live?.state.contextTokens
   }
 
   const apiRequestId = stringValue(event.api_request_id)
@@ -31,7 +37,7 @@ export function recordBridgeModelUsage(
   const requestKey = apiRequestId || fallbackId
   if (!requestKey) {
     bridgeLogger.warn({ sessionId, bridgeRunId }, '[chat-run-socket] ignoring Hermes model usage event without request identity')
-    return
+    return live?.state.contextTokens
   }
 
   recordSessionUsage({
@@ -49,4 +55,19 @@ export function recordBridgeModelUsage(
     profile,
     isEstimated: false,
   })
+
+  // Context-window UI: use the latest real API prompt_tokens (log "in="), not in+out total.
+  if (live) {
+    return applyApiPromptContextTokens(
+      sessionId,
+      live.state,
+      live.emit,
+      usage.inputTokens,
+      {
+        inputTokens: live.state.inputTokens ?? 0,
+        outputTokens: live.state.outputTokens ?? 0,
+      },
+    )
+  }
+  return undefined
 }
