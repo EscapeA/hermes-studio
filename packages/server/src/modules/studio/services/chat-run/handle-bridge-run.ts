@@ -20,10 +20,13 @@ import type {
 import { contentBlocksToString, convertContentBlocksForAgent, extractTextForPreview, isContentBlockArray } from './content-blocks'
 import { buildCompressedHistory, buildDbSnapshotAwareHistory, forceCompressBridgeHistory, pushState, replaceState } from './compression'
 import {
+  applyApiPromptContextTokens,
   calcAndUpdateUsage,
+  clearApiPromptContextTokens,
   contextTokensWithCachedOverhead,
   estimateUsageTokensFromMessages,
   getCachedBridgeContextOverhead,
+  hasApiPromptContextTokens,
   updateMessageContextTokenUsage,
 } from './usage'
 import {
@@ -1064,7 +1067,7 @@ export async function resumeBridgeRun(
         recordBridgeModelUsage(sessionId, runId, bridgeEvent, profile, {
           model: args.model,
           provider: args.provider,
-        })
+        }, { state, emit })
       }
     }
     const output = typeof snapshot.output === 'string' ? snapshot.output : deltas.join('')
@@ -1189,6 +1192,17 @@ async function refreshFinalContextUsage(args: {
       { excludeLastUser: false },
       { model: args.model, provider: args.provider },
     )
+    if (hasApiPromptContextTokens(args.state)) {
+      bridgeLogger.info({
+        sessionId: args.sessionId,
+        profile: args.profile,
+        model: args.model,
+        provider: args.provider,
+        apiPromptTokens: args.state.apiPromptTokens,
+        contextTokens: args.state.contextTokens,
+      }, '[chat-run-socket] keeping API prompt_tokens for context usage')
+      return args.state.contextTokens
+    }
     const finalMessageUsage = estimateUsageTokensFromMessages(finalHistory)
     const finalMessageTokens = finalMessageUsage.inputTokens + finalMessageUsage.outputTokens
     await ensureBridgeFixedContext({
@@ -1313,7 +1327,7 @@ async function applyBridgeChunkAsync(
         emit,
       )
     } else if (evType === 'model.usage') {
-      recordBridgeModelUsage(sessionId, chunk.run_id, ev, profile, modelContext)
+      recordBridgeModelUsage(sessionId, chunk.run_id, ev, profile, modelContext, { state, emit })
     } else if (evType === 'session.title.updated') {
       syncBridgeGeneratedTitle(sessionId, (ev as any).title, emit)
     } else if (evType === 'bridge.context.ready') {
@@ -1634,6 +1648,8 @@ async function applyBridgeChunkAsync(
       emit('compression.completed', payload)
       const usage = await calcAndUpdateUsage(sessionId, state, emit)
       if (messageAfterTokensWithInput != null) {
+        // History shrank; drop last API prompt so local estimate can fill until the next real usage.
+        clearApiPromptContextTokens(state)
         updateMessageContextTokenUsage(sessionId, state, emit, messageAfterTokensWithInput, usage)
       }
     } else if (evType === 'bridge.compression.failed') {
