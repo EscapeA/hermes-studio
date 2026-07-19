@@ -21,7 +21,6 @@ import type {
 import { contentBlocksToString, convertContentBlocksForAgent, extractTextForPreview, isContentBlockArray } from './content-blocks'
 import { buildCompressedHistory, buildDbSnapshotAwareHistory, forceCompressBridgeHistory, getOrCreateSession, pushState, replaceState } from './compression'
 import {
-  applyApiPromptContextTokens,
   calcAndUpdateUsage,
   clearApiPromptContextTokens,
   contextTokensWithCachedOverhead,
