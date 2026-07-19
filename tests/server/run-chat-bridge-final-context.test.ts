@@ -57,6 +57,17 @@ const hasApiPromptContextTokensMock = vi.fn((state: any) => (
   && Number.isFinite(state.apiPromptTokens)
   && state.apiPromptTokens >= 0
 ))
+const resolveApiPromptTokensMock = vi.fn((raw: any, normalized?: any) => {
+  if (raw && typeof raw === 'object') {
+    if (typeof raw.prompt_tokens === 'number') return raw.prompt_tokens
+    if (typeof raw.promptTokens === 'number') return raw.promptTokens
+    const uncached = Number(raw.input_tokens ?? raw.inputTokens ?? normalized?.inputTokens ?? 0)
+    const cacheRead = Number(raw.cache_read_tokens ?? raw.cacheReadTokens ?? normalized?.cacheReadTokens ?? 0)
+    const cacheWrite = Number(raw.cache_write_tokens ?? raw.cacheWriteTokens ?? normalized?.cacheWriteTokens ?? 0)
+    if (Number.isFinite(uncached) && uncached >= 0) return Math.floor(uncached + (cacheRead > 0 ? cacheRead : 0) + (cacheWrite > 0 ? cacheWrite : 0))
+  }
+  return normalized?.inputTokens
+})
 const flushBridgePendingToDbMock = vi.fn()
 const ensureOpenBridgeAssistantMessageMock = vi.fn()
 const syncBridgeReasoningToMessageMock = vi.fn()
@@ -110,6 +121,7 @@ vi.mock('../../packages/server/src/modules/studio/services/chat-run/usage', () =
   applyApiPromptContextTokens: applyApiPromptContextTokensMock,
   clearApiPromptContextTokens: clearApiPromptContextTokensMock,
   hasApiPromptContextTokens: hasApiPromptContextTokensMock,
+  resolveApiPromptTokens: resolveApiPromptTokensMock,
 }))
 
 vi.mock('../../packages/server/src/modules/studio/services/chat-run/bridge-message', () => ({
@@ -234,6 +246,17 @@ describe('bridge run final context usage', () => {
       && Number.isFinite(state.apiPromptTokens)
       && state.apiPromptTokens >= 0
     ))
+    resolveApiPromptTokensMock.mockImplementation((raw: any, normalized?: any) => {
+      if (raw && typeof raw === 'object') {
+        if (typeof raw.prompt_tokens === 'number') return raw.prompt_tokens
+        if (typeof raw.promptTokens === 'number') return raw.promptTokens
+        const uncached = Number(raw.input_tokens ?? raw.inputTokens ?? normalized?.inputTokens ?? 0)
+        const cacheRead = Number(raw.cache_read_tokens ?? raw.cacheReadTokens ?? normalized?.cacheReadTokens ?? 0)
+        const cacheWrite = Number(raw.cache_write_tokens ?? raw.cacheWriteTokens ?? normalized?.cacheWriteTokens ?? 0)
+        if (Number.isFinite(uncached) && uncached >= 0) return Math.floor(uncached + (cacheRead > 0 ? cacheRead : 0) + (cacheWrite > 0 ? cacheWrite : 0))
+      }
+      return normalized?.inputTokens
+    })
   })
 
   afterEach(() => {
