@@ -874,10 +874,19 @@ export async function resumeBridgeRun(
       if (!event || typeof event !== 'object' || Array.isArray(event)) continue
       const bridgeEvent = event as Record<string, unknown>
       if (bridgeEvent.event === 'model.usage') {
-        recordBridgeModelUsage(sessionId, runId, bridgeEvent, profile, {
-          model: args.model,
-          provider: args.provider,
-        }, { state, emit })
+        try {
+          recordBridgeModelUsage(sessionId, runId, bridgeEvent, profile, {
+            model: args.model,
+            provider: args.provider,
+          }, { state, emit })
+        } catch (usageErr) {
+          // Never block resume cursor advancement on usage accounting failures.
+          bridgeLogger.warn({
+            err: usageErr instanceof Error ? { message: usageErr.message, name: usageErr.name } : usageErr,
+            sessionId,
+            runId,
+          }, '[chat-run-socket] failed to apply model.usage during bridge resume snapshot')
+        }
       }
     }
     const output = typeof snapshot.output === 'string' ? snapshot.output : deltas.join('')
