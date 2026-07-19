@@ -161,6 +161,8 @@ export interface SessionState {
   cacheReadTokens?: number
   cacheWriteTokens?: number
   contextTokens?: number
+  /** Last real API prompt_tokens (in=) for context-window UI; blocks local estimate overwrite. */
+  apiPromptTokens?: number
   bridgeContext?: BridgeContextState
   isAborting?: boolean
   queue: QueuedRun[]
