@@ -3,6 +3,7 @@ import {
   applyApiPromptContextTokens,
   clearApiPromptContextTokens,
   hasApiPromptContextTokens,
+  resolveApiPromptTokens,
   updateMessageContextTokenUsage,
 } from '../../packages/server/src/services/hermes/run-chat/usage'
 import type { SessionState } from '../../packages/server/src/services/hermes/run-chat/types'
@@ -59,6 +60,31 @@ describe('API prompt_tokens context usage', () => {
     expect(emit).not.toHaveBeenCalled()
   })
 
+
+  it('resolves full prompt_tokens from Hermes canonical usage (uncached + cache)', () => {
+    // mirrors agent log: in=158201 cache=156416/158201 → uncached input=1785
+    expect(resolveApiPromptTokens({
+      input_tokens: 1785,
+      output_tokens: 171,
+      cache_read_tokens: 156416,
+      cache_write_tokens: 0,
+      prompt_tokens: 158201,
+      total_tokens: 158372,
+    })).toBe(158201)
+
+    // without explicit prompt_tokens, sum buckets
+    expect(resolveApiPromptTokens({
+      input_tokens: 1785,
+      output_tokens: 171,
+      cache_read_tokens: 156416,
+    })).toBe(158201)
+
+    // via normalized CanonicalUsage-like object
+    expect(resolveApiPromptTokens(
+      { input_tokens: 1785, cache_read_tokens: 156416 },
+      { inputTokens: 1785, cacheReadTokens: 156416, cacheWriteTokens: 0 },
+    )).toBe(158201)
+  })
   it('allows local estimates again after clearApiPromptContextTokens', () => {
     const state = makeState({ bridgeContext: { fixedContextTokens: 100 } })
     const emit = vi.fn()
