@@ -163,6 +163,8 @@ export interface SessionState {
   contextTokens?: number
   /** Ekko's system/tool context, kept separately from conversation history. */
   ekkoContext?: { fixedContextTokens: number }
+  /** Last real API prompt_tokens (in=) for context-window UI; blocks local estimate overwrite. */
+  apiPromptTokens?: number
   bridgeContext?: BridgeContextState
   isAborting?: boolean
   queue: QueuedRun[]
