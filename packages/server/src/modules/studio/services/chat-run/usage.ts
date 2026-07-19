@@ -229,6 +229,31 @@ export function updateContextTokenUsage(
   return normalizedContextTokens
 }
 
+export function applyApiPromptContextTokens(
+  sid: string,
+  state: SessionState,
+  emit: (event: string, payload: any) => void,
+  promptTokens: number | null | undefined,
+  usage?: { inputTokens: number; outputTokens: number },
+): number | undefined {
+  if (typeof promptTokens !== 'number' || !Number.isFinite(promptTokens) || promptTokens < 0) {
+    return state.contextTokens
+  }
+  const normalized = Math.floor(promptTokens)
+  state.apiPromptTokens = normalized
+  return updateContextTokenUsage(sid, state, emit, normalized, usage)
+}
+
+export function clearApiPromptContextTokens(state: SessionState): void {
+  state.apiPromptTokens = undefined
+}
+
+export function hasApiPromptContextTokens(state: SessionState): boolean {
+  return typeof state.apiPromptTokens === 'number'
+    && Number.isFinite(state.apiPromptTokens)
+    && state.apiPromptTokens >= 0
+}
+
 export function getCachedBridgeContextOverhead(state: SessionState): number | undefined {
   const fixedContextTokens = state.bridgeContext?.fixedContextTokens
   if (typeof fixedContextTokens !== 'number' || !Number.isFinite(fixedContextTokens) || fixedContextTokens < 0) {
@@ -252,6 +277,10 @@ export function updateMessageContextTokenUsage(
   messageTokens: number | null | undefined,
   usage?: { inputTokens: number; outputTokens: number },
 ): number | undefined {
+  // Prefer real API prompt_tokens over local message/fixed estimates for the UI meter.
+  if (hasApiPromptContextTokens(state)) {
+    return state.contextTokens
+  }
   if (typeof messageTokens !== 'number' || !Number.isFinite(messageTokens) || messageTokens < 0) {
     return state.contextTokens
   }
