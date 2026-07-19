@@ -229,6 +229,52 @@ export function updateContextTokenUsage(
   return normalizedContextTokens
 }
 
+
+/** Full context occupancy from Hermes model.usage (log "in=" / prompt_tokens). */
+export function resolveApiPromptTokens(rawUsage: unknown, normalized?: { inputTokens: number; cacheReadTokens?: number; cacheWriteTokens?: number }): number | undefined {
+  const root = rawUsage && typeof rawUsage === 'object' && !Array.isArray(rawUsage)
+    ? rawUsage as Record<string, any>
+    : {}
+  const nested = root.usage && typeof root.usage === 'object' && !Array.isArray(root.usage)
+    ? root.usage as Record<string, any>
+    : root
+  const candidates = [
+    nested.prompt_tokens,
+    nested.promptTokens,
+    nested.total_tokens != null && nested.completion_tokens != null
+      ? Number(nested.total_tokens) - Number(nested.completion_tokens)
+      : undefined,
+    nested.totalTokens != null && nested.completionTokens != null
+      ? Number(nested.totalTokens) - Number(nested.completionTokens)
+      : undefined,
+  ]
+  for (const value of candidates) {
+    if (typeof value === 'number' && Number.isFinite(value) && value >= 0) return Math.floor(value)
+    if (typeof value === 'string' && value.trim()) {
+      const n = Number(value)
+      if (Number.isFinite(n) && n >= 0) return Math.floor(n)
+    }
+  }
+  // CanonicalUsage from agent hook: input is uncached; full prompt = input+cache_read+cache_write
+  if (normalized) {
+    const uncached = Math.max(0, Math.floor(normalized.inputTokens || 0))
+    const cacheRead = Math.max(0, Math.floor(normalized.cacheReadTokens || 0))
+    const cacheWrite = Math.max(0, Math.floor(normalized.cacheWriteTokens || 0))
+    const sum = uncached + cacheRead + cacheWrite
+    if (sum > 0) return sum
+  }
+  // raw canonical fields without prompt_tokens key
+  const uncached = Number(nested.input_tokens ?? nested.inputTokens)
+  const cacheRead = Number(nested.cache_read_tokens ?? nested.cacheReadTokens ?? 0)
+  const cacheWrite = Number(nested.cache_write_tokens ?? nested.cacheWriteTokens ?? 0)
+  if (Number.isFinite(uncached) && uncached >= 0) {
+    const sum = Math.floor(uncached) + (Number.isFinite(cacheRead) && cacheRead > 0 ? Math.floor(cacheRead) : 0)
+      + (Number.isFinite(cacheWrite) && cacheWrite > 0 ? Math.floor(cacheWrite) : 0)
+    if (sum > 0) return sum
+  }
+  return undefined
+}
+
 export function applyApiPromptContextTokens(
   sid: string,
   state: SessionState,
