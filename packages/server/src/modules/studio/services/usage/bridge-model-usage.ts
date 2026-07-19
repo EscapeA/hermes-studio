@@ -1,6 +1,6 @@
 import { bridgeLogger } from '../../public/logging'
 import type { SessionState } from '../chat-run/types'
-import { applyApiPromptContextTokens } from '../chat-run/usage'
+import { applyApiPromptContextTokens, resolveApiPromptTokens } from '../chat-run/usage'
 import { normalizeTokenUsage, recordSessionUsage } from './usage-recorder'
 
 function stringValue(value: unknown): string {
@@ -56,13 +56,15 @@ export function recordBridgeModelUsage(
     isEstimated: false,
   })
 
-  // Context-window UI: use the latest real API prompt_tokens (log "in="), not in+out total.
+  // Context-window UI: use full prompt occupancy (log "in=" / prompt_tokens).
+  // Hermes CanonicalUsage.input_tokens is uncached-only; prompt_tokens = input+cache_read+cache_write.
   if (live) {
+    const promptTokens = resolveApiPromptTokens(event.usage, usage)
     return applyApiPromptContextTokens(
       sessionId,
       live.state,
       live.emit,
-      usage.inputTokens,
+      promptTokens,
       {
         inputTokens: live.state.inputTokens ?? 0,
         outputTokens: live.state.outputTokens ?? 0,
