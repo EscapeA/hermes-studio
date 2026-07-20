@@ -1985,13 +1985,13 @@ function isImage(type: string): boolean {
   }
 
   .input-model-button {
-    min-width: 35px;
-    max-width: 35px;
+    min-width: 0;
+    max-width: min(160px, 42vw);
     padding: 0 4px 0 6px;
   }
 
   .input-model-label {
-    display: none;
+    display: inline-block;
   }
 
   .input-settings-button {
