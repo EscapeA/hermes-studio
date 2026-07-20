@@ -1626,6 +1626,8 @@ export default {
       showReasoningHint: '모델의 생각 과정 표시',
       showCost: '비용 표시',
       showCostHint: '응답에 토큰 사용량 표시',
+      showSessionIdentity: '세션 목록 아바타 및 프로필',
+      showSessionIdentityHint: '사이드바 세션 목록에 에이전트 유형 아바타, 프로필 아바타, 프로필 이름 표시',
       inlineDiffs: '인라인 변경사항',
       inlineDiffsHint: '코드 변경사항을 인라인으로 표시',
       bellOnComplete: '완료 알림음',

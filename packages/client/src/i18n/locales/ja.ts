@@ -1626,6 +1626,8 @@ export default {
       showReasoningHint: 'モデルの思考プロセスを表示',
       showCost: 'コストを表示',
       showCostHint: '返信にトークン使用量を表示',
+      showSessionIdentity: 'セッション一覧のアバターとプロファイル',
+      showSessionIdentityHint: 'サイドバーのセッション一覧にエージェント種別アバター、プロファイルアバター、プロファイル名を表示',
       inlineDiffs: 'インライン差分',
       inlineDiffsHint: 'コード変更をインラインで表示',
       bellOnComplete: '完了通知音',
