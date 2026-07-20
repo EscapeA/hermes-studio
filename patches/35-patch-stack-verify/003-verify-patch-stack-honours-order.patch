@@ -1,0 +1,32 @@
+From 741fe053bdfacd3ea1cef2fb55d9c8164cb0eb88 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Fri, 9 Oct 2026 11:54:16 +0800
+Subject: [PATCH] fix(ci): verify-patch-stack honours patches/ORDER when
+ present
+
+---
+ scripts/verify-patch-stack.sh | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/scripts/verify-patch-stack.sh b/scripts/verify-patch-stack.sh
+index 58922f7b2..bd0ee0143 100755
+--- a/scripts/verify-patch-stack.sh
++++ b/scripts/verify-patch-stack.sh
+@@ -71,8 +71,15 @@ if ! git cat-file -e "$STACK_REF:patches" 2>/dev/null; then
+   fail "$STACK_REF 上没有 patches/ 目录（补丁串应只存在于该分支）"
+ fi
+ 
+-mapfile -t PATCHES < <(git ls-tree -r --name-only "$STACK_REF" -- patches \
+-  | grep -E '^patches/[^/]+/[^/]+\.patch$' | LC_ALL=C sort)
++# patches/ORDER（若有）记录真实重放顺序：分组目录只为人类可读，通配排序不等于提交顺序。
++if git cat-file -e "$STACK_REF:patches/ORDER" 2>/dev/null; then
++  # ORDER 行格式：`NNN <组>/<文件名>.patch`（相对 patches/）
++  mapfile -t PATCHES < <(git show "$STACK_REF:patches/ORDER" \
++    | sed -nE 's/^[0-9]+ +([^[:space:]]+\.patch)$/patches\/\1/p')
++else
++  mapfile -t PATCHES < <(git ls-tree -r --name-only "$STACK_REF" -- patches \
++    | grep -E '^patches/[^/]+/[^/]+\.patch$' | LC_ALL=C sort)
++fi
+ 
+ [ "${#PATCHES[@]}" -gt 0 ] || fail "在 $STACK_REF 的 patches/ 下没有找到任何 *.patch"
+ 

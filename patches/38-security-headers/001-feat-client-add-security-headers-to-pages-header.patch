@@ -1,0 +1,34 @@
+From bd5a5f1381eee13d54bb4fbf33873953d9b978ec Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 7 Oct 2026 00:00:17 +0800
+Subject: [PATCH] feat(client): add security headers to Pages _headers
+
+---
+ packages/client/public/_headers | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/packages/client/public/_headers b/packages/client/public/_headers
+index 5f73de8e7..1b439988b 100644
+--- a/packages/client/public/_headers
++++ b/packages/client/public/_headers
+@@ -11,3 +11,20 @@
+   Cache-Control: no-cache
+ /manifest.webmanifest
+   Cache-Control: no-cache
++
++# Security headers — parity with the Koa `securityHeaders()` middleware
++# (packages/server/src/modules/studio/middleware/security.ts).
++# Cloudflare merges every matching rule, so a single /* block also covers the
++# more specific cache rules above (distinct header names, no conflict).
++# CSP notes:
++#  - script-src needs 'unsafe-inline': index.html ships an inline theme/FOUC
++#    bootstrap <script> (and the inline <style> needs style-src 'unsafe-inline').
++#  - media-src needs blob: — voice/TTS/markdown audio+video play from
++#    URL.createObjectURL() blob URLs.
++#  - connect-src keeps http:/ws: so the same static build also works when
++#    previewed over plain http (mixed-content already blocks them on https).
++/*
++  X-Content-Type-Options: nosniff
++  X-Frame-Options: DENY
++  Referrer-Policy: strict-origin-when-cross-origin
++  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' http: https: ws: wss:; worker-src 'self'; manifest-src 'self'; form-action 'self'

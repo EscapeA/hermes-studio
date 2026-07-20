@@ -1,0 +1,64 @@
+From bbfbe1c6d174b02a35947721a1ed66eb21a4fae8 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 1 Oct 2026 12:05:54 +0800
+Subject: [PATCH] feat(theme): cover the 0.7.26 navigation chrome with the
+ style layers
+
+Upstream's new rail + mobile drawer kept the plain palette surface, so they read
+as unthemed next to the styled cards. Add the hairline + accent glow per style
+(one block keyed off --accent-primary-rgb) and put the drawer into the
+custom-background glass group.
+---
+ packages/client/src/App.vue                  |  2 ++
+ packages/client/src/styles/style-layers.scss | 25 ++++++++++++++++++++
+ 2 files changed, 27 insertions(+)
+
+diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
+index 07febb662..294a8ccb0 100644
+--- a/packages/client/src/App.vue
++++ b/packages/client/src/App.vue
+@@ -718,6 +718,8 @@ usePwa();
+   :deep(.hermes-config-sidebar),
+   :deep(.ekko-config-sidebar),
+   :deep(.coding-agent-config-sidebar),
++  :deep(.studio-mobile-navigation),
++  :deep(.studio-mobile-navigation__content > .session-list),
+   :deep(.chat-panel > .session-list),
+   :deep(.history-panel > .page-loading-content > .session-list) {
+     background-color: var(--glass-sidebar-bg);
+diff --git a/packages/client/src/styles/style-layers.scss b/packages/client/src/styles/style-layers.scss
+index e3d9b5ca0..6eb391b37 100644
+--- a/packages/client/src/styles/style-layers.scss
++++ b/packages/client/src/styles/style-layers.scss
+@@ -223,6 +223,31 @@ html.warm {
+ // screenshot showed no periodicity for the 32px grid, while the 3px scanline
+ // barely leaked through). A fixed overlay above the app content but below
+ // teleported overlays is the reliable hook — the wash then covers the cards,
++// ─── Navigation chrome (desktop rail + mobile drawer) ───────────────────────
++// Upstream 0.7.26 added these two components; without a rule here they keep the
++// plain palette surface and read as unthemed next to the styled cards. The
++// colour comes from the style's own accent variable, so one block covers every
++// style instead of one per style.
++html.tech,
++html.neon,
++html.aurora,
++html.blueprint,
++html.graphite,
++html.warm {
++  .studio-navigation-rail {
++    border-inline-end: 1px solid rgba(var(--accent-primary-rgb), 0.2);
++  }
++
++  .studio-mobile-navigation {
++    border-inline-end: 1px solid rgba(var(--accent-primary-rgb), 0.2);
++    box-shadow: 0 0 30px -16px rgba(var(--accent-primary-rgb), 0.5);
++  }
++
++  .studio-mobile-navigation__panel {
++    border-inline-start-color: rgba(var(--accent-primary-rgb), 0.2);
++  }
++}
++
+ // which is what makes the texture read.
+ // z-index 3 puts it above `.app-layout` (z-index 1) and below Naive UI's
+ // teleported modals/dropdowns, so menus keep a clean surface.

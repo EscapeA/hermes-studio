@@ -1,0 +1,119 @@
+From 2954d2219944d028ee378dcc030c5240a94d7899 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 14:27:20 +0800
+Subject: [PATCH] feat(chat): drop context progress bar, two-decimal usage
+ percent
+
+---
+ .../src/components/hermes/chat/ChatInput.vue  | 67 +------------------
+ 1 file changed, 2 insertions(+), 65 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index 09f712e70..7f1324ff2 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -1166,7 +1166,7 @@ function openAttachmentPreview(attachment: Attachment) {
+       </button>
+     </div>
+ 
+-    <div v-if="showContextUsage" class="context-usage-row">
++<div v-if="showContextUsage" class="context-usage-row">
+       <span class="context-info" :class="{ 'context-warning': showContextLimit && usagePercent > 80 }">
+         <template v-if="showSessionUsage">{{ t('chat.sessionUsage') }} </template>
+         {{ formatTokens(totalTokens) }}
+@@ -1186,20 +1186,10 @@ function openAttachmentPreview(attachment: Attachment) {
+               'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
+               'context-percent-danger': usagePercent > 80,
+             }"
+-            >{{ usagePercent.toFixed(1) }}%</span
++            >{{ usagePercent.toFixed(2) }}%</span
+           >
+         </template>
+       </span>
+-      <div v-if="showContextLimit" class="context-bar">
+-        <div
+-          class="context-bar-fill"
+-          :class="{
+-            'context-bar-warn': usagePercent > 60 && usagePercent <= 80,
+-            'context-bar-danger': usagePercent > 80,
+-          }"
+-          :style="{ width: `${usagePercent}%` }"
+-        />
+-      </div>
+     </div>
+ 
+     <div
+@@ -1965,34 +1955,6 @@ function openAttachmentPreview(attachment: Attachment) {
+   }
+ }
+ 
+-.context-bar {
+-  width: 60px;
+-  height: 4px;
+-  margin-inline-start: -4px;
+-  background: rgba(var(--text-muted-rgb), 0.2);
+-  border-radius: 2px;
+-  overflow: hidden;
+-}
+-
+-.context-bar-fill {
+-  height: 100%;
+-  background: linear-gradient(
+-    90deg,
+-    rgba(var(--text-muted-rgb), 0.45),
+-    rgba(var(--text-muted-rgb), 0.85)
+-  );
+-  border-radius: 2px;
+-  transition: width 0.3s ease;
+-
+-  &.context-bar-warn {
+-    background: linear-gradient(90deg, #c98a1a, #e8a735);
+-  }
+-
+-  &.context-bar-danger {
+-    background: linear-gradient(90deg, #c43a2a, #e85d4a);
+-  }
+-}
+-
+ .dark .context-limit-editable {
+   color: var(--text-secondary);
+ 
+@@ -2002,26 +1964,6 @@ function openAttachmentPreview(attachment: Attachment) {
+   }
+ }
+ 
+-.dark .context-bar {
+-  background: rgba(var(--text-muted-rgb), 0.2);
+-}
+-
+-.dark .context-bar-fill {
+-  background: linear-gradient(
+-    90deg,
+-    rgba(var(--text-muted-rgb), 0.5),
+-    rgba(var(--text-muted-rgb), 0.9)
+-  );
+-
+-  &.context-bar-warn {
+-    background: linear-gradient(90deg, #d99d35, #f0bc58);
+-  }
+-
+-  &.context-bar-danger {
+-    background: linear-gradient(90deg, #d95445, #ff7a68);
+-  }
+-}
+-
+ @media (max-width: 768px) {
+   .chat-input-area {
+     --voice-overlay-mobile-bottom-offset: 146px;
+@@ -2078,11 +2020,6 @@ function openAttachmentPreview(attachment: Attachment) {
+     font-size: 10px;
+     line-height: 14px;
+   }
+-
+-  .context-bar {
+-    width: 42px;
+-    flex-shrink: 0;
+-  }
+ }
+ 
+ .attachment-previews {

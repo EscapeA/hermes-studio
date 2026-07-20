@@ -1,0 +1,80 @@
+From 4f11307b1e630cb90693187be4f230e7e3fcb55e Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Fri, 2 Oct 2026 12:40:05 +0800
+Subject: [PATCH] feat(mobile-nav): frosted drawer surface
+
+The drawer was flat white, and naive-ui's drawer root painted an opaque modal colour
+on top of it. It now uses the app's glass recipe - --glass-sidebar-bg plus
+blur(12px) saturate(110%) on the container only, with the rail and the page column
+transparent so the backdrop is tinted once - plus a lighter 0.18 scrim that keeps the
+content behind readable through the glass.
+naive-ui renders the drawer root and its mask as siblings outside this component's
+subtree, so that part lives in an unscoped block scoped back to this drawer with
+:has(). Other NDrawers keep naive's defaults.
+---
+ .../layout/MobileNavigationDrawer.vue         | 36 ++++++++++++++++++-
+ 1 file changed, 35 insertions(+), 1 deletion(-)
+
+diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
+index ca43273da..a6d4752e9 100644
+--- a/packages/client/src/components/layout/MobileNavigationDrawer.vue
++++ b/packages/client/src/components/layout/MobileNavigationDrawer.vue
+@@ -73,12 +73,20 @@ const drawerWidth = computed(() =>
+   display: flex;
+   height: 100%;
+   min-height: 0;
+-  background: $bg-sidebar-surface;
++  // Frosted drawer surface. This container is the only glass layer: the rail and
++  // the page column inside are transparent (below), because two translucent
++  // columns would double-tint the backdrop. Same recipe as the app's other glass
++  // sidebars so the strength follows the theme (`--glass-sidebar-bg`).
++  background-color: var(--glass-sidebar-bg);
++  -webkit-backdrop-filter: blur(12px) saturate(110%);
++  backdrop-filter: blur(12px) saturate(110%);
+   border-top-right-radius: 5px;
+   border-bottom-right-radius: 5px;
+   overflow: hidden;
+ 
+   :deep(.studio-navigation-rail) {
++    // Drop the rail's own opaque column so the container's glass shows through.
++    background-color: transparent;
+     padding-top: var(--drawer-top-inset);
+     padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+   }
+@@ -118,6 +126,9 @@ const drawerWidth = computed(() =>
+     border: 0;
+     border-radius: 0;
+     box-shadow: none;
++    // Transparent so the drawer's frosted surface (on the container) is the one
++    // visible layer instead of an opaque panel sitting on it.
++    background-color: transparent;
+     transform: none;
+     transition: none;
+     opacity: 1;
+@@ -134,3 +145,26 @@ const drawerWidth = computed(() =>
+   :deep(.coding-agent-config-collapse) { display: none; }
+ }
+ </style>
++
++<!-- Unscoped on purpose: naive-ui renders the drawer root and its mask as siblings
++     outside this component's DOM subtree (the mask is not a descendant of the
++     root), so a scoped selector cannot reach either. `:has()` keeps the override
++     tied to THIS drawer — the app's other NDrawers (new chat, voice, kanban) keep
++     naive's defaults. -->
++<style lang="scss">
++.n-drawer-container:has(.studio-mobile-drawer) {
++  // naive's drawer paints the modal colour opaque; left in place it covers the
++  // frosted surface inside it.
++  .studio-mobile-drawer {
++    --n-color: transparent;
++    background-color: transparent;
++  }
++
++  // Lighter scrim than naive's 0.3: a heavy mask under a translucent panel reads
++  // as dirty grey, and the strip right of the drawer is the close target, so what
++  // shows through it stays legible.
++  > .n-drawer-mask {
++    background-color: rgba(0, 0, 0, 0.18);
++  }
++}
++</style>

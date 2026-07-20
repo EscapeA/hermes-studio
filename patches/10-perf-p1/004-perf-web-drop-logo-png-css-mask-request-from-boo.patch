@@ -1,0 +1,31 @@
+From 69522f92eae66e24404276585d66947d4e1d4c8d Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 08:34:42 +0800
+Subject: [PATCH] perf(web): drop logo.png CSS-mask request from boot shimmer
+
+The boot-fallback logo rendered the same /logo.png twice on cold load: an
+<img> plus the ::after shimmer whose CSS mask re-fetched the URL. Replace
+the mask with a plain rounded-rectangle gradient overlay, leaving exactly
+one logo.png request on first paint.
+---
+ packages/client/index.html | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/packages/client/index.html b/packages/client/index.html
+index 61dd3387a..a7de4119d 100644
+--- a/packages/client/index.html
++++ b/packages/client/index.html
+@@ -65,6 +65,13 @@
+     .boot-fallback__logo-wrap {
+       --studio-loading-size: 72px;
+     }
++
++    /* one /logo.png request on cold load: the ::after mask re-fetches the URL
++       the <img> already loaded, so sweep a plain rounded-rect highlight instead */
++    .boot-fallback__logo-wrap::after {
++      -webkit-mask: none;
++      mask: none;
++    }
+   </style>
+ 
+   <!-- Prevent FOUC by applying theme classes immediately -->

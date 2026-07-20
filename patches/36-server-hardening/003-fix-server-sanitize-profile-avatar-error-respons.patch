@@ -1,0 +1,42 @@
+From ffa03f46691178cbfe2b544491db9a012a5ee3d2 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 7 Oct 2026 00:04:18 +0800
+Subject: [PATCH] fix(server): sanitize profile avatar error responses
+
+updateAvatar and getAvatarImage echoed the raw err.message back to the client,
+which can embed absolute filesystem paths. Return a fixed message instead and
+log the internal detail server-side.
+---
+ .../server/src/modules/hermes/controllers/profiles.ts  | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/packages/server/src/modules/hermes/controllers/profiles.ts b/packages/server/src/modules/hermes/controllers/profiles.ts
+index cc39a39a3..fe8bdeeb1 100644
+--- a/packages/server/src/modules/hermes/controllers/profiles.ts
++++ b/packages/server/src/modules/hermes/controllers/profiles.ts
+@@ -496,8 +496,11 @@ export async function updateAvatar(ctx: any) {
+     ctx.status = 400
+     ctx.body = { error: 'Invalid avatar payload' }
+   } catch (err: any) {
++    // Sanitized response; the raw message (which may contain absolute paths)
++    // stays in the server log.
++    logger.warn(err, '[profiles] failed to update avatar for profile "%s"', name)
+     ctx.status = 400
+-    ctx.body = { error: err.message }
++    ctx.body = { error: 'Avatar update failed' }
+   }
+ }
+ 
+@@ -547,8 +550,11 @@ export async function getAvatarImage(ctx: any) {
+     ctx.set('Cache-Control', 'private, max-age=31536000, immutable')
+     ctx.body = createReadStream(imagePath)
+   } catch (err: any) {
++    // Do not echo internal error details (they can embed absolute paths) to the
++    // client; keep them in the server log only.
++    logger.warn(err, '[profiles] failed to read avatar image for profile "%s"', name)
+     ctx.status = 500
+-    ctx.body = { error: err.message }
++    ctx.body = { error: 'Avatar image unavailable' }
+   }
+ }
+ 

@@ -1,0 +1,21 @@
+From 2237fa7a85cda2fee7981568cc5aa7553bab1f68 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Fri, 3 Jul 2026 23:15:48 +0800
+Subject: [PATCH] ci: add dev/main to build trigger for CF Pages deploy
+
+---
+ .github/workflows/build.yml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
+index c64ca5371..ecfc7a9c4 100644
+--- a/.github/workflows/build.yml
++++ b/.github/workflows/build.yml
+@@ -4,6 +4,7 @@ on:
+   push:
+     branches:
+       - main
++      - dev/main
+   pull_request:
+     branches:
+       - main

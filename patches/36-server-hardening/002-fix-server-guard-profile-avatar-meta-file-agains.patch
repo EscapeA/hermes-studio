@@ -1,0 +1,33 @@
+From e77de0687f604d16abeb659fa2572446882a2fe4 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 7 Oct 2026 00:03:45 +0800
+Subject: [PATCH] fix(server): guard profile avatar meta.file against path
+ traversal
+
+getAvatarImage streamed whatever filename meta.file named without validating
+it. The only writer stores 'avatar.bin', but a tampered avatar.json could point
+the read stream outside the profile metadata directory. Reject any value that
+is not a bare filename.
+---
+ .../server/src/modules/hermes/controllers/profiles.ts     | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/packages/server/src/modules/hermes/controllers/profiles.ts b/packages/server/src/modules/hermes/controllers/profiles.ts
+index f1b2c2679..cc39a39a3 100644
+--- a/packages/server/src/modules/hermes/controllers/profiles.ts
++++ b/packages/server/src/modules/hermes/controllers/profiles.ts
+@@ -529,6 +529,14 @@ export async function getAvatarImage(ctx: any) {
+       ctx.body = { error: 'Avatar image not found' }
+       return
+     }
++    // Defense in depth: meta.file is only ever written as 'avatar.bin', but a
++    // tampered metadata file must not be able to point the read stream at an
++    // arbitrary path. Reject anything that is not a bare filename.
++    if (basename(meta.file) !== meta.file || meta.file === '.' || meta.file === '..') {
++      ctx.status = 404
++      ctx.body = { error: 'Avatar image not found' }
++      return
++    }
+     const imagePath = profileAvatarImagePath(name, meta.file)
+     if (!existsSync(imagePath)) {
+       ctx.status = 404
