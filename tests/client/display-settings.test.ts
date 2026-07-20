@@ -10,6 +10,7 @@ const mockSettingsStore = vi.hoisted(() => ({
     compact: false,
     show_reasoning: true,
     show_cost: false,
+    show_session_identity: true,
     inline_diffs: true,
     chat_input_height: 160,
     bell_on_complete: false,
