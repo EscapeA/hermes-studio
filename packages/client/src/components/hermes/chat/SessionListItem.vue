@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import type { Session } from '@/stores/hermes/chat'
 import { useAppStore } from '@/stores/hermes/app'
 import { useProfilesStore } from '@/stores/hermes/profiles'
+import { useSettingsStore } from '@/stores/hermes/settings'
 import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
 import { formatTimestampMs } from '@/shared/session-display'
 import { chatSessionAgentAvatar } from '@/utils/chat-agent-avatar'
@@ -36,6 +37,8 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const appStore = useAppStore()
 const profilesStore = useProfilesStore()
+const settingsStore = useSettingsStore()
+const showSessionIdentity = computed(() => settingsStore.display.show_session_identity !== false)
 const profileName = computed(() => props.session.profile || 'default')
 const profileAvatar = computed(() => profilesStore.profiles.find(profile => profile.name === profileName.value)?.avatar)
 const profileHasModels = computed(() => {
@@ -147,7 +150,7 @@ onUnmounted(() => {
         </span>
         <span class="session-item-time">{{ formatTimestampMs(session.createdAt) }}</span>
       </span>
-      <span class="session-item-agent-row">
+      <span v-if="showSessionIdentity" class="session-item-agent-row">
         <span class="session-item-agent-logo-wrap" :class="{ streaming }">
           <img
             class="session-item-agent-logo"
