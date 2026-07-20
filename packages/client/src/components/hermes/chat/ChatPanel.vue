@@ -3257,14 +3257,17 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
   }
 
   @media (max-width: $breakpoint-mobile) {
+    // Upstream 0.7.26 made the sidebar flush (no card margin/radius); keep its
+    // absolute placement but stay above the global .hamburger-btn (z-index 99).
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
     height: auto;
     margin: 0;
-    z-index: 120;
+    z-index: 1000;
     width: $sidebar-width;
+    padding-top: env(safe-area-inset-top, 0px);
 
     &.collapsed {
       transform: translateX(-100%);
@@ -3275,10 +3278,10 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
 
 @media (max-width: $breakpoint-mobile) {
   .session-backdrop {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
-    z-index: 110;
+    z-index: 999;
     opacity: 0;
     pointer-events: none;
     transition: opacity $transition-fast;
