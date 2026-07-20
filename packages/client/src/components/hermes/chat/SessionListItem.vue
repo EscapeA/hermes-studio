@@ -146,6 +146,12 @@ onUnmounted(() => {
             </svg>
           </span>
           <span v-if="completedUnread" class="session-item-unread-dot" aria-hidden="true" />
+          <span
+            v-if="streaming"
+            class="session-item-live-dot"
+            :title="t('chat.sessionLive')"
+            :aria-label="t('chat.sessionLive')"
+          />
           <span class="session-item-title">
             {{ session.title }}
           </span>
@@ -313,6 +319,40 @@ onUnmounted(() => {
   border-radius: 50%;
   background: var(--accent-primary);
   box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.12);
+}
+
+/* Live/working indicator is independent of the agent/profile identity row.
+   Identity can be hidden via display settings; the live status must remain visible. */
+.session-item-live-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #171717;
+  box-shadow:
+    0 0 0 2px rgba(23, 23, 23, 0.12),
+    0 0 8px rgba(255, 107, 107, 0.35);
+  animation: session-live-pulse 1.5s ease-in-out infinite;
+}
+
+.dark .session-item-live-dot {
+  background: #f5f5f5;
+  box-shadow:
+    0 0 0 2px rgba(245, 245, 245, 0.16),
+    0 0 10px rgba(255, 107, 107, 0.4);
+}
+
+@keyframes session-live-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.82);
+    opacity: 0.72;
+  }
 }
 
 .session-item-time {
