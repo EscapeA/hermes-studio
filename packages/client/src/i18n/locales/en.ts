@@ -850,6 +850,7 @@ export default {
     clarifyDismiss: 'Dismiss',
     newCliChat: 'New CLI',
     deleteSession: 'Delete this session?',
+    sessionLive: 'Session is working',
     sessionDeleted: 'Session deleted',
     toggleBatchMode: 'Batch selection',
     selectAll: 'Select all',
