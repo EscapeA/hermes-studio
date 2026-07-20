@@ -2230,6 +2230,8 @@ export default {
       showReasoningHint: '展示模型思考过程',
       showCost: '显示费用',
       showCostHint: '在回复中显示 token 使用量',
+      showSessionIdentity: '会话列表头像与 Profile',
+      showSessionIdentityHint: '在侧边栏会话列表中显示 Agent 类型头像、Profile 头像与配置名',
       inlineDiffs: '内联差异',
       inlineDiffsHint: '代码变更以内联方式显示',
       bellOnComplete: '完成提示音',
