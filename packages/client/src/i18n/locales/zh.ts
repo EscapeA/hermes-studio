@@ -744,6 +744,7 @@ export default {
     clarifyDismiss: '忽略',
     newCliChat: '新建 CLI',
     deleteSession: '确定删除此会话？',
+    sessionLive: '会话进行中',
     sessionDeleted: '会话已删除',
     toggleBatchMode: '批量选择',
     selectAll: '全选',

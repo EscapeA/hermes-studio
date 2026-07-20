@@ -689,6 +689,7 @@ export default {
     clarifySubmit: 'Répondre',
     clarifyDismiss: 'Ignorer',
     deleteSession: 'Supprimer cette session ?',
+    sessionLive: 'Session en cours',
     toggleBatchMode: 'Sélection par lot',
     selectAll: 'Tout sélectionner',
     confirmBatchDelete: 'Supprimer {count} sessions sélectionnées?',
