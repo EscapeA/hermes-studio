@@ -1177,3 +1177,46 @@ test('workflow title is hidden on mobile', async ({ page }) => {
   await expect(workspaceBadge).toHaveCSS('flex-grow', '1')
   await expect(workspaceBadge).toHaveCSS('max-width', 'none')
 })
+
+test('workflow runs panel opens as a bottom sheet on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await authenticate(page, TEST_ACCESS_KEY, 'research')
+  await mockHermesApi(page, {
+    workflows: [{
+      id: 'wf-mobile-runs', name: 'Mobile runs sheet', profile: 'research', workspace: '/tmp/mobile-workspace',
+      nodes: [], edges: [], viewport: null, created_at: 1, updated_at: 1,
+    }],
+    workflowRuns: [{
+      id: 'run-1',
+      workflow_id: 'wf-mobile-runs',
+      status: 'completed',
+      start_node_ids: [],
+      input: null,
+      error: null,
+      started_at: 1,
+      completed_at: 2,
+      created_at: 1,
+      snapshot_nodes: [],
+      snapshot_edges: [],
+      node_sessions: [],
+      edge_evaluations: [],
+      loop_epochs: [],
+    }],
+  })
+  await page.goto('/#/hermes/workflow')
+  await expect(page.getByTestId('workflow-runs-panel')).toHaveCount(0)
+
+  // Runs toggle is icon-only with aria-label
+  await page.getByRole('button', { name: 'Show run records' }).click()
+  const panel = page.getByTestId('workflow-runs-panel')
+  await expect(panel).toBeVisible()
+  await expect(panel).toHaveClass(/mobile-expanded/)
+  await expect(page.getByTestId('workflow-runs-sheet-handle')).toBeVisible()
+  await expect(page.getByTestId('workflow-runs-backdrop')).toBeVisible()
+
+  // Collapse via backdrop click (expanded -> compact peek)
+  await page.getByTestId('workflow-runs-backdrop').click()
+  await expect(panel).not.toHaveClass(/mobile-expanded/)
+  await expect(page.getByTestId('workflow-runs-backdrop')).toHaveCount(0)
+  await expect(panel).toBeVisible()
+})
