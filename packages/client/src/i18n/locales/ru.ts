@@ -732,6 +732,7 @@ export default {
       createWorkflowFirst: 'Сначала создайте workflow',
       reset: 'Сбросить',
       startExecution: 'Запустить выполнение',
+      backToEdit: 'Вернуться к редактированию',
       executionPending: 'Выполнение workflow пока не подключено',
       executionStarted: 'Выполнение workflow началось',
       executionCompleted: 'Выполнение workflow завершено',

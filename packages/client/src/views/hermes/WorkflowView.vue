@@ -326,6 +326,8 @@ const workflowRuns = ref<WorkflowRunRecord[]>([])
 const workflowRunsLoading = ref(false)
 const rerunningWorkflowNodeId = ref<string | null>(null)
 const showWorkflowRunsPanel = ref(true)
+const workflowRunsPanelExpanded = ref(false)
+const workflowRunsSheetDragStartY = ref<number | null>(null)
 const selectedWorkflowRunId = ref<string | null>(null)
 const workflowRunPage = ref<WorkflowRunPagerPage>('history')
 const workflowEvidenceTab = ref<'actual' | 'other' | 'loops'>('actual')
@@ -833,7 +835,12 @@ onUnmounted(() => {
 function handleMobileChange(event: MediaQueryList | MediaQueryListEvent) {
   isMobile.value = event.matches
   showWorkflowSidebar.value = !event.matches
-  if (event.matches) showWorkflowRunsPanel.value = false
+  if (event.matches) {
+    showWorkflowRunsPanel.value = false
+    workflowRunsPanelExpanded.value = false
+  } else {
+    workflowRunsPanelExpanded.value = false
+  }
 }
 
 function openPageSidebar() {
@@ -1693,6 +1700,10 @@ async function selectWorkflowRun(run: WorkflowRunRecord) {
   nextDeselected.delete(run.id)
   manuallyDeselectedWorkflowRunIds.value = nextDeselected
   selectedWorkflowRunId.value = run.id
+  if (isMobile.value) {
+    showWorkflowRunsPanel.value = true
+    workflowRunsPanelExpanded.value = true
+  }
   await applyWorkflowRunSnapshot(run)
   await changeWorkflowRunPage('details')
 }
@@ -1737,9 +1748,49 @@ function closeWorkflowRunContextMenu() {
 async function toggleWorkflowRunsPanel() {
   const nextVisible = !showWorkflowRunsPanel.value
   showWorkflowRunsPanel.value = nextVisible
-  if (!nextVisible && selectedWorkflowRunId.value) {
-    await clearSelectedWorkflowRun()
+  if (nextVisible) {
+    // Mobile: open expanded so the list is usable; user can swipe down to peek/close.
+    workflowRunsPanelExpanded.value = isMobile.value
+  } else {
+    workflowRunsPanelExpanded.value = false
+    if (selectedWorkflowRunId.value) {
+      await clearSelectedWorkflowRun()
+    }
   }
+}
+
+function collapseWorkflowRunsPanelExpanded() {
+  workflowRunsPanelExpanded.value = false
+}
+
+function handleWorkflowRunsSheetPointerDown(event: PointerEvent) {
+  if (!isMobile.value || !event.isPrimary) return
+  const target = event.currentTarget
+  if (!(target instanceof HTMLElement)) return
+  workflowRunsSheetDragStartY.value = event.clientY
+  target.setPointerCapture?.(event.pointerId)
+}
+
+function handleWorkflowRunsSheetPointerUp(event: PointerEvent) {
+  if (!isMobile.value || workflowRunsSheetDragStartY.value == null) return
+  const delta = event.clientY - workflowRunsSheetDragStartY.value
+  workflowRunsSheetDragStartY.value = null
+  if (Math.abs(delta) < 40) {
+    workflowRunsPanelExpanded.value = !workflowRunsPanelExpanded.value
+    return
+  }
+  if (delta < -40) {
+    workflowRunsPanelExpanded.value = true
+    return
+  }
+  if (delta > 40) {
+    if (workflowRunsPanelExpanded.value) workflowRunsPanelExpanded.value = false
+    else void toggleWorkflowRunsPanel()
+  }
+}
+
+function handleWorkflowRunsSheetPointerCancel() {
+  workflowRunsSheetDragStartY.value = null
 }
 
 async function handleWorkflowRunContextMenuSelect(key: string | number) {
@@ -1795,6 +1846,7 @@ function handleWorkflowRuntimeStatus(status: WorkflowRuntimeStatus) {
       !manuallyDeselectedWorkflowRunIds.value.has(status.runId)
     if (shouldAutoSelect) {
       showWorkflowRunsPanel.value = true
+      if (isMobile.value) workflowRunsPanelExpanded.value = true
       const wasSelected = selectedWorkflowRunId.value === status.runId
       selectedWorkflowRunId.value = status.runId
       void loadWorkflowRuns(status.workflowId, status.runId, {
@@ -2270,6 +2322,7 @@ async function executeWorkflowWithBudget(timeoutMs: number | undefined): Promise
   const saved = await saveActiveWorkflow({ quiet: true })
   if (!saved) return false
   showWorkflowRunsPanel.value = true
+  if (isMobile.value) workflowRunsPanelExpanded.value = true
   manuallyDeselectedWorkflowRunIds.value = new Set()
   autoSelectRunningWorkflowIds.value = new Set([...autoSelectRunningWorkflowIds.value, workflowId])
   executingWorkflow.value = true
@@ -2303,6 +2356,7 @@ async function rerunWorkflowFromNode(nodeId: string, preserveStartNode: boolean,
   if (!workflowId || !run || rerunningWorkflowNodeId.value) return false
   rerunningWorkflowNodeId.value = nodeId
   showWorkflowRunsPanel.value = true
+  if (isMobile.value) workflowRunsPanelExpanded.value = true
   autoSelectRunningWorkflowIds.value = new Set([...autoSelectRunningWorkflowIds.value, workflowId])
   closeWorkflowChatPanel()
   try {
@@ -2935,6 +2989,25 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
           </div>
         </div>
         <div class="header-actions">
+          <NTooltip v-if="isMobile && selectedWorkflowRunId" trigger="hover">
+            <template #trigger>
+              <NButton
+                quaternary
+                size="small"
+                circle
+                data-testid="workflow-back-to-edit"
+                :aria-label="t('workflow.actions.backToEdit')"
+                @click="clearSelectedWorkflowRun"
+              >
+                <template #icon>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                </template>
+              </NButton>
+            </template>
+            {{ t('workflow.actions.backToEdit') }}
+          </NTooltip>
           <NTooltip trigger="hover">
             <template #trigger>
               <NButton
@@ -3240,14 +3313,32 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
           @clickoutside="handleContextMenuClickOutside"
         />
       </section>
+      <div
+        v-if="isMobile && showWorkflowRunsPanel && workflowRunsPanelExpanded"
+        class="workflow-runs-backdrop"
+        data-testid="workflow-runs-backdrop"
+        @click="collapseWorkflowRunsPanelExpanded"
+      />
       <aside
         ref="workflowRunsPanelRef"
         v-if="showWorkflowRunsPanel"
         class="workflow-runs-panel"
+        :class="{ 'mobile-expanded': isMobile && workflowRunsPanelExpanded }"
+        data-testid="workflow-runs-panel"
         @pointerdown="startWorkflowRunPageSwipe"
         @pointerup="finishWorkflowRunPageSwipe"
         @pointercancel="cancelWorkflowRunPageSwipe"
       >
+        <div
+          v-if="isMobile"
+          class="workflow-runs-sheet-handle"
+          data-testid="workflow-runs-sheet-handle"
+          @pointerdown="handleWorkflowRunsSheetPointerDown"
+          @pointerup="handleWorkflowRunsSheetPointerUp"
+          @pointercancel="handleWorkflowRunsSheetPointerCancel"
+        >
+          <span class="workflow-runs-sheet-handle-bar" />
+        </div>
         <span class="workflow-runs-live-region" aria-live="polite" aria-atomic="true">{{ workflowRunPageAnnouncement }}</span>
         <div
           class="workflow-runs-pages"
@@ -3323,7 +3414,8 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
             </div>
             <div ref="workflowRunDetailsScrollRef" class="workflow-runs-page-scroll">
         <section
-          v-if="selectedWorkflowRun"
+          v-if="selectedWorkflowRun && (!isMobile || workflowRunsPanelExpanded)"
+          ref="workflowEvidenceRef"
           class="workflow-evidence"
           :aria-label="t('workflow.evidence.ariaLabel')"
         >
@@ -4266,6 +4358,14 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
   .workflow-runs-pages { transition-duration: 0.01ms; }
 }
 
+.workflow-runs-backdrop {
+  display: none;
+}
+
+.workflow-runs-sheet-handle {
+  display: none;
+}
+
 .workflow-chat-panel {
   position: relative;
   flex: 0 0 auto;
@@ -4749,23 +4849,61 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
 
   .workflow-body {
     min-height: 420px;
+    position: relative;
+  }
+
+  .workflow-runs-backdrop {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+    background: rgba(0, 0, 0, 0.28);
+  }
+
+  .workflow-runs-sheet-handle {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    height: 22px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .workflow-runs-sheet-handle-bar {
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: $text-muted;
+    opacity: 0.55;
   }
 
   .workflow-runs-panel {
     position: absolute;
-    top: 0;
-    inset-inline-end: 0;
+    left: 0;
+    right: 0;
+    top: auto;
     bottom: 0;
     z-index: 70;
-    width: min(340px, 88vw);
+    width: 100%;
     flex: none;
     min-height: 0;
-    border-inline-start: 1px solid $border-color;
-    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.16);
+    max-height: calc(110px + env(safe-area-inset-bottom, 0px));
+    border-left: none;
+    border-top: 1px solid $border-color;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.18);
     display: flex;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    // no max-height transition — swipe lag on mobile
 
-    &:dir(rtl) {
-      box-shadow: 8px 0 24px rgba(0, 0, 0, 0.16);
+    &.mobile-expanded {
+      max-height: min(65vh, calc(100% - 48px));
+    }
+
+    .workflow-evidence-resize-handle {
+      display: none;
     }
   }
 
@@ -4784,6 +4922,14 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
 
   .workflow-chat-resize-handle {
     display: none;
+  }
+
+  :deep(.vue-flow__controls) {
+    margin-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+  }
+
+  :deep(.vue-flow__minimap) {
+    margin-bottom: max(8px, env(safe-area-inset-bottom, 0px));
   }
 }
 </style>
