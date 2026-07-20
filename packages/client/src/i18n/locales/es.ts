@@ -1196,6 +1196,7 @@ export default {
     sessionListActions: 'Acciones de la lista de sesiones',
     filterByProfile: 'Filtrar por perfil',
     selectedSessions: '{count} seleccionadas',
+    sessionLive: 'Sesion en curso',
     toggleBatchMode: 'Selección por lotes',
     selectAll: 'Seleccionar todo',
     confirmBatchDelete: '¿Eliminar {count} sesiones seleccionadas?',
