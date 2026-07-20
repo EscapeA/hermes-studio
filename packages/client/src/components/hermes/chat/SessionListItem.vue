@@ -210,7 +210,7 @@ onUnmounted(() => {
 .session-item {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   width: 100%;
   padding: 8px 10px;
@@ -274,7 +274,7 @@ onUnmounted(() => {
 
 .session-item-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
@@ -282,7 +282,7 @@ onUnmounted(() => {
 
 .session-item-title-main {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   flex: 1 1 auto;
   min-width: 0;
@@ -293,9 +293,10 @@ onUnmounted(() => {
   flex: 1 1 auto;
   min-width: 0;
   font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .session-item-pin {
@@ -303,6 +304,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  margin-top: 2px;
   color: var(--accent-primary);
 }
 
@@ -310,6 +312,7 @@ onUnmounted(() => {
   flex: 0 0 auto;
   width: 6px;
   height: 6px;
+  margin-top: 5px;
   border-radius: 50%;
   background: var(--accent-primary);
   box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.12);
@@ -317,8 +320,11 @@ onUnmounted(() => {
 
 .session-item-time {
   flex: 0 0 auto;
+  margin-top: 1px;
   font-size: 11px;
+  line-height: 1.35;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .session-item-global-icon {
@@ -333,6 +339,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   opacity: 0;
   pointer-events: none;
+  margin-top: 1px;
   padding: 2px;
   border: none;
   background: none;
