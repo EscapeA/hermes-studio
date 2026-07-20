@@ -713,6 +713,7 @@ export default {
     approvalDeny: 'Отказать',
     newCliChat: 'Новый CLI',
     deleteSession: 'Удалить этот сеанс?',
+    sessionLive: 'Сессия выполняется',
     sessionDeleted: 'Сеанс удалён',
     toggleBatchMode: 'Пакетный выбор',
     selectAll: 'Выбрать всё',

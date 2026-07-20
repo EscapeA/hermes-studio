@@ -353,4 +353,44 @@ describe('SessionListItem', () => {
     expect(wrapper.get('.session-item-agent-logo').attributes('src')).toBe('/coding-agents/hermes.png')
     expect(wrapper.find('.session-item-profile').exists()).toBe(true)
   })
+  it('shows an independent live-status indicator when streaming', () => {
+    settingsDisplay.show_session_identity = false
+    const wrapper = mount(SessionListItem, {
+      props: {
+        session: { ...session, source: 'cli', agent: 'hermes' },
+        active: false,
+        pinned: false,
+        canDelete: true,
+        streaming: true,
+      },
+      global: {
+        stubs: {
+          ProfileAvatar: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('.session-item-agent-row').exists()).toBe(false)
+    expect(wrapper.find('.session-item-live-dot').exists()).toBe(true)
+  })
+
+  it('does not show the live-status indicator when not streaming', () => {
+    const wrapper = mount(SessionListItem, {
+      props: {
+        session: { ...session, source: 'cli', agent: 'hermes' },
+        active: false,
+        pinned: false,
+        canDelete: true,
+        streaming: false,
+      },
+      global: {
+        stubs: {
+          ProfileAvatar: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('.session-item-live-dot').exists()).toBe(false)
+  })
+
 })
