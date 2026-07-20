@@ -984,6 +984,7 @@ export default {
     interactionCountdown: '残り {time}',
     interactionCountdownElapsed: '00:00 · サーバー確認待ち',
     deleteSession: 'このセッションを削除しますか？',
+    sessionLive: 'セッション実行中',
     toggleBatchMode: '一括選択',
     selectAll: 'すべて選択',
     confirmBatchDelete: '{count}件のセッションを削除しますか？',

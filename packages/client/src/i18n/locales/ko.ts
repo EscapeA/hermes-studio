@@ -984,6 +984,7 @@ export default {
     interactionCountdown: '{time} 남음',
     interactionCountdownElapsed: '00:00 · 서버 확인 대기 중',
     deleteSession: '이 세션을 삭제하시겠습니까?',
+    sessionLive: '세션 작업 중',
     toggleBatchMode: '일괄 선택',
     selectAll: '모두 선택',
     confirmBatchDelete: '선택한 {count}개의 세션을 삭제하시겠습니까?',
