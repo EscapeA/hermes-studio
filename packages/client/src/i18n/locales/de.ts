@@ -1167,6 +1167,7 @@ export default {
     sessionListActions: 'Aktionen für die Sitzungsliste',
     filterByProfile: 'Nach Profil filtern',
     selectedSessions: '{count} ausgewählt',
+    sessionLive: 'Sitzung arbeitet',
     toggleBatchMode: 'Batch-Auswahl',
     selectAll: 'Alle auswählen',
     confirmBatchDelete: '{count} ausgewählte Sitzungen löschen?',

@@ -1167,6 +1167,7 @@ export default {
     sessionListActions: '세션 목록 작업',
     filterByProfile: '프로필로 필터링',
     selectedSessions: '{count}개 선택됨',
+    sessionLive: '세션 작업 중',
     toggleBatchMode: '일괄 선택',
     selectAll: '모두 선택',
     confirmBatchDelete: '선택한 {count}개의 세션을 삭제하시겠습니까?',
