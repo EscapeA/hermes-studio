@@ -1246,6 +1246,7 @@ export default {
     sessionListActions: 'セッション一覧の操作',
     filterByProfile: 'プロファイルで絞り込み',
     selectedSessions: '{count} 件選択中',
+    sessionLive: 'セッション実行中',
     toggleBatchMode: '一括選択',
     selectAll: 'すべて選択',
     confirmBatchDelete: '{count}件のセッションを削除しますか？',
