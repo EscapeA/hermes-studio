@@ -961,6 +961,7 @@ export default {
     interactionCountdown: '{time} verbleibend',
     interactionCountdownElapsed: '00:00 · Serverbestätigung ausstehend',
     deleteSession: 'Diese Sitzung loschen?',
+    sessionLive: 'Sitzung arbeitet',
     toggleBatchMode: 'Batch-Auswahl',
     selectAll: 'Alle auswählen',
     confirmBatchDelete: '{count} ausgewählte Sitzungen löschen?',
