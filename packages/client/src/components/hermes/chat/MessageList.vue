@@ -926,7 +926,10 @@ defineExpose({
           </div>
           <div class="approval-float-title">{{ t("chat.clarifyTitle") }}</div>
           <div class="approval-float-desc">{{ visibleClarify.question }}</div>
-          <div v-if="visibleClarify.choices && visibleClarify.choices.length" class="approval-float-actions">
+          <div
+            v-if="visibleClarify.choices && visibleClarify.choices.length"
+            class="approval-float-actions clarify-float-actions"
+          >
             <NButton
               v-for="choice in visibleClarify.choices"
               :key="choice"
@@ -1147,6 +1150,24 @@ defineExpose({
   border-top: 1px solid $border-color;
 }
 
+/* Clarify choices can be long descriptions — allow multi-line labels. */
+.clarify-float-actions {
+  :deep(.n-button) {
+    height: auto;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.35;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  :deep(.n-button .n-button__content) {
+    white-space: normal;
+    line-height: 1.35;
+    text-align: left;
+  }
+}
+
 .clarify-float-input-row {
   display: flex;
   gap: 8px;
@@ -1346,6 +1367,16 @@ defineExpose({
 
     :deep(.n-button) {
       width: 100%;
+    }
+  }
+
+  /* Long clarify options need full width; keep approval 2-col short labels. */
+  .approval-float-actions.clarify-float-actions {
+    grid-template-columns: minmax(0, 1fr);
+
+    :deep(.n-button) {
+      width: 100%;
+      justify-content: flex-start;
     }
   }
 
