@@ -12,6 +12,7 @@ export interface DisplayConfig {
   streaming?: boolean
   inline_diffs?: boolean
   show_cost?: boolean
+  show_session_identity?: boolean
   skin?: string
 }
 
