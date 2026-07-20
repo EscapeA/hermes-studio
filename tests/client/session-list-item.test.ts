@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import SessionListItem from '@/components/hermes/chat/SessionListItem.vue'
+
+const settingsDisplay = vi.hoisted(() => ({
+  show_session_identity: true as boolean | undefined,
+}))
 
 vi.mock('@/stores/hermes/app', () => ({
   useAppStore: () => ({
@@ -12,6 +16,12 @@ vi.mock('@/stores/hermes/app', () => ({
 
 vi.mock('@/stores/hermes/profiles', () => ({
   useProfilesStore: () => ({ profiles: [] }),
+}))
+
+vi.mock('@/stores/hermes/settings', () => ({
+  useSettingsStore: () => ({
+    display: settingsDisplay,
+  }),
 }))
 
 vi.mock('vue-i18n', () => ({
@@ -50,6 +60,10 @@ const session = {
 }
 
 describe('SessionListItem', () => {
+  beforeEach(() => {
+    settingsDisplay.show_session_identity = true
+  })
+
   it('renders normal mode as a link to the session route', () => {
     const wrapper = mount(SessionListItem, {
       props: {
@@ -217,5 +231,48 @@ describe('SessionListItem', () => {
     expect(logo.attributes('src')).toBe('/coding-agents/codex-openai.png')
     expect(logo.attributes('alt')).toBe('Codex')
     expect(wrapper.find('.session-item-agent-name').exists()).toBe(false)
+  })
+
+  it('hides the agent/profile identity row when show_session_identity is false', () => {
+    settingsDisplay.show_session_identity = false
+    const wrapper = mount(SessionListItem, {
+      props: {
+        session: { ...session, source: 'cli', agent: 'hermes' },
+        active: false,
+        pinned: false,
+        canDelete: true,
+      },
+      global: {
+        stubs: {
+          ProfileAvatar: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('.session-item-agent-row').exists()).toBe(false)
+    expect(wrapper.find('.session-item-agent-logo').exists()).toBe(false)
+    expect(wrapper.find('.session-item-profile').exists()).toBe(false)
+  })
+
+  it('shows the agent/profile identity row by default', () => {
+    settingsDisplay.show_session_identity = undefined
+    const wrapper = mount(SessionListItem, {
+      props: {
+        session: { ...session, source: 'cli', agent: 'hermes' },
+        active: false,
+        pinned: false,
+        canDelete: true,
+        showProfile: true,
+      },
+      global: {
+        stubs: {
+          ProfileAvatar: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('.session-item-agent-row').exists()).toBe(true)
+    expect(wrapper.get('.session-item-agent-logo').attributes('src')).toBe('/coding-agents/hermes.png')
+    expect(wrapper.find('.session-item-profile').exists()).toBe(true)
   })
 })
