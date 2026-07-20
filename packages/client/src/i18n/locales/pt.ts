@@ -651,6 +651,7 @@ export default {
     clarifySubmit: 'Responder',
     clarifyDismiss: 'Descartar',
     deleteSession: 'Excluir esta sessao?',
+    sessionLive: 'Sessao em execucao',
     toggleBatchMode: 'Seleção em lote',
     selectAll: 'Selecionar tudo',
     confirmBatchDelete: 'Excluir {count} sessões selecionadas?',
