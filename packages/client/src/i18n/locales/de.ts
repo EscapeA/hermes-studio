@@ -680,6 +680,7 @@ export default {
     clarifySubmit: 'Antworten',
     clarifyDismiss: 'Schließen',
     deleteSession: 'Diese Sitzung loschen?',
+    sessionLive: 'Sitzung arbeitet',
     toggleBatchMode: 'Batch-Auswahl',
     selectAll: 'Alle auswählen',
     confirmBatchDelete: '{count} ausgewählte Sitzungen löschen?',
