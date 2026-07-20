@@ -987,6 +987,7 @@ export default {
     interactionCountdown: '{time} restante',
     interactionCountdownElapsed: '00:00 · Confirmation du serveur en attente',
     deleteSession: 'Supprimer cette session ?',
+    sessionLive: 'Session en cours',
     toggleBatchMode: 'Sélection par lot',
     selectAll: 'Tout sélectionner',
     confirmBatchDelete: 'Supprimer {count} sessions sélectionnées?',

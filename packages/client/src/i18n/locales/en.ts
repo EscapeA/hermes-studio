@@ -1066,6 +1066,7 @@ export default {
     interactionCountdownElapsed: '00:00 · Awaiting server confirmation',
     newCliChat: 'New CLI',
     deleteSession: 'Delete this session?',
+    sessionLive: 'Session is working',
     sessionDeleted: 'Session deleted',
     toggleBatchMode: 'Batch selection',
     selectAll: 'Select all',

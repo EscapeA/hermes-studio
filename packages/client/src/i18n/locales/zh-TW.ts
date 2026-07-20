@@ -1056,6 +1056,7 @@ export default {
     interactionCountdown: '剩餘 {time}',
     interactionCountdownElapsed: '00:00 · 等待伺服器確認',
     deleteSession: '確定刪除此工作階段？',
+    sessionLive: '會話進行中',
     sessionDeleted: '工作階段已刪除',
     toggleBatchMode: '批次選取',
     selectAll: '全選',
