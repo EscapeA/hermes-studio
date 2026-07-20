@@ -756,6 +756,7 @@ export default {
     clarifySubmit: 'Responder',
     clarifyDismiss: 'Descartar',
     deleteSession: 'Eliminar esta sesion?',
+    sessionLive: 'Sesion en curso',
     toggleBatchMode: 'Selección por lotes',
     selectAll: 'Seleccionar todo',
     confirmBatchDelete: '¿Eliminar {count} sesiones seleccionadas?',

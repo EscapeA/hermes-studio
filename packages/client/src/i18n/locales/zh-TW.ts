@@ -808,6 +808,7 @@ export default {
     clarifySubmit: '回覆',
     clarifyDismiss: '忽略',
     deleteSession: '確定刪除此工作階段？',
+    sessionLive: '會話進行中',
     sessionDeleted: '工作階段已刪除',
     toggleBatchMode: '批次選取',
     selectAll: '全選',
