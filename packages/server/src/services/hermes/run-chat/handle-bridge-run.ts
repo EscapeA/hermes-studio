@@ -12,10 +12,14 @@ import { AgentBridgeClient, type AgentBridgeContextEstimate, type AgentBridgeMes
 import { contentBlocksToString, convertContentBlocksForAgent, extractTextForPreview, isContentBlockArray } from './content-blocks'
 import { buildCompressedHistory, buildDbSnapshotAwareHistory, forceCompressBridgeHistory, pushState, replaceState } from './compression'
 import {
+  applyApiPromptContextTokens,
   calcAndUpdateUsage,
+  clearApiPromptContextTokens,
   contextTokensWithCachedOverhead,
   estimateUsageTokensFromMessages,
   getCachedBridgeContextOverhead,
+  hasApiPromptContextTokens,
+  resolveApiPromptTokens,
   updateMessageContextTokenUsage,
 } from './usage'
 import {
@@ -870,10 +874,19 @@ export async function resumeBridgeRun(
       if (!event || typeof event !== 'object' || Array.isArray(event)) continue
       const bridgeEvent = event as Record<string, unknown>
       if (bridgeEvent.event === 'model.usage') {
-        recordBridgeModelUsage(sessionId, runId, bridgeEvent, profile, {
-          model: args.model,
-          provider: args.provider,
-        })
+        try {
+          recordBridgeModelUsage(sessionId, runId, bridgeEvent, profile, {
+            model: args.model,
+            provider: args.provider,
+          }, { state, emit })
+        } catch (usageErr) {
+          // Never block resume cursor advancement on usage accounting failures.
+          bridgeLogger.warn({
+            err: usageErr instanceof Error ? { message: usageErr.message, name: usageErr.name } : usageErr,
+            sessionId,
+            runId,
+          }, '[chat-run-socket] failed to apply model.usage during bridge resume snapshot')
+        }
       }
     }
     const output = typeof snapshot.output === 'string' ? snapshot.output : deltas.join('')
@@ -998,6 +1011,17 @@ async function refreshFinalContextUsage(args: {
       { excludeLastUser: false },
       { model: args.model, provider: args.provider },
     )
+    if (hasApiPromptContextTokens(args.state)) {
+      bridgeLogger.info({
+        sessionId: args.sessionId,
+        profile: args.profile,
+        model: args.model,
+        provider: args.provider,
+        apiPromptTokens: args.state.apiPromptTokens,
+        contextTokens: args.state.contextTokens,
+      }, '[chat-run-socket] keeping API prompt_tokens for context usage')
+      return args.state.contextTokens
+    }
     const finalMessageUsage = estimateUsageTokensFromMessages(finalHistory)
     const finalMessageTokens = finalMessageUsage.inputTokens + finalMessageUsage.outputTokens
     await ensureBridgeFixedContext({
@@ -1068,7 +1092,11 @@ function recordBridgeModelUsage(
   event: Record<string, unknown>,
   profile: string,
   modelContext: { model?: string | null; provider?: string | null },
-): void {
+  live?: {
+    state: SessionState
+    emit: (event: string, payload: any) => void
+  },
+): number | undefined {
   const usage = normalizeTokenUsage(event.usage)
   if (usage.isEstimated) {
     bridgeLogger.warn({
@@ -1076,7 +1104,7 @@ function recordBridgeModelUsage(
       bridgeRunId,
       apiRequestId: event.api_request_id,
     }, '[chat-run-socket] ignoring incomplete Hermes model usage event')
-    return
+    return live?.state.contextTokens
   }
 
   const apiRequestId = stringValue(event.api_request_id)
@@ -1088,7 +1116,7 @@ function recordBridgeModelUsage(
   const requestKey = apiRequestId || fallbackId
   if (!requestKey) {
     bridgeLogger.warn({ sessionId, bridgeRunId }, '[chat-run-socket] ignoring Hermes model usage event without request identity')
-    return
+    return live?.state.contextTokens
   }
 
   recordSessionUsage({
@@ -1104,6 +1132,23 @@ function recordBridgeModelUsage(
     profile,
     isEstimated: false,
   })
+
+  // Context-window UI: use full prompt occupancy (log "in=" / prompt_tokens).
+  // Hermes CanonicalUsage.input_tokens is uncached-only; prompt_tokens = input+cache_read+cache_write.
+  if (live) {
+    const promptTokens = resolveApiPromptTokens(event.usage, usage)
+    return applyApiPromptContextTokens(
+      sessionId,
+      live.state,
+      live.emit,
+      promptTokens,
+      {
+        inputTokens: live.state.inputTokens ?? 0,
+        outputTokens: live.state.outputTokens ?? 0,
+      },
+    )
+  }
+  return undefined
 }
 
 async function applyBridgeChunkAsync(
@@ -1166,7 +1211,7 @@ async function applyBridgeChunkAsync(
         emit,
       )
     } else if (evType === 'model.usage') {
-      recordBridgeModelUsage(sessionId, chunk.run_id, ev, profile, modelContext)
+      recordBridgeModelUsage(sessionId, chunk.run_id, ev, profile, modelContext, { state, emit })
     } else if (evType === 'session.title.updated') {
       syncBridgeGeneratedTitle(sessionId, (ev as any).title, emit)
     } else if (evType === 'bridge.context.ready') {
@@ -1474,6 +1519,8 @@ async function applyBridgeChunkAsync(
       emit('compression.completed', payload)
       const usage = await calcAndUpdateUsage(sessionId, state, emit)
       if (messageAfterTokensWithInput != null) {
+        // History shrank; drop last API prompt so local estimate can fill until the next real usage.
+        clearApiPromptContextTokens(state)
         updateMessageContextTokenUsage(sessionId, state, emit, messageAfterTokensWithInput, usage)
       }
     } else if (evType === 'bridge.compression.failed') {

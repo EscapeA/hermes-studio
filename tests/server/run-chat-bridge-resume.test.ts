@@ -55,8 +55,48 @@ vi.mock('../../packages/server/src/services/hermes/run-chat/usage', () => ({
   estimateUsageTokensFromMessages: estimateUsageTokensFromMessagesMock,
   getCachedBridgeContextOverhead: vi.fn(() => undefined),
   updateMessageContextTokenUsage: vi.fn((_sid, state, _emit, tokens) => {
+    if (typeof state.apiPromptTokens === 'number' && Number.isFinite(state.apiPromptTokens) && state.apiPromptTokens >= 0) {
+      return state.contextTokens
+    }
     state.contextTokens = tokens
     return tokens
+  }),
+  applyApiPromptContextTokens: vi.fn((_sid, state, emit, promptTokens, usage) => {
+    if (typeof promptTokens !== 'number' || !Number.isFinite(promptTokens) || promptTokens < 0) {
+      return state.contextTokens
+    }
+    const normalized = Math.floor(promptTokens)
+    state.apiPromptTokens = normalized
+    state.contextTokens = normalized
+    emit('usage.updated', {
+      event: 'usage.updated',
+      session_id: _sid,
+      inputTokens: usage?.inputTokens ?? state.inputTokens ?? 0,
+      outputTokens: usage?.outputTokens ?? state.outputTokens ?? 0,
+      contextTokens: normalized,
+    })
+    return normalized
+  }),
+  clearApiPromptContextTokens: vi.fn((state) => {
+    state.apiPromptTokens = undefined
+  }),
+  hasApiPromptContextTokens: vi.fn((state) => (
+    typeof state.apiPromptTokens === 'number'
+    && Number.isFinite(state.apiPromptTokens)
+    && state.apiPromptTokens >= 0
+  )),
+  resolveApiPromptTokens: vi.fn((raw, normalized) => {
+    if (raw && typeof raw === 'object') {
+      if (typeof raw.prompt_tokens === 'number') return raw.prompt_tokens
+      if (typeof raw.promptTokens === 'number') return raw.promptTokens
+      const uncached = Number(raw.input_tokens ?? raw.inputTokens ?? normalized?.inputTokens ?? 0)
+      const cacheRead = Number(raw.cache_read_tokens ?? raw.cacheReadTokens ?? normalized?.cacheReadTokens ?? 0)
+      const cacheWrite = Number(raw.cache_write_tokens ?? raw.cacheWriteTokens ?? normalized?.cacheWriteTokens ?? 0)
+      if (Number.isFinite(uncached) && uncached >= 0) {
+        return Math.floor(uncached + (cacheRead > 0 ? cacheRead : 0) + (cacheWrite > 0 ? cacheWrite : 0))
+      }
+    }
+    return typeof normalized?.inputTokens === 'number' ? normalized.inputTokens : undefined
   }),
 }))
 
