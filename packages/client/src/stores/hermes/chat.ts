@@ -3366,7 +3366,12 @@ export const useChatStore = defineStore('chat', () => {
               if (last?.isStreaming) {
                 updateMessage(sid, last.id, { isStreaming: false })
               }
+              // Align with bridge-message: tool boundary closes the open assistant
+              // segment. Clear both content and reasoning pointers so post-tool
+              // reasoning/content open a new assistant bubble instead of sticking
+              // to the pre-tool message.
               activeAssistantMessageId = null
+              reasoningAssistantMessageId = null
               const existingTool = toolCallId
                 ? msgs.find(m => m.role === 'tool' && m.toolCallId === toolCallId)
                 : null
@@ -4027,7 +4032,12 @@ export const useChatStore = defineStore('chat', () => {
           if (last?.isStreaming) {
             updateMessage(sid, last.id, { isStreaming: false })
           }
+          // Align with bridge-message: tool boundary closes the open assistant
+          // segment. Clear both content and reasoning pointers so post-tool
+          // reasoning/content open a new assistant bubble instead of sticking
+          // to the pre-tool message.
           activeAssistantMessageId = null
+          reasoningAssistantMessageId = null
           const existingTool = toolCallId
             ? msgs.find(m => m.role === 'tool' && m.toolCallId === toolCallId)
             : null

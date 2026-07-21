@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMessage } from 'naive-ui'
 import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
@@ -136,6 +136,29 @@ const thinkingExpanded = computed(() => {
     if (thinkingOverride.value !== null) return thinkingOverride.value
     return false
 })
+
+// --- Thinking streaming scroll containment ---
+// 开关必须与"思考是否仍在流式"解耦：原实现用 thinkingStreamingNow 作开关，正文开始
+// 回流后即置 false；若后续又产生思考内容（工具调用后二次思考 / 交错推理），思考块解除
+// 高度限制，后续内容追加进同一框体形成瀑布流。改为：本条消息仍在流式且含思考内容时
+// 始终保持限制并贴底。
+const thinkingBodyRef = ref<HTMLElement | null>(null)
+
+const thinkingCapped = computed(
+  () => props.message.isStreaming && hasThinking.value,
+)
+
+const scrollThinkingToBottom = () => {
+  if (!thinkingCapped.value || !thinkingBodyRef.value) return
+  nextTick(() => {
+    const el = thinkingBodyRef.value
+    if (el) el.scrollTop = el.scrollHeight
+  })
+}
+
+watch(() => props.message.reasoning?.length, scrollThinkingToBottom)
+watch(() => props.message.content?.length, scrollThinkingToBottom)
+
 const assistantBody = computed(() => parsedThinking.value.body || props.message.content || '')
 const contentBlocks = computed(() => {
     const content = props.message.content || ''
@@ -707,7 +730,7 @@ onBeforeUnmount(() => {
                         </span>
                         <span class="thinking-meta">· {{ t('chat.thinkingChars', { count: thinkingCharCount }) }}</span>
                     </div>
-                    <div v-if="thinkingExpanded" class="thinking-body">
+                    <div v-if="thinkingExpanded" ref="thinkingBodyRef" class="thinking-body" :class="{ streaming: thinkingCapped }">
                         <MarkdownRenderer :content="thinkingFullText" />
                     </div>
                 </div>
@@ -1274,6 +1297,11 @@ onBeforeUnmount(() => {
         font-size: 13px;
         opacity: 0.85;
         font-style: italic;
+
+        &.streaming {
+            max-height: 50vh;
+            overflow-y: auto;
+        }
 
         :deep(p) {
             margin: 0.3em 0;
