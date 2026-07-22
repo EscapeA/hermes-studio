@@ -68,10 +68,20 @@ textarea {
   --vh: 1vh;
 }
 
-// Fix mobile viewport height (address bar)
+// Stable mobile shell height.
+// Prefer svh over dvh: dvh shrinks when the virtual keyboard opens and forces
+// every calc(100 * var(--vh)) shell (App, Drawer, Chat) to reflow — the flash /
+// stacking jump users see while opening filters inside drawers.
+// Address-bar chrome is already mitigated by html/body position:fixed below.
+// Later matching @supports wins, so svh overrides dvh when both exist.
 @supports (height: 100dvh) {
   :root {
     --vh: 1dvh;
+  }
+}
+@supports (height: 100svh) {
+  :root {
+    --vh: 1svh;
   }
 }
 
