@@ -105,6 +105,12 @@ async function testCompletionNotification() {
     <SettingRow :label="t('settings.display.showCost')" :hint="t('settings.display.showCostHint')">
       <NSwitch :value="settingsStore.display.show_cost" @update:value="v => save({ show_cost: v })" />
     </SettingRow>
+    <SettingRow :label="t('settings.display.showSessionIdentity')" :hint="t('settings.display.showSessionIdentityHint')">
+      <NSwitch
+        :value="settingsStore.display.show_session_identity !== false"
+        @update:value="v => save({ show_session_identity: v })"
+      />
+    </SettingRow>
     <SettingRow :label="t('settings.display.inlineDiffs')" :hint="t('settings.display.inlineDiffsHint')">
       <NSwitch :value="settingsStore.display.inline_diffs" @update:value="v => save({ inline_diffs: v })" />
     </SettingRow>
