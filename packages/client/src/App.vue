@@ -8,6 +8,7 @@ import { useTheme } from '@/composables/useTheme'
 import { useKeyboard } from '@/composables/useKeyboard'
 import { useSessionSearch } from '@/composables/useSessionSearch'
 import { usePwa } from '@/composables/usePwa'
+import { installVisualViewportHeight } from '@/composables/useVisualViewportHeight'
 import { useAppStore } from '@/stores/hermes/app'
 import AuthEventListener from '@/components/auth/AuthEventListener.vue'
 import { desktopBridge } from '@/utils/desktop-bridge'
@@ -67,6 +68,7 @@ const showWebPet = computed(() => !isLoginPage.value && !isStandaloneChatPage.va
 const desktopPlatformClass = computed(() => desktopPlatform.value ? `desktop-platform-${desktopPlatform.value}` : '')
 const isDesktopWindowMaximized = ref(false)
 let stopWindowStateListener: (() => void) | undefined
+let stopVisualViewportHeight: (() => void) | undefined
 
 function handleMobileMenuClick() {
   if (usesPageSidebar.value) {
@@ -89,6 +91,8 @@ watch(isLoginPage, (loginPage) => {
 
 onMounted(() => {
   void syncThemeFromServer().catch(() => undefined)
+  stopVisualViewportHeight = installVisualViewportHeight()
+
   const bridge = desktopBridge()
   if (!bridge?.isDesktop || (desktopPlatform.value !== 'win32' && bridge.windowKind !== 'chat')) return
   bridge.getWindowState?.()
@@ -102,6 +106,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  stopVisualViewportHeight?.()
   stopWindowStateListener?.()
   appStore.stopHealthPolling()
 })
@@ -164,7 +169,10 @@ usePwa()
 
 .app-shell {
   position: relative;
-  height: calc(100 * var(--vh));
+  /* Prefer visualViewport-backed --app-height so IME open shrinks the shell
+     and flex composers stay above the keyboard. Fall back to stable svh. */
+  height: var(--app-height, calc(100 * var(--vh)));
+  top: var(--app-top, 0px);
   width: 100%;
   max-width: 100%;
   overflow: hidden;

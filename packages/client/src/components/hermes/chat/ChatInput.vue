@@ -125,8 +125,6 @@ const messageReferencePreview = computed(() =>
   activeMessageReference.value?.content.replace(/\s+/g, ' ').trim() || '',
 )
 const isMobileViewport = ref(typeof window !== 'undefined' ? isMobileChatInputViewport(window.innerWidth) : false)
-/** Keyboard overlay inset under interactive-widget=overlays-content (px). */
-const keyboardInsetBottom = ref(0)
 const manualTextareaResize = ref(false)
 
 // Mobile detection — on mobile, Enter inserts newline instead of sending
@@ -454,42 +452,7 @@ const inputWrapperStyle = computed(() => {
 function syncViewport() {
   if (typeof window === 'undefined') return
   isMobileViewport.value = isMobileChatInputViewport(window.innerWidth)
-  syncKeyboardInset()
 }
-
-/**
- * With interactive-widget=overlays-content the layout viewport no longer
- * shrinks for the IME, so the bottom composer can sit under the keyboard.
- * Lift the input by the covered height from visualViewport.
- */
-function syncKeyboardInset() {
-  if (typeof window === 'undefined') {
-    keyboardInsetBottom.value = 0
-    return
-  }
-  const vv = window.visualViewport
-  if (!vv) {
-    keyboardInsetBottom.value = 0
-    return
-  }
-  // Only apply on narrow chat viewports (same cutoff as mobile input height).
-  if (!isMobileChatInputViewport(window.innerWidth)) {
-    keyboardInsetBottom.value = 0
-    return
-  }
-  const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
-  // Ignore tiny chrome jitter (address bar) under ~48px; IME is usually much taller.
-  keyboardInsetBottom.value = covered >= 48 ? Math.round(covered) : 0
-}
-
-const chatInputAreaStyle = computed(() => {
-  if (!keyboardInsetBottom.value) return undefined
-  return {
-    // Keep the whole composer (toolbar + textarea) above the IME overlay.
-    // Do not also add paddingBottom — that would double-count the lift.
-    transform: `translateY(-${keyboardInsetBottom.value}px)`,
-  }
-})
 
 function resetTextareaHeight() {
   manualTextareaResize.value = false
@@ -626,11 +589,6 @@ onMounted(() => {
   loadDraftForActiveSession()
   syncViewport()
   window.addEventListener('resize', syncViewport)
-  const vv = window.visualViewport
-  if (vv) {
-    vv.addEventListener('resize', syncKeyboardInset)
-    vv.addEventListener('scroll', syncKeyboardInset)
-  }
   nextTick(() => {
     applyConfiguredTextareaHeight()
   })
@@ -1235,11 +1193,6 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('mousedown', onDocumentMousedown)
   window.removeEventListener('resize', syncViewport)
-  const vv = window.visualViewport
-  if (vv) {
-    vv.removeEventListener('resize', syncKeyboardInset)
-    vv.removeEventListener('scroll', syncKeyboardInset)
-  }
 })
 
 function removeAttachment(id: string) {
@@ -1262,7 +1215,7 @@ function isImage(type: string): boolean {
 </script>
 
 <template>
-  <div class="chat-input-area" :style="chatInputAreaStyle">
+  <div class="chat-input-area">
     <!-- Attachment previews -->
     <div v-if="attachments.length > 0" class="attachment-previews">
       <div
@@ -1727,8 +1680,6 @@ function isImage(type: string): boolean {
   border-top: 0;
   background-color: $bg-main-surface;
   flex-shrink: 0;
-  // Avoid jank when visualViewport fires many times while IME opens.
-  will-change: transform;
 }
 
 .input-top-bar {
