@@ -48,6 +48,8 @@ const inputSettingsOptions = computed<DropdownOption[]>(() => [
     },
 ])
 const isMobileViewport = ref(typeof window !== 'undefined' ? isMobileChatInputViewport(window.innerWidth) : false)
+/** Keyboard overlay inset under interactive-widget=overlays-content (px). */
+const keyboardInsetBottom = ref(0)
 const manualTextareaResize = ref(false)
 const configuredTextareaHeight = computed(() =>
     isMobileViewport.value ? null : clampChatInputHeight(settingsStore.display.chat_input_height),
@@ -61,6 +63,11 @@ onMounted(() => {
     }
     syncViewport()
     window.addEventListener('resize', syncViewport)
+    const vv = window.visualViewport
+    if (vv) {
+        vv.addEventListener('resize', syncKeyboardInset)
+        vv.addEventListener('scroll', syncKeyboardInset)
+    }
     nextTick(() => {
         applyConfiguredTextareaHeight()
     })
@@ -115,7 +122,37 @@ const inputWrapperStyle = computed(() => {
 function syncViewport() {
   if (typeof window === 'undefined') return
   isMobileViewport.value = isMobileChatInputViewport(window.innerWidth)
+  syncKeyboardInset()
 }
+
+/**
+ * With interactive-widget=overlays-content the layout viewport no longer
+ * shrinks for the IME, so the bottom composer can sit under the keyboard.
+ */
+function syncKeyboardInset() {
+  if (typeof window === 'undefined') {
+    keyboardInsetBottom.value = 0
+    return
+  }
+  const vv = window.visualViewport
+  if (!vv) {
+    keyboardInsetBottom.value = 0
+    return
+  }
+  if (!isMobileChatInputViewport(window.innerWidth)) {
+    keyboardInsetBottom.value = 0
+    return
+  }
+  const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+  keyboardInsetBottom.value = covered >= 48 ? Math.round(covered) : 0
+}
+
+const chatInputAreaStyle = computed(() => {
+  if (!keyboardInsetBottom.value) return undefined
+  return {
+    transform: `translateY(-${keyboardInsetBottom.value}px)`,
+  }
+})
 
 function resetTextareaHeight() {
     manualTextareaResize.value = false
@@ -369,6 +406,11 @@ onMounted(() => {
 onUnmounted(() => {
     document.removeEventListener('mousedown', onDocumentMousedown)
     window.removeEventListener('resize', syncViewport)
+    const vv = window.visualViewport
+    if (vv) {
+        vv.removeEventListener('resize', syncKeyboardInset)
+        vv.removeEventListener('scroll', syncKeyboardInset)
+    }
 })
 
 function handleCompositionStart() {
@@ -467,7 +509,7 @@ function isImage(type: string): boolean {
 </script>
 
 <template>
-    <div class="chat-input-area">
+    <div class="chat-input-area" :style="chatInputAreaStyle">
         <div v-if="attachments.length > 0" class="attachment-previews">
             <div v-for="att in attachments" :key="att.id" class="attachment-preview" :class="{ image: isImage(att.type) }">
                 <img v-if="isImage(att.type)" :src="att.url" :alt="att.name" class="attachment-thumb" />
@@ -604,10 +646,13 @@ function isImage(type: string): boolean {
 @use "@/styles/variables" as *;
 
 .chat-input-area {
+    position: relative;
+    z-index: 80;
     padding: 8px 20px 14px;
     border-top: 0;
     background-color: $bg-main-surface;
     flex-shrink: 0;
+    will-change: transform;
 }
 
 .input-top-bar {
