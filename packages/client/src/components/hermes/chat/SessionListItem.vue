@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import type { Session } from '@/stores/hermes/chat'
 import { useAppStore } from '@/stores/hermes/app'
 import { useProfilesStore } from '@/stores/hermes/profiles'
+import { useSettingsStore } from '@/stores/hermes/settings'
 import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
 import { formatTimestampMs } from '@/shared/session-display'
 
@@ -35,6 +36,8 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const appStore = useAppStore()
 const profilesStore = useProfilesStore()
+const settingsStore = useSettingsStore()
+const showSessionIdentity = computed(() => settingsStore.display.show_session_identity !== false)
 const profileName = computed(() => props.session.profile || 'default')
 const profileAvatar = computed(() => profilesStore.profiles.find(profile => profile.name === profileName.value)?.avatar)
 const profileHasModels = computed(() => {
@@ -143,6 +146,12 @@ onUnmounted(() => {
             </svg>
           </span>
           <span v-if="completedUnread" class="session-item-unread-dot" aria-hidden="true" />
+          <span
+            v-if="streaming"
+            class="session-item-live-dot"
+            :title="t('chat.sessionLive')"
+            :aria-label="t('chat.sessionLive')"
+          />
           <span class="session-item-title">
             {{ session.title }}
           </span>
@@ -157,7 +166,7 @@ onUnmounted(() => {
         </span>
         <span class="session-item-time">{{ formatTimestampMs(session.createdAt) }}</span>
       </span>
-      <span class="session-item-agent-row">
+      <span v-if="showSessionIdentity" class="session-item-agent-row">
         <span class="session-item-agent-logo-wrap" :class="{ streaming }">
           <img
             class="session-item-agent-logo"
@@ -204,7 +213,7 @@ onUnmounted(() => {
 .session-item {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   width: 100%;
   padding: 8px 10px;
@@ -268,7 +277,7 @@ onUnmounted(() => {
 
 .session-item-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
@@ -276,7 +285,7 @@ onUnmounted(() => {
 
 .session-item-title-main {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   flex: 1 1 auto;
   min-width: 0;
@@ -287,9 +296,10 @@ onUnmounted(() => {
   flex: 1 1 auto;
   min-width: 0;
   font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .session-item-pin {
@@ -297,6 +307,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  margin-top: 2px;
   color: var(--accent-primary);
 }
 
@@ -304,15 +315,53 @@ onUnmounted(() => {
   flex: 0 0 auto;
   width: 6px;
   height: 6px;
+  margin-top: 5px;
   border-radius: 50%;
   background: var(--accent-primary);
   box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.12);
 }
 
+/* Live/working indicator is independent of the agent/profile identity row.
+   Identity can be hidden via display settings; the live status must remain visible. */
+.session-item-live-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #171717;
+  box-shadow:
+    0 0 0 2px rgba(23, 23, 23, 0.12),
+    0 0 8px rgba(255, 107, 107, 0.35);
+  animation: session-live-pulse 1.5s ease-in-out infinite;
+}
+
+.dark .session-item-live-dot {
+  background: #f5f5f5;
+  box-shadow:
+    0 0 0 2px rgba(245, 245, 245, 0.16),
+    0 0 10px rgba(255, 107, 107, 0.4);
+}
+
+@keyframes session-live-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.82);
+    opacity: 0.72;
+  }
+}
+
 .session-item-time {
   flex: 0 0 auto;
+  margin-top: 1px;
   font-size: 11px;
+  line-height: 1.35;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .session-item-global-icon {
@@ -327,6 +376,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   opacity: 0;
   pointer-events: none;
+  margin-top: 1px;
   padding: 2px;
   border: none;
   background: none;
