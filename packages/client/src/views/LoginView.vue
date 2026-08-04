@@ -224,7 +224,7 @@ async function handlePasswordLogin() {
 
 .server-section {
   margin-bottom: 20px;
-  text-align: left;
+  text-align: start;
 }
 
 .server-current {

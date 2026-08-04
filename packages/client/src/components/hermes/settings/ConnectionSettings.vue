@@ -179,7 +179,7 @@ function isActive(url: string): boolean {
 
   .label {
     color: var(--n-text-color-3);
-    margin-right: 4px;
+    margin-inline-end: 4px;
   }
 
   code {

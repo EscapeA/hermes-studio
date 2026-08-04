@@ -4890,7 +4890,7 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
     flex: none;
     min-height: 0;
     max-height: calc(110px + env(safe-area-inset-bottom, 0px));
-    border-left: none;
+    border-inline-start: none;
     border-top: 1px solid $border-color;
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.18);
@@ -4900,10 +4900,6 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
 
     &.mobile-expanded {
       max-height: min(65vh, calc(100% - 48px));
-    }
-
-    .workflow-evidence-resize-handle {
-      display: none;
     }
   }
 

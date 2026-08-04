@@ -86,6 +86,7 @@ vi.mock('@/components/hermes/settings/VoiceSettings.vue', () => ({
 }))
 
 vi.mock('@/components/hermes/settings/AccountSettings.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/components/hermes/settings/ConnectionSettings.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/hermes/settings/AgentSettings.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/hermes/settings/CompressionSettings.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/hermes/settings/DisplaySettings.vue', () => ({ default: { template: '<div />' } }))
