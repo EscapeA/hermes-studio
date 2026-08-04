@@ -2474,7 +2474,7 @@ jobTriggered: 'Job ausgelost',
     canvasAriaLabel: 'Workflow-Arbeitsfläche',
     workspace: { title: 'Arbeitsbereich auswählen', select: 'Arbeitsbereich auswählen', clear: 'Arbeitsbereich entfernen' },
     actions: {
-      newWorkflow: 'Neuer Workflow', addNode: 'Knoten hinzufügen', createWorkflowFirst: 'Bitte zuerst einen Workflow erstellen', reset: 'Zurücksetzen',
+      newWorkflow: 'Neuer Workflow', addNode: 'Knoten hinzufügen', createWorkflowFirst: 'Bitte zuerst einen Workflow erstellen', reset: 'Zurücksetzen', backToEdit: 'Zurück zur Bearbeitung',
       startExecution: 'Ausführung starten', executionPending: 'Die Workflow-Ausführung ist noch nicht verbunden', executionStarted: 'Workflow-Ausführung gestartet', executionCompleted: 'Workflow-Ausführung abgeschlossen', executionFailed: 'Workflow-Ausführung fehlgeschlagen',
       rerunDownstreamKeepNode: 'Diesen Knoten beibehalten und nachgelagerte Knoten ausführen', rerunDownstreamClearNode: 'Diesen Knoten leeren und nachgelagerte Knoten ausführen', rerunDownstreamStarted: 'Erneute Ausführung der nachgelagerten Knoten gestartet', rerunFromNodeStarted: 'Erneute Ausführung ab diesem Knoten gestartet', rerunFailed: 'Erneute Workflow-Ausführung fehlgeschlagen',
       deleteNode: 'Knoten löschen', deleteEdge: 'Verbindung löschen', editEdge: 'Verbindung bearbeiten', undo: 'Rückgängig',
