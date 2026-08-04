@@ -2651,7 +2651,7 @@ export default {
     canvasAriaLabel: 'ワークフローキャンバス',
     workspace: { title: 'ワークスペースを選択', select: 'ワークスペースを選択', clear: 'ワークスペースをクリア' },
     actions: {
-      newWorkflow: '新しいワークフロー', addNode: 'ノードを追加', createWorkflowFirst: '先にワークフローを作成してください', reset: 'リセット',
+      newWorkflow: '新しいワークフロー', addNode: 'ノードを追加', createWorkflowFirst: '先にワークフローを作成してください', reset: 'リセット', backToEdit: '編集に戻る',
       startExecution: '実行を開始', executionPending: 'ワークフロー実行はまだ接続されていません', executionStarted: 'ワークフローの実行を開始しました', executionCompleted: 'ワークフローの実行が完了しました', executionFailed: 'ワークフローの実行に失敗しました',
       rerunDownstreamKeepNode: 'このノードを保持して下流を再実行', rerunDownstreamClearNode: 'このノードをクリアして下流を再実行', rerunDownstreamStarted: '下流の再実行を開始しました', rerunFromNodeStarted: 'このノードから再実行を開始しました', rerunFailed: 'ワークフローの再実行に失敗しました',
       deleteNode: 'ノードを削除', deleteEdge: '接続を削除', editEdge: '接続を編集', undo: '元に戻す',
