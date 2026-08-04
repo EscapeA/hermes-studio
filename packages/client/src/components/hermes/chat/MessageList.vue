@@ -1155,7 +1155,7 @@ defineExpose({
   :deep(.n-button) {
     height: auto;
     white-space: normal;
-    text-align: left;
+    text-align: start;
     line-height: 1.35;
     padding-top: 8px;
     padding-bottom: 8px;
@@ -1164,7 +1164,7 @@ defineExpose({
   :deep(.n-button .n-button__content) {
     white-space: normal;
     line-height: 1.35;
-    text-align: left;
+    text-align: start;
   }
 }
 
