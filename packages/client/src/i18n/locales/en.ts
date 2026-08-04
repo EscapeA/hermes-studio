@@ -870,6 +870,7 @@ export default {
       createWorkflowFirst: 'Please create a workflow first',
       reset: 'Reset',
       startExecution: 'Start Execution',
+      backToEdit: 'Back to edit',
       executionPending: 'Workflow execution is not connected yet',
       executionStarted: 'Workflow execution started',
       executionCompleted: 'Workflow execution completed',
