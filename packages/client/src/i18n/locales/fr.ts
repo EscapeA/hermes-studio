@@ -2344,7 +2344,7 @@ jobTriggered: 'Job declenche',
     canvasAriaLabel: 'Canevas du Workflow',
     workspace: { title: 'Sélectionner un espace de travail', select: 'Sélectionner un espace de travail', clear: 'Effacer l’espace de travail' },
     actions: {
-      newWorkflow: 'Nouveau Workflow', addNode: 'Ajouter un nœud', createWorkflowFirst: 'Créez d’abord un Workflow', reset: 'Réinitialiser',
+      newWorkflow: 'Nouveau Workflow', addNode: 'Ajouter un nœud', createWorkflowFirst: 'Créez d’abord un Workflow', reset: 'Réinitialiser', backToEdit: 'Revenir à la modification',
       startExecution: 'Démarrer l’exécution', executionPending: 'L’exécution du Workflow n’est pas encore connectée', executionStarted: 'Exécution du Workflow démarrée', executionCompleted: 'Exécution du Workflow terminée', executionFailed: 'Échec de l’exécution du Workflow',
       rerunDownstreamKeepNode: 'Conserver ce nœud et exécuter la suite', rerunDownstreamClearNode: 'Effacer ce nœud et exécuter la suite', rerunDownstreamStarted: 'Réexécution de la suite démarrée', rerunFromNodeStarted: 'Réexécution démarrée depuis ce nœud', rerunFailed: 'Échec de la réexécution du Workflow',
       deleteNode: 'Supprimer le nœud', deleteEdge: 'Supprimer la connexion', editEdge: 'Modifier la connexion', undo: 'Annuler',
