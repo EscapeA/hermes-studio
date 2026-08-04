@@ -2476,7 +2476,7 @@ jobTriggered: 'Job acionado',
     canvasAriaLabel: 'Tela do Workflow',
     workspace: { title: 'Selecionar espaço de trabalho', select: 'Selecionar espaço de trabalho', clear: 'Limpar espaço de trabalho' },
     actions: {
-      newWorkflow: 'Novo Workflow', addNode: 'Adicionar nó', createWorkflowFirst: 'Crie um Workflow primeiro', reset: 'Redefinir',
+      newWorkflow: 'Novo Workflow', addNode: 'Adicionar nó', createWorkflowFirst: 'Crie um Workflow primeiro', reset: 'Redefinir', backToEdit: 'Voltar para edição',
       startExecution: 'Iniciar execução', executionPending: 'A execução do Workflow ainda não está conectada', executionStarted: 'Execução do Workflow iniciada', executionCompleted: 'Execução do Workflow concluída', executionFailed: 'Falha na execução do Workflow',
       rerunDownstreamKeepNode: 'Manter este nó e executar os seguintes', rerunDownstreamClearNode: 'Limpar este nó e executar os seguintes', rerunDownstreamStarted: 'Reexecução dos nós seguintes iniciada', rerunFromNodeStarted: 'Reexecução iniciada a partir deste nó', rerunFailed: 'Falha ao reexecutar o Workflow',
       deleteNode: 'Excluir nó', deleteEdge: 'Excluir conexão', editEdge: 'Editar conexão', undo: 'Desfazer',
