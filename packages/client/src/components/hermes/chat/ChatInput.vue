@@ -116,6 +116,10 @@ const messageReferencePreview = computed(() =>
   activeMessageReference.value?.content.replace(/\s+/g, ' ').trim() || '',
 )
 const isMobileViewport = ref(typeof window !== 'undefined' ? isMobileChatInputViewport(window.innerWidth) : false)
+/** Keyboard overlay inset under interactive-widget=overlays-content (px). */
+const keyboardInsetBottom = ref(0)
+const composerHeight = ref(0)
+const chatInputAreaRef = ref<HTMLElement>()
 const manualTextareaResize = ref(false)
 const configuredTextareaHeight = computed(() =>
   isMobileViewport.value ? null : clampChatInputHeight(settingsStore.display.chat_input_height),
@@ -357,7 +361,62 @@ const inputWrapperStyle = computed(() => {
 function syncViewport() {
   if (typeof window === 'undefined') return
   isMobileViewport.value = isMobileChatInputViewport(window.innerWidth)
+  syncKeyboardInset()
 }
+
+/**
+ * With interactive-widget=overlays-content the layout viewport no longer
+ * shrinks for the IME, so the bottom composer can sit under the keyboard.
+ * Float the composer with position:fixed (transform was clipped by
+ * overflow:hidden ancestors). Keep a spacer so message list bottom is free.
+ */
+function syncKeyboardInset() {
+  if (typeof window === 'undefined') {
+    keyboardInsetBottom.value = 0
+    return
+  }
+  const vv = window.visualViewport
+  if (!vv || !isMobileChatInputViewport(window.innerWidth)) {
+    keyboardInsetBottom.value = 0
+    return
+  }
+  const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+  // Ignore tiny chrome jitter (address bar) under ~48px; IME is usually much taller.
+  keyboardInsetBottom.value = covered >= 48 ? Math.round(covered) : 0
+}
+
+function measureComposerHeight() {
+  if (typeof window === 'undefined') return
+  const el = chatInputAreaRef.value
+  if (!el) return
+  composerHeight.value = Math.round(el.getBoundingClientRect().height)
+}
+
+const composerLifted = computed(() =>
+  isMobileViewport.value && keyboardInsetBottom.value > 0,
+)
+
+const chatInputAreaStyle = computed(() => {
+  if (!composerLifted.value) return undefined
+  return {
+    // Float above IME without reflowing the fixed shell / pushing the page.
+    position: 'fixed' as const,
+    left: '0',
+    right: '0',
+    bottom: `${keyboardInsetBottom.value}px`,
+    width: '100%',
+    zIndex: '120',
+  }
+})
+
+const composerSpacerStyle = computed(() => {
+  if (!composerLifted.value) return undefined
+  const h = composerHeight.value || 0
+  return {
+    height: `${h}px`,
+    flexShrink: '0',
+  }
+})
 
 function resetTextareaHeight() {
   manualTextareaResize.value = false
@@ -494,8 +553,14 @@ onMounted(() => {
   loadDraftForActiveSession()
   syncViewport()
   window.addEventListener('resize', syncViewport)
+  const vv = window.visualViewport
+  if (vv) {
+    vv.addEventListener('resize', syncKeyboardInset)
+    vv.addEventListener('scroll', syncKeyboardInset)
+  }
   nextTick(() => {
     applyConfiguredTextareaHeight()
+    measureComposerHeight()
   })
 })
 
@@ -513,6 +578,13 @@ function handleInputSettingsSelect(key: string | number) {
 watch(inputText, (value) => {
   saveDraftForActiveSession(value)
 })
+
+watch(
+  [composerLifted, attachments, () => inputText.value, () => activeMessageReference.value?.id],
+  () => {
+    nextTick(() => measureComposerHeight())
+  },
+)
 
 watch(() => chatStore.activeSession?.id, () => {
   loadDraftForActiveSession()
@@ -995,6 +1067,11 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('mousedown', onDocumentMousedown)
   window.removeEventListener('resize', syncViewport)
+  const vv = window.visualViewport
+  if (vv) {
+    vv.removeEventListener('resize', syncKeyboardInset)
+    vv.removeEventListener('scroll', syncKeyboardInset)
+  }
 })
 
 function removeAttachment(id: string) {
@@ -1017,7 +1094,12 @@ function isImage(type: string): boolean {
 </script>
 
 <template>
-  <div class="chat-input-area">
+  <div
+    ref="chatInputAreaRef"
+    class="chat-input-area"
+    :class="{ 'chat-input-area--lifted': composerLifted }"
+    :style="chatInputAreaStyle"
+  >
     <!-- Attachment previews -->
     <div v-if="attachments.length > 0" class="attachment-previews">
       <div
@@ -1470,6 +1552,12 @@ function isImage(type: string): boolean {
       </template>
     </NModal>
   </div>
+  <div
+    v-if="composerLifted"
+    class="chat-input-area-spacer"
+    aria-hidden="true"
+    :style="composerSpacerStyle"
+  />
 </template>
 
 <style scoped lang="scss">
@@ -1482,6 +1570,16 @@ function isImage(type: string): boolean {
   border-top: 0;
   background-color: $bg-main-surface;
   flex-shrink: 0;
+}
+
+.chat-input-area--lifted {
+  // background already set; keep shadow so it separates from message list under IME
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.chat-input-area-spacer {
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .input-top-bar {

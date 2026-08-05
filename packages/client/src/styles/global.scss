@@ -68,10 +68,18 @@ textarea {
   --vh: 1vh;
 }
 
-// Fix mobile viewport height (address bar)
+// Stable mobile shell height while IME is open.
+// Prefer svh: dvh shrinks with the keyboard and reflows fixed shells (page push).
+// Address-bar chrome is already mitigated by html/body position:fixed below.
+// Later matching @supports wins, so svh overrides dvh when both exist.
 @supports (height: 100dvh) {
   :root {
     --vh: 1dvh;
+  }
+}
+@supports (height: 100svh) {
+  :root {
+    --vh: 1svh;
   }
 }
 
