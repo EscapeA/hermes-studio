@@ -2165,19 +2165,9 @@ function isImage(type: string): boolean {
     gap: 5px;
   }
 
+  .reasoning-effort-label,
   .auto-play-speech-switch {
     display: none;
-  }
-
-  .reasoning-effort-button {
-    min-width: 0;
-    max-width: min(120px, 34vw);
-    padding: 0 4px 0 6px;
-  }
-
-  .reasoning-effort-label {
-    display: inline-block;
-    max-width: min(72px, 22vw);
   }
 
   .reasoning-effort-slider-popover {
