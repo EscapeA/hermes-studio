@@ -1,7 +1,7 @@
 // Hermes Studio Service Worker
 // Caching strategy: Cache-First for hashed assets, Network-First for navigation, Stale-While-Revalidate for public assets
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v4-ime-overlays-float';
 const STATIC_CACHE = `hermes-static-${CACHE_VERSION}`;
 
 // Essential URLs to precache on install
