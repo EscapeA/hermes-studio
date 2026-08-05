@@ -68,20 +68,10 @@ textarea {
   --vh: 1vh;
 }
 
-// Stable mobile shell height.
-// Prefer svh over dvh: dvh shrinks when the virtual keyboard opens and forces
-// every calc(100 * var(--vh)) shell (App, Drawer, Chat) to reflow — the flash /
-// stacking jump users see while opening filters inside drawers.
-// Address-bar chrome is already mitigated by html/body position:fixed below.
-// Later matching @supports wins, so svh overrides dvh when both exist.
+// Fix mobile viewport height (address bar)
 @supports (height: 100dvh) {
   :root {
     --vh: 1dvh;
-  }
-}
-@supports (height: 100svh) {
-  :root {
-    --vh: 1svh;
   }
 }
 
@@ -99,9 +89,7 @@ html, body {
   top: 0;
   left: 0;
   width: 100%;
-  /* Prefer visualViewport-backed height (set by installVisualViewportHeight)
-     so fixed shells shrink with the IME instead of being covered by it. */
-  height: var(--app-height, 100%);
+  height: 100%;
   overflow: hidden;
 }
 
@@ -115,7 +103,7 @@ html[dir='rtl'] .v-binder-follower-container {
 }
 
 #app {
-  height: var(--app-height, 100%);
+  height: 100%;
   width: 100%;
   overflow: hidden;
 }

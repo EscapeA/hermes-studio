@@ -1,7 +1,7 @@
 // Hermes Studio Service Worker
 // Caching strategy: Cache-First for hashed assets, Network-First for navigation, Stale-While-Revalidate for public assets
 
-const CACHE_VERSION = 'v2-keyboard-reflow';
+const CACHE_VERSION = 'v3-remove-ime-viewport';
 const STATIC_CACHE = `hermes-static-${CACHE_VERSION}`;
 
 // Essential URLs to precache on install
