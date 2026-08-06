@@ -2943,4 +2943,7 @@ export default {
     new_0_6_32_9: '桌面窗口控件已融入页面框架：macOS 红绿灯位于侧边栏，Windows 控件位于主内容上方，Linux 继续使用原生窗口装饰（#2162）',
     new_0_6_32_10: '开发文档现在同时支持直接使用当前 checkout，并可按需采用隔离的 Git worktree（#2155）',
   },
+  pwa: {
+    install: '安装应用',
+  },
 }
