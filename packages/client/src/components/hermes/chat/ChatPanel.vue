@@ -2303,11 +2303,11 @@ async function handleSessionModelCustomSubmit() {
               :placeholder="t('chat.categoryPlaceholder')"
               :loading="sessionCategoriesLoading || newChatCategoryCreating"
               :disabled="newChatLoading || newChatCategoryCreating"
-              filterable
-              tag
+              :filterable="!isMobile"
+              :tag="!isMobile"
               @update:value="handleNewChatCategoryChange"
             />
-            <span class="new-chat-field-hint">{{ t("chat.categoryCreateHint") }}</span>
+            <span v-if="!isMobile" class="new-chat-field-hint">{{ t("chat.categoryCreateHint") }}</span>
           </label>
           <label v-if="newChatUsesProviderModel && newChatCanUseMoa" class="new-chat-field">
             <span class="new-chat-label">{{ t('chat.modelType') }}</span>
