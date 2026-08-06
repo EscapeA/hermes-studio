@@ -1,17 +1,32 @@
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import thinkingImage from '@/assets/thinking.gif'
 
 const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
 
-defineProps<{
+const props = defineProps<{
   reasoning?: string | null
   reasoningId?: string | number | null
   elapsed: string
 }>()
 
 const { t } = useI18n()
+
+const reasoningBodyRef = ref<HTMLElement | null>(null)
+
+// 流式思考内容更新时自动滚动到底部，始终展示最新输出的部分
+watch(
+  () => props.reasoning,
+  () => {
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        const el = reasoningBodyRef.value
+        if (el) el.scrollTop = el.scrollHeight
+      })
+    })
+  },
+)
 </script>
 
 <template>
@@ -38,7 +53,7 @@ const { t } = useI18n()
         <span aria-hidden="true">💭</span>
         <span>{{ t('chat.thinkingLabel') }}</span>
       </div>
-      <div class="live-reasoning-body">
+      <div ref="reasoningBodyRef" class="live-reasoning-body">
         <MarkdownRenderer :content="reasoning" />
       </div>
     </div>
