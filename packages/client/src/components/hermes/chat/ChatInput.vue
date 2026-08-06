@@ -1799,8 +1799,11 @@ function openAttachmentPreview(attachment: Attachment) {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  vertical-align: top;
+  vertical-align: middle;
   white-space: nowrap;
+  // tiny NButton height clips descenders (e.g. "g" in grok-*) without a hair more room
+  line-height: 1.25;
+  padding-bottom: 1px;
 }
 
 .reasoning-effort-button {
