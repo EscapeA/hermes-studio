@@ -1600,9 +1600,7 @@ async function handleWorkspaceConfirm() {
 const showSessionModelModal = ref(false);
 const showSessionModelModeModal = ref(false);
 const sessionModelSessionId = ref<string | null>(null);
-const sessionModelSearch = ref("");
 const sessionModelKind = ref<"model" | "moa">("model");
-const sessionModelCollapsedGroups = ref<Record<string, boolean>>({});
 const sessionModelValue = ref("");
 const sessionModelProvider = ref("");
 const sessionModelCustomInput = ref("");
@@ -1664,7 +1662,10 @@ const sessionCanUseMoa = computed(() =>
 );
 
 const sessionModelProviderOptions = computed(() =>
-  sessionModelBaseGroups.value.map((group) => ({ label: group.label, value: group.provider })),
+  sessionModelBaseGroups.value.map((group) => ({
+    label: group.label || group.provider,
+    value: group.provider,
+  })),
 );
 
 const sessionModelGroupsWithCustom = computed(() =>
@@ -1679,25 +1680,23 @@ const sessionModelGroupsWithCustom = computed(() =>
   })),
 );
 
-const filteredSessionModelGroups = computed(() => {
-  const query = sessionModelSearch.value.trim().toLowerCase();
-  if (!query) return sessionModelGroupsWithCustom.value;
-  return sessionModelGroupsWithCustom.value
-    .map((group) => ({
-      ...group,
-      models: group.models.filter((model) => {
-        const displayName = appStore.displayModelName(model, group.provider);
-        return model.toLowerCase().includes(query) || displayName.toLowerCase().includes(query);
-      }),
-    }))
-    .filter((group) => group.models.length > 0 || group.label.toLowerCase().includes(query));
+const sessionModelSelectOptions = computed(() => {
+  const group = sessionModelGroupsWithCustom.value.find(
+    (item) => item.provider === sessionModelProvider.value,
+  );
+  return (group?.models || []).map((model) => ({
+    label: appStore.displayModelName(model, group?.provider),
+    value: model,
+    disabled: !!group?.model_meta?.[model]?.disabled,
+  }));
 });
 
-const filteredSessionMoaModels = computed(() => {
-  const models = sessionMoaGroup.value?.models || [];
-  const query = sessionModelSearch.value.trim().toLowerCase();
-  return query ? models.filter((model) => model.toLowerCase().includes(query)) : models;
-});
+const sessionMoaSelectOptions = computed(() =>
+  (sessionMoaGroup.value?.models || []).map((model) => ({
+    label: model,
+    value: model,
+  })),
+);
 
 async function openSessionModelModal(sessionId: string) {
   if (appStore.modelGroups.length === 0 && appStore.profileModelGroups.length === 0) {
@@ -1727,16 +1726,53 @@ async function openSessionModelModal(sessionId: string) {
     ? "moa"
     : providerGroup ? session?.provider || "" : defaults.provider || "";
   sessionModelCustomProvider.value = usesMoa ? defaults.provider : sessionModelProvider.value;
-  sessionModelSearch.value = "";
   sessionModelCustomInput.value = "";
-  sessionModelCollapsedGroups.value = {};
   showSessionModelModal.value = true;
 }
 
 function handleSessionModelKindChange(value: "model" | "moa") {
   if (sessionModelSwitching.value || (value === "moa" && !sessionCanUseMoa.value)) return;
   sessionModelKind.value = value;
-  sessionModelSearch.value = "";
+  if (value === "moa") {
+    const models = sessionMoaGroup.value?.models || [];
+    sessionModelProvider.value = "moa";
+    if (!models.includes(sessionModelValue.value)) {
+      sessionModelValue.value = models[0] || "";
+    }
+  } else {
+    const groups = sessionModelGroupsWithCustom.value;
+    const current = groups.find((group) => group.provider === sessionModelProvider.value)
+      || groups.find((group) => group.models.length > 0);
+    sessionModelProvider.value = current?.provider || "";
+    if (!current?.models.includes(sessionModelValue.value)) {
+      sessionModelValue.value = current?.models[0] || "";
+    }
+    sessionModelCustomProvider.value = sessionModelProvider.value;
+  }
+}
+
+function handleSessionModelProviderChange(value: string) {
+  if (sessionModelSwitching.value) return;
+  sessionModelProvider.value = value;
+  sessionModelCustomProvider.value = value;
+  const options = sessionModelSelectOptions.value;
+  sessionModelValue.value = options.find((item) => !item.disabled)?.value || options[0]?.value || "";
+}
+
+async function confirmSessionModelSelection() {
+  if (sessionModelSwitching.value) return;
+  if (sessionModelKind.value === "moa") {
+    if (!sessionModelValue.value) return;
+    await selectSessionMoaPreset(sessionModelValue.value);
+    return;
+  }
+  const customModel = sessionModelCustomInput.value.trim();
+  if (customModel && sessionModelProvider.value) {
+    await selectSessionModel(customModel, sessionModelProvider.value);
+    return;
+  }
+  if (!sessionModelProvider.value || !sessionModelValue.value) return;
+  await selectSessionModel(sessionModelValue.value, sessionModelProvider.value);
 }
 
 function handleHeaderModelClick() {
@@ -1746,27 +1782,6 @@ function handleHeaderModelClick() {
     return;
   }
   openSessionModelModal(sessionId);
-}
-
-function isSessionModelGroupCollapsed(provider: string) {
-  return !!sessionModelCollapsedGroups.value[provider];
-}
-
-function toggleSessionModelGroup(provider: string) {
-  if (sessionModelSwitching.value) return;
-  sessionModelCollapsedGroups.value[provider] = !sessionModelCollapsedGroups.value[provider];
-}
-
-function isCustomSessionModel(model: string, provider: string) {
-  return (appStore.customModels[provider] || []).includes(model);
-}
-
-function sessionModelDisplayName(model: string, provider: string) {
-  return appStore.displayModelName(model, provider);
-}
-
-function sessionModelAlias(model: string, provider: string) {
-  return appStore.getModelAlias(model, provider);
 }
 
 function defaultSessionModelApiMode(provider: string): CodingAgentApiMode {
@@ -1833,8 +1848,9 @@ function cancelSessionModelMode() {
 
 async function handleSessionModelCustomSubmit() {
   const model = sessionModelCustomInput.value.trim();
-  const provider = sessionModelCustomProvider.value;
+  const provider = sessionModelProvider.value || sessionModelCustomProvider.value;
   if (!model || !provider || sessionModelSwitching.value) return;
+  sessionModelCustomProvider.value = provider;
   await selectSessionModel(model, provider);
 }
 </script>
@@ -2205,152 +2221,74 @@ async function handleSessionModelCustomSubmit() {
       v-model:show="showSessionModelModal"
       preset="card"
       :title="t('chat.setModelTitle')"
-      :style="{ width: 'min(480px, calc(100vw - 32px))' }"
+      :style="{ width: 'min(440px, calc(100vw - 32px))' }"
       :mask-closable="!sessionModelSwitching"
       :close-on-esc="!sessionModelSwitching"
       :closable="!sessionModelSwitching"
     >
       <NSpin :show="sessionModelSwitching" class="session-model-switch-spin">
         <template #description>{{ t('chat.modelSwitching') }}</template>
-        <div v-if="sessionCanUseMoa" class="session-model-kind-field">
-          <span class="session-model-kind-label">{{ t('chat.modelType') }}</span>
-          <NRadioGroup
-            :value="sessionModelKind"
-            name="session-model-kind"
-            @update:value="handleSessionModelKindChange"
-          >
-            <NRadioButton value="model">{{ t('chat.standardModels') }}</NRadioButton>
-            <NRadioButton value="moa">{{ t('chat.moaPresets') }}</NRadioButton>
-          </NRadioGroup>
-        </div>
-        <NInput
-          v-model:value="sessionModelSearch"
-          :placeholder="t('models.searchPlaceholder')"
-          :disabled="sessionModelSwitching"
-          clearable
-          size="small"
-          class="session-model-search"
-        />
-        <div v-if="sessionModelKind === 'model'" class="session-model-list" :aria-busy="sessionModelSwitching">
-        <div v-for="group in filteredSessionModelGroups" :key="group.provider" class="session-model-group">
-          <div class="session-model-group-header" @click="toggleSessionModelGroup(group.provider)">
-            <svg
-              class="session-model-group-arrow"
-              :class="{ collapsed: isSessionModelGroupCollapsed(group.provider) }"
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+        <div class="session-model-form" :aria-busy="sessionModelSwitching">
+          <div v-if="sessionCanUseMoa" class="session-model-field">
+            <span class="session-model-field-label">{{ t('chat.modelType') }}</span>
+            <NRadioGroup
+              :value="sessionModelKind"
+              name="session-model-kind"
+              :disabled="sessionModelSwitching"
+              @update:value="handleSessionModelKindChange"
             >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-            <span class="session-model-group-label">{{ group.label }}</span>
-            <span class="session-model-group-count">{{ group.models.length }}</span>
+              <NRadioButton value="model">{{ t('chat.standardModels') }}</NRadioButton>
+              <NRadioButton value="moa">{{ t('chat.moaPresets') }}</NRadioButton>
+            </NRadioGroup>
           </div>
-          <div v-show="!isSessionModelGroupCollapsed(group.provider)" class="session-model-group-items">
-            <div
-              v-for="model in group.models"
-              :key="model"
-              class="session-model-item"
-              :class="{
-                active: model === sessionModelValue && group.provider === sessionModelProvider,
-                disabled: !!group.model_meta?.[model]?.disabled,
-                switching: sessionModelSwitching,
-              }"
-              :aria-disabled="sessionModelSwitching || !!group.model_meta?.[model]?.disabled"
-              :title="group.model_meta?.[model]?.disabled ? t('models.disabledTooltip') : ''"
-              @click="selectSessionModel(model, group.provider)"
-            >
-              <span class="session-model-item-label">
-                <span class="session-model-item-name">{{ sessionModelDisplayName(model, group.provider) }}</span>
-                <span v-if="sessionModelAlias(model, group.provider)" class="session-model-item-id">
-                  {{ t('models.aliasCanonical', { model }) }}
-                </span>
-              </span>
-              <span v-if="group.model_meta?.[model]?.preview" class="session-model-badge-preview">{{ t('models.previewBadge') }}</span>
-              <span v-if="group.model_meta?.[model]?.disabled" class="session-model-badge-disabled">{{ t('models.disabledBadge') }}</span>
-              <span v-if="isCustomSessionModel(model, group.provider)" class="session-model-badge-custom">{{ t('models.customBadge') }}</span>
-              <svg
-                v-if="model === sessionModelValue && group.provider === sessionModelProvider"
-                class="session-model-check"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div v-if="filteredSessionModelGroups.length === 0" class="session-model-empty">
-          {{ sessionModelSearch ? 'No results' : 'No models' }}
-        </div>
-        </div>
-        <div v-else class="session-model-list" :aria-busy="sessionModelSwitching">
-          <div class="session-model-group-items session-moa-items">
-            <div
-              v-for="preset in filteredSessionMoaModels"
-              :key="preset"
-              class="session-model-item"
-              :class="{
-                active: preset === sessionModelValue && sessionModelProvider === 'moa',
-                switching: sessionModelSwitching,
-              }"
-              :aria-disabled="sessionModelSwitching"
-              @click="selectSessionMoaPreset(preset)"
-            >
-              <span class="session-model-item-label">
-                <span class="session-model-item-name">{{ preset }}</span>
-              </span>
-              <svg
-                v-if="preset === sessionModelValue && sessionModelProvider === 'moa'"
-                class="session-model-check"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-          </div>
-          <div v-if="filteredSessionMoaModels.length === 0" class="session-model-empty">
-            {{ t('chat.noMoaPresets') }}
-          </div>
-        </div>
-        <div v-if="sessionModelKind === 'model'" class="session-model-custom">
-          <div class="session-model-custom-row">
+          <label v-if="sessionModelKind === 'model'" class="session-model-field">
+            <span class="session-model-field-label">{{ t('models.provider') }}</span>
             <NSelect
-              v-model:value="sessionModelCustomProvider"
+              :value="sessionModelProvider"
               :options="sessionModelProviderOptions"
               :disabled="sessionModelSwitching"
-              size="small"
-              class="session-model-custom-provider"
+              @update:value="handleSessionModelProviderChange"
             />
-            <NInput
-              v-model:value="sessionModelCustomInput"
-              :placeholder="t('models.customModelPlaceholder')"
-              :disabled="sessionModelSwitching"
-              size="small"
-              class="session-model-custom-input"
-              @keydown.enter="handleSessionModelCustomSubmit"
+          </label>
+          <label class="session-model-field">
+            <span class="session-model-field-label">
+              {{ sessionModelKind === 'moa' ? t('chat.moaPresets') : t('models.models') }}
+            </span>
+            <NSelect
+              v-model:value="sessionModelValue"
+              :options="sessionModelKind === 'moa' ? sessionMoaSelectOptions : sessionModelSelectOptions"
+              :disabled="sessionModelSwitching || (sessionModelKind === 'model' && !sessionModelProvider)"
+              :filterable="!isMobile"
             />
+          </label>
+          <div v-if="sessionModelKind === 'model'" class="session-model-custom">
+            <div class="session-model-custom-row">
+              <NInput
+                v-model:value="sessionModelCustomInput"
+                :placeholder="t('models.customModelPlaceholder')"
+                :disabled="sessionModelSwitching || !sessionModelProvider"
+                size="small"
+                class="session-model-custom-input"
+                @keydown.enter="handleSessionModelCustomSubmit"
+              />
+            </div>
+            <div class="session-model-custom-hint">
+              {{ t('models.customModelHint') }}
+            </div>
           </div>
-          <div class="session-model-custom-hint">
-            {{ t('models.customModelHint') }}
+          <div class="session-model-actions">
+            <NButton size="small" :disabled="sessionModelSwitching" @click="showSessionModelModal = false">
+              {{ t('common.cancel') }}
+            </NButton>
+            <NButton
+              size="small"
+              type="primary"
+              :loading="sessionModelSwitching"
+              :disabled="!sessionModelValue || (sessionModelKind === 'model' && !sessionModelProvider)"
+              @click="confirmSessionModelSelection"
+            >
+              {{ sessionModelSwitching ? t('chat.modelSwitching') : t('common.confirm') }}
+            </NButton>
           </div>
         </div>
       </NSpin>
@@ -2878,187 +2816,30 @@ async function handleSessionModelCustomSubmit() {
   background-color: $bg-card;
 }
 
-.session-model-search {
-  margin-bottom: 12px;
+.session-model-switch-spin {
+  min-height: 120px;
 }
 
-.session-model-kind-field {
+.session-model-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.session-model-field {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 12px;
 }
 
-.session-model-kind-label {
+.session-model-field-label {
   font-size: 12px;
   color: $text-muted;
   font-weight: 500;
 }
 
-.session-model-switch-spin {
-  min-height: 180px;
-}
-
-.session-model-list {
-  max-height: 50vh;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.session-model-group {
-  margin-bottom: 4px;
-}
-
-.session-model-group-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: $text-secondary;
-  cursor: pointer;
-  border-radius: $radius-sm;
-  user-select: none;
-  transition: background-color $transition-fast;
-
-  &:hover {
-    background-color: $bg-secondary;
-  }
-}
-
-.session-model-group-arrow {
-  flex-shrink: 0;
-  transition: transform $transition-fast;
-
-  &.collapsed {
-    transform: rotate(-90deg);
-  }
-}
-
-.session-model-group-label {
-  flex: 1;
-}
-
-.session-model-group-count {
-  font-size: 11px;
-  color: $text-muted;
-  font-weight: 400;
-}
-
-.session-model-group-items {
-  padding-inline-start: 8px;
-}
-
-.session-moa-items {
-  padding-inline-start: 0;
-}
-
-.session-model-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  font-size: 13px;
-  color: $text-secondary;
-  border-radius: $radius-sm;
-  cursor: pointer;
-  transition: all $transition-fast;
-
-  &:hover {
-    background-color: rgba(var(--accent-primary-rgb), 0.06);
-    color: $text-primary;
-  }
-
-  &.active {
-    color: $accent-primary;
-    font-weight: 500;
-  }
-
-  &.disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-
-    &:hover {
-      background-color: transparent;
-      color: $text-secondary;
-    }
-  }
-
-  &.switching {
-    cursor: wait;
-  }
-}
-
-.session-model-item-label {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.session-model-item-name,
-.session-model-item-id {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: $font-code;
-}
-
-.session-model-item-name {
-  font-size: 12px;
-}
-
-.session-model-item-id {
-  color: $text-muted;
-  font-size: 10px;
-  font-weight: 400;
-}
-
-.session-model-check {
-  flex-shrink: 0;
-  color: $accent-primary;
-}
-
-.session-model-badge-preview,
-.session-model-badge-custom,
-.session-model-badge-disabled {
-  flex-shrink: 0;
-  font-size: 9px;
-  font-weight: 600;
-  padding: 1px 5px;
-  border-radius: 3px;
-  margin-inline-end: 4px;
-  letter-spacing: 0.03em;
-}
-
-.session-model-badge-preview {
-  color: #fff;
-  background: #d97706;
-}
-
-.session-model-badge-custom {
-  color: #fff;
-  background: $accent-primary;
-}
-
-.session-model-badge-disabled {
-  color: $text-muted;
-  background: transparent;
-  border: 1px solid $border-color;
-  padding: 0 5px;
-}
-
-.session-model-empty {
-  padding: 24px 0;
-  text-align: center;
-  font-size: 13px;
-  color: $text-muted;
-}
-
 .session-model-custom {
-  margin-top: 12px;
+  margin-top: 2px;
   padding-top: 12px;
   border-top: 1px solid $border-color;
 }
@@ -3066,11 +2847,6 @@ async function handleSessionModelCustomSubmit() {
 .session-model-custom-row {
   display: flex;
   gap: 8px;
-}
-
-.session-model-custom-provider {
-  width: 160px;
-  flex-shrink: 0;
 }
 
 .session-model-custom-input {
@@ -3081,6 +2857,13 @@ async function handleSessionModelCustomSubmit() {
   margin-top: 6px;
   font-size: 11px;
   color: $text-muted;
+}
+
+.session-model-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .session-list {
@@ -3111,14 +2894,17 @@ async function handleSessionModelCustomSubmit() {
   }
 
   @media (max-width: $breakpoint-mobile) {
-    position: absolute;
+    // fixed + high z-index so it covers the global .hamburger-btn (z-index: 99)
+    // and is not trapped under the chat header stacking context.
+    position: fixed;
     left: 10px;
     top: 10px;
     bottom: 10px;
     height: auto;
     margin: 0;
-    z-index: 120;
+    z-index: 1000;
     width: $sidebar-width;
+    padding-top: env(safe-area-inset-top, 0px);
 
     &.collapsed {
       transform: translateX(calc(-100% - 10px));
@@ -3133,10 +2919,10 @@ async function handleSessionModelCustomSubmit() {
   }
 
   .session-backdrop {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
-    z-index: 110;
+    z-index: 999;
     opacity: 0;
     pointer-events: none;
     transition: opacity $transition-fast;
