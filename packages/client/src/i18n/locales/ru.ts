@@ -1835,7 +1835,6 @@ export default {
       active: 'Активен',
       switch: 'Переключить',
       removeConfirm: 'Удалить этот сервер?',
-51ccc514 (fix: move i18n connection section from sidebar to settings)
     },
     models: {
       apiKey: 'API-ключ',
