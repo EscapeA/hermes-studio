@@ -39,7 +39,35 @@ const updateContextTokenUsageMock = vi.fn((sid: string, state: any, emit: any, c
 })
 const getCachedBridgeContextOverheadMock = vi.fn(() => undefined)
 const contextTokensWithCachedOverheadMock = vi.fn((_state: any, messageTokens: number) => messageTokens)
-const updateMessageContextTokenUsageMock = vi.fn((sid: string, state: any, emit: any, messageTokens: number, usage?: { inputTokens: number; outputTokens: number }) => updateContextTokenUsageMock(sid, state, emit, messageTokens, usage))
+const updateMessageContextTokenUsageMock = vi.fn((sid: string, state: any, emit: any, messageTokens: number, usage?: { inputTokens: number; outputTokens: number }) => {
+  if (typeof state.apiPromptTokens === 'number' && Number.isFinite(state.apiPromptTokens) && state.apiPromptTokens >= 0) {
+    return state.contextTokens
+  }
+  return updateContextTokenUsageMock(sid, state, emit, messageTokens, usage)
+})
+const applyApiPromptContextTokensMock = vi.fn((sid: string, state: any, emit: any, promptTokens: number, usage?: { inputTokens: number; outputTokens: number }) => {
+  state.apiPromptTokens = Math.floor(promptTokens)
+  return updateContextTokenUsageMock(sid, state, emit, Math.floor(promptTokens), usage)
+})
+const clearApiPromptContextTokensMock = vi.fn((state: any) => {
+  state.apiPromptTokens = undefined
+})
+const hasApiPromptContextTokensMock = vi.fn((state: any) => (
+  typeof state.apiPromptTokens === 'number'
+  && Number.isFinite(state.apiPromptTokens)
+  && state.apiPromptTokens >= 0
+))
+const resolveApiPromptTokensMock = vi.fn((raw: any, normalized?: any) => {
+  if (raw && typeof raw === 'object') {
+    if (typeof raw.prompt_tokens === 'number') return raw.prompt_tokens
+    if (typeof raw.promptTokens === 'number') return raw.promptTokens
+    const uncached = Number(raw.input_tokens ?? raw.inputTokens ?? normalized?.inputTokens ?? 0)
+    const cacheRead = Number(raw.cache_read_tokens ?? raw.cacheReadTokens ?? normalized?.cacheReadTokens ?? 0)
+    const cacheWrite = Number(raw.cache_write_tokens ?? raw.cacheWriteTokens ?? normalized?.cacheWriteTokens ?? 0)
+    if (Number.isFinite(uncached) && uncached >= 0) return Math.floor(uncached + (cacheRead > 0 ? cacheRead : 0) + (cacheWrite > 0 ? cacheWrite : 0))
+  }
+  return normalized?.inputTokens
+})
 const flushBridgePendingToDbMock = vi.fn()
 const ensureOpenBridgeAssistantMessageMock = vi.fn()
 const syncBridgeReasoningToMessageMock = vi.fn()
@@ -90,6 +118,10 @@ vi.mock('../../packages/server/src/services/hermes/run-chat/usage', () => ({
   contextTokensWithCachedOverhead: contextTokensWithCachedOverheadMock,
   updateContextTokenUsage: updateContextTokenUsageMock,
   updateMessageContextTokenUsage: updateMessageContextTokenUsageMock,
+  applyApiPromptContextTokens: applyApiPromptContextTokensMock,
+  clearApiPromptContextTokens: clearApiPromptContextTokensMock,
+  hasApiPromptContextTokens: hasApiPromptContextTokensMock,
+  resolveApiPromptTokens: resolveApiPromptTokensMock,
 }))
 
 vi.mock('../../packages/server/src/services/hermes/run-chat/bridge-message', () => ({
@@ -196,8 +228,34 @@ describe('bridge run final context usage', () => {
       return typeof fixed === 'number' ? fixed + messageTokens : messageTokens
     })
     updateMessageContextTokenUsageMock.mockImplementation((sid: string, state: any, emit: any, messageTokens: number, usage?: { inputTokens: number; outputTokens: number }) => {
+      if (typeof state.apiPromptTokens === 'number' && Number.isFinite(state.apiPromptTokens) && state.apiPromptTokens >= 0) {
+        return state.contextTokens
+      }
       const contextTokens = contextTokensWithCachedOverheadMock(state, messageTokens)
       return updateContextTokenUsageMock(sid, state, emit, contextTokens, usage)
+    })
+    applyApiPromptContextTokensMock.mockImplementation((sid: string, state: any, emit: any, promptTokens: number, usage?: { inputTokens: number; outputTokens: number }) => {
+      state.apiPromptTokens = Math.floor(promptTokens)
+      return updateContextTokenUsageMock(sid, state, emit, Math.floor(promptTokens), usage)
+    })
+    clearApiPromptContextTokensMock.mockImplementation((state: any) => {
+      state.apiPromptTokens = undefined
+    })
+    hasApiPromptContextTokensMock.mockImplementation((state: any) => (
+      typeof state.apiPromptTokens === 'number'
+      && Number.isFinite(state.apiPromptTokens)
+      && state.apiPromptTokens >= 0
+    ))
+    resolveApiPromptTokensMock.mockImplementation((raw: any, normalized?: any) => {
+      if (raw && typeof raw === 'object') {
+        if (typeof raw.prompt_tokens === 'number') return raw.prompt_tokens
+        if (typeof raw.promptTokens === 'number') return raw.promptTokens
+        const uncached = Number(raw.input_tokens ?? raw.inputTokens ?? normalized?.inputTokens ?? 0)
+        const cacheRead = Number(raw.cache_read_tokens ?? raw.cacheReadTokens ?? normalized?.cacheReadTokens ?? 0)
+        const cacheWrite = Number(raw.cache_write_tokens ?? raw.cacheWriteTokens ?? normalized?.cacheWriteTokens ?? 0)
+        if (Number.isFinite(uncached) && uncached >= 0) return Math.floor(uncached + (cacheRead > 0 ? cacheRead : 0) + (cacheWrite > 0 ? cacheWrite : 0))
+      }
+      return normalized?.inputTokens
     })
   })
 
@@ -1246,6 +1304,87 @@ describe('bridge run final context usage', () => {
       command: 'goal',
       action: 'judge_unavailable',
       message: 'Goal judge is not configured; automatic goal continuation was skipped. The goal remains active, but Hermes cannot mark it done automatically.',
+    }))
+  })
+
+  it('sets contextTokens from the latest real API prompt_tokens and keeps it over final local estimate', async () => {
+    const emit = vi.fn()
+    const nsp = makeNamespace(emit)
+    const socket = makeSocket()
+    const state = makeState()
+    const sessionMap = new Map([['session-1', state]])
+    const bridge = {
+      chat: vi.fn().mockResolvedValue({ run_id: 'run-1', status: 'started' }),
+      contextEstimate: vi.fn().mockResolvedValue({
+        token_count: 999,
+        fixed_context_tokens: 900,
+        message_count: 2,
+      }),
+      streamOutput: vi.fn(async function* () {
+        yield {
+          run_id: 'run-1',
+          done: false,
+          status: 'running',
+          events: [{
+            event: 'model.usage',
+            api_request_id: 'req-1',
+            turn_id: 'turn-1',
+            api_call_count: 1,
+            model: 'grok-4.5',
+            provider: 'custom',
+            usage: {
+              prompt_tokens: 1000,
+              completion_tokens: 10,
+              total_tokens: 1010,
+            },
+          }],
+        }
+        yield {
+          run_id: 'run-1',
+          done: true,
+          status: 'completed',
+          output: 'done',
+          events: [{
+            event: 'model.usage',
+            api_request_id: 'req-2',
+            turn_id: 'turn-1',
+            api_call_count: 2,
+            model: 'grok-4.5',
+            provider: 'custom',
+            usage: {
+              prompt_tokens: 153386,
+              completion_tokens: 861,
+              total_tokens: 154247,
+            },
+          }],
+        }
+      }),
+    } as any
+
+    const { handleBridgeRun } = await import('../../packages/server/src/services/hermes/run-chat/handle-bridge-run')
+    await handleBridgeRun(
+      nsp,
+      socket,
+      { input: 'hello', session_id: 'session-1' },
+      'default',
+      sessionMap,
+      bridge,
+      false,
+      vi.fn(),
+      vi.fn(),
+    )
+
+    expect(applyApiPromptContextTokensMock).toHaveBeenCalled()
+    const lastApply = applyApiPromptContextTokensMock.mock.calls.at(-1)
+    expect(lastApply?.[3]).toBe(153386)
+    expect(state.apiPromptTokens).toBe(153386)
+    expect(state.contextTokens).toBe(153386)
+    expect(emit).toHaveBeenCalledWith('usage.updated', expect.objectContaining({
+      contextTokens: 153386,
+    }))
+    // Final local estimate path must not clobber the real API prompt.
+    expect(emit).toHaveBeenCalledWith('run.completed', expect.objectContaining({
+      contextTokens: 153386,
     }))
   })
 
