@@ -146,13 +146,6 @@ watch(
     },
 )
 
-watch(
-    [composerLifted, attachments, inputText],
-    () => {
-        nextTick(() => measureComposerHeight())
-    },
-)
-
 function clearMessageReference() {
     const roomId = store.currentRoomId
     if (roomId) store.clearMessageReference(roomId)
@@ -196,6 +189,13 @@ function measureComposerHeight() {
 
 const composerLifted = computed(() =>
   isMobileViewport.value && keyboardInsetBottom.value > 0,
+)
+
+watch(
+  [composerLifted, attachments, inputText],
+  () => {
+    nextTick(() => measureComposerHeight())
+  },
 )
 
 const chatInputAreaStyle = computed(() => {
