@@ -5,5 +5,8 @@ export function getStaticCacheControl(relativePath: string): string | null {
   const normalizedPath = relativePath.replaceAll('\\', '/').replace(/^\.\//, '')
   if (normalizedPath === 'index.html') return SPA_ENTRY_CACHE_CONTROL
   if (normalizedPath.startsWith('assets/')) return IMMUTABLE_ASSET_CACHE_CONTROL
+  // Coding-agent logos (group-chat agent avatars) are immutable static assets;
+  // without a cache header every agent avatar re-downloads on each visit.
+  if (normalizedPath.startsWith('coding-agents/')) return IMMUTABLE_ASSET_CACHE_CONTROL
   return null
 }
