@@ -995,6 +995,8 @@ export default {
     runUsageEstimatedSpeedHint: "出力トークン /（実行時間 − ツール時間）。並列ツールの重複時間は一度だけ除外。起動や通信の時間を含むため、モデルの実測速度ではありません。",
 
     contextRemaining: '残り',
+    sessionTokensUsed: '使用済み',
+    sessionTokensDetail: '入力 {input}\n出力 {output}\nキャッシュ読込 {cacheRead}\nキャッシュ書込 {cacheWrite}\n推論 {reasoning}',
     contextClickToEdit: 'クリックしてコンテキスト長を編集',
     contextEditTitle: 'コンテキスト長を編集',
     contextEditDesc: '現在のモデルのコンテキスト長制限を設定（トークン数）',

@@ -995,6 +995,8 @@ export default {
     runUsageEstimatedSpeedHint: "Ausgabetokens / (Laufzeit − Werkzeugzeit). Überlappungen zählen einmal. Enthält Start- und Netzwerkaufwand; kein gemessenes Modelltempo.",
 
     contextRemaining: 'übrig',
+    sessionTokensUsed: 'Verwendet',
+    sessionTokensDetail: 'Eingabe {input}\nAusgabe {output}\nCache lesen {cacheRead}\nCache schreiben {cacheWrite}\nReasoning {reasoning}',
     contextClickToEdit: 'Klicken zum Bearbeiten der Kontextlänge',
     contextEditTitle: 'Kontextlänge bearbeiten',
     contextEditDesc: 'Kontextlängenlimit für aktuelles Modell festlegen (in Tokens)',

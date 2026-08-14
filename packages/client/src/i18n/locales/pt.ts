@@ -995,6 +995,8 @@ export default {
     runUsageEstimatedSpeedHint: "Tokens de saída / (duração total − ferramentas). Sobreposições contam uma vez. Inclui inicialização e rede; não é a velocidade medida do modelo.",
 
     contextRemaining: 'restante',
+    sessionTokensUsed: 'Usado',
+    sessionTokensDetail: 'Entrada {input}\nSaída {output}\nLeitura de cache {cacheRead}\nEscrita de cache {cacheWrite}\nRaciocínio {reasoning}',
     contextClickToEdit: 'Clique para editar o tamanho do contexto',
     contextEditTitle: 'Editar tamanho do contexto',
     contextEditDesc: 'Definir o limite de tamanho do contexto para o modelo atual (em tokens)',
