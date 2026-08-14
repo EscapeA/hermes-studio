@@ -536,7 +536,7 @@ export default {
   chat: {
     contextRemaining: 'übrig',
     sessionTokensUsed: 'Verwendet',
-    sessionTokensDetail: 'Eingabe {input}\nAusgabe {output}\nCache lesen {cacheRead}\nCache schreiben {cacheWrite}\nReasoning {reasoning}',
+    sessionTokensDetail: 'Eingabe {input}\nAusgabe {output}\nCache lesen {cacheRead}\nReasoning {reasoning}',
     contextClickToEdit: 'Klicken zum Bearbeiten der Kontextlänge',
     contextEditTitle: 'Kontextlänge bearbeiten',
     contextEditDesc: 'Kontextlängenlimit für aktuelles Modell festlegen (in Tokens)',
