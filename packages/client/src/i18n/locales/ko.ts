@@ -1024,6 +1024,8 @@ export default {
     runUsageEstimatedSpeedHint: "출력 토큰 / (실행 시간 − 도구 시간). 병렬 도구의 겹치는 시간은 한 번만 제외합니다. 시작 및 네트워크 시간이 포함되어 모델 실측 속도는 아닙니다.",
 
     contextRemaining: '남음',
+    sessionTokensUsed: '사용됨',
+    sessionTokensDetail: '입력 {input}\n출력 {output}\n캐시 읽기 {cacheRead}\n캐시 쓰기 {cacheWrite}\n추론 {reasoning}',
     contextClickToEdit: '클릭하여 컨텍스트 길이 편집',
     contextEditTitle: '컨텍스트 길이 편집',
     contextEditDesc: '현재 모델의 컨텍스트 길이 제한 설정 (토큰 수)',
