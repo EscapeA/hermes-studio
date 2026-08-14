@@ -1070,6 +1070,8 @@ export default {
     runUsageEstimatedSpeedHint: "Tokens de sortie / (durée totale − outils). Les chevauchements comptent une fois. Inclut démarrage et réseau ; vitesse du modèle non mesurée.",
 
     contextRemaining: 'restant',
+    sessionTokensUsed: 'Utilisé',
+    sessionTokensDetail: 'Entrée {input}\nSortie {output}\nLecture cache {cacheRead}\nÉcriture cache {cacheWrite}\nRaisonnement {reasoning}',
     contextClickToEdit: 'Cliquez pour modifier la longueur du contexte',
     contextEditTitle: 'Modifier la longueur du contexte',
     contextEditDesc: 'Définir la limite de longueur du contexte pour le modèle actuel (en tokens)',
