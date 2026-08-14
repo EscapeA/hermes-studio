@@ -671,6 +671,23 @@ export async function fetchSessionUsage(ids: string[]): Promise<Record<string, {
   return request(`/api/studio/sessions/usage?${params}`)
 }
 
+export interface SessionUsageTotal {
+  inputTokens: number
+  outputTokens: number
+  cacheReadTokens: number
+  cacheWriteTokens: number
+  reasoningTokens: number
+  apiCalls: number
+}
+
+export async function fetchSessionUsageTotal(id: string): Promise<SessionUsageTotal | null> {
+  try {
+    return await request<SessionUsageTotal>(`/api/hermes/sessions/${id}/usage?scope=total`)
+  } catch {
+    return null
+  }
+}
+
 export async function fetchSessionUsageSingle(id: string): Promise<{ input_tokens: number; output_tokens: number } | null> {
   try {
     return await request<{ input_tokens: number; output_tokens: number }>(`/api/studio/sessions/${id}/usage`)
