@@ -14,7 +14,7 @@ import {
   updateSessionStats as localUpdateSessionStats,
 } from '../../db/hermes/session-store'
 import { buildDbExportHistory, ExportCompressor } from '../../lib/context-compressor/export-compressor'
-import { getLocalUsageStats, getRecordedUsageSessionIds, getUsage, getUsageBatch } from '../../db/hermes/usage-store'
+import { getLocalUsageStats, getRecordedUsageSessionIds, getUsage, getUsageBatch, getUsageTotals } from '../../db/hermes/usage-store'
 import {
   SESSION_CATEGORY_NAME_MAX_LENGTH,
   createSessionCategory,
@@ -1309,6 +1309,10 @@ export async function usageBatch(ctx: any) {
 export async function usageSingle(ctx: any) {
   const session = localGetSession(ctx.params.id)
   if (denySessionAccess(ctx, session)) return
+  if (ctx.query?.scope === 'total') {
+    ctx.body = getUsageTotals(ctx.params.id)
+    return
+  }
   const result = getUsage(ctx.params.id)
   if (!result) {
     ctx.body = { input_tokens: 0, output_tokens: 0 }
