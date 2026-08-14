@@ -1070,6 +1070,8 @@ export default {
     runUsageEstimatedSpeedHint: "Tokens de salida / (duración total − herramientas). Los solapamientos cuentan una vez. Incluye inicio y red; no es la velocidad medida del modelo.",
 
     contextRemaining: 'restante',
+    sessionTokensUsed: 'Usado',
+    sessionTokensDetail: 'Entrada {input}\nSalida {output}\nLectura de caché {cacheRead}\nEscritura de caché {cacheWrite}\nRazonamiento {reasoning}',
     contextClickToEdit: 'Haz clic para editar la longitud del contexto',
     contextEditTitle: 'Editar longitud del contexto',
     contextEditDesc: 'Establecer el límite de longitud del contexto para el modelo actual (en tokens)',
