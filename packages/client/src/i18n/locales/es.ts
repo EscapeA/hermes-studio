@@ -603,7 +603,7 @@ export default {
   chat: {
     contextRemaining: 'restante',
     sessionTokensUsed: 'Usado',
-    sessionTokensDetail: 'Entrada {input}\nSalida {output}\nLectura de caché {cacheRead}\nEscritura de caché {cacheWrite}\nRazonamiento {reasoning}',
+    sessionTokensDetail: 'Entrada {input}\nSalida {output}\nLectura de caché {cacheRead}\nRazonamiento {reasoning}',
     contextClickToEdit: 'Haz clic para editar la longitud del contexto',
     contextEditTitle: 'Editar longitud del contexto',
     contextEditDesc: 'Establecer el límite de longitud del contexto para el modelo actual (en tokens)',
