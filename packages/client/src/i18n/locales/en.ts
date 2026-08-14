@@ -1091,6 +1091,8 @@ export default {
     runUsageEstimatedSpeedHint: "Output tokens / (run time − tool time). Overlapping tools count once. Includes startup and network overhead; not measured model speed.",
 
     contextRemaining: 'remaining',
+    sessionTokensUsed: 'Used',
+    sessionTokensDetail: 'Input {input}\nOutput {output}\nCache read {cacheRead}\nCache write {cacheWrite}\nReasoning {reasoning}',
     contextClickToEdit: 'Click to edit context length',
     contextEditTitle: 'Edit Context Length',
     contextEditDesc: 'Set context length limit for current model (in tokens)',
