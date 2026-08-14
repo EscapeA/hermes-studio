@@ -797,7 +797,7 @@ export default {
   chat: {
     contextRemaining: '남음',
     sessionTokensUsed: '사용됨',
-    sessionTokensDetail: '입력 {input}\n출력 {output}\n캐시 읽기 {cacheRead}\n캐시 쓰기 {cacheWrite}\n추론 {reasoning}',
+    sessionTokensDetail: '입력 {input}\n출력 {output}\n캐시 읽기 {cacheRead}\n추론 {reasoning}',
     contextClickToEdit: '클릭하여 컨텍스트 길이 편집',
     contextEditTitle: '컨텍스트 길이 편집',
     contextEditDesc: '현재 모델의 컨텍스트 길이 제한 설정 (토큰 수)',
