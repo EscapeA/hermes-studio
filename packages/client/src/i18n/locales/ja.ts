@@ -820,6 +820,8 @@ export default {
   // チャット
   chat: {
     contextRemaining: '残り',
+    sessionTokensUsed: '使用済み',
+    sessionTokensDetail: '入力 {input}\n出力 {output}\nキャッシュ読込 {cacheRead}\nキャッシュ書込 {cacheWrite}\n推論 {reasoning}',
     contextClickToEdit: 'クリックしてコンテキスト長を編集',
     contextEditTitle: 'コンテキスト長を編集',
     contextEditDesc: '現在のモデルのコンテキスト長制限を設定（トークン数）',
