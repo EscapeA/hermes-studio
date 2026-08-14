@@ -193,6 +193,45 @@ export function getUsage(sessionId: string): UsageRecord | undefined {
   }
 }
 
+/** Session-lifetime totals (sum of every model_call row) — real API usage, not estimates. */
+export function getUsageTotals(sessionId: string): {
+  inputTokens: number
+  outputTokens: number
+  cacheReadTokens: number
+  cacheWriteTokens: number
+  reasoningTokens: number
+  apiCalls: number
+} {
+  const empty = {
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheReadTokens: 0,
+    cacheWriteTokens: 0,
+    reasoningTokens: 0,
+    apiCalls: 0,
+  }
+  if (!isSqliteAvailable()) return empty
+  const row = getDb()!.prepare(`
+    SELECT
+      COALESCE(SUM(input_tokens), 0) AS input_tokens,
+      COALESCE(SUM(output_tokens), 0) AS output_tokens,
+      COALESCE(SUM(cache_read_tokens), 0) AS cache_read_tokens,
+      COALESCE(SUM(cache_write_tokens), 0) AS cache_write_tokens,
+      COALESCE(SUM(reasoning_tokens), 0) AS reasoning_tokens,
+      COALESCE(SUM(api_calls), 0) AS api_calls
+    FROM ${TABLE}
+    WHERE session_id = ? AND usage_scope = 'model_call'
+  `).get(sessionId) as any
+  return {
+    inputTokens: Number(row?.input_tokens || 0),
+    outputTokens: Number(row?.output_tokens || 0),
+    cacheReadTokens: Number(row?.cache_read_tokens || 0),
+    cacheWriteTokens: Number(row?.cache_write_tokens || 0),
+    reasoningTokens: Number(row?.reasoning_tokens || 0),
+    apiCalls: Number(row?.api_calls || 0),
+  }
+}
+
 export function getUsageBatch(sessionIds: string[]): Record<string, UsageRecord> {
   if (sessionIds.length === 0) return {}
   if (isSqliteAvailable()) {

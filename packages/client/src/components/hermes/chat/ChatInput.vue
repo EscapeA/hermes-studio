@@ -4,7 +4,7 @@ import { useChatStore } from '@/stores/hermes/chat'
 import { useAppStore } from '@/stores/hermes/app'
 import { useProfilesStore } from '@/stores/hermes/profiles'
 import { useSettingsStore } from '@/stores/hermes/settings'
-import { fetchContextLength } from '@/api/studio/sessions'
+import { fetchContextLength, fetchSessionUsageTotal } from '@/api/studio/sessions'
 import { setModelContext } from '@/api/hermes/model-context'
 import { fetchSocialMessagePlatforms } from '@/api/studio/social-messages'
 import { fetchSkills, type SkillCategory, type SkillInfo } from '@/api/hermes/skills'
@@ -863,6 +863,76 @@ function formatTokens(n: number): string {
   return String(n)
 }
 
+// Session-lifetime token consumption (real API usage totals from session_usage table).
+const sessionUsageTotal = ref<{
+  input: number
+  output: number
+  cacheRead: number
+  cacheWrite: number
+  reasoning: number
+  apiCalls: number
+} | null>(null)
+let sessionUsageRequestKey = ''
+async function refreshSessionUsageTotal() {
+  const sid = chatStore.activeSession?.id
+  if (!sid) {
+    sessionUsageTotal.value = null
+    return
+  }
+  const key = `${sid}:${Date.now()}`
+  sessionUsageRequestKey = key
+  const data = await fetchSessionUsageTotal(sid)
+  if (sessionUsageRequestKey !== key || chatStore.activeSession?.id !== sid) return
+  if (!data) {
+    sessionUsageTotal.value = null
+    return
+  }
+  sessionUsageTotal.value = {
+    input: Number(data.inputTokens) || 0,
+    output: Number(data.outputTokens) || 0,
+    cacheRead: Number(data.cacheReadTokens) || 0,
+    cacheWrite: Number(data.cacheWriteTokens) || 0,
+    reasoning: Number(data.reasoningTokens) || 0,
+    apiCalls: Number(data.apiCalls) || 0,
+  }
+}
+const sessionTotalTokens = computed(() => {
+  const u = sessionUsageTotal.value
+  if (!u) return 0
+  return u.input + u.output + u.cacheRead + u.cacheWrite
+})
+const showSessionUsage = computed(() => {
+  const u = sessionUsageTotal.value
+  return !!chatStore.activeSession && !!u && sessionTotalTokens.value > 0
+})
+const sessionUsageDetailText = computed(() => {
+  const u = sessionUsageTotal.value
+  if (!u) return ''
+  return t('chat.sessionTokensDetail', {
+    input: formatTokens(u.input),
+    output: formatTokens(u.output),
+    cacheRead: formatTokens(u.cacheRead),
+    cacheWrite: formatTokens(u.cacheWrite),
+    reasoning: formatTokens(u.reasoning),
+  })
+})
+let sessionUsageTimer: ReturnType<typeof setInterval> | null = null
+watch(
+  () => chatStore.activeSession?.id,
+  refreshSessionUsageTotal,
+  { flush: 'post' },
+)
+onMounted(() => {
+  refreshSessionUsageTotal()
+  sessionUsageTimer = setInterval(refreshSessionUsageTotal, 15000)
+})
+onUnmounted(() => {
+  if (sessionUsageTimer) {
+    clearInterval(sessionUsageTimer)
+    sessionUsageTimer = null
+  }
+})
+
 // --- File attachment helpers ---
 
 function addFile(file: File) {
@@ -1204,6 +1274,16 @@ function openAttachmentPreview(attachment: Attachment) {
         @dblclick="resetTextareaHeight"
       ></div>
       <div v-if="showContextUsage" class="context-usage-row">
+        <NPopover
+          v-if="showSessionUsage"
+          :trigger="isMobileViewport ? 'click' : 'hover'"
+          placement="top-start"
+        >
+          <template #trigger>
+            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }}</span>
+          </template>
+          <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
+        </NPopover>
         <span class="context-info" :class="{ 'context-warning': usagePercent > 80 }">
           {{ formatTokens(totalTokens) }} /
           <NTooltip trigger="hover" :disabled="isMobileViewport">
@@ -1926,6 +2006,25 @@ function openAttachmentPreview(attachment: Attachment) {
   &.context-percent-danger {
     color: #e85d4a;
   }
+}
+
+.session-tokens-used {
+  font-size: 11px;
+  color: inherit;
+  min-width: 0;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    color: var(--text-secondary, inherit);
+  }
+}
+
+.session-usage-detail-text {
+  display: block;
+  white-space: pre-line;
+  line-height: 1.7;
 }
 
 .context-limit-editable {
