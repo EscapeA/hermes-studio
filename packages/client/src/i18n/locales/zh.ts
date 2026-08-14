@@ -1045,6 +1045,8 @@ export default {
     runUsageEstimatedSpeedHint: "输出 token /（本轮耗时 − 工具占用时间）。并行工具重叠时间只扣一次；仍包含启动、网络等开销，非实测模型速度。",
 
     contextRemaining: '剩余',
+    sessionTokensUsed: '已用',
+    sessionTokensDetail: '输入 {input}\n输出 {output}\n缓存读 {cacheRead}\n缓存写 {cacheWrite}\n推理 {reasoning}',
     contextClickToEdit: '点击编辑上下文长度',
     contextEditTitle: '编辑上下文长度',
     contextEditDesc: '设置当前模型的上下文长度限制（token 数量）',
