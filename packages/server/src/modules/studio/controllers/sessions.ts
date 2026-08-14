@@ -27,7 +27,7 @@ import {
   updateSessionStats as localUpdateSessionStats,
 } from '../public/sessions'
 import { buildDbExportHistory, ExportCompressor } from '../services/context-compressor/export-compressor'
-import { getLocalUsageStats, getRecordedUsageSessionIds, getUsage, getUsageBatch } from '../public/sessions'
+import { getLocalUsageStats, getRecordedUsageSessionIds, getUsage, getUsageBatch, getUsageTotals } from '../public/sessions'
 import {
   SESSION_CATEGORY_NAME_MAX_LENGTH,
   createSessionCategory,
@@ -1374,6 +1374,10 @@ export async function usageBatch(ctx: any) {
 export async function usageSingle(ctx: any) {
   const session = localGetSession(ctx.params.id)
   if (denySessionAccess(ctx, session)) return
+  if (ctx.query?.scope === 'total') {
+    ctx.body = getUsageTotals(ctx.params.id)
+    return
+  }
   const result = getUsage(ctx.params.id)
   if (!result) {
     ctx.body = { input_tokens: 0, output_tokens: 0 }
