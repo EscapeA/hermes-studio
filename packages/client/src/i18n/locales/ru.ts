@@ -947,6 +947,8 @@ export default {
     runUsageEstimatedSpeedHint: "Выходные токены / (время запуска − время инструментов). Пересечения учитываются один раз. Включает запуск и сеть; это не измеренная скорость модели.",
 
     contextRemaining: 'Осталось',
+    sessionTokensUsed: 'Использовано',
+    sessionTokensDetail: 'Ввод {input}\nВывод {output}\nЧтение кэша {cacheRead}\nЗапись кэша {cacheWrite}\nРассуждения {reasoning}',
     contextClickToEdit: 'Нажмите, чтобы изменить размер контекста',
     contextEditTitle: 'Изменить размер контекста',
     contextEditDesc: 'Установите лимит размера контекста для текущей модели (в токенах)',
