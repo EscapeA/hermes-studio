@@ -857,7 +857,7 @@ export default {
   chat: {
     contextRemaining: '剩余',
     sessionTokensUsed: '已用',
-    sessionTokensDetail: '输入 {input}\n输出 {output}\n缓存读 {cacheRead}\n缓存写 {cacheWrite}\n推理 {reasoning}',
+    sessionTokensDetail: '输入 {input}\n输出 {output}\n缓存读 {cacheRead}\n推理 {reasoning}',
     contextClickToEdit: '点击编辑上下文长度',
     contextEditTitle: '编辑上下文长度',
     contextEditDesc: '设置当前模型的上下文长度限制（token 数量）',
