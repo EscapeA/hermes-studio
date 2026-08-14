@@ -853,7 +853,6 @@ const sessionUsageTotal = ref<{
   input: number
   output: number
   cacheRead: number
-  cacheWrite: number
   reasoning: number
   apiCalls: number
 } | null>(null)
@@ -876,7 +875,6 @@ async function refreshSessionUsageTotal() {
     input: Number(data.inputTokens) || 0,
     output: Number(data.outputTokens) || 0,
     cacheRead: Number(data.cacheReadTokens) || 0,
-    cacheWrite: Number(data.cacheWriteTokens) || 0,
     reasoning: Number(data.reasoningTokens) || 0,
     apiCalls: Number(data.apiCalls) || 0,
   }
@@ -884,7 +882,7 @@ async function refreshSessionUsageTotal() {
 const sessionTotalTokens = computed(() => {
   const u = sessionUsageTotal.value
   if (!u) return 0
-  return u.input + u.output + u.cacheRead + u.cacheWrite
+  return u.input + u.output + u.cacheRead
 })
 const showSessionTokensUsed = computed(() => {
   const u = sessionUsageTotal.value
@@ -902,7 +900,6 @@ const sessionUsageDetailText = computed(() => {
     input: formatTokens(u.input),
     output: formatTokens(u.output),
     cacheRead: formatTokens(u.cacheRead),
-    cacheWrite: formatTokens(u.cacheWrite),
     reasoning: formatTokens(u.reasoning),
   })
 })
