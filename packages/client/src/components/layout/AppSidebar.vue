@@ -82,7 +82,9 @@ function handleReloadClient() {
 async function handleLogout() {
   const userId = getStoredUserId()
   if (userId) await clearThemeBackgroundCache(userId)
-  localStorage.clear();
+  // Only clear auth-related keys; preserve connection, theme, locale, etc.
+  localStorage.removeItem('hermes_api_key');
+  localStorage.removeItem('hermes_active_profile_name');
   window.location.reload();
 }
 
