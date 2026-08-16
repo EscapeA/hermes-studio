@@ -36,15 +36,19 @@ export function buildVisibleSessionCategoryGroups<T extends SessionCategoryAssig
       sessions: sessions.filter((session) => session.categoryId === category.id),
     }))
     .filter((group) => group.sessions.length > 0);
-  const uncategorized = sessions.filter(
-    (session) => session.categoryId == null || !knownCategoryIds.has(session.categoryId),
-  );
-  if (uncategorized.length > 0) {
-    groups.push({
-      key: "category-none",
-      label: uncategorizedLabel,
-      sessions: uncategorized,
-    });
+  // 用户未创建任何分类时，不渲染「未分类」分组：
+  // 侧边栏已由「最近 + 置顶」覆盖，避免与「最近」重复展示同一批会话。
+  if (categories.length > 0) {
+    const uncategorized = sessions.filter(
+      (session) => session.categoryId == null || !knownCategoryIds.has(session.categoryId),
+    );
+    if (uncategorized.length > 0) {
+      groups.push({
+        key: "category-none",
+        label: uncategorizedLabel,
+        sessions: uncategorized,
+      });
+    }
   }
   return groups;
 }
