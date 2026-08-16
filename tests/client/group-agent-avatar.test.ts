@@ -11,6 +11,10 @@ describe('group agent avatars', () => {
       type: 'image',
       dataUrl: 'data:image/png;base64,abc',
     })
+    expect(parseStoredAvatar(JSON.stringify({ type: 'image', url: '/api/auth/avatar/image' }))).toEqual({
+      type: 'image',
+      url: '/api/auth/avatar/image',
+    })
   })
 
   it('falls back to the matching single-chat agent icon', () => {
