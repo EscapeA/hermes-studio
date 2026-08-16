@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import multiavatar from '@multiavatar/multiavatar'
 import type { ProfileAvatar } from '@/api/hermes/profiles'
+import { getApiKey, getBaseUrlValue } from '@/api/client'
 
 const props = withDefaults(defineProps<{
   name: string
@@ -18,14 +19,73 @@ const style = computed(() => ({
   height: `${props.size}px`,
   flexBasis: `${props.size}px`,
 }))
+
+const imageSrc = ref('')
+let objectUrl = ''
+let resolveGeneration = 0
+
+function revokeObjectUrl() {
+  if (!objectUrl) return
+  URL.revokeObjectURL(objectUrl)
+  objectUrl = ''
+}
+
+async function resolveImageSrc() {
+  const generation = ++resolveGeneration
+  revokeObjectUrl()
+  const avatar = props.avatar
+  if (avatar?.type !== 'image') {
+    imageSrc.value = ''
+    return
+  }
+  if (avatar.dataUrl) {
+    imageSrc.value = avatar.dataUrl
+    return
+  }
+  if (!avatar.url) {
+    imageSrc.value = ''
+    return
+  }
+  if (!avatar.url.startsWith('/api/')) {
+    imageSrc.value = avatar.url
+    return
+  }
+  try {
+    const token = getApiKey()
+    const res = await fetch(`${getBaseUrlValue()}${avatar.url}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!res.ok) {
+      if (generation === resolveGeneration) imageSrc.value = ''
+      return
+    }
+    const blob = await res.blob()
+    if (generation !== resolveGeneration) return
+    objectUrl = URL.createObjectURL(blob)
+    imageSrc.value = objectUrl
+  } catch {
+    if (generation === resolveGeneration) imageSrc.value = ''
+  }
+}
+
+watch(
+  () => [props.avatar?.type, props.avatar?.dataUrl, props.avatar?.url, props.avatar?.updatedAt],
+  () => { void resolveImageSrc() },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  resolveGeneration += 1
+  revokeObjectUrl()
+})
 </script>
 
 <template>
   <span class="profile-avatar-view" :style="style">
     <img
-      v-if="avatar?.type === 'image' && avatar.dataUrl"
+      v-if="imageSrc"
       class="profile-avatar-image"
-      :src="avatar.dataUrl"
+      :src="imageSrc"
       alt=""
       draggable="false"
     >

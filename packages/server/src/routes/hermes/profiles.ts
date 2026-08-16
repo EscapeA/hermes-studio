@@ -12,6 +12,7 @@ profileRoutes.post('/api/hermes/profiles/:name/restart', ctrl.restartProfileRunt
 profileRoutes.post('/api/hermes/profiles/:name/gateway/restart', ctrl.restartGatewayForProfile)
 profileRoutes.put('/api/hermes/profiles/:name/avatar', ctrl.updateAvatar)
 profileRoutes.delete('/api/hermes/profiles/:name/avatar', ctrl.deleteAvatar)
+profileRoutes.get('/api/hermes/profiles/:name/avatar/image', ctrl.getAvatarImage)
 profileRoutes.get('/api/hermes/profiles/:name', ctrl.get)
 profileRoutes.delete('/api/hermes/profiles/:name', ctrl.remove)
 profileRoutes.post('/api/hermes/profiles/:name/rename', ctrl.rename)
