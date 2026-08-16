@@ -1,9 +1,10 @@
 // Hermes Studio Service Worker
 // Caching strategy: Cache-First for hashed assets, Network-First for navigation, Stale-While-Revalidate for public assets
-// v3: + brand assets Cache-First (logo never hits network after first install);
+// v4: drop dead logo-original.png (unreferenced 1.8MB) from cache-first list;
+//     v3 added brand assets Cache-First (logo never hits network after first install);
 //     v2 added session list API SWR cache; v3 fixes precache robustness + version bump.
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = `hermes-static-${CACHE_VERSION}`;
 const API_CACHE = `hermes-api-${CACHE_VERSION}`;
 
@@ -23,7 +24,6 @@ const PRECACHE_URLS = [
 // never hit the network for them; SW version bump clears the cache on activate.
 const CACHE_FIRST_PATHS = [
   '/logo.png',
-  '/logo-original.png',
   '/favicon.ico',
   '/icon-192.png',
   '/icon-512.png',
