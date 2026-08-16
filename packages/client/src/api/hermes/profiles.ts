@@ -24,6 +24,7 @@ export interface ProfileAvatar {
   type: 'generated' | 'image'
   seed?: string
   dataUrl?: string
+  url?: string
   updatedAt?: number
 }
 
