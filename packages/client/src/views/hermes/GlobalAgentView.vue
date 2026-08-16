@@ -42,13 +42,18 @@ async function applyRouteProfile() {
 onMounted(async () => {
   chatStore.setRuntimeMode('global_agent')
   appStore.loadModels()
+  const preferredSessionId = routeSessionId.value
+  const sessionOpen = chatStore.openPreferredSession(preferredSessionId)
   await Promise.all([
     profilesStore.fetchProfiles(),
     settingsStore.fetchSettings(),
   ])
   chatStore.validateSessionProfileFilter(profilesStore.profiles.map(profile => profile.name))
   await applyRouteProfile()
-  await loadRouteSession()
+  await Promise.all([
+    sessionOpen,
+    loadRouteSession(),
+  ])
 })
 
 onUnmounted(() => {
