@@ -34,6 +34,19 @@ describe('session category groups', () => {
     )).toEqual([])
   })
 
+  it('hides the uncategorized group when there are no user-defined categories', () => {
+    const groups = buildVisibleSessionCategoryGroups(
+      [],
+      [
+        { id: 'session-1', categoryId: null },
+        { id: 'session-2', categoryId: 999 },
+      ],
+      'Uncategorized',
+    )
+
+    expect(groups).toEqual([])
+  })
+
   it('shows sessions with deleted or unknown categories as uncategorized', () => {
     const groups = buildVisibleSessionCategoryGroups(
       [{ id: 1, name: 'Work' }],
