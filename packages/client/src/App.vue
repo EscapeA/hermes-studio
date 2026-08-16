@@ -767,7 +767,6 @@ usePwa();
     backdrop-filter: none;
   }
 
-  :deep(.chat-input-area .context-usage-row),
   :deep(.chat-input-area .input-wrapper) {
     background-color: rgba(var(--bg-main-surface-rgb), 0.72);
     -webkit-backdrop-filter: blur(8px) saturate(110%);
