@@ -58,6 +58,8 @@ async function applyRouteProfile() {
 onMounted(async () => {
   chatStore.setRuntimeMode('default')
   appStore.loadModels()
+  const preferredSessionId = routeSessionId.value
+  const sessionOpen = chatStore.openPreferredSession(preferredSessionId)
   // 先加载 profile，确保缓存 key 使用正确的 profile name；同时预取显示设置，
   // 让聊天完成提示音不依赖用户先打开 Settings 页面。
   await Promise.all([
@@ -66,7 +68,10 @@ onMounted(async () => {
   ])
   chatStore.validateSessionProfileFilter(profilesStore.profiles.map(profile => profile.name))
   await applyRouteProfile()
-  await loadRouteSession()
+  await Promise.all([
+    sessionOpen,
+    loadRouteSession(),
+  ])
 })
 
 watch([routeSessionId, routeProfile], async ([sessionId]) => {
