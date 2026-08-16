@@ -76,6 +76,9 @@ async function applyRouteProfile() {
 onMounted(async () => {
   chatStore.setRuntimeMode('default')
   const models = appStore.loadModels()
+  // fast-path: kick off opening the preferred (last) session before profiles resolve
+  const preferredSessionId = routeSessionId.value
+  const sessionOpen = chatStore.openPreferredSession(preferredSessionId)
   // 先加载 profile，确保缓存 key 使用正确的 profile name；同时预取显示设置，
   // 让聊天完成提示音不依赖用户先打开 Settings 页面。
   try {
@@ -89,7 +92,7 @@ onMounted(async () => {
       const target = [routeSessionId.value, routeProfile.value].join(':')
       await applyRouteProfile()
       if (disposed) return
-      await Promise.all([models, loadRouteSession()])
+      await Promise.all([models, sessionOpen, loadRouteSession()])
       if (target === [routeSessionId.value, routeProfile.value].join(':')) break
     } while (!disposed)
   } catch (error) {
