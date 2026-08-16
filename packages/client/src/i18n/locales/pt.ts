@@ -1673,7 +1673,7 @@ jobTriggered: 'Job acionado',
       active: 'Ativo',
       switch: 'Alternar',
       removeConfirm: 'Remover este servidor?',
-51ccc514 (fix: move i18n connection section from sidebar to settings)
+
     },
     display: {
       streaming: 'Respostas em streaming',
