@@ -933,6 +933,7 @@ export default {
       createWorkflowFirst: '请先创建工作流',
       reset: '重置',
       startExecution: '开始执行',
+      backToEdit: '返回编辑',
       executionPending: '工作流执行功能待接入',
       executionStarted: '工作流已开始执行',
       executionCompleted: '工作流执行完成',
