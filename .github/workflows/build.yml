@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - dev/main
+      - custom
   pull_request:
     branches:
       - main
@@ -51,7 +51,7 @@ jobs:
 
   deploy:
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/custom'
     runs-on: ubuntu-latest
     permissions:
       contents: read
