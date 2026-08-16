@@ -1265,18 +1265,19 @@ function openAttachmentPreview(attachment: Attachment) {
         @mousedown="startResize"
         @dblclick="resetTextareaHeight"
       ></div>
-      <div v-if="showContextUsage && showSessionTokensUsed" class="session-usage-corner">
-        <NPopover
-          :trigger="isMobileViewport ? 'click' : 'hover'"
-          placement="bottom-start"
-        >
-          <template #trigger>
-            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · {{ cacheHitRatePercent }}%</span>
-          </template>
-          <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
-        </NPopover>
-      </div>
       <div v-if="showContextUsage" class="context-usage-row">
+        <div class="session-usage-slot">
+          <NPopover
+            v-if="showSessionTokensUsed"
+            :trigger="isMobileViewport ? 'click' : 'hover'"
+            placement="bottom-start"
+          >
+            <template #trigger>
+              <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · <span class="session-percent">{{ cacheHitRatePercent }}%</span></span>
+            </template>
+            <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
+          </NPopover>
+        </div>
         <span class="context-info" :class="{ 'context-warning': showContextLimit && usagePercent > 80 }">
           <template v-if="showSessionUsage">{{ t('chat.sessionUsage') }} </template>
           {{ formatTokens(totalTokens) }}
@@ -1965,33 +1966,41 @@ function openAttachmentPreview(attachment: Attachment) {
   color: $text-muted;
 }
 
-.session-usage-corner {
-  position: absolute;
-  top: 9px;
-  left: 14px;
-  z-index: 1;
-  min-width: 0;
-  max-width: calc(100% - 28px);
-}
-
 .context-usage-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 7px;
+  justify-content: space-between;
+  gap: 8px;
   position: absolute;
   top: 9px;
+  left: 14px;
   right: 14px;
   z-index: 1;
   min-width: 0;
-  max-width: calc(100% - 28px);
   padding: 0;
   color: $text-muted;
+  font-size: 11px;
+  line-height: 14px;
   pointer-events: auto;
+
+  :deep(.n-popover-trigger),
+  :deep(.n-tooltip-trigger) {
+    display: inline-flex;
+    align-items: center;
+    font-size: inherit;
+    line-height: inherit;
+  }
+}
+
+.session-usage-slot {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .context-info {
-  font-size: 11px;
+  font-size: inherit;
+  line-height: inherit;
   color: inherit;
   min-width: 0;
   white-space: nowrap;
@@ -2001,10 +2010,13 @@ function openAttachmentPreview(attachment: Attachment) {
   }
 }
 
-.context-percent {
+.context-percent,
+.session-percent {
   font-weight: 600;
   color: inherit;
+}
 
+.context-percent {
   &.context-percent-warn {
     color: #e8a735;
   }
@@ -2015,7 +2027,8 @@ function openAttachmentPreview(attachment: Attachment) {
 }
 
 .session-tokens-used {
-  font-size: 11px;
+  font-size: inherit;
+  line-height: inherit;
   color: inherit;
   min-width: 0;
   white-space: nowrap;
