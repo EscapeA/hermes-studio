@@ -799,8 +799,6 @@ const totalTokens = computed(() => {
 })
 const showContextUsage = computed(() => !!chatStore.activeSession)
 
-const remainingTokens = computed(() => Math.max(0, contextLength.value - totalTokens.value))
-
 const usagePercent = computed(() =>
   Math.min((totalTokens.value / contextLength.value) * 100, 100),
 )
@@ -1096,18 +1094,15 @@ function isImage(type: string): boolean {
             </template>
             <span>{{ t('chat.contextClickToEdit') }}</span>
           </NTooltip>
-          · {{ t('chat.contextRemaining') }} {{ formatTokens(remainingTokens) }}
-        </span>
-        <div class="context-bar">
-          <div
-            class="context-bar-fill"
+          · <span
+            class="context-percent"
             :class="{
-              'context-bar-warn': usagePercent > 60 && usagePercent <= 80,
-              'context-bar-danger': usagePercent > 80,
+              'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
+              'context-percent-danger': usagePercent > 80,
             }"
-            :style="{ width: `${usagePercent}%` }"
-          />
-        </div>
+            >{{ usagePercent.toFixed(2) }}%</span
+          >
+        </span>
       </div>
       <textarea
         ref="textareaRef"
@@ -1789,6 +1784,19 @@ function isImage(type: string): boolean {
   }
 }
 
+.context-percent {
+  font-weight: 600;
+  color: inherit;
+
+  &.context-percent-warn {
+    color: #e8a735;
+  }
+
+  &.context-percent-danger {
+    color: #e85d4a;
+  }
+}
+
 .context-limit-editable {
   cursor: pointer;
   border-bottom: 1px dashed transparent;
@@ -1802,60 +1810,12 @@ function isImage(type: string): boolean {
   }
 }
 
-.context-bar {
-  width: 60px;
-  height: 4px;
-  margin-inline-start: -4px;
-  background: rgba(var(--text-muted-rgb), 0.2);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.context-bar-fill {
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    rgba(var(--text-muted-rgb), 0.45),
-    rgba(var(--text-muted-rgb), 0.85)
-  );
-  border-radius: 2px;
-  transition: width 0.3s ease;
-
-  &.context-bar-warn {
-    background: linear-gradient(90deg, #c98a1a, #e8a735);
-  }
-
-  &.context-bar-danger {
-    background: linear-gradient(90deg, #c43a2a, #e85d4a);
-  }
-}
-
 .dark .context-limit-editable {
   color: var(--text-secondary);
 
   &:hover {
     border-bottom-color: var(--text-muted);
     background: rgba(var(--text-muted-rgb), 0.1);
-  }
-}
-
-.dark .context-bar {
-  background: rgba(var(--text-muted-rgb), 0.2);
-}
-
-.dark .context-bar-fill {
-  background: linear-gradient(
-    90deg,
-    rgba(var(--text-muted-rgb), 0.5),
-    rgba(var(--text-muted-rgb), 0.9)
-  );
-
-  &.context-bar-warn {
-    background: linear-gradient(90deg, #d99d35, #f0bc58);
-  }
-
-  &.context-bar-danger {
-    background: linear-gradient(90deg, #d95445, #ff7a68);
   }
 }
 
@@ -1914,11 +1874,6 @@ function isImage(type: string): boolean {
     text-overflow: ellipsis;
     font-size: 10px;
     line-height: 14px;
-  }
-
-  .context-bar {
-    width: 42px;
-    flex-shrink: 0;
   }
 }
 
