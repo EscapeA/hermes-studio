@@ -44,6 +44,7 @@ interface ProfileAvatarResponse {
   type: 'generated' | 'image'
   seed?: string
   dataUrl?: string
+  url?: string
   updatedAt?: number
 }
 
@@ -174,7 +175,14 @@ function profileAvatarImagePath(name: string, file = 'avatar.bin'): string {
   return join(profileMetadataDir(name), file)
 }
 
-function readProfileAvatar(name: string): ProfileAvatarResponse | null {
+function profileAvatarImageUrl(name: string, updatedAt?: number): string {
+  const encoded = encodeURIComponent(name || 'default')
+  return updatedAt
+    ? `/api/hermes/profiles/${encoded}/avatar/image?v=${updatedAt}`
+    : `/api/hermes/profiles/${encoded}/avatar/image`
+}
+
+function readProfileAvatar(name: string, options: { inline?: boolean } = {}): ProfileAvatarResponse | null {
   const metaPath = profileAvatarMetaPath(name)
   if (!existsSync(metaPath)) return null
   try {
@@ -189,10 +197,17 @@ function readProfileAvatar(name: string): ProfileAvatarResponse | null {
     if (meta.type === 'image' && meta.file && meta.mime) {
       const imagePath = profileAvatarImagePath(name, meta.file)
       if (!existsSync(imagePath)) return null
-      const data = readFileSync(imagePath).toString('base64')
+      if (options.inline) {
+        const data = readFileSync(imagePath).toString('base64')
+        return {
+          type: 'image',
+          dataUrl: `data:${meta.mime};base64,${data}`,
+          updatedAt: meta.updatedAt,
+        }
+      }
       return {
         type: 'image',
-        dataUrl: `data:${meta.mime};base64,${data}`,
+        url: profileAvatarImageUrl(name, meta.updatedAt),
         updatedAt: meta.updatedAt,
       }
     }
@@ -532,7 +547,7 @@ export async function updateAvatar(ctx: any) {
       const meta: ProfileAvatarMeta = { type: 'generated', seed, updatedAt }
       rmSync(profileAvatarImagePath(name), { force: true })
       await writeFile(profileAvatarMetaPath(name), JSON.stringify(meta, null, 2) + '\n', { mode: 0o600 })
-      ctx.body = { avatar: readProfileAvatar(name) }
+      ctx.body = { avatar: readProfileAvatar(name, { inline: true }) }
       return
     }
 
@@ -541,7 +556,7 @@ export async function updateAvatar(ctx: any) {
       const meta: ProfileAvatarMeta = { type: 'image', file: 'avatar.bin', mime, updatedAt }
       await writeFile(profileAvatarImagePath(name), buffer, { mode: 0o600 })
       await writeFile(profileAvatarMetaPath(name), JSON.stringify(meta, null, 2) + '\n', { mode: 0o600 })
-      ctx.body = { avatar: readProfileAvatar(name) }
+      ctx.body = { avatar: readProfileAvatar(name, { inline: true }) }
       return
     }
 
@@ -559,6 +574,37 @@ export async function deleteAvatar(ctx: any) {
   try {
     removeProfileMetadata(name)
     ctx.body = { success: true }
+  } catch (err: any) {
+    ctx.status = 500
+    ctx.body = { error: err.message }
+  }
+}
+
+export async function getAvatarImage(ctx: any) {
+  const name = String(ctx.params.name || '').trim() || 'default'
+  if (denyProfile(ctx, name)) return
+  const metaPath = profileAvatarMetaPath(name)
+  if (!existsSync(metaPath)) {
+    ctx.status = 404
+    ctx.body = { error: 'Avatar not found' }
+    return
+  }
+  try {
+    const meta = JSON.parse(readFileSync(metaPath, 'utf-8')) as ProfileAvatarMeta
+    if (meta.type !== 'image' || !meta.file || !meta.mime) {
+      ctx.status = 404
+      ctx.body = { error: 'Avatar image not found' }
+      return
+    }
+    const imagePath = profileAvatarImagePath(name, meta.file)
+    if (!existsSync(imagePath)) {
+      ctx.status = 404
+      ctx.body = { error: 'Avatar image not found' }
+      return
+    }
+    ctx.set('Content-Type', meta.mime)
+    ctx.set('Cache-Control', 'private, max-age=31536000, immutable')
+    ctx.body = createReadStream(imagePath)
   } catch (err: any) {
     ctx.status = 500
     ctx.body = { error: err.message }

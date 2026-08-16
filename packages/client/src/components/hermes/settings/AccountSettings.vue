@@ -250,7 +250,7 @@ onMounted(() => { loadLockedIps(); });
         <div class="avatar-display">
           <ProfileAvatar
             :name="username || 'default'"
-            :avatar="avatar?.type === 'image' && avatar.dataUrl ? { type: 'image', dataUrl: avatar.dataUrl } : null"
+            :avatar="avatar?.type === 'image' && (avatar.dataUrl || avatar.url) ? { type: 'image', dataUrl: avatar.dataUrl, url: avatar.url } : null"
             :size="80"
           />
         </div>

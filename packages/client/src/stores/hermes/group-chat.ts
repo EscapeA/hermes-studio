@@ -886,7 +886,8 @@ export const useGroupChatStore = defineStore('groupChat', () => {
                 authUserId = user.id
                 userId.value = authenticatedGroupUserId(user.id)
                 if (!connectionName) userName.value = user.username
-                currentUserAvatar.value = user.avatar || ''
+                currentUserAvatar.value = user.avatar
+                    || (user.hasAvatar ? JSON.stringify({ type: 'image', url: '/api/auth/avatar/image' }) : '')
             } catch { /* non-critical: avatar fallback handles missing id */ }
         }
         const socket = connectGroupChat({
