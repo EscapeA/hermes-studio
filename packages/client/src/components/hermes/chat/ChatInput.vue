@@ -895,6 +895,11 @@ const showSessionTokensUsed = computed(() => {
   const u = sessionUsageTotal.value
   return !!chatStore.activeSession && !!u && sessionTotalTokens.value > 0
 })
+const cacheHitRatePercent = computed(() => {
+  const u = sessionUsageTotal.value
+  if (!u || sessionTotalTokens.value <= 0) return '0.00'
+  return ((u.cacheRead / sessionTotalTokens.value) * 100).toFixed(2)
+})
 const sessionUsageDetailText = computed(() => {
   const u = sessionUsageTotal.value
   if (!u) return ''
@@ -1263,17 +1268,18 @@ function openAttachmentPreview(attachment: Attachment) {
         @mousedown="startResize"
         @dblclick="resetTextareaHeight"
       ></div>
-      <div v-if="showContextUsage" class="context-usage-row">
+      <div v-if="showContextUsage && showSessionTokensUsed" class="session-usage-corner">
         <NPopover
-          v-if="showSessionTokensUsed"
           :trigger="isMobileViewport ? 'click' : 'hover'"
-          placement="top-start"
+          placement="bottom-start"
         >
           <template #trigger>
-            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }}</span>
+            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · {{ cacheHitRatePercent }}%</span>
           </template>
           <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
         </NPopover>
+      </div>
+      <div v-if="showContextUsage" class="context-usage-row">
         <span class="context-info" :class="{ 'context-warning': showContextLimit && usagePercent > 80 }">
           <template v-if="showSessionUsage">{{ t('chat.sessionUsage') }} </template>
           {{ formatTokens(totalTokens) }}
@@ -1960,6 +1966,15 @@ function openAttachmentPreview(attachment: Attachment) {
 .toolbar-chevron {
   flex: 0 0 12px;
   color: $text-muted;
+}
+
+.session-usage-corner {
+  position: absolute;
+  top: 9px;
+  left: 14px;
+  z-index: 1;
+  min-width: 0;
+  max-width: calc(100% - 28px);
 }
 
 .context-usage-row {
