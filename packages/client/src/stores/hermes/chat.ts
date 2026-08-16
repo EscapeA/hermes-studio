@@ -1896,10 +1896,20 @@ export const useChatStore = defineStore('chat', () => {
           : storedId && sessions.value.some(s => s.id === storedId)
             ? storedId
             : sessions.value[0]?.id
-      if (targetId) {
-        await switchSession(targetId, targetId === currentId ? focusMessageId.value : null)
-      } else {
-        clearActiveSession()
+      if (currentId) {
+        const rebound = sessions.value.find(s => s.id === currentId)
+        if (rebound && activeSession.value !== rebound) activeSession.value = rebound
+      }
+      if (targetId && targetId !== currentId) {
+        await switchSession(targetId)
+      } else if (currentId && !sessions.value.some(s => s.id === currentId)) {
+        if (targetId) await switchSession(targetId)
+        else clearActiveSession()
+      } else if (currentId && targetId === currentId && focusMessageId.value) {
+        // Search-hit focus pending: re-open so focus paging can extend the
+        // window (upstream search navigation); the plain same-session case
+        // still skips the reload (fork fast start).
+        await switchSession(targetId, focusMessageId.value)
       }
     } catch (err) {
       if (requestSequence === loadSessionsRequestSequence) {
@@ -1911,6 +1921,19 @@ export const useChatStore = defineStore('chat', () => {
         sessionsLoaded.value = true
       }
     }
+  }
+
+  function storedPreferredSessionId(preferredSessionId?: string | null): string | null {
+    const currentId = activeSessionId.value
+    const legacyActiveKey = legacyStorageKey()
+    const storedId = getItemBestEffort(storageKey()) || (legacyActiveKey ? getItemBestEffort(LEGACY_STORAGE_KEY) : null)
+    return preferredSessionId || currentId || storedId || null
+  }
+
+  async function openPreferredSession(preferredSessionId?: string | null) {
+    const targetId = storedPreferredSessionId(preferredSessionId)
+    if (!targetId || targetId === activeSessionId.value) return
+    await switchSession(targetId)
   }
 
   // Refresh ONLY the session list metadata (titles, ordering, new/removed
@@ -2117,7 +2140,21 @@ export const useChatStore = defineStore('chat', () => {
     setItemBestEffort(storageKey(), sessionId)
     const legacyActiveKey = legacyStorageKey()
     if (legacyActiveKey) removeItem(legacyActiveKey)
-    activeSession.value = sessions.value.find(s => s.id === sessionId) || null
+    let target = sessions.value.find(s => s.id === sessionId) || null
+    if (!target) {
+      target = {
+        id: sessionId,
+        profile: getProfileName(),
+        title: '',
+        source: runtimeMode.value === 'global_agent' ? 'global_agent' : 'cli',
+        agent: 'hermes',
+        messages: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }
+      sessions.value = [target, ...sessions.value]
+    }
+    activeSession.value = target
     clearSessionCompletedUnread(sessionId)
 
     if (!activeSession.value) return false
@@ -5726,6 +5763,7 @@ export const useChatStore = defineStore('chat', () => {
     loadSessions,
     refreshSessionListOnly,
     refreshActiveSession,
+    openPreferredSession,
     getThinkingObservation,
     noteThinkingDelta,
     noteReasoningStart,
