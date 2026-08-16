@@ -1,0 +1,13 @@
+# Cloudflare Pages headers — mirror local Koa static-cache.ts behavior.
+# Hashed build assets are immutable: content hash in filename, safe to cache 1y.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/coding-agents/*
+  Cache-Control: public, max-age=31536000, immutable
+# Entry HTML and SW must always revalidate so new deployments pick up.
+/index.html
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
