@@ -1268,19 +1268,16 @@ function openAttachmentPreview(attachment: Attachment) {
             </template>
             <span>{{ t('chat.contextClickToEdit') }}</span>
           </NTooltip>
-          · {{ t('chat.contextRemaining') }} {{ formatTokens(remainingTokens) }}
+          · <span
+            class="context-percent"
+            :class="{
+              'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
+              'context-percent-danger': usagePercent > 80,
+            }"
+            >{{ usagePercent.toFixed(2) }}%</span
+          >
         </template>
       </span>
-      <div v-if="showContextLimit && totalTokens != null" class="context-bar">
-        <div
-          class="context-bar-fill"
-          :class="{
-            'context-bar-warn': usagePercent > 60 && usagePercent <= 80,
-            'context-bar-danger': usagePercent > 80,
-          }"
-          :style="{ width: `${usagePercent}%` }"
-        />
-      </div>
     </div>
 
     <div
@@ -2037,60 +2034,12 @@ function openAttachmentPreview(attachment: Attachment) {
   }
 }
 
-.context-bar {
-  width: 60px;
-  height: 4px;
-  margin-inline-start: -4px;
-  background: rgba(var(--text-muted-rgb), 0.2);
-  border-radius: var(--radius-component, 2px);
-  overflow: hidden;
-}
-
-.context-bar-fill {
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    rgba(var(--text-muted-rgb), 0.45),
-    rgba(var(--text-muted-rgb), 0.85)
-  );
-  border-radius: var(--radius-component, 2px);
-  transition: width 0.3s ease;
-
-  &.context-bar-warn {
-    background: linear-gradient(90deg, #c98a1a, #e8a735);
-  }
-
-  &.context-bar-danger {
-    background: linear-gradient(90deg, #c43a2a, #e85d4a);
-  }
-}
-
 .dark .context-limit-editable {
   color: var(--text-secondary);
 
   &:hover {
     border-bottom-color: var(--text-muted);
     background: rgba(var(--text-muted-rgb), 0.1);
-  }
-}
-
-.dark .context-bar {
-  background: rgba(var(--text-muted-rgb), 0.2);
-}
-
-.dark .context-bar-fill {
-  background: linear-gradient(
-    90deg,
-    rgba(var(--text-muted-rgb), 0.5),
-    rgba(var(--text-muted-rgb), 0.9)
-  );
-
-  &.context-bar-warn {
-    background: linear-gradient(90deg, #d99d35, #f0bc58);
-  }
-
-  &.context-bar-danger {
-    background: linear-gradient(90deg, #d95445, #ff7a68);
   }
 }
 
@@ -2152,11 +2101,6 @@ function openAttachmentPreview(attachment: Attachment) {
     text-overflow: ellipsis;
     font-size: calc(var(--font-size-base, 14px) * 10 / 14);
     line-height: var(--line-height, calc(var(--font-size-base, 14px) * 14 / 14));
-  }
-
-  .context-bar {
-    width: 42px;
-    flex-shrink: 0;
   }
 }
 
