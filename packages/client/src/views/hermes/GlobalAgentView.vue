@@ -45,14 +45,20 @@ const initializing = ref(true)
 onMounted(async () => {
   try {
     chatStore.setRuntimeMode('global_agent')
+    appStore.loadModels()
+    // fast-path: kick off opening the preferred (last) session before profiles resolve
+    const preferredSessionId = routeSessionId.value
+    const sessionOpen = chatStore.openPreferredSession(preferredSessionId)
     await Promise.all([
-      appStore.loadModels(),
       profilesStore.fetchProfiles(),
       settingsStore.fetchSettings(),
     ])
     chatStore.validateSessionProfileFilter(profilesStore.profiles.map(profile => profile.name))
     await applyRouteProfile()
-    await loadRouteSession()
+    await Promise.all([
+      sessionOpen,
+      loadRouteSession(),
+    ])
   } finally {
     initializing.value = false
   }
