@@ -1639,7 +1639,7 @@ jobTriggered: 'Job ausgelost',
       active: 'Aktiv',
       switch: 'Wechseln',
       removeConfirm: 'Diesen Server entfernen?',
-51ccc514 (fix: move i18n connection section from sidebar to settings)
+
     },
     display: {
       streaming: 'Streaming-Antworten',

@@ -1638,7 +1638,7 @@ jobTriggered: 'Job declenche',
       active: 'Actif',
       switch: 'Basculer',
       removeConfirm: 'Supprimer ce serveur ?',
-51ccc514 (fix: move i18n connection section from sidebar to settings)
+
     },
     display: {
       streaming: 'Reponses en continu',
