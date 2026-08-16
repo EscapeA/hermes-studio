@@ -18,8 +18,13 @@ export function parseStoredAvatar(raw: unknown): ProfileAvatar | null {
         if (parsed?.type === 'generated' && typeof parsed.seed === 'string' && parsed.seed) {
             return { type: 'generated', seed: parsed.seed }
         }
-        if (parsed?.type === 'image' && typeof parsed.dataUrl === 'string' && parsed.dataUrl) {
-            return { type: 'image', dataUrl: parsed.dataUrl }
+        if (parsed?.type === 'image') {
+            if (typeof parsed.dataUrl === 'string' && parsed.dataUrl) {
+                return { type: 'image', dataUrl: parsed.dataUrl }
+            }
+            if (typeof parsed.url === 'string' && parsed.url) {
+                return { type: 'image', url: parsed.url }
+            }
         }
     } catch {
         // Invalid persisted avatars fall back to the runtime's default icon.
