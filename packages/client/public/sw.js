@@ -1,8 +1,10 @@
 // Hermes Studio Service Worker
 // Caching strategy: Cache-First for hashed assets, Network-First for navigation, Stale-While-Revalidate for public assets
+// v2: + session list API SWR cache (fast second-open of sidebar/conversations)
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `hermes-static-${CACHE_VERSION}`;
+const API_CACHE = `hermes-api-${CACHE_VERSION}`;
 
 // Essential URLs to precache on install
 const PRECACHE_URLS = [
@@ -30,6 +32,17 @@ function isExcluded(url) {
   return EXCLUDED_PATHS.some(p => url.pathname.startsWith(p));
 }
 
+// Session list endpoints that get SWR caching (fast second-open, then background refresh).
+// Exact pathname match only — session detail/messages endpoints must stay network-only.
+const SESSION_LIST_PATHS = [
+  '/api/hermes/sessions',
+  '/api/hermes/sessions/conversations',
+];
+
+function isSessionListRequest(url) {
+  return SESSION_LIST_PATHS.includes(url.pathname);
+}
+
 // Match Vite hashed assets: /assets/js/name-HASH.js, /assets/css/name-HASH.css
 function isHashedAsset(url) {
   return url.pathname.match(/\/assets\/(js|css|images|fonts)\/.*-[a-zA-Z0-9_-]{8,}\./);
@@ -43,12 +56,13 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// --- Activate: clean up old caches ---
+// --- Activate: clean up old caches (keep current static + api caches) ---
 self.addEventListener('activate', (event) => {
+  const keep = new Set([STATIC_CACHE, API_CACHE]);
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.filter(k => k !== STATIC_CACHE).map(k => caches.delete(k))
+        keys.filter(k => !keep.has(k)).map(k => caches.delete(k))
       )
     ).then(() => self.clients.claim())
   );
@@ -63,6 +77,12 @@ self.addEventListener('fetch', (event) => {
   try {
     url = new URL(request.url);
   } catch {
+    return;
+  }
+
+  // Session list → SWR (serve cache instantly, refresh in background)
+  if (isSessionListRequest(url)) {
+    event.respondWith(staleWhileRevalidate(request, API_CACHE));
     return;
   }
 
