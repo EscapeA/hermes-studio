@@ -1654,7 +1654,7 @@ export default {
       active: '활성',
       switch: '전환',
       removeConfirm: '이 서버를 제거하시겠습니까?',
-51ccc514 (fix: move i18n connection section from sidebar to settings)
+
     },
     display: {
       streaming: '스트리밍 응답',
