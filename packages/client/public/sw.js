@@ -1,8 +1,9 @@
 // Hermes Studio Service Worker
 // Caching strategy: Cache-First for hashed assets, Network-First for navigation, Stale-While-Revalidate for public assets
-// v2: + session list API SWR cache (fast second-open of sidebar/conversations)
+// v3: + brand assets Cache-First (logo never hits network after first install);
+//     v2 added session list API SWR cache; v3 fixes precache robustness + version bump.
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `hermes-static-${CACHE_VERSION}`;
 const API_CACHE = `hermes-api-${CACHE_VERSION}`;
 
@@ -65,12 +66,13 @@ function isCacheFirstAsset(url) {
   return CACHE_FIRST_PATHS.includes(url.pathname);
 }
 
-// --- Install: precache essential resources ---
+// --- Install: precache essential resources (tolerant: one failure doesn't block activation) ---
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then(cache => cache.addAll(PRECACHE_URLS))
+    caches.open(STATIC_CACHE)
+      .then(cache => Promise.allSettled(PRECACHE_URLS.map(url => cache.add(url))))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 // --- Activate: clean up old caches (keep current static + api caches) ---
