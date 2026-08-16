@@ -63,7 +63,7 @@ export async function currentUser(ctx: Context) {
       created_at: user.created_at,
       updated_at: user.updated_at,
       last_login_at: user.last_login_at,
-      avatar: user.avatar || '',
+      hasAvatar: Boolean(user.avatar),
       requiresCredentialChange: process.env.HERMES_DESKTOP === 'true'
         ? false
         : user.username === DEFAULT_USERNAME && verifyPassword(DEFAULT_PASSWORD, user.password_hash),
@@ -104,6 +104,45 @@ export async function getMyAvatar(ctx: Context) {
     return
   }
   ctx.body = { avatar: getUserAvatar(userId) }
+}
+
+/**
+ * GET /api/auth/avatar/image
+ * Stream the authenticated user's image avatar as bytes (for <img src>).
+ */
+export async function getMyAvatarImage(ctx: Context) {
+  const userId = ctx.state.user?.id
+  if (!userId) {
+    ctx.status = 401
+    ctx.body = { error: 'Unauthorized' }
+    return
+  }
+  const raw = getUserAvatar(userId)
+  if (!raw) {
+    ctx.status = 404
+    ctx.body = { error: 'Avatar not found' }
+    return
+  }
+  try {
+    const parsed = JSON.parse(raw) as { type?: string; dataUrl?: string }
+    if (parsed?.type !== 'image' || typeof parsed.dataUrl !== 'string') {
+      ctx.status = 404
+      ctx.body = { error: 'Avatar image not found' }
+      return
+    }
+    const match = parsed.dataUrl.match(/^data:(image\/(?:png|jpeg|webp|svg\+xml));base64,([a-zA-Z0-9+/=]+)$/)
+    if (!match) {
+      ctx.status = 404
+      ctx.body = { error: 'Avatar image not found' }
+      return
+    }
+    ctx.set('Content-Type', match[1])
+    ctx.set('Cache-Control', 'private, max-age=60')
+    ctx.body = Buffer.from(match[2], 'base64')
+  } catch {
+    ctx.status = 404
+    ctx.body = { error: 'Avatar image not found' }
+  }
 }
 
 /**
