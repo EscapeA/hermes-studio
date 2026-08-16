@@ -4,7 +4,7 @@ import { useChatStore } from '@/stores/hermes/chat'
 import { useAppStore } from '@/stores/hermes/app'
 import { useProfilesStore } from '@/stores/hermes/profiles'
 import { useSettingsStore } from '@/stores/hermes/settings'
-import { fetchContextLength } from '@/api/hermes/sessions'
+import { fetchContextLength, fetchSessionUsageTotal } from '@/api/hermes/sessions'
 import { setModelContext } from '@/api/hermes/model-context'
 import { fetchSkills, type SkillCategory, type SkillInfo } from '@/api/hermes/skills'
 import { deleteSkillBundleApi, fetchSkillBundles, type SkillBundleInfo } from '@/api/hermes/skill-bundles'
@@ -809,6 +809,78 @@ function formatTokens(n: number): string {
   return String(n)
 }
 
+// Session-lifetime token consumption (real API usage totals from session_usage table).
+const sessionUsageTotal = ref<{
+  input: number
+  output: number
+  cacheRead: number
+  reasoning: number
+  apiCalls: number
+} | null>(null)
+let sessionUsageRequestKey = ''
+async function refreshSessionUsageTotal() {
+  const sid = chatStore.activeSession?.id
+  if (!sid) {
+    sessionUsageTotal.value = null
+    return
+  }
+  const key = `${sid}:${Date.now()}`
+  sessionUsageRequestKey = key
+  const data = await fetchSessionUsageTotal(sid)
+  if (sessionUsageRequestKey !== key || chatStore.activeSession?.id !== sid) return
+  if (!data) {
+    sessionUsageTotal.value = null
+    return
+  }
+  sessionUsageTotal.value = {
+    input: Number(data.inputTokens) || 0,
+    output: Number(data.outputTokens) || 0,
+    cacheRead: Number(data.cacheReadTokens) || 0,
+    reasoning: Number(data.reasoningTokens) || 0,
+    apiCalls: Number(data.apiCalls) || 0,
+  }
+}
+const sessionTotalTokens = computed(() => {
+  const u = sessionUsageTotal.value
+  if (!u) return 0
+  return u.input + u.output + u.cacheRead
+})
+const showSessionUsage = computed(() => {
+  const u = sessionUsageTotal.value
+  return !!chatStore.activeSession && !!u && sessionTotalTokens.value > 0
+})
+const cacheHitRatePercent = computed(() => {
+  const u = sessionUsageTotal.value
+  if (!u || sessionTotalTokens.value <= 0) return '0.00'
+  return ((u.cacheRead / sessionTotalTokens.value) * 100).toFixed(2)
+})
+const sessionUsageDetailText = computed(() => {
+  const u = sessionUsageTotal.value
+  if (!u) return ''
+  return t('chat.sessionTokensDetail', {
+    input: formatTokens(u.input),
+    output: formatTokens(u.output),
+    cacheRead: formatTokens(u.cacheRead),
+    reasoning: formatTokens(u.reasoning),
+  })
+})
+let sessionUsageTimer: ReturnType<typeof setInterval> | null = null
+watch(
+  () => chatStore.activeSession?.id,
+  refreshSessionUsageTotal,
+  { flush: 'post' },
+)
+onMounted(() => {
+  refreshSessionUsageTotal()
+  sessionUsageTimer = setInterval(refreshSessionUsageTotal, 15000)
+})
+onUnmounted(() => {
+  if (sessionUsageTimer) {
+    clearInterval(sessionUsageTimer)
+    sessionUsageTimer = null
+  }
+})
+
 // --- File attachment helpers ---
 
 function addFile(file: File, context?: string) {
@@ -1083,6 +1155,17 @@ function isImage(type: string): boolean {
         @mousedown="startResize"
         @dblclick="resetTextareaHeight"
       ></div>
+      <div v-if="showContextUsage && showSessionUsage" class="session-usage-corner">
+        <NPopover
+          :trigger="isMobileViewport ? 'click' : 'hover'"
+          placement="bottom-start"
+        >
+          <template #trigger>
+            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · {{ cacheHitRatePercent }}%</span>
+          </template>
+          <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
+        </NPopover>
+      </div>
       <div v-if="showContextUsage" class="context-usage-row">
         <span class="context-info" :class="{ 'context-warning': usagePercent > 80 }">
           {{ formatTokens(totalTokens) }} /
@@ -1757,6 +1840,15 @@ function isImage(type: string): boolean {
   color: $text-muted;
 }
 
+.session-usage-corner {
+  position: absolute;
+  top: 9px;
+  left: 14px;
+  z-index: 1;
+  min-width: 0;
+  max-width: calc(100% - 28px);
+}
+
 .context-usage-row {
   display: flex;
   align-items: center;
@@ -1797,6 +1889,24 @@ function isImage(type: string): boolean {
   }
 }
 
+.session-tokens-used {
+  font-size: 11px;
+  color: inherit;
+  min-width: 0;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    color: var(--text-secondary, inherit);
+  }
+}
+
+.session-usage-detail-text {
+  display: block;
+  white-space: pre-line;
+  line-height: 1.7;
+}
 .context-limit-editable {
   cursor: pointer;
   border-bottom: 1px dashed transparent;
