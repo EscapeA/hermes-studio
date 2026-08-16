@@ -2333,7 +2333,7 @@ export default {
       active: '使用中',
       switch: '切換',
       removeConfirm: '確定移除此伺服器？',
-51ccc514 (fix: move i18n connection section from sidebar to settings)
+
     },
     models: {
       apiKey: 'API Key',
