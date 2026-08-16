@@ -68,7 +68,7 @@ textarea {
   --vh: 1vh;
 }
 
-// Stable mobile shell height.
+// Stable mobile shell height while IME is open.
 // Prefer svh over dvh: dvh shrinks when the virtual keyboard opens and forces
 // every calc(100 * var(--vh)) shell (App, Drawer, Chat) to reflow — the flash /
 // stacking jump users see while opening filters inside drawers.
