@@ -1195,19 +1195,9 @@ function isImage(type: string): boolean {
               'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
               'context-percent-danger': usagePercent > 80,
             }"
-            >{{ usagePercent.toFixed(1) }}%</span
+            >{{ usagePercent.toFixed(2) }}%</span
           >
         </span>
-        <div class="context-bar">
-          <div
-            class="context-bar-fill"
-            :class="{
-              'context-bar-warn': usagePercent > 60 && usagePercent <= 80,
-              'context-bar-danger': usagePercent > 80,
-            }"
-            :style="{ width: `${usagePercent}%` }"
-          />
-        </div>
       </div>
       <textarea
         ref="textareaRef"
@@ -1926,60 +1916,12 @@ function isImage(type: string): boolean {
   }
 }
 
-.context-bar {
-  width: 60px;
-  height: 4px;
-  margin-inline-start: -4px;
-  background: rgba(var(--text-muted-rgb), 0.2);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.context-bar-fill {
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    rgba(var(--text-muted-rgb), 0.45),
-    rgba(var(--text-muted-rgb), 0.85)
-  );
-  border-radius: 2px;
-  transition: width 0.3s ease;
-
-  &.context-bar-warn {
-    background: linear-gradient(90deg, #c98a1a, #e8a735);
-  }
-
-  &.context-bar-danger {
-    background: linear-gradient(90deg, #c43a2a, #e85d4a);
-  }
-}
-
 .dark .context-limit-editable {
   color: var(--text-secondary);
 
   &:hover {
     border-bottom-color: var(--text-muted);
     background: rgba(var(--text-muted-rgb), 0.1);
-  }
-}
-
-.dark .context-bar {
-  background: rgba(var(--text-muted-rgb), 0.2);
-}
-
-.dark .context-bar-fill {
-  background: linear-gradient(
-    90deg,
-    rgba(var(--text-muted-rgb), 0.5),
-    rgba(var(--text-muted-rgb), 0.9)
-  );
-
-  &.context-bar-warn {
-    background: linear-gradient(90deg, #d99d35, #f0bc58);
-  }
-
-  &.context-bar-danger {
-    background: linear-gradient(90deg, #d95445, #ff7a68);
   }
 }
 
@@ -2038,11 +1980,6 @@ function isImage(type: string): boolean {
     text-overflow: ellipsis;
     font-size: 10px;
     line-height: 14px;
-  }
-
-  .context-bar {
-    width: 42px;
-    flex-shrink: 0;
   }
 }
 
