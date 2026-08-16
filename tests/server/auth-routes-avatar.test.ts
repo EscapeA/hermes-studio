@@ -11,6 +11,7 @@ vi.mock('../../packages/server/src/controllers/auth', () => ({
   changePassword: vi.fn(async (ctx: any) => { ctx.body = { ok: true } }),
   changeUsername: vi.fn(async (ctx: any) => { ctx.body = { ok: true } }),
   getMyAvatar: vi.fn(async (ctx: any) => { ctx.body = { avatar: '' } }),
+  getMyAvatarImage: vi.fn(async (ctx: any) => { ctx.status = 404 }),
   updateMyAvatar: vi.fn(async (ctx: any) => { ctx.body = { success: true } }),
   removePassword: vi.fn(async (ctx: any) => { ctx.body = { ok: true } }),
   listManagedUsers: vi.fn(async (ctx: any) => { ctx.body = { users: [] } }),
@@ -57,7 +58,14 @@ describe('auth routes: avatar endpoints', () => {
     expect(findLayer(authPublicRoutes, 'GET', '/api/auth/avatar')).toBeUndefined()
     expect(findLayer(authPublicRoutes, 'PUT', '/api/auth/avatar')).toBeUndefined()
     expect(findLayer(authProtectedRoutes, 'GET', '/api/auth/avatar')).toBeDefined()
+    expect(findLayer(authProtectedRoutes, 'GET', '/api/auth/avatar/image')).toBeDefined()
     expect(findLayer(authProtectedRoutes, 'PUT', '/api/auth/avatar')).toBeDefined()
+  })
+
+  it('mounts GET /api/auth/avatar/image on the protected router', async () => {
+    const { authProtectedRoutes } = await import('../../packages/server/src/routes/auth')
+    const layer = findLayer(authProtectedRoutes, 'GET', '/api/auth/avatar/image')
+    expect(layer).toBeDefined()
   })
 
   it('routes GET /api/auth/avatar to getMyAvatar', async () => {
