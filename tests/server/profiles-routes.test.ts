@@ -543,6 +543,57 @@ describe('Profile Routes', () => {
       expect(readFileSync(join(dir, 'avatar.bin')).toString()).toBe('avatar-png')
     })
 
+    it('lists image avatars as URL refs instead of inline data URLs', async () => {
+      const webUiHome = await mkdtemp(join(tmpdir(), 'hermes-web-ui-avatar-'))
+      tempHomes.push(webUiHome)
+      process.env.HERMES_WEB_UI_HOME = webUiHome
+      const dataUrl = `data:image/png;base64,${Buffer.from('avatar-png').toString('base64')}`
+      const { updateAvatar, list } = await import('../../packages/server/src/controllers/hermes/profiles')
+      await updateAvatar({
+        params: { name: 'default' },
+        request: { body: { type: 'image', dataUrl } },
+        status: 200,
+        body: undefined,
+      })
+      vi.mocked(hermesCli.listProfiles).mockResolvedValue([{
+        name: 'default',
+        active: true,
+        model: 'gpt',
+        alias: '',
+      }])
+      const ctx: any = { status: 200, body: undefined, get: () => '', state: { user: { role: 'super_admin' } } }
+      await list(ctx)
+      expect(ctx.body.profiles[0].avatar.dataUrl).toBeUndefined()
+      expect(ctx.body.profiles[0].avatar.url).toMatch(/^\/api\/hermes\/profiles\/default\/avatar\/image/)
+    })
+
+    it('streams the stored avatar image', async () => {
+      const webUiHome = await mkdtemp(join(tmpdir(), 'hermes-web-ui-avatar-'))
+      tempHomes.push(webUiHome)
+      process.env.HERMES_WEB_UI_HOME = webUiHome
+      const dataUrl = `data:image/png;base64,${Buffer.from('avatar-png').toString('base64')}`
+      const { updateAvatar, getAvatarImage } = await import('../../packages/server/src/controllers/hermes/profiles')
+      await updateAvatar({
+        params: { name: 'work' },
+        request: { body: { type: 'image', dataUrl } },
+        status: 200,
+        body: undefined,
+      })
+      const headers: Record<string, string> = {}
+      const ctx: any = {
+        params: { name: 'work' },
+        status: 200,
+        body: undefined,
+        set: (key: string, value: string) => { headers[key] = value },
+      }
+      await getAvatarImage(ctx)
+      expect(ctx.status).toBe(200)
+      expect(headers['Content-Type']).toBe('image/png')
+      const chunks: Buffer[] = []
+      for await (const chunk of ctx.body) chunks.push(Buffer.from(chunk))
+      expect(Buffer.concat(chunks).toString()).toBe('avatar-png')
+    })
+
     it('deletes profile avatar metadata', async () => {
       const webUiHome = await mkdtemp(join(tmpdir(), 'hermes-web-ui-avatar-'))
       tempHomes.push(webUiHome)

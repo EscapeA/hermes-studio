@@ -506,6 +506,8 @@ describe('user auth tables and middleware', () => {
     } as any
     await ctrl.currentUser(defaultCtx)
     expect(defaultCtx.body.user.requiresCredentialChange).toBe(true)
+    expect(defaultCtx.body.user.avatar).toBeUndefined()
+    expect(defaultCtx.body.user.hasAvatar).toBe(false)
 
     users.updateUserPassword(admin.id, 'stronger-password')
     const passwordChangedCtx = {
