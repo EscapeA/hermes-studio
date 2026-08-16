@@ -633,6 +633,8 @@ export default {
   // Chat
   chat: {
     contextRemaining: 'remaining',
+    sessionTokensUsed: 'Used',
+    sessionTokensDetail: 'Input {input}\nOutput {output}\nCache read {cacheRead}\nReasoning {reasoning}',
     contextClickToEdit: 'Click to edit context length',
     contextEditTitle: 'Edit Context Length',
     contextEditDesc: 'Set context length limit for current model (in tokens)',
