@@ -1,18 +1,34 @@
 // Hermes Studio Service Worker
 // Caching strategy: Cache-First for hashed assets, Network-First for navigation, Stale-While-Revalidate for public assets
+// v3: + brand assets Cache-First (logo never hits network after first install);
+//     v2 added session list API SWR cache; v3 fixes precache robustness + version bump.
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `hermes-static-${CACHE_VERSION}`;
+const API_CACHE = `hermes-api-${CACHE_VERSION}`;
 
 // Essential URLs to precache on install
 const PRECACHE_URLS = [
   '/',
   '/offline.html',
-  '/manifest.json',
+  '/manifest.webmanifest',
   '/icon-192.png',
   '/icon-512.png',
   '/logo.png',
   '/favicon.ico',
+];
+
+// Brand/static resources that are effectively immutable (no content hash in
+// filename, but change only across app releases). Cache-First so cold starts
+// never hit the network for them; SW version bump clears the cache on activate.
+const CACHE_FIRST_PATHS = [
+  '/logo.png',
+  '/logo-original.png',
+  '/favicon.ico',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/manifest.webmanifest',
+  '/offline.html',
 ];
 
 // Paths that must NEVER be intercepted (API, WebSocket, Socket.IO)
@@ -30,25 +46,42 @@ function isExcluded(url) {
   return EXCLUDED_PATHS.some(p => url.pathname.startsWith(p));
 }
 
+// Session list endpoints that get SWR caching (fast second-open, then background refresh).
+// Exact pathname match only — session detail/messages endpoints must stay network-only.
+const SESSION_LIST_PATHS = [
+  '/api/hermes/sessions',
+  '/api/hermes/sessions/conversations',
+];
+
+function isSessionListRequest(url) {
+  return SESSION_LIST_PATHS.includes(url.pathname);
+}
+
 // Match Vite hashed assets: /assets/js/name-HASH.js, /assets/css/name-HASH.css
 function isHashedAsset(url) {
   return url.pathname.match(/\/assets\/(js|css|images|fonts)\/.*-[a-zA-Z0-9_-]{8,}\./);
 }
 
-// --- Install: precache essential resources ---
+function isCacheFirstAsset(url) {
+  return CACHE_FIRST_PATHS.includes(url.pathname);
+}
+
+// --- Install: precache essential resources (tolerant: one failure doesn't block activation) ---
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then(cache => cache.addAll(PRECACHE_URLS))
+    caches.open(STATIC_CACHE)
+      .then(cache => Promise.allSettled(PRECACHE_URLS.map(url => cache.add(url))))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// --- Activate: clean up old caches ---
+// --- Activate: clean up old caches (keep current static + api caches) ---
 self.addEventListener('activate', (event) => {
+  const keep = new Set([STATIC_CACHE, API_CACHE]);
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.filter(k => k !== STATIC_CACHE).map(k => caches.delete(k))
+        keys.filter(k => !keep.has(k)).map(k => caches.delete(k))
       )
     ).then(() => self.clients.claim())
   );
@@ -66,14 +99,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Session list → SWR (serve cache instantly, refresh in background).
+  // Matched before the same-origin gate on purpose: cross-origin CORS calls
+  // (e.g. CF Pages frontend → tailscale backend) also benefit from SWR.
+  if (isSessionListRequest(url)) {
+    event.respondWith(staleWhileRevalidate(request, API_CACHE, event));
+    return;
+  }
+
   // Never intercept API/WebSocket/Socket.IO
   if (isExcluded(url)) return;
 
-  // Only handle same-origin requests
+  // Only handle same-origin requests (session list already handled above)
   if (url.origin !== self.location.origin) return;
 
-  if (isHashedAsset(url)) {
-    // Cache-First for hashed assets (immutable due to hash in filename)
+  if (isHashedAsset(url) || isCacheFirstAsset(url)) {
+    // Cache-First for immutable assets (content hash or brand resources)
     event.respondWith(cacheFirst(request, STATIC_CACHE));
   } else if (url.pathname === '/' || url.pathname === '/index.html') {
     // Network-First for navigation (always try fresh)
@@ -126,7 +167,7 @@ async function networkFirst(request, cacheName) {
   }
 }
 
-async function staleWhileRevalidate(request, cacheName) {
+async function staleWhileRevalidate(request, cacheName, event) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
   const fetchPromise = fetch(request).then(response => {
@@ -135,5 +176,9 @@ async function staleWhileRevalidate(request, cacheName) {
     }
     return response;
   }).catch(() => cached);
+  // Keep the background refresh alive for the whole SW lifecycle, even when
+  // the page already received the cached (stale) response — otherwise the
+  // browser may terminate the worker before the refresh completes.
+  if (event && fetchPromise) event.waitUntil(fetchPromise);
   return cached || fetchPromise;
 }
