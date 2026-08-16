@@ -15,6 +15,8 @@ import { useChatStore } from "@/stores/hermes/chat";
 import { useFilesStore } from "@/stores/hermes/files";
 import { useToolPanelStore } from "@/stores/hermes/tool-panel";
 import { useSettingsStore } from "@/stores/hermes/settings";
+import { useProfilesStore } from "@/stores/hermes/profiles";
+import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";
 import { chatSessionAgentAvatar, type ChatAgentAvatar } from "@/utils/chat-agent-avatar";
 import ToolChangeCard from "./ToolChangeCard.vue";
 import {
@@ -215,8 +217,19 @@ const chatStore = useChatStore();
 const filesStore = useFilesStore();
 const toolPanelStore = useToolPanelStore();
 const settingsStore = useSettingsStore();
+const profilesStore = useProfilesStore();
 const speech = useGlobalSpeech();
 const voiceSettings = useVoiceSettings();
+const assistantProfileName = computed(() => chatStore.activeSession?.profile || profilesStore.activeProfileName || "default");
+const assistantProfileAvatar = computed(() => profilesStore.profiles.find(profile => profile.name === assistantProfileName.value)?.avatar);
+const isCodingAgentSession = computed(() => {
+  const session = chatStore.activeSession;
+  if (!session) return false;
+  const runtime = String(session.codingAgentId || session.agent || "").trim().toLowerCase();
+  return session.source === "coding_agent" || session.source === "global_agent"
+    || runtime === "ekko-agent" || runtime === "ekko" || runtime === "claude"
+    || runtime === "claude-code" || runtime === "codex" || runtime === "pi";
+});
 const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
 
 // Copy entire bubble content
@@ -953,8 +966,15 @@ onBeforeUnmount(() => {
     </template>
     <template v-else>
       <div class="msg-body">
+        <ProfileAvatar
+          v-if="message.role === 'assistant' && !isCodingAgentSession"
+          class="msg-avatar"
+          :name="assistantProfileName"
+          :avatar="assistantProfileAvatar"
+          :size="40"
+        />
         <img
-          v-if="message.role === 'assistant'"
+          v-else-if="message.role === 'assistant'"
           class="msg-avatar"
           :src="assistantAgent.src"
           :alt="assistantAgent.label"
