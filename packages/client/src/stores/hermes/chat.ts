@@ -30,7 +30,7 @@ export const LIVE_CHAT_MAX_LOADED_MESSAGES = 300
 // messages from the paginated REST endpoint immediately, then let the socket
 // resume fill in the full state (usage, queue, in-flight events) in the
 // background. Kept small so the first paint is nearly instant.
-export const SESSION_FAST_FIRST_PAGE_SIZE = 50
+export const SESSION_FAST_FIRST_PAGE_SIZE = 20
 const LEGACY_WORKSPACE_RUN_CHANGE_MESSAGE_PREFIX = 'workspace-run-change:'
 type ChatAgentId = 'hermes' | 'claude' | 'codex' | 'pi' | 'grok' | 'ekko-agent'
 
