@@ -1238,18 +1238,19 @@ function openAttachmentPreview(attachment: Attachment) {
       </button>
     </div>
 
-    <div v-if="showContextUsage && showSessionTokensUsed" class="session-usage-corner">
-      <NPopover
-        :trigger="isMobileViewport ? 'click' : 'hover'"
-        placement="bottom-start"
-      >
-        <template #trigger>
-          <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · {{ cacheHitRatePercent }}%</span>
-        </template>
-        <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
-      </NPopover>
-    </div>
     <div v-if="showContextUsage" class="context-usage-row">
+      <div class="session-usage-slot">
+        <NPopover
+          v-if="showSessionTokensUsed"
+          :trigger="isMobileViewport ? 'click' : 'hover'"
+          placement="bottom-start"
+        >
+          <template #trigger>
+            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · <span class="session-percent">{{ cacheHitRatePercent }}%</span></span>
+          </template>
+          <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
+        </NPopover>
+      </div>
       <span class="context-info" :class="{ 'context-warning': showContextLimit && usagePercent > 80 }">
         <template v-if="showSessionUsage">{{ t('chat.sessionUsage') }} </template>
         {{ formatTokens(totalTokens) }}
@@ -1965,53 +1966,40 @@ function openAttachmentPreview(attachment: Attachment) {
   color: $text-muted;
 }
 
-.session-usage-corner {
-  position: absolute;
-  top: 9px;
-  left: 14px;
-  z-index: 1;
-  min-width: 0;
-  max-width: calc(100% - 28px);
-}
-
 .context-usage-row {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 7px;
-  position: relative;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  margin-inline-start: 0;
-  padding: 4px 10px;
-  border: 1px solid var(--input-border-color);
-  border-bottom: 0;
-  border-radius: $radius-sm $radius-sm 0 0;
-  background-color: $bg-card;
+  // Plain text line above the composer: the 11px side padding lands the text on the
+  // same axis as the textarea (1px wrapper border + 10px wrapper padding), so the
+  // usage line reads as part of the composer instead of a second table row.
+  padding: 0 11px 6px;
   color: $text-muted;
-  transition: border-color $transition-fast;
+  font-size: 11px;
+  line-height: 14px;
 
-  .dark & {
-    background-color: $bg-main-surface;
+  :deep(.n-popover-trigger),
+  :deep(.n-tooltip-trigger) {
+    display: inline-flex;
+    align-items: center;
+    font-size: inherit;
+    line-height: inherit;
   }
 }
 
-.context-usage-row + .input-wrapper {
-  border-start-start-radius: 0;
-  border-start-end-radius: 0;
-}
-
-.chat-input-area:has(.input-wrapper:hover) .context-usage-row {
-  border-color: var(--input-border-hover-color);
-}
-
-.chat-input-area:has(.input-wrapper:focus-within) .context-usage-row {
-  border-color: var(--input-border-focus-color);
+.session-usage-slot {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .context-info {
-  font-size: 11px;
+  font-size: inherit;
+  line-height: inherit;
   color: inherit;
   min-width: 0;
   white-space: nowrap;
@@ -2021,10 +2009,13 @@ function openAttachmentPreview(attachment: Attachment) {
   }
 }
 
-.context-percent {
+.context-percent,
+.session-percent {
   font-weight: 600;
   color: inherit;
+}
 
+.context-percent {
   &.context-percent-warn {
     color: #e8a735;
   }
@@ -2035,7 +2026,8 @@ function openAttachmentPreview(attachment: Attachment) {
 }
 
 .session-tokens-used {
-  font-size: 11px;
+  font-size: inherit;
+  line-height: inherit;
   color: inherit;
   min-width: 0;
   white-space: nowrap;
