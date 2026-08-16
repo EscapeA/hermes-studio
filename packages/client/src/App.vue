@@ -805,7 +805,6 @@ useKeyboard();
     backdrop-filter: none;
   }
 
-  :deep(.chat-input-area .context-usage-row),
   :deep(.chat-input-area .input-wrapper) {
     background-color: var(--theme-input-bg, rgba(var(--bg-main-surface-rgb), 0.72));
     -webkit-backdrop-filter: var(--theme-input-filter, blur(8px) saturate(110%));
