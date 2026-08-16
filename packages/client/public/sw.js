@@ -10,11 +10,24 @@ const API_CACHE = `hermes-api-${CACHE_VERSION}`;
 const PRECACHE_URLS = [
   '/',
   '/offline.html',
-  '/manifest.json',
+  '/manifest.webmanifest',
   '/icon-192.png',
   '/icon-512.png',
   '/logo.png',
   '/favicon.ico',
+];
+
+// Brand/static resources that are effectively immutable (no content hash in
+// filename, but change only across app releases). Cache-First so cold starts
+// never hit the network for them; SW version bump clears the cache on activate.
+const CACHE_FIRST_PATHS = [
+  '/logo.png',
+  '/logo-original.png',
+  '/favicon.ico',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/manifest.webmanifest',
+  '/offline.html',
 ];
 
 // Paths that must NEVER be intercepted (API, WebSocket, Socket.IO)
@@ -46,6 +59,10 @@ function isSessionListRequest(url) {
 // Match Vite hashed assets: /assets/js/name-HASH.js, /assets/css/name-HASH.css
 function isHashedAsset(url) {
   return url.pathname.match(/\/assets\/(js|css|images|fonts)\/.*-[a-zA-Z0-9_-]{8,}\./);
+}
+
+function isCacheFirstAsset(url) {
+  return CACHE_FIRST_PATHS.includes(url.pathname);
 }
 
 // --- Install: precache essential resources ---
@@ -94,8 +111,8 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin requests (session list already handled above)
   if (url.origin !== self.location.origin) return;
 
-  if (isHashedAsset(url)) {
-    // Cache-First for hashed assets (immutable due to hash in filename)
+  if (isHashedAsset(url) || isCacheFirstAsset(url)) {
+    // Cache-First for immutable assets (content hash or brand resources)
     event.respondWith(cacheFirst(request, STATIC_CACHE));
   } else if (url.pathname === '/' || url.pathname === '/index.html') {
     // Network-First for navigation (always try fresh)
