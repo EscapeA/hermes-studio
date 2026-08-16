@@ -839,8 +839,6 @@ const totalTokens = computed(() => {
 const showContextUsage = computed(() => !!chatStore.activeSession)
 const showContextLimit = computed(() => !showSessionUsage.value)
 
-const remainingTokens = computed(() => Math.max(0, contextLength.value - totalTokens.value))
-
 const usagePercent = computed(() =>
   Math.min((totalTokens.value / contextLength.value) * 100, 100),
 )
@@ -1182,7 +1180,14 @@ function openAttachmentPreview(attachment: Attachment) {
             </template>
             <span>{{ t('chat.contextClickToEdit') }}</span>
           </NTooltip>
-          · {{ t('chat.contextRemaining') }} {{ formatTokens(remainingTokens) }}
+          · <span
+            class="context-percent"
+            :class="{
+              'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
+              'context-percent-danger': usagePercent > 80,
+            }"
+            >{{ usagePercent.toFixed(1) }}%</span
+          >
         </template>
       </span>
       <div v-if="showContextLimit" class="context-bar">
@@ -1931,6 +1936,19 @@ function openAttachmentPreview(attachment: Attachment) {
 
   &.context-warning {
     color: #e8a735;
+  }
+}
+
+.context-percent {
+  font-weight: 600;
+  color: inherit;
+
+  &.context-percent-warn {
+    color: #e8a735;
+  }
+
+  &.context-percent-danger {
+    color: #e85d4a;
   }
 }
 
