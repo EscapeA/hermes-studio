@@ -1248,18 +1248,17 @@ function isImage(type: string): boolean {
         @mousedown="startResize"
         @dblclick="resetTextareaHeight"
       ></div>
-      <div v-if="showContextUsage && showSessionUsage" class="session-usage-corner">
+      <div v-if="showContextUsage" class="context-usage-row">
         <NPopover
+          v-if="showSessionUsage"
           :trigger="isMobileViewport ? 'click' : 'hover'"
-          placement="bottom-start"
+          placement="top-start"
         >
           <template #trigger>
             <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · {{ cacheHitRatePercent }}%</span>
           </template>
           <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
         </NPopover>
-      </div>
-      <div v-if="showContextUsage" class="context-usage-row">
         <span class="context-info" :class="{ 'context-warning': usagePercent > 80 }">
           {{ formatTokens(totalTokens) }} /
           <NTooltip trigger="hover" :disabled="isMobileViewport">
@@ -1952,15 +1951,6 @@ function isImage(type: string): boolean {
   color: $text-muted;
 }
 
-.session-usage-corner {
-  position: absolute;
-  top: 9px;
-  left: 14px;
-  z-index: 1;
-  min-width: 0;
-  max-width: calc(100% - 28px);
-}
-
 .context-usage-row {
   display: flex;
   align-items: center;
@@ -2094,6 +2084,11 @@ function isImage(type: string): boolean {
   .context-info {
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: 10px;
+    line-height: 14px;
+  }
+
+  .session-tokens-used {
     font-size: 10px;
     line-height: 14px;
   }
