@@ -35,6 +35,11 @@ export type ContentBlock = ContentBlockImport
 
 export const LIVE_CHAT_MESSAGE_PAGE_SIZE = 150
 export const LIVE_CHAT_MAX_LOADED_MESSAGES = 300
+// Fast-first page when opening a session: render this many of the latest
+// messages from the paginated REST endpoint immediately, then let the socket
+// resume fill in the full state (usage, queue, in-flight events) in the
+// background. Kept small so the first paint is nearly instant.
+export const SESSION_FAST_FIRST_PAGE_SIZE = 50
 const LEGACY_WORKSPACE_RUN_CHANGE_MESSAGE_PREFIX = 'workspace-run-change:'
 type ChatAgentId = 'hermes' | 'claude' | 'codex' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor' | 'antigravity' | 'qwen' | 'kimi' | 'codebuddy' | 'qoder' | 'copilot' | 'zcode' | 'ekko-agent'
 
@@ -2120,8 +2125,15 @@ export const useChatStore = defineStore('chat', () => {
 
     let loaded = false
     try {
+      // Fast path: fire the paginated REST request immediately so the latest
+      // messages render while the socket resume fills in the full state.
+      const fastPagePromise = fetchSessionMessagesPage(
+        sessionId, 0, SESSION_FAST_FIRST_PAGE_SIZE, activeSession.value?.profile,
+      )
+      let resumeAppliedMessages = false
+
       // Load messages via Socket.IO resume (server loads from DB if not in memory)
-      await new Promise<void>((resolve, reject) => {
+      const resumePromise = new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error('resume timeout')), 15_000)
         resumeSession(sessionId, (data) => {
           clearTimeout(timeout)
@@ -2182,6 +2194,7 @@ export const useChatStore = defineStore('chat', () => {
             target.messageTotal = data.messageTotal ?? target.messageCount ?? target.loadedMessageCount
             target.messageCount = target.messageTotal
             target.hasMoreBefore = data.hasMoreBefore ?? target.loadedMessageCount < target.messageTotal
+            resumeAppliedMessages = true
           }
           if (!target.title) {
             const firstUser = target.messages.find(m => m.role === 'user')
@@ -2272,6 +2285,31 @@ export const useChatStore = defineStore('chat', () => {
           resolve()
         }, activeSession.value?.profile, runtimeTransport())
       })
+
+      // Apply the fast page as soon as it lands (does not block on resume).
+      // If resume already applied a fuller message list, keep that instead.
+      const fastPage = await fastPagePromise
+      if (
+        activeSessionId.value === sessionId
+        && requestSequence === switchSessionRequestSequence
+        && fastPage
+        && !resumeAppliedMessages
+      ) {
+        const fastTarget = sessions.value.find(s => s.id === sessionId)
+        if (fastTarget) {
+          fastTarget.messages = mapHermesMessages(fastPage.messages || [])
+          restorePersistedSubagentStreams(sessionId)
+          fastTarget.loadedMessageCount = fastPage.messages.length
+          fastTarget.messageTotal = fastPage.total
+          fastTarget.messageCount = fastPage.total
+          fastTarget.hasMoreBefore = fastPage.hasMore
+          activeSession.value = fastTarget
+        }
+      }
+
+      // Now let the socket resume complete: it replaces messages with the full
+      // page (if it arrived after the fast page) and fills in usage/queue/in-flight state.
+      await resumePromise
       // A search hit can be older than both the resume page and the live-chat
       // history cap. Only explicit message navigation may extend that window.
       while (focusId && isCurrentSelection()) {
