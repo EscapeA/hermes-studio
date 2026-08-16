@@ -1653,7 +1653,7 @@ export default {
       active: 'アクティブ',
       switch: '切り替え',
       removeConfirm: 'このサーバーを削除しますか？',
-51ccc514 (fix: move i18n connection section from sidebar to settings)
+
     },
     display: {
       streaming: 'ストリームレスポンス',
