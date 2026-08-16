@@ -80,16 +80,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Session list → SWR (serve cache instantly, refresh in background)
+  // Session list → SWR (serve cache instantly, refresh in background).
+  // Matched before the same-origin gate on purpose: cross-origin CORS calls
+  // (e.g. CF Pages frontend → tailscale backend) also benefit from SWR.
   if (isSessionListRequest(url)) {
-    event.respondWith(staleWhileRevalidate(request, API_CACHE));
+    event.respondWith(staleWhileRevalidate(request, API_CACHE, event));
     return;
   }
 
   // Never intercept API/WebSocket/Socket.IO
   if (isExcluded(url)) return;
 
-  // Only handle same-origin requests
+  // Only handle same-origin requests (session list already handled above)
   if (url.origin !== self.location.origin) return;
 
   if (isHashedAsset(url)) {
@@ -146,7 +148,7 @@ async function networkFirst(request, cacheName) {
   }
 }
 
-async function staleWhileRevalidate(request, cacheName) {
+async function staleWhileRevalidate(request, cacheName, event) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
   const fetchPromise = fetch(request).then(response => {
@@ -155,5 +157,9 @@ async function staleWhileRevalidate(request, cacheName) {
     }
     return response;
   }).catch(() => cached);
+  // Keep the background refresh alive for the whole SW lifecycle, even when
+  // the page already received the cached (stale) response — otherwise the
+  // browser may terminate the worker before the refresh completes.
+  if (event && fetchPromise) event.waitUntil(fetchPromise);
   return cached || fetchPromise;
 }
