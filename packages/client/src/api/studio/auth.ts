@@ -45,12 +45,14 @@ export interface CurrentUser {
   updated_at: number
   last_login_at: number | null
   avatar?: string
+  hasAvatar?: boolean
   requiresCredentialChange?: boolean
 }
 
 export interface UserAvatar {
   type: 'image' | 'default'
   dataUrl?: string
+  url?: string
   seed?: string
 }
 

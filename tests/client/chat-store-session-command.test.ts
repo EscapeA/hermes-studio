@@ -56,6 +56,7 @@ vi.mock('@/api/studio/sessions', () => ({
   deleteSession: vi.fn(),
   fetchSession: vi.fn(),
   fetchSessions: vi.fn(),
+  fetchSessionMessagesPage: vi.fn(),
   fetchWorkspaceRunChangesForSession: vi.fn(async () => []),
   fetchWorkspaceRunChangeFile: vi.fn(async () => null),
   setSessionModel: vi.fn(),
