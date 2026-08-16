@@ -2499,7 +2499,6 @@ export default {
       active: '当前使用',
       switch: '切换',
       removeConfirm: '确定移除这个服务器吗？',
-51ccc514 (fix: move i18n connection section from sidebar to settings)
     },
     models: {
       apiKey: 'API Key',
