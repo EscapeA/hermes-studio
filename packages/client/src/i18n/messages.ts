@@ -24,18 +24,18 @@ export function mergeMessagesWithFallback(
 }
 
 const localeLoaders: Record<SupportedLocale, () => Promise<{ default: LocaleMessages }>> = {
-  en: () => import('./locales/en'),
-  zh: () => import('./locales/zh'),
-  'zh-TW': () => import('./locales/zh-TW'),
-  ja: () => import('./locales/ja'),
-  ko: () => import('./locales/ko'),
-  fr: () => import('./locales/fr'),
-  es: () => import('./locales/es'),
-  de: () => import('./locales/de'),
-  pt: () => import('./locales/pt'),
-  ru: () => import('./locales/ru'),
-  ar: () => import('./locales/ar'),
-  tr: () => import('./locales/tr'),
+  en: () => import('@locales/en'),
+  zh: () => import('@locales/zh'),
+  'zh-TW': () => import('@locales/zh-TW'),
+  ja: () => import('@locales/ja'),
+  ko: () => import('@locales/ko'),
+  fr: () => import('@locales/fr'),
+  es: () => import('@locales/es'),
+  de: () => import('@locales/de'),
+  pt: () => import('@locales/pt'),
+  ru: () => import('@locales/ru'),
+  ar: () => import('@locales/ar'),
+  tr: () => import('@locales/tr'),
 }
 
 const localeMessagePromises = new Map<SupportedLocale, Promise<LocaleMessages>>()
