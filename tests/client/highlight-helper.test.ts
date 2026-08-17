@@ -11,9 +11,33 @@ const highlightJsMock = vi.hoisted(() => ({
 
 const copyToClipboardMock = vi.hoisted(() => vi.fn<(text: string) => Promise<boolean>>(async () => true))
 
-vi.mock('highlight.js', () => ({
+// highlight.ts now imports from 'highlight.js/lib/core' and per-language
+// submodules instead of the full 'highlight.js' package, so the mocks must
+// target those exact paths.
+vi.mock('highlight.js/lib/core', () => ({
   default: highlightJsMock,
 }))
+
+vi.mock('highlight.js/lib/languages/bash', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/c', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/cpp', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/css', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/diff', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/dockerfile', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/go', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/ini', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/java', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/javascript', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/json', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/markdown', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/php', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/python', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/rust', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/shell', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/sql', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/typescript', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/xml', () => ({ default: {} }))
+vi.mock('highlight.js/lib/languages/yaml', () => ({ default: {} }))
 
 vi.mock('@/utils/clipboard', () => ({
   copyToClipboard: copyToClipboardMock,
