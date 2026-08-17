@@ -4,7 +4,7 @@
 //     v3 added brand assets Cache-First (logo never hits network after first install);
 //     v2 added session list API SWR cache; v3 fixes precache robustness + version bump.
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const STATIC_CACHE = `hermes-static-${CACHE_VERSION}`;
 const API_CACHE = `hermes-api-${CACHE_VERSION}`;
 
