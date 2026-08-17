@@ -1,5 +1,5 @@
 import { createI18n } from 'vue-i18n'
-import { loadLocaleMessages, mergeMessagesWithFallback, supportedLocales } from './messages'
+import { loadLocaleMessages, supportedLocales } from './messages'
 import type { SupportedLocale } from './messages'
 import { applyDocumentDirection } from './direction'
 
@@ -43,20 +43,10 @@ const locale = resolveLocale(saved)
 setHtmlLang(locale)
 
 async function createAppI18n() {
-  const englishMessagesPromise = loadLocaleMessages('en')
-  const localeMessagesPromise = locale === 'en'
-    ? englishMessagesPromise
-    : loadLocaleMessages(locale)
-  const [englishMessages, localeMessages] = await Promise.all([
-    englishMessagesPromise,
-    localeMessagesPromise,
-  ])
-  const initialMessages = locale === 'en'
-    ? { en: englishMessages }
-    : {
-        en: englishMessages,
-        [locale]: mergeMessagesWithFallback(englishMessages, localeMessages),
-      }
+  // `loadLocaleMessages` already returns messages merged with the English
+  // fallback at build time (vite `locale-merge` plugin), so the runtime only
+  // fetches a single locale chunk instead of locale + en.
+  const initialMessages = { [locale]: await loadLocaleMessages(locale) }
 
   return createI18n({
     legacy: false,
@@ -80,12 +70,7 @@ export async function switchLocale(newLocale: string): Promise<void> {
   if (!(globalI18n.availableLocales as readonly string[]).includes(nextLocale)) {
     const nextMessages = await loadLocaleMessages(nextLocale)
     if (sequence !== localeSwitchSequence) return
-    globalI18n.setLocaleMessage(
-      nextLocale,
-      nextLocale === 'en'
-        ? nextMessages
-        : mergeMessagesWithFallback(globalI18n.getLocaleMessage('en'), nextMessages),
-    )
+    globalI18n.setLocaleMessage(nextLocale, nextMessages)
   }
 
   if (sequence !== localeSwitchSequence) return
