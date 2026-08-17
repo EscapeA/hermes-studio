@@ -382,6 +382,9 @@ export class ChatRunSocket {
   private backgroundBrokerId?: string
   private backgroundPollRetryAt = 0
   private backgroundActivityGraceUntil = 0
+  /** socketId → last observed write-backlog bytes (stalled-connection detection) */
+  private socketBacklog = new Map<string, number>()
+  private socketHealthTimer?: NodeJS.Timeout
   private closing = false
 
   constructor(io: Server) {
@@ -524,8 +527,49 @@ export class ChatRunSocket {
     this.nsp.on('connection', this.onConnection.bind(this))
     this.backgroundPollTimer = setInterval(() => void this.pollBackgroundWork(), 500)
     this.backgroundPollTimer.unref?.()
+    this.socketHealthTimer = setInterval(() => this.checkSocketHealth(), 5_000)
+    this.socketHealthTimer.unref?.()
     void this.pollBackgroundWork()
     logger.info('[chat-run-socket] Socket.IO ready at /chat-run')
+  }
+
+  /**
+   * Detect socket connections whose TCP write buffer has been accumulating for
+   * multiple checks without draining. This happens when a client (e.g. a phone
+   * PWA on a flaky tailscale/relay link) goes half-open: the transport stays
+   * ESTAB on our side, but frames we emit for the session pile up in the send
+   * buffer and the client never sees new messages. Force-disconnecting such a
+   * socket lets socket.io-client's reconnection + resume path re-sync it.
+   */
+  private checkSocketHealth(): void {
+    const KILL_BACKLOG_BYTES = 256 * 1024
+    for (const socket of this.nsp.sockets.values()) {
+      try {
+        const raw = (socket.conn?.transport as any)?.socket as
+          | { writableLength?: number }
+          | undefined
+        if (!raw || typeof raw.writableLength !== 'number') continue
+        const buffered = raw.writableLength || 0
+        const prev = this.socketBacklog.get(socket.id)
+        if (buffered > KILL_BACKLOG_BYTES && prev != null && buffered >= prev) {
+          const rooms = Array.from(socket.rooms || [])
+            .filter(room => room.startsWith('session:'))
+            .slice(0, 5)
+          logger.warn(
+            `[chat-run-socket] killing stalled socket (write backlog not draining) socketId=${socket.id} buffered=${buffered} rooms=${rooms.join(',')}`,
+          )
+          socket.disconnect(true)
+          this.socketBacklog.delete(socket.id)
+          continue
+        }
+        this.socketBacklog.set(socket.id, buffered)
+      } catch {
+        // Ignore per-socket inspection errors; a socket mid-close can throw.
+      }
+    }
+    for (const id of Array.from(this.socketBacklog.keys())) {
+      if (!this.nsp.sockets.has(id)) this.socketBacklog.delete(id)
+    }
   }
 
   // --- Auth middleware ---
@@ -2693,6 +2737,11 @@ export class ChatRunSocket {
         error: { code: 'calendar_failed' },
       })
     }
+    if (this.socketHealthTimer) {
+      clearInterval(this.socketHealthTimer)
+      this.socketHealthTimer = undefined
+    }
+    this.socketBacklog.clear()
     const releaseClaims: Array<Promise<unknown>> = []
     for (const [sessionId, state] of this.sessionMap.entries()) {
       if (state.abortController) {
