@@ -1,0 +1,405 @@
+From b07d1a3ee37e9872359816f21d09c57591e230d8 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Fri, 14 Aug 2026 18:54:27 +0800
+Subject: [PATCH 1/3] feat(chat): show session-lifetime token consumption in
+ input composer
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Add '已用 X' label next to context usage in ChatInput — real API usage
+totals (input+output+cache_read+cache_write) from session_usage table,
+refreshed every 15s. Hover/click shows multi-line breakdown (input/output/
+cache read/cache write/reasoning).
+
+- server: getUsageTotals() sums usage_scope='model_call' rows;
+  /api/hermes/sessions/:id/usage?scope=total returns camelCase totals
+- client: fetchSessionUsageTotal() + 15s polling in ChatInput
+- i18n: chat.sessionTokensUsed / chat.sessionTokensDetail (10 locales)
+- NPopover: hover on desktop, click on mobile; plain-text style matches
+  existing context usage
+---
+ packages/client/src/api/hermes/sessions.ts    |  17 +++
+ .../src/components/hermes/chat/ChatInput.vue  | 101 +++++++++++++++++-
+ packages/client/src/i18n/locales/de.ts        |   2 +
+ packages/client/src/i18n/locales/en.ts        |   2 +
+ packages/client/src/i18n/locales/es.ts        |   2 +
+ packages/client/src/i18n/locales/fr.ts        |   2 +
+ packages/client/src/i18n/locales/ja.ts        |   2 +
+ packages/client/src/i18n/locales/ko.ts        |   2 +
+ packages/client/src/i18n/locales/pt.ts        |   2 +
+ packages/client/src/i18n/locales/ru.ts        |   2 +
+ packages/client/src/i18n/locales/zh-TW.ts     |   2 +
+ packages/client/src/i18n/locales/zh.ts        |   2 +
+ .../server/src/controllers/hermes/sessions.ts |   6 +-
+ packages/server/src/db/hermes/usage-store.ts  |  39 +++++++
+ 14 files changed, 181 insertions(+), 2 deletions(-)
+
+diff --git a/packages/client/src/api/hermes/sessions.ts b/packages/client/src/api/hermes/sessions.ts
+index 2b722d36..b34993a1 100644
+--- a/packages/client/src/api/hermes/sessions.ts
++++ b/packages/client/src/api/hermes/sessions.ts
+@@ -633,6 +633,23 @@ export async function fetchSessionUsage(ids: string[]): Promise<Record<string, {
+   return request(`/api/hermes/sessions/usage?${params}`)
+ }
+ 
++export interface SessionUsageTotal {
++  inputTokens: number
++  outputTokens: number
++  cacheReadTokens: number
++  cacheWriteTokens: number
++  reasoningTokens: number
++  apiCalls: number
++}
++
++export async function fetchSessionUsageTotal(id: string): Promise<SessionUsageTotal | null> {
++  try {
++    return await request<SessionUsageTotal>(`/api/hermes/sessions/${id}/usage?scope=total`)
++  } catch {
++    return null
++  }
++}
++
+ export async function fetchSessionUsageSingle(id: string): Promise<{ input_tokens: number; output_tokens: number } | null> {
+   try {
+     return await request<{ input_tokens: number; output_tokens: number }>(`/api/hermes/sessions/${id}/usage`)
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index 3423d2af..ca49ed70 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -4,7 +4,7 @@ import { useChatStore } from '@/stores/hermes/chat'
+ import { useAppStore } from '@/stores/hermes/app'
+ import { useProfilesStore } from '@/stores/hermes/profiles'
+ import { useSettingsStore } from '@/stores/hermes/settings'
+-import { fetchContextLength } from '@/api/hermes/sessions'
++import { fetchContextLength, fetchSessionUsageTotal } from '@/api/hermes/sessions'
+ import { setModelContext } from '@/api/hermes/model-context'
+ import { fetchSkills, type SkillCategory, type SkillInfo } from '@/api/hermes/skills'
+ import { deleteSkillBundleApi, fetchSkillBundles, type SkillBundleInfo } from '@/api/hermes/skill-bundles'
+@@ -811,6 +811,76 @@ function formatTokens(n: number): string {
+   return String(n)
+ }
+ 
++// Session-lifetime token consumption (real API usage totals from session_usage table).
++const sessionUsageTotal = ref<{
++  input: number
++  output: number
++  cacheRead: number
++  cacheWrite: number
++  reasoning: number
++  apiCalls: number
++} | null>(null)
++let sessionUsageRequestKey = ''
++async function refreshSessionUsageTotal() {
++  const sid = chatStore.activeSession?.id
++  if (!sid) {
++    sessionUsageTotal.value = null
++    return
++  }
++  const key = `${sid}:${Date.now()}`
++  sessionUsageRequestKey = key
++  const data = await fetchSessionUsageTotal(sid)
++  if (sessionUsageRequestKey !== key || chatStore.activeSession?.id !== sid) return
++  if (!data) {
++    sessionUsageTotal.value = null
++    return
++  }
++  sessionUsageTotal.value = {
++    input: Number(data.inputTokens) || 0,
++    output: Number(data.outputTokens) || 0,
++    cacheRead: Number(data.cacheReadTokens) || 0,
++    cacheWrite: Number(data.cacheWriteTokens) || 0,
++    reasoning: Number(data.reasoningTokens) || 0,
++    apiCalls: Number(data.apiCalls) || 0,
++  }
++}
++const sessionTotalTokens = computed(() => {
++  const u = sessionUsageTotal.value
++  if (!u) return 0
++  return u.input + u.output + u.cacheRead + u.cacheWrite
++})
++const showSessionUsage = computed(() => {
++  const u = sessionUsageTotal.value
++  return !!chatStore.activeSession && !!u && sessionTotalTokens.value > 0
++})
++const sessionUsageDetailText = computed(() => {
++  const u = sessionUsageTotal.value
++  if (!u) return ''
++  return t('chat.sessionTokensDetail', {
++    input: formatTokens(u.input),
++    output: formatTokens(u.output),
++    cacheRead: formatTokens(u.cacheRead),
++    cacheWrite: formatTokens(u.cacheWrite),
++    reasoning: formatTokens(u.reasoning),
++  })
++})
++let sessionUsageTimer: ReturnType<typeof setInterval> | null = null
++watch(
++  () => chatStore.activeSession?.id,
++  refreshSessionUsageTotal,
++  { flush: 'post' },
++)
++onMounted(() => {
++  refreshSessionUsageTotal()
++  sessionUsageTimer = setInterval(refreshSessionUsageTotal, 15000)
++})
++onUnmounted(() => {
++  if (sessionUsageTimer) {
++    clearInterval(sessionUsageTimer)
++    sessionUsageTimer = null
++  }
++})
++
+ // --- File attachment helpers ---
+ 
+ function addFile(file: File, context?: string) {
+@@ -1086,6 +1156,16 @@ function isImage(type: string): boolean {
+         @dblclick="resetTextareaHeight"
+       ></div>
+       <div v-if="showContextUsage" class="context-usage-row">
++        <NPopover
++          v-if="showSessionUsage"
++          :trigger="isMobileViewport ? 'click' : 'hover'"
++          placement="top-start"
++        >
++          <template #trigger>
++            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }}</span>
++          </template>
++          <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
++        </NPopover>
+         <span class="context-info" :class="{ 'context-warning': usagePercent > 80 }">
+           {{ formatTokens(totalTokens) }} /
+           <NTooltip trigger="hover" :disabled="isMobileViewport">
+@@ -1789,6 +1869,25 @@ function isImage(type: string): boolean {
+   }
+ }
+ 
++.session-tokens-used {
++  font-size: 11px;
++  color: inherit;
++  min-width: 0;
++  white-space: nowrap;
++  cursor: pointer;
++  user-select: none;
++
++  &:hover {
++    color: var(--text-secondary, inherit);
++  }
++}
++
++.session-usage-detail-text {
++  display: block;
++  white-space: pre-line;
++  line-height: 1.7;
++}
++
+ .context-limit-editable {
+   cursor: pointer;
+   border-bottom: 1px dashed transparent;
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 58f6c981..ab9441eb 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -599,6 +599,8 @@ export default {
+   // Chat
+   chat: {
+     contextRemaining: 'übrig',
++    sessionTokensUsed: 'Verwendet',
++    sessionTokensDetail: 'Eingabe {input}\nAusgabe {output}\nCache lesen {cacheRead}\nCache schreiben {cacheWrite}\nReasoning {reasoning}',
+     contextClickToEdit: 'Klicken zum Bearbeiten der Kontextlänge',
+     contextEditTitle: 'Kontextlänge bearbeiten',
+     contextEditDesc: 'Kontextlängenlimit für aktuelles Modell festlegen (in Tokens)',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 3d4ab0c9..cda78b99 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -633,6 +633,8 @@ export default {
+   // Chat
+   chat: {
+     contextRemaining: 'remaining',
++    sessionTokensUsed: 'Used',
++    sessionTokensDetail: 'Input {input}\nOutput {output}\nCache read {cacheRead}\nCache write {cacheWrite}\nReasoning {reasoning}',
+     contextClickToEdit: 'Click to edit context length',
+     contextEditTitle: 'Edit Context Length',
+     contextEditDesc: 'Set context length limit for current model (in tokens)',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 3cf70563..14e79e8d 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -599,6 +599,8 @@ export default {
+   // Chat
+   chat: {
+     contextRemaining: 'restante',
++    sessionTokensUsed: 'Usado',
++    sessionTokensDetail: 'Entrada {input}\nSalida {output}\nLectura de caché {cacheRead}\nEscritura de caché {cacheWrite}\nRazonamiento {reasoning}',
+     contextClickToEdit: 'Haz clic para editar la longitud del contexto',
+     contextEditTitle: 'Editar longitud del contexto',
+     contextEditDesc: 'Establecer el límite de longitud del contexto para el modelo actual (en tokens)',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index d628e9d8..674bb639 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -599,6 +599,8 @@ export default {
+   // Chat
+   chat: {
+     contextRemaining: 'restant',
++    sessionTokensUsed: 'Utilisé',
++    sessionTokensDetail: 'Entrée {input}\nSortie {output}\nLecture cache {cacheRead}\nÉcriture cache {cacheWrite}\nRaisonnement {reasoning}',
+     contextClickToEdit: 'Cliquez pour modifier la longueur du contexte',
+     contextEditTitle: 'Modifier la longueur du contexte',
+     contextEditDesc: 'Définir la limite de longueur du contexte pour le modèle actuel (en tokens)',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index efb216df..743e9ad7 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -599,6 +599,8 @@ export default {
+   // チャット
+   chat: {
+     contextRemaining: '残り',
++    sessionTokensUsed: '使用済み',
++    sessionTokensDetail: '入力 {input}\n出力 {output}\nキャッシュ読込 {cacheRead}\nキャッシュ書込 {cacheWrite}\n推論 {reasoning}',
+     contextClickToEdit: 'クリックしてコンテキスト長を編集',
+     contextEditTitle: 'コンテキスト長を編集',
+     contextEditDesc: '現在のモデルのコンテキスト長制限を設定（トークン数）',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 51c02e41..ecf0d295 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -599,6 +599,8 @@ export default {
+   // 채팅
+   chat: {
+     contextRemaining: '남음',
++    sessionTokensUsed: '사용됨',
++    sessionTokensDetail: '입력 {input}\n출력 {output}\n캐시 읽기 {cacheRead}\n캐시 쓰기 {cacheWrite}\n추론 {reasoning}',
+     contextClickToEdit: '클릭하여 컨텍스트 길이 편집',
+     contextEditTitle: '컨텍스트 길이 편집',
+     contextEditDesc: '현재 모델의 컨텍스트 길이 제한 설정 (토큰 수)',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 401c65a0..d58b41fb 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -599,6 +599,8 @@ export default {
+   // Chat
+   chat: {
+     contextRemaining: 'restante',
++    sessionTokensUsed: 'Usado',
++    sessionTokensDetail: 'Entrada {input}\nSaída {output}\nLeitura de cache {cacheRead}\nEscrita de cache {cacheWrite}\nRaciocínio {reasoning}',
+     contextClickToEdit: 'Clique para editar o tamanho do contexto',
+     contextEditTitle: 'Editar tamanho do contexto',
+     contextEditDesc: 'Definir o limite de tamanho do contexto para o modelo atual (em tokens)',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index ff62cdb7..22780fc3 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -514,6 +514,8 @@ export default {
+ 
+   chat: {
+     contextRemaining: 'Осталось',
++    sessionTokensUsed: 'Использовано',
++    sessionTokensDetail: 'Ввод {input}\nВывод {output}\nЧтение кэша {cacheRead}\nЗапись кэша {cacheWrite}\nРассуждения {reasoning}',
+     contextClickToEdit: 'Нажмите, чтобы изменить размер контекста',
+     contextEditTitle: 'Изменить размер контекста',
+     contextEditDesc: 'Установите лимит размера контекста для текущей модели (в токенах)',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 94b57503..a1a2643d 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -613,6 +613,8 @@ export default {
+   // 對話
+   chat: {
+     contextRemaining: '剩餘',
++    sessionTokensUsed: '已用',
++    sessionTokensDetail: '輸入 {input}\n輸出 {output}\n快取讀取 {cacheRead}\n快取寫入 {cacheWrite}\n推理 {reasoning}',
+     contextClickToEdit: '點擊編輯上下文長度',
+     contextEditTitle: '編輯上下文長度',
+     contextEditDesc: '設定目前模型的上下文長度限制（token 數量）',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index af4e2a42..5b21e504 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -633,6 +633,8 @@ export default {
+   // 对话
+   chat: {
+     contextRemaining: '剩余',
++    sessionTokensUsed: '已用',
++    sessionTokensDetail: '输入 {input}\n输出 {output}\n缓存读 {cacheRead}\n缓存写 {cacheWrite}\n推理 {reasoning}',
+     contextClickToEdit: '点击编辑上下文长度',
+     contextEditTitle: '编辑上下文长度',
+     contextEditDesc: '设置当前模型的上下文长度限制（token 数量）',
+diff --git a/packages/server/src/controllers/hermes/sessions.ts b/packages/server/src/controllers/hermes/sessions.ts
+index 2320fb96..5e722786 100644
+--- a/packages/server/src/controllers/hermes/sessions.ts
++++ b/packages/server/src/controllers/hermes/sessions.ts
+@@ -14,7 +14,7 @@ import {
+   updateSessionStats as localUpdateSessionStats,
+ } from '../../db/hermes/session-store'
+ import { buildDbExportHistory, ExportCompressor } from '../../lib/context-compressor/export-compressor'
+-import { getLocalUsageStats, getRecordedUsageSessionIds, getUsage, getUsageBatch } from '../../db/hermes/usage-store'
++import { getLocalUsageStats, getRecordedUsageSessionIds, getUsage, getUsageBatch, getUsageTotals } from '../../db/hermes/usage-store'
+ import {
+   SESSION_CATEGORY_NAME_MAX_LENGTH,
+   createSessionCategory,
+@@ -1310,6 +1310,10 @@ export async function usageBatch(ctx: any) {
+ export async function usageSingle(ctx: any) {
+   const session = localGetSession(ctx.params.id)
+   if (denySessionAccess(ctx, session)) return
++  if (ctx.query?.scope === 'total') {
++    ctx.body = getUsageTotals(ctx.params.id)
++    return
++  }
+   const result = getUsage(ctx.params.id)
+   if (!result) {
+     ctx.body = { input_tokens: 0, output_tokens: 0 }
+diff --git a/packages/server/src/db/hermes/usage-store.ts b/packages/server/src/db/hermes/usage-store.ts
+index 790057c7..dd3a7a73 100644
+--- a/packages/server/src/db/hermes/usage-store.ts
++++ b/packages/server/src/db/hermes/usage-store.ts
+@@ -180,6 +180,45 @@ export function getUsage(sessionId: string): UsageRecord | undefined {
+   }
+ }
+ 
++/** Session-lifetime totals (sum of every model_call row) — real API usage, not estimates. */
++export function getUsageTotals(sessionId: string): {
++  inputTokens: number
++  outputTokens: number
++  cacheReadTokens: number
++  cacheWriteTokens: number
++  reasoningTokens: number
++  apiCalls: number
++} {
++  const empty = {
++    inputTokens: 0,
++    outputTokens: 0,
++    cacheReadTokens: 0,
++    cacheWriteTokens: 0,
++    reasoningTokens: 0,
++    apiCalls: 0,
++  }
++  if (!isSqliteAvailable()) return empty
++  const row = getDb()!.prepare(`
++    SELECT
++      COALESCE(SUM(input_tokens), 0) AS input_tokens,
++      COALESCE(SUM(output_tokens), 0) AS output_tokens,
++      COALESCE(SUM(cache_read_tokens), 0) AS cache_read_tokens,
++      COALESCE(SUM(cache_write_tokens), 0) AS cache_write_tokens,
++      COALESCE(SUM(reasoning_tokens), 0) AS reasoning_tokens,
++      COALESCE(SUM(api_calls), 0) AS api_calls
++    FROM ${TABLE}
++    WHERE session_id = ? AND usage_scope = 'model_call'
++  `).get(sessionId) as any
++  return {
++    inputTokens: Number(row?.input_tokens || 0),
++    outputTokens: Number(row?.output_tokens || 0),
++    cacheReadTokens: Number(row?.cache_read_tokens || 0),
++    cacheWriteTokens: Number(row?.cache_write_tokens || 0),
++    reasoningTokens: Number(row?.reasoning_tokens || 0),
++    apiCalls: Number(row?.api_calls || 0),
++  }
++}
++
+ export function getUsageBatch(sessionIds: string[]): Record<string, UsageRecord> {
+   if (sessionIds.length === 0) return {}
+   if (isSqliteAvailable()) {
+-- 
+2.53.0
+

@@ -1,0 +1,137 @@
+From 0222c19b4d4ba71dca07959a2ebeeddece3c52d2 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 14:59:08 +0800
+Subject: [PATCH] fix(i18n): remove leftover merge conflict marker text from
+ locale files
+
+---
+ packages/client/src/i18n/locales/de.ts    | 2 +-
+ packages/client/src/i18n/locales/es.ts    | 2 +-
+ packages/client/src/i18n/locales/fr.ts    | 2 +-
+ packages/client/src/i18n/locales/ja.ts    | 2 +-
+ packages/client/src/i18n/locales/ko.ts    | 2 +-
+ packages/client/src/i18n/locales/pt.ts    | 2 +-
+ packages/client/src/i18n/locales/ru.ts    | 2 +-
+ packages/client/src/i18n/locales/zh-TW.ts | 2 +-
+ packages/client/src/i18n/locales/zh.ts    | 1 -
+ 9 files changed, 8 insertions(+), 9 deletions(-)
+
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index ca1e9df9..5f0349ef 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1653,7 +1653,7 @@ jobTriggered: 'Job ausgelost',
+       active: 'Aktiv',
+       switch: 'Wechseln',
+       removeConfirm: 'Diesen Server entfernen?',
+-51ccc514 (fix: move i18n connection section from sidebar to settings)
++
+     },
+     display: {
+       streaming: 'Streaming-Antworten',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index b01edcb8..0f08bf24 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1653,7 +1653,7 @@ jobTriggered: 'Job ejecutado',
+       active: 'Activo',
+       switch: 'Cambiar',
+       removeConfirm: '¿Eliminar este servidor?',
+-51ccc514 (fix: move i18n connection section from sidebar to settings)
++
+     },
+     display: {
+       streaming: 'Respuestas en streaming',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 264b7315..0bc2fa4a 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1652,7 +1652,7 @@ jobTriggered: 'Job declenche',
+       active: 'Actif',
+       switch: 'Basculer',
+       removeConfirm: 'Supprimer ce serveur ?',
+-51ccc514 (fix: move i18n connection section from sidebar to settings)
++
+     },
+     display: {
+       streaming: 'Reponses en continu',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 54c36833..3d09bbb2 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1653,7 +1653,7 @@ export default {
+       active: 'アクティブ',
+       switch: '切り替え',
+       removeConfirm: 'このサーバーを削除しますか？',
+-51ccc514 (fix: move i18n connection section from sidebar to settings)
++
+     },
+     display: {
+       streaming: 'ストリームレスポンス',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 575a8c73..bcc9b50f 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1653,7 +1653,7 @@ export default {
+       active: '활성',
+       switch: '전환',
+       removeConfirm: '이 서버를 제거하시겠습니까?',
+-51ccc514 (fix: move i18n connection section from sidebar to settings)
++
+     },
+     display: {
+       streaming: '스트리밍 응답',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 29111d13..40fa767d 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1653,7 +1653,7 @@ jobTriggered: 'Job acionado',
+       active: 'Ativo',
+       switch: 'Alternar',
+       removeConfirm: 'Remover este servidor?',
+-51ccc514 (fix: move i18n connection section from sidebar to settings)
++
+     },
+     display: {
+       streaming: 'Respostas em streaming',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 4c372e28..2df4105a 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -1917,7 +1917,7 @@ export default {
+       active: 'Активен',
+       switch: 'Переключить',
+       removeConfirm: 'Удалить этот сервер?',
+-51ccc514 (fix: move i18n connection section from sidebar to settings)
++
+     },
+     models: {
+       apiKey: 'API-ключ',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index e34f951c..c8398c65 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -2105,7 +2105,7 @@ export default {
+       active: '使用中',
+       switch: '切換',
+       removeConfirm: '確定移除此伺服器？',
+-51ccc514 (fix: move i18n connection section from sidebar to settings)
++
+     },
+     models: {
+       apiKey: 'API Key',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index d08bdbaf..ddcdd9b8 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -2211,7 +2211,6 @@ export default {
+       active: '当前使用',
+       switch: '切换',
+       removeConfirm: '确定移除这个服务器吗？',
+-51ccc514 (fix: move i18n connection section from sidebar to settings)
+     },
+     models: {
+       apiKey: 'API Key',
+-- 
+2.53.0
+
