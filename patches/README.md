@@ -12,7 +12,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 组 | 内容 | 补丁 |
 |---|---|---|
 | 01-ci | CI/测试（unit-test 移除、custom 触发、CF Pages deploy、mock） | 001-006 |
-| 02-pwa | PWA（离线、SW 缓存、SWR、资源瘦身、_headers） | 001-008 |
+| 02-pwa | PWA（离线、SW 缓存、SWR、资源瘦身、_headers、状态栏主题色） | 001-009 |
 | 03-connection | 连接设置/自定义后端 URL | 001-011 |
 | 04-usage | 用量显示（prompt_tokens、百分比、session 累计、composer 对齐） | 001-009 |
 | 05-chat | Chat 核心（fast-path、avatar、双下拉、identity、滚动） | 001-013 |
@@ -23,7 +23,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 10-perf-p1 | P1 性能（highlight core、comic 字体 woff2、locale 构建期合并、logo 单请求） | 001-004 |
 | 11-socket-stall | socket 卡死防护（服务端 backlog 检测断连 + 前端 REST 兜底刷新） | 001-002 |
 
-共 **59 个补丁**（含 01-ci/006 的 custom 分支切换）。
+共 **60 个补丁**（含 01-ci/006 的 custom 分支切换）。
 
 ## 升级 SOP（上游新版本）
 
