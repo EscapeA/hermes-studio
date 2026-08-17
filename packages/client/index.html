@@ -65,6 +65,13 @@
     .boot-fallback__logo-wrap {
       --studio-loading-size: 72px;
     }
+
+    /* one /logo.png request on cold load: the ::after mask re-fetches the URL
+       the <img> already loaded, so sweep a plain rounded-rect highlight instead */
+    .boot-fallback__logo-wrap::after {
+      -webkit-mask: none;
+      mask: none;
+    }
   </style>
 
   <!-- Prevent FOUC by applying theme classes immediately -->
