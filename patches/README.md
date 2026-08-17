@@ -20,8 +20,9 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 07-workflow | Workflow 移动端布局 + i18n | 001-002 |
 | 08-server | server 静态缓存头 | 001 |
 | 09-cleanup | locale 冲突标记清理 | 001 |
+| 10-perf-p1 | P1 性能（highlight core、comic 字体 woff2、locale 构建期合并、logo 单请求） | 001-004 |
 
-共 **53 个补丁**（含 01-ci/006 的 custom 分支切换）。
+共 **57 个补丁**（含 01-ci/006 的 custom 分支切换）。
 
 ## 升级 SOP（上游新版本）
 

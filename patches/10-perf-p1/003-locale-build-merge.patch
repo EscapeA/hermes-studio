@@ -1,0 +1,205 @@
+From 3d7caa2ca1b3bf95f7b97574a211a10331462266 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 08:34:42 +0800
+Subject: [PATCH 3/4] perf(i18n): merge en fallback at build time, one locale
+ chunk
+
+The i18n loader always fetched English plus the target locale at runtime
+so missing keys could fall back - every non-English page loaded two chunks
+(e.g. en 137KB + zh 134KB). Add a vite 'locale-merge' plugin that resolves
+@locales/<locale> to a virtual module already merged with English at build
+time. Runtime now loads exactly one chunk per locale (-~136KB raw / ~20KB
+wire for zh users).
+---
+ packages/client/src/i18n/index.ts     | 27 +++--------
+ packages/client/src/i18n/locales.d.ts |  8 ++++
+ packages/client/src/i18n/messages.ts  | 22 ++++-----
+ vite.config.ts                        | 65 ++++++++++++++++++++++++++-
+ 4 files changed, 88 insertions(+), 34 deletions(-)
+ create mode 100644 packages/client/src/i18n/locales.d.ts
+
+diff --git a/packages/client/src/i18n/index.ts b/packages/client/src/i18n/index.ts
+index bf52f6cd..233b98af 100644
+--- a/packages/client/src/i18n/index.ts
++++ b/packages/client/src/i18n/index.ts
+@@ -1,5 +1,5 @@
+ import { createI18n } from 'vue-i18n'
+-import { loadLocaleMessages, mergeMessagesWithFallback, supportedLocales } from './messages'
++import { loadLocaleMessages, supportedLocales } from './messages'
+ import type { SupportedLocale } from './messages'
+ import { applyDocumentDirection } from './direction'
+ 
+@@ -43,20 +43,10 @@ const locale = resolveLocale(saved)
+ setHtmlLang(locale)
+ 
+ async function createAppI18n() {
+-  const englishMessagesPromise = loadLocaleMessages('en')
+-  const localeMessagesPromise = locale === 'en'
+-    ? englishMessagesPromise
+-    : loadLocaleMessages(locale)
+-  const [englishMessages, localeMessages] = await Promise.all([
+-    englishMessagesPromise,
+-    localeMessagesPromise,
+-  ])
+-  const initialMessages = locale === 'en'
+-    ? { en: englishMessages }
+-    : {
+-        en: englishMessages,
+-        [locale]: mergeMessagesWithFallback(englishMessages, localeMessages),
+-      }
++  // `loadLocaleMessages` already returns messages merged with the English
++  // fallback at build time (vite `locale-merge` plugin), so the runtime only
++  // fetches a single locale chunk instead of locale + en.
++  const initialMessages = { [locale]: await loadLocaleMessages(locale) }
+ 
+   return createI18n({
+     legacy: false,
+@@ -80,12 +70,7 @@ export async function switchLocale(newLocale: string): Promise<void> {
+   if (!(globalI18n.availableLocales as readonly string[]).includes(nextLocale)) {
+     const nextMessages = await loadLocaleMessages(nextLocale)
+     if (sequence !== localeSwitchSequence) return
+-    globalI18n.setLocaleMessage(
+-      nextLocale,
+-      nextLocale === 'en'
+-        ? nextMessages
+-        : mergeMessagesWithFallback(globalI18n.getLocaleMessage('en'), nextMessages),
+-    )
++    globalI18n.setLocaleMessage(nextLocale, nextMessages)
+   }
+ 
+   if (sequence !== localeSwitchSequence) return
+diff --git a/packages/client/src/i18n/locales.d.ts b/packages/client/src/i18n/locales.d.ts
+new file mode 100644
+index 00000000..d3d42d66
+--- /dev/null
++++ b/packages/client/src/i18n/locales.d.ts
+@@ -0,0 +1,8 @@
++// Virtual modules provided by the `locale-merge` vite plugin (see vite.config.ts).
++// Each `@locales/<locale>` module is the locale's messages merged with the
++// English fallback at build time, so the runtime never fetches two locale chunks.
++declare module '@locales/*' {
++  import type { LocaleMessages } from './messages'
++  const messages: LocaleMessages
++  export default messages
++}
+diff --git a/packages/client/src/i18n/messages.ts b/packages/client/src/i18n/messages.ts
+index 0abd2e93..e16613e3 100644
+--- a/packages/client/src/i18n/messages.ts
++++ b/packages/client/src/i18n/messages.ts
+@@ -24,17 +24,17 @@ export function mergeMessagesWithFallback(
+ }
+ 
+ const localeLoaders: Record<SupportedLocale, () => Promise<{ default: LocaleMessages }>> = {
+-  en: () => import('./locales/en'),
+-  zh: () => import('./locales/zh'),
+-  'zh-TW': () => import('./locales/zh-TW'),
+-  ja: () => import('./locales/ja'),
+-  ko: () => import('./locales/ko'),
+-  fr: () => import('./locales/fr'),
+-  es: () => import('./locales/es'),
+-  de: () => import('./locales/de'),
+-  pt: () => import('./locales/pt'),
+-  ru: () => import('./locales/ru'),
+-  ar: () => import('./locales/ar'),
++  en: () => import('@locales/en'),
++  zh: () => import('@locales/zh'),
++  'zh-TW': () => import('@locales/zh-TW'),
++  ja: () => import('@locales/ja'),
++  ko: () => import('@locales/ko'),
++  fr: () => import('@locales/fr'),
++  es: () => import('@locales/es'),
++  de: () => import('@locales/de'),
++  pt: () => import('@locales/pt'),
++  ru: () => import('@locales/ru'),
++  ar: () => import('@locales/ar'),
+ }
+ 
+ const localeMessagePromises = new Map<SupportedLocale, Promise<LocaleMessages>>()
+diff --git a/vite.config.ts b/vite.config.ts
+index ed458efd..3359070b 100644
+--- a/vite.config.ts
++++ b/vite.config.ts
+@@ -1,7 +1,9 @@
+ import { defineConfig } from 'vite'
+ import vue from '@vitejs/plugin-vue'
+-import type { ProxyOptions } from 'vite'
++import type { Plugin, ProxyOptions } from 'vite'
+ import { resolve } from 'path'
++import { readFileSync } from 'fs'
++import { transformSync } from 'esbuild'
+ import pkg from './package.json'
+ 
+ const FRONTEND_PORT = Number(process.env.HERMES_WEB_UI_FRONTEND_PORT || 8649)
+@@ -30,9 +32,68 @@ function createProxyConfig(): ProxyOptions {
+   }
+ }
+ 
++// --- Locale merge plugin ---------------------------------------------------
++// The i18n loader imports each locale plus English at runtime so that missing
++// keys fall back to English. That forces two chunks per page load (e.g. en +
++// zh) on every non-English client. This plugin performs the English fallback
++// merge at BUILD time instead: `import('@locales/zh')` resolves to a virtual
++// module whose content is already `mergeMessagesWithFallback(en, zh)`. Runtime
++// then loads exactly one chunk per locale.
++const LOCALES_DIR = resolve(__dirname, 'packages/client/src/i18n/locales')
++
++function isPlainObject(value: unknown): value is Record<string, unknown> {
++  return !!value && typeof value === 'object' && !Array.isArray(value)
++}
++
++function mergeMessagesWithFallback(
++  fallback: Record<string, unknown>,
++  locale: Record<string, unknown>,
++): Record<string, unknown> {
++  const merged: Record<string, unknown> = { ...fallback }
++  for (const [key, value] of Object.entries(locale)) {
++    const fallbackValue = fallback[key]
++    merged[key] = isPlainObject(fallbackValue) && isPlainObject(value)
++      ? mergeMessagesWithFallback(fallbackValue, value)
++      : value
++  }
++  return merged
++}
++
++function loadLocaleModule(locale: string): Record<string, unknown> {
++  const source = readFileSync(resolve(LOCALES_DIR, `${locale}.ts`), 'utf8')
++  const { code } = transformSync(source, { loader: 'ts', format: 'cjs' })
++  const module = { exports: {} as Record<string, unknown> }
++  // eslint-disable-next-line no-new-func
++  new Function('module', 'exports', 'require', code)(module, module.exports, require)
++  const exported = (module.exports as Record<string, unknown>).default as Record<string, unknown>
++  return exported
++}
++
++function createLocaleMergePlugin(): Plugin {
++  const cache = new Map<string, string>()
++  return {
++    name: 'locale-merge',
++    resolveId(id: string) {
++      if (id.startsWith('@locales/')) return '\0locales/' + id.slice('@locales/'.length)
++      return null
++    },
++    load(id: string) {
++      if (!id.startsWith('\0locales/')) return null
++      const locale = id.slice('\0locales/'.length)
++      if (!cache.has(locale)) {
++        const messages = locale === 'en'
++          ? loadLocaleModule('en')
++          : mergeMessagesWithFallback(loadLocaleModule('en'), loadLocaleModule(locale))
++        cache.set(locale, `export default ${JSON.stringify(messages)}`)
++      }
++      return cache.get(locale)
++    },
++  }
++}
++
+ export default defineConfig({
+   root: 'packages/client',
+-  plugins: [vue()],
++  plugins: [vue(), createLocaleMergePlugin()],
+   define: {
+     __APP_VERSION__: JSON.stringify(pkg.version),
+   },
+-- 
+2.53.0
+
