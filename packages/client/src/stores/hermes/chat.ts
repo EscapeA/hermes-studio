@@ -1256,6 +1256,8 @@ export const useChatStore = defineStore('chat', () => {
   const streamStates = ref<Map<string, { abort: () => void }>>(new Map())
   /** sessionId → server-reported isWorking status */
   const serverWorking = ref<Set<string>>(new Set())
+  /** sessionId → last socket event arrival time (stall watchdog heartbeat) */
+  const lastSocketEventAt = new Map<string, number>()
   /** sessionIds with a terminal /fork command submitted but not settled yet */
   const pendingForkCommands = ref<Set<string>>(new Set())
   /** Sessions that completed while the user was viewing another session. */
@@ -4382,6 +4384,8 @@ export const useChatStore = defineStore('chat', () => {
     // Shared event handler — filters by session_id tag
     function handleEvent(evt: RunEvent) {
       if (closed) return
+      // Any socket event counts as a liveness heartbeat for the stall watchdog
+      lastSocketEventAt.set(sid, Date.now())
       // Filter events for this session (server tags all events with session_id)
       if (evt.session_id && evt.session_id !== sid) return
       const eventRunMarker = readRunMarker(evt)
@@ -5170,6 +5174,29 @@ export const useChatStore = defineStore('chat', () => {
       if (isStreaming.value) return
       void refreshSessionListOnly()
     }, 12_000)
+  }
+
+  // Stall watchdog: when the server reports a session as working but no socket
+  // event has arrived for a while (e.g. the websocket went half-open on a flaky
+  // tailscale/relay link and the server-side backlog kill hasn't kicked in yet),
+  // fall back to a REST refresh so the UI never stays minutes behind an agent
+  // that is clearly still emitting. Only the active session is refreshed; other
+  // working sessions just get their heartbeat updated. refreshActiveSession is
+  // idempotent and cheap (paginated, latest page only).
+  if (typeof window !== 'undefined') {
+    window.setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+      const now = Date.now()
+      for (const sid of serverWorking.value) {
+        const last = lastSocketEventAt.get(sid)
+        if (last == null || now - last <= 15_000) continue
+        // Suppress duplicate refreshes until the next event or next window.
+        lastSocketEventAt.set(sid, now)
+        if (activeSessionId.value === sid) {
+          void refreshActiveSession()
+        }
+      }
+    }, 10_000)
   }
 
   // Transient observation of <think> boundaries during active streaming.
