@@ -20,6 +20,24 @@ import {
 export type BrightnessMode = 'light' | 'dark' | 'system'
 export type ThemeStyle = 'ink' | 'comic'
 
+// Status bar / browser chrome theme color — mirrors manifest.theme_color so
+// standalone PWA chrome follows the in-app brightness setting.
+const THEME_COLOR_LIGHT = '#f7f7f4'
+const THEME_COLOR_DARK = '#1a1a1a'
+
+function applyThemeColorMeta() {
+  const color = isDark.value ? THEME_COLOR_DARK : THEME_COLOR_LIGHT
+  let meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]:not([media])')
+  if (!meta) {
+    meta = document.createElement('meta')
+    meta.name = 'theme-color'
+    // Prepend so it is the first matching meta and wins over the static
+    // prefers-color-scheme variants in index.html.
+    document.head.prepend(meta)
+  }
+  meta.content = color
+}
+
 const BRIGHTNESS_KEY = 'hermes_brightness'
 const STYLE_KEY = 'hermes_style'
 const AUTH_TOKEN_KEY = 'hermes_api_key'
@@ -144,6 +162,7 @@ function applyClasses() {
   document.documentElement.classList.toggle('dark', dark)
   document.documentElement.classList.toggle('comic', isComic.value)
   applyCustomization()
+  applyThemeColorMeta()
 }
 
 function persistThemeCache() {
