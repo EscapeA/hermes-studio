@@ -1,0 +1,71 @@
+From 17653caa2be01259829862e4d7b1696120b482ee Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 09:33:59 +0800
+Subject: [PATCH 2/2] fix(client): stall watchdog falls back to REST refresh
+ when socket goes quiet
+
+When the server reports a session as working but no socket event arrives
+for 15s (half-open websocket on a flaky tailscale/relay link), refresh
+the active session via the paginated REST endpoint so the UI never stays
+minutes behind an agent that is still emitting. Any socket event resets
+the heartbeat; the refresh is idempotent and only touches the active
+session.
+---
+ packages/client/src/stores/hermes/chat.ts | 27 +++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
+index beaa6a40..42f2eb23 100644
+--- a/packages/client/src/stores/hermes/chat.ts
++++ b/packages/client/src/stores/hermes/chat.ts
+@@ -1248,6 +1248,8 @@ export const useChatStore = defineStore('chat', () => {
+   const streamStates = ref<Map<string, { abort: () => void }>>(new Map())
+   /** sessionId → server-reported isWorking status */
+   const serverWorking = ref<Set<string>>(new Set())
++  /** sessionId → last socket event arrival time (stall watchdog heartbeat) */
++  const lastSocketEventAt = new Map<string, number>()
+   /** sessionIds with a terminal /fork command submitted but not settled yet */
+   const pendingForkCommands = ref<Set<string>>(new Set())
+   /** Sessions that completed while the user was viewing another session. */
+@@ -4283,6 +4285,8 @@ export const useChatStore = defineStore('chat', () => {
+     // Shared event handler — filters by session_id tag
+     function handleEvent(evt: RunEvent) {
+       if (closed) return
++      // Any socket event counts as a liveness heartbeat for the stall watchdog
++      lastSocketEventAt.set(sid, Date.now())
+       // Filter events for this session (server tags all events with session_id)
+       if (evt.session_id && evt.session_id !== sid) return
+       const eventRunMarker = readRunMarker(evt)
+@@ -5061,6 +5065,29 @@ export const useChatStore = defineStore('chat', () => {
+     }, 12_000)
+   }
+ 
++  // Stall watchdog: when the server reports a session as working but no socket
++  // event has arrived for a while (e.g. the websocket went half-open on a flaky
++  // tailscale/relay link and the server-side backlog kill hasn't kicked in yet),
++  // fall back to a REST refresh so the UI never stays minutes behind an agent
++  // that is clearly still emitting. Only the active session is refreshed; other
++  // working sessions just get their heartbeat updated. refreshActiveSession is
++  // idempotent and cheap (paginated, latest page only).
++  if (typeof window !== 'undefined') {
++    window.setInterval(() => {
++      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
++      const now = Date.now()
++      for (const sid of serverWorking.value) {
++        const last = lastSocketEventAt.get(sid)
++        if (last == null || now - last <= 15_000) continue
++        // Suppress duplicate refreshes until the next event or next window.
++        lastSocketEventAt.set(sid, now)
++        if (activeSessionId.value === sid) {
++          void refreshActiveSession()
++        }
++      }
++    }, 10_000)
++  }
++
+   // Transient observation of <think> boundaries during active streaming.
+   // Not persisted; cleared on session switch. See spec §5.3.
+   const thinkingObservation = new Map<string, { startedAt?: number; endedAt?: number }>()
+-- 
+2.53.0
+

@@ -21,8 +21,9 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 08-server | server 静态缓存头 | 001 |
 | 09-cleanup | locale 冲突标记清理 | 001 |
 | 10-perf-p1 | P1 性能（highlight core、comic 字体 woff2、locale 构建期合并、logo 单请求） | 001-004 |
+| 11-socket-stall | socket 卡死防护（服务端 backlog 检测断连 + 前端 REST 兜底刷新） | 001-002 |
 
-共 **57 个补丁**（含 01-ci/006 的 custom 分支切换）。
+共 **59 个补丁**（含 01-ci/006 的 custom 分支切换）。
 
 ## 升级 SOP（上游新版本）
 
