@@ -1,7 +1,9 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import type { ProxyOptions } from 'vite'
+import type { Plugin, ProxyOptions } from 'vite'
 import { resolve } from 'path'
+import { readFileSync } from 'fs'
+import { transformSync } from 'esbuild'
 import pkg from './package.json'
 
 const FRONTEND_PORT = Number(process.env.HERMES_WEB_UI_FRONTEND_PORT || 8649)
@@ -30,9 +32,68 @@ function createProxyConfig(): ProxyOptions {
   }
 }
 
+// --- Locale merge plugin ---------------------------------------------------
+// The i18n loader imports each locale plus English at runtime so that missing
+// keys fall back to English. That forces two chunks per page load (e.g. en +
+// zh) on every non-English client. This plugin performs the English fallback
+// merge at BUILD time instead: `import('@locales/zh')` resolves to a virtual
+// module whose content is already `mergeMessagesWithFallback(en, zh)`. Runtime
+// then loads exactly one chunk per locale.
+const LOCALES_DIR = resolve(__dirname, 'packages/client/src/i18n/locales')
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function mergeMessagesWithFallback(
+  fallback: Record<string, unknown>,
+  locale: Record<string, unknown>,
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...fallback }
+  for (const [key, value] of Object.entries(locale)) {
+    const fallbackValue = fallback[key]
+    merged[key] = isPlainObject(fallbackValue) && isPlainObject(value)
+      ? mergeMessagesWithFallback(fallbackValue, value)
+      : value
+  }
+  return merged
+}
+
+function loadLocaleModule(locale: string): Record<string, unknown> {
+  const source = readFileSync(resolve(LOCALES_DIR, `${locale}.ts`), 'utf8')
+  const { code } = transformSync(source, { loader: 'ts', format: 'cjs' })
+  const module = { exports: {} as Record<string, unknown> }
+  // eslint-disable-next-line no-new-func
+  new Function('module', 'exports', 'require', code)(module, module.exports, require)
+  const exported = (module.exports as Record<string, unknown>).default as Record<string, unknown>
+  return exported
+}
+
+function createLocaleMergePlugin(): Plugin {
+  const cache = new Map<string, string>()
+  return {
+    name: 'locale-merge',
+    resolveId(id: string) {
+      if (id.startsWith('@locales/')) return '\0locales/' + id.slice('@locales/'.length)
+      return null
+    },
+    load(id: string) {
+      if (!id.startsWith('\0locales/')) return null
+      const locale = id.slice('\0locales/'.length)
+      if (!cache.has(locale)) {
+        const messages = locale === 'en'
+          ? loadLocaleModule('en')
+          : mergeMessagesWithFallback(loadLocaleModule('en'), loadLocaleModule(locale))
+        cache.set(locale, `export default ${JSON.stringify(messages)}`)
+      }
+      return cache.get(locale)
+    },
+  }
+}
+
 export default defineConfig({
   root: 'packages/client',
-  plugins: [vue()],
+  plugins: [vue(), createLocaleMergePlugin()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
