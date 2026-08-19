@@ -1,0 +1,350 @@
+From 6b8d2813b8d1ffc0e7d95cf8b9267f9e38fd5b4c Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 17 Jun 2026 12:32:49 +0800
+Subject: [PATCH 01/11] feat: add custom backend connection settings
+
+- Add ConnectionSettings.vue component for server management
+- Add multi-server save/switch/remove API in client.ts
+- Integrate connection tab into SettingsView
+- Support multiple backend server switching with auto-reload
+---
+ packages/client/src/api/client.ts             |  50 ++++
+ .../hermes/settings/ConnectionSettings.vue    | 234 ++++++++++++++++++
+ .../client/src/views/hermes/SettingsView.vue  |   5 +
+ 3 files changed, 289 insertions(+)
+ create mode 100644 packages/client/src/components/hermes/settings/ConnectionSettings.vue
+
+diff --git a/packages/client/src/api/client.ts b/packages/client/src/api/client.ts
+index 87f9e26a..05b1ccb6 100644
+--- a/packages/client/src/api/client.ts
++++ b/packages/client/src/api/client.ts
+@@ -32,6 +32,56 @@ export function setServerUrl(url: string) {
+   localStorage.setItem('hermes_server_url', url)
+ }
+ 
++// --- Multi-server management ---
++
++export interface SavedServer {
++  url: string
++  name: string
++}
++
++const SAVED_SERVERS_KEY = 'hermes_saved_servers'
++
++export function getSavedServers(): SavedServer[] {
++  try {
++    const raw = localStorage.getItem(SAVED_SERVERS_KEY)
++    if (!raw) return []
++    return JSON.parse(raw) as SavedServer[]
++  } catch {
++    return []
++  }
++}
++
++export function saveSavedServers(servers: SavedServer[]) {
++  localStorage.setItem(SAVED_SERVERS_KEY, JSON.stringify(servers))
++}
++
++export function addSavedServer(url: string, name: string): SavedServer[] {
++  const servers = getSavedServers()
++  const cleanUrl = url.trim().replace(/\/+$/, '')
++  if (!cleanUrl) return servers
++  // Avoid duplicates
++  const exists = servers.find(s => s.url === cleanUrl)
++  if (exists) {
++    exists.name = name || exists.name
++  } else {
++    servers.push({ url: cleanUrl, name: name || cleanUrl })
++  }
++  saveSavedServers(servers)
++  return servers
++}
++
++export function removeSavedServer(url: string): SavedServer[] {
++  const servers = getSavedServers().filter(s => s.url !== url)
++  saveSavedServers(servers)
++  return servers
++}
++
++export function switchServer(url: string) {
++  const cleanUrl = url.trim().replace(/\/+$/, '')
++  setServerUrl(cleanUrl)
++  clearApiKey()
++}
++
+ export function setApiKey(key: string) {
+   localStorage.setItem('hermes_api_key', key)
+ }
+diff --git a/packages/client/src/components/hermes/settings/ConnectionSettings.vue b/packages/client/src/components/hermes/settings/ConnectionSettings.vue
+new file mode 100644
+index 00000000..62d5eb78
+--- /dev/null
++++ b/packages/client/src/components/hermes/settings/ConnectionSettings.vue
+@@ -0,0 +1,234 @@
++<script setup lang="ts">
++import { ref, onMounted } from 'vue'
++import { NCard, NInput, NButton, NSpace, NAlert, NList, NListItem, NTag, NPopconfirm } from 'naive-ui'
++import { useI18n } from 'vue-i18n'
++import {
++  getBaseUrlValue, setServerUrl,
++  getSavedServers, addSavedServer, removeSavedServer, switchServer,
++  type SavedServer,
++} from '@/api/client'
++
++const { t } = useI18n()
++const serverUrl = ref('')
++const serverName = ref('')
++const saved = ref(false)
++const currentUrl = ref('')
++const servers = ref<SavedServer[]>([])
++
++onMounted(() => {
++  currentUrl.value = getBaseUrlValue()
++  serverUrl.value = currentUrl.value
++  servers.value = getSavedServers()
++})
++
++function handleSave() {
++  const url = serverUrl.value.trim().replace(/\/+$/, '')
++  setServerUrl(url)
++  currentUrl.value = url
++  saved.value = true
++  setTimeout(() => { saved.value = false }, 2000)
++}
++
++function handleReset() {
++  setServerUrl('')
++  serverUrl.value = ''
++  currentUrl.value = ''
++  saved.value = true
++  setTimeout(() => { saved.value = false }, 2000)
++}
++
++function handleAddToList() {
++  const url = serverUrl.value.trim().replace(/\/+$/, '')
++  if (!url) return
++  addSavedServer(url, serverName.value.trim() || url)
++  servers.value = getSavedServers()
++  serverName.value = ''
++}
++
++function handleRemoveFromList(url: string) {
++  removeSavedServer(url)
++  servers.value = getSavedServers()
++}
++
++function handleSwitchTo(url: string) {
++  switchServer(url)
++  currentUrl.value = url
++  serverUrl.value = url
++  // Reload to apply new backend — clears all state
++  window.location.reload()
++}
++
++function isActive(url: string): boolean {
++  return currentUrl.value === url || (!currentUrl.value && !url)
++}
++</script>
++
++<template>
++  <div class="connection-settings">
++    <NCard :title="t('settings.connection.title')" size="small">
++      <div class="setting-description">
++        {{ t('settings.connection.description') }}
++      </div>
++
++      <!-- Add new server -->
++      <div class="add-server-row">
++        <NInput
++          v-model:value="serverName"
++          :placeholder="t('settings.connection.namePlaceholder')"
++          size="small"
++          style="margin-bottom: 8px;"
++        />
++        <div class="url-input-row">
++          <NInput
++            v-model:value="serverUrl"
++            :placeholder="t('settings.connection.placeholder')"
++            clearable
++            @keyup.enter="handleSave"
++          />
++        </div>
++      </div>
++
++      <div class="current-url" v-if="currentUrl">
++        <span class="label">{{ t('settings.connection.current') }}:</span>
++        <code>{{ currentUrl }}</code>
++      </div>
++      <div class="current-url" v-else>
++        <span class="label">{{ t('settings.connection.current') }}:</span>
++        <code>{{ t('settings.connection.same_origin') }}</code>
++      </div>
++
++      <NSpace>
++        <NButton type="primary" size="small" @click="handleSave">
++          {{ t('common.save') }}
++        </NButton>
++        <NButton size="small" @click="handleAddToList">
++          {{ t('settings.connection.saveToList') }}
++        </NButton>
++        <NButton size="small" @click="handleReset">
++          {{ t('settings.connection.reset') }}
++        </NButton>
++      </NSpace>
++
++      <NAlert v-if="saved" type="success" :title="t('settings.connection.saved')" style="margin-top: 12px;">
++        {{ t('settings.connection.reload_hint') }}
++      </NAlert>
++
++      <!-- Saved servers list -->
++      <div v-if="servers.length > 0" class="saved-servers-section">
++        <div class="section-title">{{ t('settings.connection.savedServers') }}</div>
++        <NList bordered size="small" hoverable>
++          <NListItem v-for="server in servers" :key="server.url">
++            <div class="server-item">
++              <div class="server-info">
++                <span class="server-name">{{ server.name }}</span>
++                <code class="server-url">{{ server.url }}</code>
++              </div>
++              <div class="server-actions">
++                <NTag v-if="isActive(server.url)" type="success" size="small">
++                  {{ t('settings.connection.active') }}
++                </NTag>
++                <NButton
++                  v-else
++                  size="tiny"
++                  type="primary"
++                  quaternary
++                  @click="handleSwitchTo(server.url)"
++                >
++                  {{ t('settings.connection.switch') }}
++                </NButton>
++                <NPopconfirm @positive-click="handleRemoveFromList(server.url)">
++                  <template #trigger>
++                    <NButton size="tiny" type="error" quaternary>
++                      {{ t('common.delete') }}
++                    </NButton>
++                  </template>
++                  {{ t('settings.connection.removeConfirm') }}
++                </NPopconfirm>
++              </div>
++            </div>
++          </NListItem>
++        </NList>
++      </div>
++    </NCard>
++  </div>
++</template>
++
++<style scoped lang="scss">
++.connection-settings {
++  max-width: 600px;
++}
++
++.setting-description {
++  color: var(--n-text-color-3);
++  font-size: 13px;
++  margin-bottom: 16px;
++  line-height: 1.5;
++}
++
++.url-input-row {
++  margin-bottom: 12px;
++}
++
++.current-url {
++  margin-bottom: 16px;
++  font-size: 13px;
++
++  .label {
++    color: var(--n-text-color-3);
++    margin-right: 4px;
++  }
++
++  code {
++    background: var(--n-code-color);
++    padding: 2px 6px;
++    border-radius: 4px;
++    font-size: 12px;
++  }
++}
++
++.saved-servers-section {
++  margin-top: 20px;
++}
++
++.section-title {
++  font-size: 14px;
++  font-weight: 500;
++  margin-bottom: 8px;
++  color: var(--n-text-color);
++}
++
++.server-item {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  width: 100%;
++  gap: 12px;
++}
++
++.server-info {
++  display: flex;
++  flex-direction: column;
++  gap: 2px;
++  min-width: 0;
++  flex: 1;
++}
++
++.server-name {
++  font-size: 13px;
++  font-weight: 500;
++  color: var(--n-text-color);
++}
++
++.server-url {
++  font-size: 11px;
++  color: var(--n-text-color-3);
++  word-break: break-all;
++}
++
++.server-actions {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  flex-shrink: 0;
++}
++</style>
+diff --git a/packages/client/src/views/hermes/SettingsView.vue b/packages/client/src/views/hermes/SettingsView.vue
+index d33f8aa6..96a96544 100644
+--- a/packages/client/src/views/hermes/SettingsView.vue
++++ b/packages/client/src/views/hermes/SettingsView.vue
+@@ -20,6 +20,7 @@ import ModelSettings from "@/components/hermes/settings/ModelSettings.vue";
+ import AccountSettings from "@/components/hermes/settings/AccountSettings.vue";
+ import UserManagementSettings from "@/components/hermes/settings/UserManagementSettings.vue";
+ import WebhookSettings from "@/components/hermes/settings/WebhookSettings.vue";
++import ConnectionSettings from "@/components/hermes/settings/ConnectionSettings.vue";
+ import { isStoredSuperAdmin } from "@/api/client";
+ import { useProfilesStore } from "@/stores/hermes/profiles";
+ 
+@@ -43,6 +44,7 @@ const validTabs = computed(() => new Set([
+   "session",
+   "privacy",
+   "models",
++  "connection",
+ ]));
+ 
+ function normalizeTab(value: unknown): string {
+@@ -133,6 +135,9 @@ onMounted(() => {
+           <NTabPane name="models" :tab="t('settings.tabs.models')">
+             <ModelSettings />
+           </NTabPane>
++          <NTabPane name="connection" :tab="t('settings.tabs.connection')">
++            <ConnectionSettings />
++          </NTabPane>
+         </NTabs>
+       </NSpin>
+     </div>
+-- 
+2.53.0
+

@@ -1,0 +1,799 @@
+From 26da99fa452210449910d62fe6d7c505781e985f Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 01:53:06 +0800
+Subject: [PATCH] perf(web): strip avatar payloads and open last session first
+
+Keep /api/hermes/profiles and /api/auth/me off the 500KB+ dataUrl path
+by serving images from dedicated authenticated URLs. Open the stored
+session immediately on chat mount so the latest 20 messages do not wait
+for the full session list.
+---
+ packages/client/src/api/auth.ts               |   2 +
+ packages/client/src/api/hermes/profiles.ts    |   1 +
+ .../hermes/profiles/ProfileAvatar.vue         |  66 ++++++++++-
+ .../hermes/settings/AccountSettings.vue       |   2 +-
+ packages/client/src/stores/hermes/chat.ts     |  43 ++++++-
+ .../client/src/stores/hermes/group-chat.ts    |   3 +-
+ .../client/src/utils/group-agent-avatar.ts    |   9 +-
+ packages/client/src/views/hermes/ChatView.vue |   7 +-
+ .../src/views/hermes/GlobalAgentView.vue      |   7 +-
+ packages/server/src/controllers/auth.ts       |  41 ++++++-
+ .../server/src/controllers/hermes/profiles.ts |  56 ++++++++-
+ packages/server/src/routes/auth.ts            |   1 +
+ packages/server/src/routes/hermes/profiles.ts |   1 +
+ .../chat-store-compression-state.test.ts      |   1 +
+ .../client/chat-store-error-handling.test.ts  |   1 +
+ .../chat-store-reasoning-effort.test.ts       |   1 +
+ .../client/chat-store-session-command.test.ts |   1 +
+ .../client/chat-store-startup-session.test.ts | 106 ++++++++++++++++++
+ tests/client/group-agent-avatar.test.ts       |   4 +
+ tests/server/auth-routes-avatar.test.ts       |   8 ++
+ tests/server/profiles-routes.test.ts          |  51 +++++++++
+ tests/server/user-auth.test.ts                |   2 +
+ 22 files changed, 393 insertions(+), 21 deletions(-)
+ create mode 100644 tests/client/chat-store-startup-session.test.ts
+
+diff --git a/packages/client/src/api/auth.ts b/packages/client/src/api/auth.ts
+index 60543265..cbade3b1 100644
+--- a/packages/client/src/api/auth.ts
++++ b/packages/client/src/api/auth.ts
+@@ -45,12 +45,14 @@ export interface CurrentUser {
+   updated_at: number
+   last_login_at: number | null
+   avatar?: string
++  hasAvatar?: boolean
+   requiresCredentialChange?: boolean
+ }
+ 
+ export interface UserAvatar {
+   type: 'image' | 'default'
+   dataUrl?: string
++  url?: string
+   seed?: string
+ }
+ 
+diff --git a/packages/client/src/api/hermes/profiles.ts b/packages/client/src/api/hermes/profiles.ts
+index 608d3901..b8168eda 100644
+--- a/packages/client/src/api/hermes/profiles.ts
++++ b/packages/client/src/api/hermes/profiles.ts
+@@ -24,6 +24,7 @@ export interface ProfileAvatar {
+   type: 'generated' | 'image'
+   seed?: string
+   dataUrl?: string
++  url?: string
+   updatedAt?: number
+ }
+ 
+diff --git a/packages/client/src/components/hermes/profiles/ProfileAvatar.vue b/packages/client/src/components/hermes/profiles/ProfileAvatar.vue
+index 5a07b681..9381306c 100644
+--- a/packages/client/src/components/hermes/profiles/ProfileAvatar.vue
++++ b/packages/client/src/components/hermes/profiles/ProfileAvatar.vue
+@@ -1,7 +1,8 @@
+ <script setup lang="ts">
+-import { computed } from 'vue'
++import { computed, onUnmounted, ref, watch } from 'vue'
+ import multiavatar from '@multiavatar/multiavatar'
+ import type { ProfileAvatar } from '@/api/hermes/profiles'
++import { getApiKey, getBaseUrlValue } from '@/api/client'
+ 
+ const props = withDefaults(defineProps<{
+   name: string
+@@ -18,14 +19,73 @@ const style = computed(() => ({
+   height: `${props.size}px`,
+   flexBasis: `${props.size}px`,
+ }))
++
++const imageSrc = ref('')
++let objectUrl = ''
++let resolveGeneration = 0
++
++function revokeObjectUrl() {
++  if (!objectUrl) return
++  URL.revokeObjectURL(objectUrl)
++  objectUrl = ''
++}
++
++async function resolveImageSrc() {
++  const generation = ++resolveGeneration
++  revokeObjectUrl()
++  const avatar = props.avatar
++  if (avatar?.type !== 'image') {
++    imageSrc.value = ''
++    return
++  }
++  if (avatar.dataUrl) {
++    imageSrc.value = avatar.dataUrl
++    return
++  }
++  if (!avatar.url) {
++    imageSrc.value = ''
++    return
++  }
++  if (!avatar.url.startsWith('/api/')) {
++    imageSrc.value = avatar.url
++    return
++  }
++  try {
++    const token = getApiKey()
++    const res = await fetch(`${getBaseUrlValue()}${avatar.url}`, {
++      headers: token ? { Authorization: `Bearer ${token}` } : {},
++    })
++    if (!res.ok) {
++      if (generation === resolveGeneration) imageSrc.value = ''
++      return
++    }
++    const blob = await res.blob()
++    if (generation !== resolveGeneration) return
++    objectUrl = URL.createObjectURL(blob)
++    imageSrc.value = objectUrl
++  } catch {
++    if (generation === resolveGeneration) imageSrc.value = ''
++  }
++}
++
++watch(
++  () => [props.avatar?.type, props.avatar?.dataUrl, props.avatar?.url, props.avatar?.updatedAt],
++  () => { void resolveImageSrc() },
++  { immediate: true },
++)
++
++onUnmounted(() => {
++  resolveGeneration += 1
++  revokeObjectUrl()
++})
+ </script>
+ 
+ <template>
+   <span class="profile-avatar-view" :style="style">
+     <img
+-      v-if="avatar?.type === 'image' && avatar.dataUrl"
++      v-if="imageSrc"
+       class="profile-avatar-image"
+-      :src="avatar.dataUrl"
++      :src="imageSrc"
+       alt=""
+       draggable="false"
+     >
+diff --git a/packages/client/src/components/hermes/settings/AccountSettings.vue b/packages/client/src/components/hermes/settings/AccountSettings.vue
+index 0922e9b7..111a1f6e 100644
+--- a/packages/client/src/components/hermes/settings/AccountSettings.vue
++++ b/packages/client/src/components/hermes/settings/AccountSettings.vue
+@@ -250,7 +250,7 @@ onMounted(() => { loadLockedIps(); });
+         <div class="avatar-display">
+           <ProfileAvatar
+             :name="username || 'default'"
+-            :avatar="avatar?.type === 'image' && avatar.dataUrl ? { type: 'image', dataUrl: avatar.dataUrl } : null"
++            :avatar="avatar?.type === 'image' && (avatar.dataUrl || avatar.url) ? { type: 'image', dataUrl: avatar.dataUrl, url: avatar.url } : null"
+             :size="80"
+           />
+         </div>
+diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
+index 17a62bc4..beaa6a40 100644
+--- a/packages/client/src/stores/hermes/chat.ts
++++ b/packages/client/src/stores/hermes/chat.ts
+@@ -1613,10 +1613,15 @@ export const useChatStore = defineStore('chat', () => {
+           : storedId && sessions.value.some(s => s.id === storedId)
+             ? storedId
+             : sessions.value[0]?.id
+-      if (targetId) {
++      if (currentId) {
++        const rebound = sessions.value.find(s => s.id === currentId)
++        if (rebound && activeSession.value !== rebound) activeSession.value = rebound
++      }
++      if (targetId && targetId !== currentId) {
+         await switchSession(targetId)
+-      } else {
+-        clearActiveSession()
++      } else if (currentId && !sessions.value.some(s => s.id === currentId)) {
++        if (targetId) await switchSession(targetId)
++        else clearActiveSession()
+       }
+     } catch (err) {
+       if (requestSequence === loadSessionsRequestSequence) {
+@@ -1630,6 +1635,19 @@ export const useChatStore = defineStore('chat', () => {
+     }
+   }
+ 
++  function storedPreferredSessionId(preferredSessionId?: string | null): string | null {
++    const currentId = activeSessionId.value
++    const legacyActiveKey = legacyStorageKey()
++    const storedId = getItemBestEffort(storageKey()) || (legacyActiveKey ? getItemBestEffort(LEGACY_STORAGE_KEY) : null)
++    return preferredSessionId || currentId || storedId || null
++  }
++
++  async function openPreferredSession(preferredSessionId?: string | null) {
++    const targetId = storedPreferredSessionId(preferredSessionId)
++    if (!targetId || targetId === activeSessionId.value) return
++    await switchSession(targetId)
++  }
++
+   // Refresh ONLY the session list metadata (titles, ordering, new/removed
+   // sessions) without switching the active session or reloading its messages.
+   // Used for live sync so sessions created elsewhere (CLI, Telegram, another
+@@ -1819,11 +1837,23 @@ export const useChatStore = defineStore('chat', () => {
+     setItemBestEffort(storageKey(), sessionId)
+     const legacyActiveKey = legacyStorageKey()
+     if (legacyActiveKey) removeItem(legacyActiveKey)
+-    activeSession.value = sessions.value.find(s => s.id === sessionId) || null
++    let target = sessions.value.find(s => s.id === sessionId) || null
++    if (!target) {
++      target = {
++        id: sessionId,
++        profile: getProfileName(),
++        title: '',
++        source: runtimeMode.value === 'global_agent' ? 'global_agent' : 'cli',
++        agent: 'hermes',
++        messages: [],
++        createdAt: Date.now(),
++        updatedAt: Date.now(),
++      }
++      sessions.value = [target, ...sessions.value]
++    }
++    activeSession.value = target
+     clearSessionCompletedUnread(sessionId)
+ 
+-    if (!activeSession.value) return
+-
+     beginMessageLoad(sessionId, requestSequence)
+     let backgroundPendingOnResume = 0
+ 
+@@ -5189,6 +5219,7 @@ export const useChatStore = defineStore('chat', () => {
+     loadSessions,
+     refreshSessionListOnly,
+     refreshActiveSession,
++    openPreferredSession,
+     getThinkingObservation,
+     noteThinkingDelta,
+     noteReasoningStart,
+diff --git a/packages/client/src/stores/hermes/group-chat.ts b/packages/client/src/stores/hermes/group-chat.ts
+index 8b998bb9..dcb48fa9 100644
+--- a/packages/client/src/stores/hermes/group-chat.ts
++++ b/packages/client/src/stores/hermes/group-chat.ts
+@@ -810,7 +810,8 @@ export const useGroupChatStore = defineStore('groupChat', () => {
+                 authUserId = user.id
+                 userId.value = authenticatedGroupUserId(user.id)
+                 if (!connectionName) userName.value = user.username
+-                currentUserAvatar.value = user.avatar || ''
++                currentUserAvatar.value = user.avatar
++                    || (user.hasAvatar ? JSON.stringify({ type: 'image', url: '/api/auth/avatar/image' }) : '')
+             } catch { /* non-critical: avatar fallback handles missing id */ }
+         }
+         const socket = connectGroupChat({
+diff --git a/packages/client/src/utils/group-agent-avatar.ts b/packages/client/src/utils/group-agent-avatar.ts
+index d2159652..d0640b38 100644
+--- a/packages/client/src/utils/group-agent-avatar.ts
++++ b/packages/client/src/utils/group-agent-avatar.ts
+@@ -16,8 +16,13 @@ export function parseStoredAvatar(raw: unknown): ProfileAvatar | null {
+         if (parsed?.type === 'generated' && typeof parsed.seed === 'string' && parsed.seed) {
+             return { type: 'generated', seed: parsed.seed }
+         }
+-        if (parsed?.type === 'image' && typeof parsed.dataUrl === 'string' && parsed.dataUrl) {
+-            return { type: 'image', dataUrl: parsed.dataUrl }
++        if (parsed?.type === 'image') {
++            if (typeof parsed.dataUrl === 'string' && parsed.dataUrl) {
++                return { type: 'image', dataUrl: parsed.dataUrl }
++            }
++            if (typeof parsed.url === 'string' && parsed.url) {
++                return { type: 'image', url: parsed.url }
++            }
+         }
+     } catch {
+         // Invalid persisted avatars fall back to the runtime's default icon.
+diff --git a/packages/client/src/views/hermes/ChatView.vue b/packages/client/src/views/hermes/ChatView.vue
+index 2a716034..8b635aeb 100644
+--- a/packages/client/src/views/hermes/ChatView.vue
++++ b/packages/client/src/views/hermes/ChatView.vue
+@@ -58,6 +58,8 @@ async function applyRouteProfile() {
+ onMounted(async () => {
+   chatStore.setRuntimeMode('default')
+   appStore.loadModels()
++  const preferredSessionId = routeSessionId.value
++  const sessionOpen = chatStore.openPreferredSession(preferredSessionId)
+   // 先加载 profile，确保缓存 key 使用正确的 profile name；同时预取显示设置，
+   // 让聊天完成提示音不依赖用户先打开 Settings 页面。
+   await Promise.all([
+@@ -66,7 +68,10 @@ onMounted(async () => {
+   ])
+   chatStore.validateSessionProfileFilter(profilesStore.profiles.map(profile => profile.name))
+   await applyRouteProfile()
+-  await loadRouteSession()
++  await Promise.all([
++    sessionOpen,
++    loadRouteSession(),
++  ])
+ })
+ 
+ watch([routeSessionId, routeProfile], async ([sessionId]) => {
+diff --git a/packages/client/src/views/hermes/GlobalAgentView.vue b/packages/client/src/views/hermes/GlobalAgentView.vue
+index 34a7b030..d1bf3ee1 100644
+--- a/packages/client/src/views/hermes/GlobalAgentView.vue
++++ b/packages/client/src/views/hermes/GlobalAgentView.vue
+@@ -42,13 +42,18 @@ async function applyRouteProfile() {
+ onMounted(async () => {
+   chatStore.setRuntimeMode('global_agent')
+   appStore.loadModels()
++  const preferredSessionId = routeSessionId.value
++  const sessionOpen = chatStore.openPreferredSession(preferredSessionId)
+   await Promise.all([
+     profilesStore.fetchProfiles(),
+     settingsStore.fetchSettings(),
+   ])
+   chatStore.validateSessionProfileFilter(profilesStore.profiles.map(profile => profile.name))
+   await applyRouteProfile()
+-  await loadRouteSession()
++  await Promise.all([
++    sessionOpen,
++    loadRouteSession(),
++  ])
+ })
+ 
+ onUnmounted(() => {
+diff --git a/packages/server/src/controllers/auth.ts b/packages/server/src/controllers/auth.ts
+index 949c4727..d462d86b 100644
+--- a/packages/server/src/controllers/auth.ts
++++ b/packages/server/src/controllers/auth.ts
+@@ -64,7 +64,7 @@ export async function currentUser(ctx: Context) {
+       created_at: user.created_at,
+       updated_at: user.updated_at,
+       last_login_at: user.last_login_at,
+-      avatar: user.avatar || '',
++      hasAvatar: Boolean(user.avatar),
+       requiresCredentialChange: process.env.HERMES_DESKTOP === 'true'
+         ? false
+         : user.username === DEFAULT_USERNAME && verifyPassword(DEFAULT_PASSWORD, user.password_hash),
+@@ -107,6 +107,45 @@ export async function getMyAvatar(ctx: Context) {
+   ctx.body = { avatar: getUserAvatar(userId) }
+ }
+ 
++/**
++ * GET /api/auth/avatar/image
++ * Stream the authenticated user's image avatar as bytes (for <img src>).
++ */
++export async function getMyAvatarImage(ctx: Context) {
++  const userId = ctx.state.user?.id
++  if (!userId) {
++    ctx.status = 401
++    ctx.body = { error: 'Unauthorized' }
++    return
++  }
++  const raw = getUserAvatar(userId)
++  if (!raw) {
++    ctx.status = 404
++    ctx.body = { error: 'Avatar not found' }
++    return
++  }
++  try {
++    const parsed = JSON.parse(raw) as { type?: string; dataUrl?: string }
++    if (parsed?.type !== 'image' || typeof parsed.dataUrl !== 'string') {
++      ctx.status = 404
++      ctx.body = { error: 'Avatar image not found' }
++      return
++    }
++    const match = parsed.dataUrl.match(/^data:(image\/(?:png|jpeg|webp|svg\+xml));base64,([a-zA-Z0-9+/=]+)$/)
++    if (!match) {
++      ctx.status = 404
++      ctx.body = { error: 'Avatar image not found' }
++      return
++    }
++    ctx.set('Content-Type', match[1])
++    ctx.set('Cache-Control', 'private, max-age=60')
++    ctx.body = Buffer.from(match[2], 'base64')
++  } catch {
++    ctx.status = 404
++    ctx.body = { error: 'Avatar image not found' }
++  }
++}
++
+ /**
+  * PUT /api/auth/avatar
+  * Update the authenticated user's avatar. Body: { avatar: <json string> } OR
+diff --git a/packages/server/src/controllers/hermes/profiles.ts b/packages/server/src/controllers/hermes/profiles.ts
+index 7080925d..f4b54883 100644
+--- a/packages/server/src/controllers/hermes/profiles.ts
++++ b/packages/server/src/controllers/hermes/profiles.ts
+@@ -33,6 +33,7 @@ interface ProfileAvatarResponse {
+   type: 'generated' | 'image'
+   seed?: string
+   dataUrl?: string
++  url?: string
+   updatedAt?: number
+ }
+ 
+@@ -187,7 +188,14 @@ function profileAvatarImagePath(name: string, file = 'avatar.bin'): string {
+   return join(profileMetadataDir(name), file)
+ }
+ 
+-function readProfileAvatar(name: string): ProfileAvatarResponse | null {
++function profileAvatarImageUrl(name: string, updatedAt?: number): string {
++  const encoded = encodeURIComponent(name || 'default')
++  return updatedAt
++    ? `/api/hermes/profiles/${encoded}/avatar/image?v=${updatedAt}`
++    : `/api/hermes/profiles/${encoded}/avatar/image`
++}
++
++function readProfileAvatar(name: string, options: { inline?: boolean } = {}): ProfileAvatarResponse | null {
+   const metaPath = profileAvatarMetaPath(name)
+   if (!existsSync(metaPath)) return null
+   try {
+@@ -202,10 +210,17 @@ function readProfileAvatar(name: string): ProfileAvatarResponse | null {
+     if (meta.type === 'image' && meta.file && meta.mime) {
+       const imagePath = profileAvatarImagePath(name, meta.file)
+       if (!existsSync(imagePath)) return null
+-      const data = readFileSync(imagePath).toString('base64')
++      if (options.inline) {
++        const data = readFileSync(imagePath).toString('base64')
++        return {
++          type: 'image',
++          dataUrl: `data:${meta.mime};base64,${data}`,
++          updatedAt: meta.updatedAt,
++        }
++      }
+       return {
+         type: 'image',
+-        dataUrl: `data:${meta.mime};base64,${data}`,
++        url: profileAvatarImageUrl(name, meta.updatedAt),
+         updatedAt: meta.updatedAt,
+       }
+     }
+@@ -495,7 +510,7 @@ export async function updateAvatar(ctx: any) {
+       const meta: ProfileAvatarMeta = { type: 'generated', seed, updatedAt }
+       rmSync(profileAvatarImagePath(name), { force: true })
+       await writeFile(profileAvatarMetaPath(name), JSON.stringify(meta, null, 2) + '\n', { mode: 0o600 })
+-      ctx.body = { avatar: readProfileAvatar(name) }
++      ctx.body = { avatar: readProfileAvatar(name, { inline: true }) }
+       return
+     }
+ 
+@@ -504,7 +519,7 @@ export async function updateAvatar(ctx: any) {
+       const meta: ProfileAvatarMeta = { type: 'image', file: 'avatar.bin', mime, updatedAt }
+       await writeFile(profileAvatarImagePath(name), buffer, { mode: 0o600 })
+       await writeFile(profileAvatarMetaPath(name), JSON.stringify(meta, null, 2) + '\n', { mode: 0o600 })
+-      ctx.body = { avatar: readProfileAvatar(name) }
++      ctx.body = { avatar: readProfileAvatar(name, { inline: true }) }
+       return
+     }
+ 
+@@ -528,6 +543,37 @@ export async function deleteAvatar(ctx: any) {
+   }
+ }
+ 
++export async function getAvatarImage(ctx: any) {
++  const name = String(ctx.params.name || '').trim() || 'default'
++  if (denyProfile(ctx, name)) return
++  const metaPath = profileAvatarMetaPath(name)
++  if (!existsSync(metaPath)) {
++    ctx.status = 404
++    ctx.body = { error: 'Avatar not found' }
++    return
++  }
++  try {
++    const meta = JSON.parse(readFileSync(metaPath, 'utf-8')) as ProfileAvatarMeta
++    if (meta.type !== 'image' || !meta.file || !meta.mime) {
++      ctx.status = 404
++      ctx.body = { error: 'Avatar image not found' }
++      return
++    }
++    const imagePath = profileAvatarImagePath(name, meta.file)
++    if (!existsSync(imagePath)) {
++      ctx.status = 404
++      ctx.body = { error: 'Avatar image not found' }
++      return
++    }
++    ctx.set('Content-Type', meta.mime)
++    ctx.set('Cache-Control', 'private, max-age=31536000, immutable')
++    ctx.body = createReadStream(imagePath)
++  } catch (err: any) {
++    ctx.status = 500
++    ctx.body = { error: err.message }
++  }
++}
++
+ export async function runtimeStatus(ctx: any) {
+   const name = String(ctx.params.name || '').trim() || 'default'
+   if (denyProfile(ctx, name)) return
+diff --git a/packages/server/src/routes/auth.ts b/packages/server/src/routes/auth.ts
+index d1961934..76c41abb 100644
+--- a/packages/server/src/routes/auth.ts
++++ b/packages/server/src/routes/auth.ts
+@@ -16,6 +16,7 @@ authProtectedRoutes.get('/api/auth/me', ctrl.currentUser)
+ authProtectedRoutes.post('/api/auth/change-password', ctrl.changePassword)
+ authProtectedRoutes.post('/api/auth/change-username', ctrl.changeUsername)
+ authProtectedRoutes.get('/api/auth/avatar', ctrl.getMyAvatar)
++authProtectedRoutes.get('/api/auth/avatar/image', ctrl.getMyAvatarImage)
+ authProtectedRoutes.put('/api/auth/avatar', ctrl.updateMyAvatar)
+ authProtectedRoutes.delete('/api/auth/password', ctrl.removePassword)
+ authProtectedRoutes.get('/api/auth/users', requireSuperAdmin, ctrl.listManagedUsers)
+diff --git a/packages/server/src/routes/hermes/profiles.ts b/packages/server/src/routes/hermes/profiles.ts
+index 163bed78..b1cbc024 100644
+--- a/packages/server/src/routes/hermes/profiles.ts
++++ b/packages/server/src/routes/hermes/profiles.ts
+@@ -12,6 +12,7 @@ profileRoutes.post('/api/hermes/profiles/:name/restart', ctrl.restartProfileRunt
+ profileRoutes.post('/api/hermes/profiles/:name/gateway/restart', ctrl.restartGatewayForProfile)
+ profileRoutes.put('/api/hermes/profiles/:name/avatar', ctrl.updateAvatar)
+ profileRoutes.delete('/api/hermes/profiles/:name/avatar', ctrl.deleteAvatar)
++profileRoutes.get('/api/hermes/profiles/:name/avatar/image', ctrl.getAvatarImage)
+ profileRoutes.get('/api/hermes/profiles/:name', ctrl.get)
+ profileRoutes.delete('/api/hermes/profiles/:name', ctrl.remove)
+ profileRoutes.post('/api/hermes/profiles/:name/rename', ctrl.rename)
+diff --git a/tests/client/chat-store-compression-state.test.ts b/tests/client/chat-store-compression-state.test.ts
+index 92019e36..8c1b044c 100644
+--- a/tests/client/chat-store-compression-state.test.ts
++++ b/tests/client/chat-store-compression-state.test.ts
+@@ -36,6 +36,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+   deleteSession: vi.fn(),
+   fetchSession: vi.fn(),
+   fetchSessions: vi.fn(),
++  fetchSessionMessagesPage: vi.fn(),
+   fetchWorkspaceRunChangesForSession: vi.fn(async () => []),
+   fetchWorkspaceRunChangeFile: vi.fn(async () => null),
+   setSessionModel: vi.fn(),
+diff --git a/tests/client/chat-store-error-handling.test.ts b/tests/client/chat-store-error-handling.test.ts
+index 10da773f..eccecede 100644
+--- a/tests/client/chat-store-error-handling.test.ts
++++ b/tests/client/chat-store-error-handling.test.ts
+@@ -44,6 +44,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+   deleteSession: vi.fn(),
+   fetchSession: vi.fn(),
+   fetchSessions: vi.fn(),
++  fetchSessionMessagesPage: vi.fn(),
+   fetchWorkspaceRunChangesForSession: vi.fn(async () => []),
+   fetchWorkspaceRunChangeFile: vi.fn(async () => null),
+   setSessionModel: vi.fn(),
+diff --git a/tests/client/chat-store-reasoning-effort.test.ts b/tests/client/chat-store-reasoning-effort.test.ts
+index c85f5ba6..9b910d63 100644
+--- a/tests/client/chat-store-reasoning-effort.test.ts
++++ b/tests/client/chat-store-reasoning-effort.test.ts
+@@ -32,6 +32,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+   deleteSession: vi.fn(),
+   fetchSession: vi.fn(),
+   fetchSessions: vi.fn(),
++  fetchSessionMessagesPage: vi.fn(),
+   fetchWorkspaceRunChangesForSession: vi.fn(async () => []),
+   fetchWorkspaceRunChangeFile: vi.fn(async () => null),
+   setSessionModel: vi.fn(),
+diff --git a/tests/client/chat-store-session-command.test.ts b/tests/client/chat-store-session-command.test.ts
+index a052e73e..0ba5c78a 100644
+--- a/tests/client/chat-store-session-command.test.ts
++++ b/tests/client/chat-store-session-command.test.ts
+@@ -55,6 +55,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+   deleteSession: vi.fn(),
+   fetchSession: vi.fn(),
+   fetchSessions: vi.fn(),
++  fetchSessionMessagesPage: vi.fn(),
+   fetchWorkspaceRunChangesForSession: vi.fn(async () => []),
+   fetchWorkspaceRunChangeFile: vi.fn(async () => null),
+   setSessionModel: vi.fn(),
+diff --git a/tests/client/chat-store-startup-session.test.ts b/tests/client/chat-store-startup-session.test.ts
+new file mode 100644
+index 00000000..0fac9aa1
+--- /dev/null
++++ b/tests/client/chat-store-startup-session.test.ts
+@@ -0,0 +1,106 @@
++// @vitest-environment jsdom
++import { beforeEach, describe, expect, it, vi } from 'vitest'
++import { createPinia, setActivePinia } from 'pinia'
++import { useChatStore } from '@/stores/hermes/chat'
++
++const sessionApi = vi.hoisted(() => ({
++  fetchSessions: vi.fn(),
++  fetchSessionMessagesPage: vi.fn(),
++  fetchWorkspaceRunChangesForSession: vi.fn(async () => []),
++}))
++
++const chatApi = vi.hoisted(() => ({
++  resumeSession: vi.fn((sessionId: string, callback: (data: any) => void) => {
++    callback({
++      session_id: sessionId,
++      messages: [{ id: 1, session_id: sessionId, role: 'user', content: 'hi', timestamp: 1 }],
++      isWorking: false,
++      events: [],
++      messageLoadedCount: 1,
++      messageTotal: 1,
++      hasMoreBefore: false,
++    })
++    return {} as any
++  }),
++}))
++
++vi.mock('@/api/hermes/sessions', () => ({
++  archiveSession: vi.fn(),
++  deleteSession: vi.fn(),
++  fetchSessionMessagesPage: sessionApi.fetchSessionMessagesPage,
++  fetchSessions: sessionApi.fetchSessions,
++  fetchWorkspaceRunChangesForSession: sessionApi.fetchWorkspaceRunChangesForSession,
++  fetchWorkspaceRunChangeFile: vi.fn(async () => null),
++  setSessionModel: vi.fn(),
++}))
++
++vi.mock('@/api/hermes/chat', () => ({
++  startRunViaSocket: vi.fn(() => ({ abort: vi.fn() })),
++  resumeSession: chatApi.resumeSession,
++  registerSessionHandlers: vi.fn(),
++  unregisterSessionHandlers: vi.fn(),
++  getChatRunSocket: vi.fn(() => ({ emit: vi.fn() })),
++  respondToolApproval: vi.fn(),
++  respondClarify: vi.fn(),
++  onPeerUserMessage: vi.fn(() => vi.fn()),
++  onSessionCommand: vi.fn(() => vi.fn()),
++  onSessionTitleUpdated: vi.fn(() => vi.fn()),
++  onSessionWorkspaceUpdated: vi.fn(() => vi.fn()),
++}))
++
++vi.mock('@/api/client', () => ({ getActiveProfileName: () => 'default' }))
++vi.mock('@/api/hermes/download', () => ({ getDownloadUrl: (_path: string, name: string) => `/download/${name}` }))
++vi.mock('@/utils/completion-sound', () => ({ primeCompletionSound: vi.fn(), playCompletionSound: vi.fn() }))
++vi.mock('@/utils/completion-notification', () => ({ showCompletionNotification: vi.fn() }))
++vi.mock('@/utils/session-sync', () => ({ subscribeSessionSync: vi.fn(() => vi.fn()), publishSessionSync: vi.fn() }))
++
++describe('chat store startup session', () => {
++  beforeEach(() => {
++    vi.clearAllMocks()
++    localStorage.clear()
++    setActivePinia(createPinia())
++    sessionApi.fetchSessionMessagesPage.mockResolvedValue({
++      messages: [{ id: 1, session_id: 'stored-session', role: 'user', content: 'fast', timestamp: 1 }],
++      total: 1,
++      offset: 0,
++      limit: 20,
++      hasMore: false,
++    })
++  })
++
++  it('opens the stored session before the list arrives', async () => {
++    localStorage.setItem('hermes_active_session_default', 'stored-session')
++    const store = useChatStore()
++
++    await store.openPreferredSession()
++
++    expect(store.activeSessionId).toBe('stored-session')
++    expect(store.sessions.some((session: { id: string }) => session.id === 'stored-session')).toBe(true)
++    expect(chatApi.resumeSession).toHaveBeenCalled()
++  })
++
++  it('does not reload the same session after the list arrives', async () => {
++    localStorage.setItem('hermes_active_session_default', 'stored-session')
++    sessionApi.fetchSessions
++      .mockResolvedValueOnce([{
++        id: 'stored-session',
++        profile: 'default',
++        source: 'cli',
++        title: 'Stored',
++        started_at: 1,
++        last_active: 2,
++        message_count: 1,
++      }])
++      .mockResolvedValueOnce([])
++
++    const store = useChatStore()
++    await store.openPreferredSession()
++    const resumeCount = chatApi.resumeSession.mock.calls.length
++
++    await store.loadSessions()
++
++    expect(store.activeSessionId).toBe('stored-session')
++    expect(store.activeSession?.title).toBe('Stored')
++    expect(chatApi.resumeSession.mock.calls.length).toBe(resumeCount)
++  })
++})
+diff --git a/tests/client/group-agent-avatar.test.ts b/tests/client/group-agent-avatar.test.ts
+index 1f10ef7f..8fdf500d 100644
+--- a/tests/client/group-agent-avatar.test.ts
++++ b/tests/client/group-agent-avatar.test.ts
+@@ -11,6 +11,10 @@ describe('group agent avatars', () => {
+       type: 'image',
+       dataUrl: 'data:image/png;base64,abc',
+     })
++    expect(parseStoredAvatar(JSON.stringify({ type: 'image', url: '/api/auth/avatar/image' }))).toEqual({
++      type: 'image',
++      url: '/api/auth/avatar/image',
++    })
+   })
+ 
+   it('falls back to the matching single-chat agent icon', () => {
+diff --git a/tests/server/auth-routes-avatar.test.ts b/tests/server/auth-routes-avatar.test.ts
+index e9d1cbfc..b184f2a3 100644
+--- a/tests/server/auth-routes-avatar.test.ts
++++ b/tests/server/auth-routes-avatar.test.ts
+@@ -11,6 +11,7 @@ vi.mock('../../packages/server/src/controllers/auth', () => ({
+   changePassword: vi.fn(async (ctx: any) => { ctx.body = { ok: true } }),
+   changeUsername: vi.fn(async (ctx: any) => { ctx.body = { ok: true } }),
+   getMyAvatar: vi.fn(async (ctx: any) => { ctx.body = { avatar: '' } }),
++  getMyAvatarImage: vi.fn(async (ctx: any) => { ctx.status = 404 }),
+   updateMyAvatar: vi.fn(async (ctx: any) => { ctx.body = { success: true } }),
+   removePassword: vi.fn(async (ctx: any) => { ctx.body = { ok: true } }),
+   listManagedUsers: vi.fn(async (ctx: any) => { ctx.body = { users: [] } }),
+@@ -57,9 +58,16 @@ describe('auth routes: avatar endpoints', () => {
+     expect(findLayer(authPublicRoutes, 'GET', '/api/auth/avatar')).toBeUndefined()
+     expect(findLayer(authPublicRoutes, 'PUT', '/api/auth/avatar')).toBeUndefined()
+     expect(findLayer(authProtectedRoutes, 'GET', '/api/auth/avatar')).toBeDefined()
++    expect(findLayer(authProtectedRoutes, 'GET', '/api/auth/avatar/image')).toBeDefined()
+     expect(findLayer(authProtectedRoutes, 'PUT', '/api/auth/avatar')).toBeDefined()
+   })
+ 
++  it('mounts GET /api/auth/avatar/image on the protected router', async () => {
++    const { authProtectedRoutes } = await import('../../packages/server/src/routes/auth')
++    const layer = findLayer(authProtectedRoutes, 'GET', '/api/auth/avatar/image')
++    expect(layer).toBeDefined()
++  })
++
+   it('routes GET /api/auth/avatar to getMyAvatar', async () => {
+     const { authProtectedRoutes } = await import('../../packages/server/src/routes/auth')
+     const ctrl = await import('../../packages/server/src/controllers/auth')
+diff --git a/tests/server/profiles-routes.test.ts b/tests/server/profiles-routes.test.ts
+index 82400f6f..ada6aeee 100644
+--- a/tests/server/profiles-routes.test.ts
++++ b/tests/server/profiles-routes.test.ts
+@@ -461,6 +461,57 @@ describe('Profile Routes', () => {
+       expect(readFileSync(join(dir, 'avatar.bin')).toString()).toBe('avatar-png')
+     })
+ 
++    it('lists image avatars as URL refs instead of inline data URLs', async () => {
++      const webUiHome = await mkdtemp(join(tmpdir(), 'hermes-web-ui-avatar-'))
++      tempHomes.push(webUiHome)
++      process.env.HERMES_WEB_UI_HOME = webUiHome
++      const dataUrl = `data:image/png;base64,${Buffer.from('avatar-png').toString('base64')}`
++      const { updateAvatar, list } = await import('../../packages/server/src/controllers/hermes/profiles')
++      await updateAvatar({
++        params: { name: 'default' },
++        request: { body: { type: 'image', dataUrl } },
++        status: 200,
++        body: undefined,
++      })
++      vi.mocked(hermesCli.listProfiles).mockResolvedValue([{
++        name: 'default',
++        active: true,
++        model: 'gpt',
++        alias: '',
++      }])
++      const ctx: any = { status: 200, body: undefined, get: () => '', state: { user: { role: 'super_admin' } } }
++      await list(ctx)
++      expect(ctx.body.profiles[0].avatar.dataUrl).toBeUndefined()
++      expect(ctx.body.profiles[0].avatar.url).toMatch(/^\/api\/hermes\/profiles\/default\/avatar\/image/)
++    })
++
++    it('streams the stored avatar image', async () => {
++      const webUiHome = await mkdtemp(join(tmpdir(), 'hermes-web-ui-avatar-'))
++      tempHomes.push(webUiHome)
++      process.env.HERMES_WEB_UI_HOME = webUiHome
++      const dataUrl = `data:image/png;base64,${Buffer.from('avatar-png').toString('base64')}`
++      const { updateAvatar, getAvatarImage } = await import('../../packages/server/src/controllers/hermes/profiles')
++      await updateAvatar({
++        params: { name: 'work' },
++        request: { body: { type: 'image', dataUrl } },
++        status: 200,
++        body: undefined,
++      })
++      const headers: Record<string, string> = {}
++      const ctx: any = {
++        params: { name: 'work' },
++        status: 200,
++        body: undefined,
++        set: (key: string, value: string) => { headers[key] = value },
++      }
++      await getAvatarImage(ctx)
++      expect(ctx.status).toBe(200)
++      expect(headers['Content-Type']).toBe('image/png')
++      const chunks: Buffer[] = []
++      for await (const chunk of ctx.body) chunks.push(Buffer.from(chunk))
++      expect(Buffer.concat(chunks).toString()).toBe('avatar-png')
++    })
++
+     it('deletes profile avatar metadata', async () => {
+       const webUiHome = await mkdtemp(join(tmpdir(), 'hermes-web-ui-avatar-'))
+       tempHomes.push(webUiHome)
+diff --git a/tests/server/user-auth.test.ts b/tests/server/user-auth.test.ts
+index 6c1dec76..2358f2b3 100644
+--- a/tests/server/user-auth.test.ts
++++ b/tests/server/user-auth.test.ts
+@@ -506,6 +506,8 @@ describe('user auth tables and middleware', () => {
+     } as any
+     await ctrl.currentUser(defaultCtx)
+     expect(defaultCtx.body.user.requiresCredentialChange).toBe(true)
++    expect(defaultCtx.body.user.avatar).toBeUndefined()
++    expect(defaultCtx.body.user.hasAvatar).toBe(false)
+ 
+     users.updateUserPassword(admin.id, 'stronger-password')
+     const passwordChangedCtx = {
+-- 
+2.53.0
+
