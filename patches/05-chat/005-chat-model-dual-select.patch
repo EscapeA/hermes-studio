@@ -1,4 +1,4 @@
-From 249284591113d1103f2bc47ca1445e0a2b005390 Mon Sep 17 00:00:00 2001
+From c120c83ac49efb6621ba34ae33d3cfe9584df3f6 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 18:28:26 +0800
 Subject: [PATCH] feat(chat): dual-select session model picker and mobile
@@ -10,14 +10,14 @@ label next to the mobile input button, and use fixed stacking so the
 session drawer covers the global hamburger icon.
 ---
  .../src/components/hermes/chat/ChatInput.vue  |   6 +-
- .../src/components/hermes/chat/ChatPanel.vue  | 490 +++++-------------
- 2 files changed, 141 insertions(+), 355 deletions(-)
+ .../src/components/hermes/chat/ChatPanel.vue  | 489 +++++-------------
+ 2 files changed, 141 insertions(+), 354 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 3423d2af..34fc32ba 100644
+index 0eef0a53..fc3f0ff3 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -1883,13 +1883,13 @@ function isImage(type: string): boolean {
+@@ -1987,13 +1987,13 @@ function isImage(type: string): boolean {
    }
  
    .input-model-button {
@@ -35,20 +35,31 @@ index 3423d2af..34fc32ba 100644
  
    .input-settings-button {
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index d6e92a28..833d1e29 100644
+index 8d2eb0e0..65141fdd 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -1612,9 +1612,7 @@ async function handleWorkspaceConfirm() {
+@@ -53,7 +53,6 @@ import { buildVisibleSessionCategoryGroups, partitionRecentSessions } from "./se
+ import PageSidebarNav from "@/components/layout/PageSidebarNav.vue";
+ import { isStoredSuperAdmin } from "@/api/client";
+ import { useDefaultWorkspace } from "@/composables/useDefaultWorkspace";
+-import { useCollapsedProviderGroups } from "@/composables/useCollapsedProviderGroups";
+ import { canScopedCodingAgentUseProvider, usesServerManagedProviderAuth } from "@/utils/codingAgentProviders";
+ import { OPEN_SUBAGENT_STREAM_EVENT, type OpenSubagentStreamDetail } from "@/utils/hermes/subagent-stream";
+ import { desktopBridge, hasDesktopBrowserBridge } from "@/utils/desktop-bridge";
+@@ -1619,12 +1618,7 @@ async function handleWorkspaceConfirm() {
  const showSessionModelModal = ref(false);
  const showSessionModelModeModal = ref(false);
  const sessionModelSessionId = ref<string | null>(null);
 -const sessionModelSearch = ref("");
  const sessionModelKind = ref<"model" | "moa">("model");
--const sessionModelCollapsedGroups = ref<Record<string, boolean>>({});
+-const {
+-  isGroupCollapsed: isSessionModelGroupCollapsed,
+-  toggleGroup: toggleSessionModelCollapsedGroup,
+-} = useCollapsedProviderGroups();
  const sessionModelValue = ref("");
  const sessionModelProvider = ref("");
  const sessionModelCustomInput = ref("");
-@@ -1676,7 +1674,10 @@ const sessionCanUseMoa = computed(() =>
+@@ -1686,7 +1680,10 @@ const sessionCanUseMoa = computed(() =>
  );
  
  const sessionModelProviderOptions = computed(() =>
@@ -60,7 +71,7 @@ index d6e92a28..833d1e29 100644
  );
  
  const sessionModelGroupsWithCustom = computed(() =>
-@@ -1691,25 +1692,23 @@ const sessionModelGroupsWithCustom = computed(() =>
+@@ -1701,25 +1698,23 @@ const sessionModelGroupsWithCustom = computed(() =>
    })),
  );
  
@@ -101,16 +112,15 @@ index d6e92a28..833d1e29 100644
  
  async function openSessionModelModal(sessionId: string) {
    if (appStore.modelGroups.length === 0 && appStore.profileModelGroups.length === 0) {
-@@ -1739,16 +1738,53 @@ async function openSessionModelModal(sessionId: string) {
+@@ -1749,7 +1744,6 @@ async function openSessionModelModal(sessionId: string) {
      ? "moa"
      : providerGroup ? session?.provider || "" : defaults.provider || "";
    sessionModelCustomProvider.value = usesMoa ? defaults.provider : sessionModelProvider.value;
 -  sessionModelSearch.value = "";
    sessionModelCustomInput.value = "";
--  sessionModelCollapsedGroups.value = {};
    showSessionModelModal.value = true;
  }
- 
+@@ -1757,7 +1751,46 @@ async function openSessionModelModal(sessionId: string) {
  function handleSessionModelKindChange(value: "model" | "moa") {
    if (sessionModelSwitching.value || (value === "moa" && !sessionCanUseMoa.value)) return;
    sessionModelKind.value = value;
@@ -158,17 +168,13 @@ index d6e92a28..833d1e29 100644
  }
  
  function handleHeaderModelClick() {
-@@ -1760,27 +1796,6 @@ function handleHeaderModelClick() {
+@@ -1769,23 +1802,6 @@ function handleHeaderModelClick() {
    openSessionModelModal(sessionId);
  }
  
--function isSessionModelGroupCollapsed(provider: string) {
--  return !!sessionModelCollapsedGroups.value[provider];
--}
--
 -function toggleSessionModelGroup(provider: string) {
 -  if (sessionModelSwitching.value) return;
--  sessionModelCollapsedGroups.value[provider] = !sessionModelCollapsedGroups.value[provider];
+-  toggleSessionModelCollapsedGroup(provider);
 -}
 -
 -function isCustomSessionModel(model: string, provider: string) {
@@ -186,7 +192,7 @@ index d6e92a28..833d1e29 100644
  function defaultSessionModelApiMode(provider: string): CodingAgentApiMode {
    const group = sessionModelBaseGroups.value.find((item) => item.provider === provider);
    const providerKey = String(group?.provider || provider || "").toLowerCase();
-@@ -1845,8 +1860,9 @@ function cancelSessionModelMode() {
+@@ -1850,8 +1866,9 @@ function cancelSessionModelMode() {
  
  async function handleSessionModelCustomSubmit() {
    const model = sessionModelCustomInput.value.trim();
@@ -197,7 +203,7 @@ index d6e92a28..833d1e29 100644
    await selectSessionModel(model, provider);
  }
  </script>
-@@ -2216,152 +2232,74 @@ async function handleSessionModelCustomSubmit() {
+@@ -2221,152 +2238,74 @@ async function handleSessionModelCustomSubmit() {
        v-model:show="showSessionModelModal"
        preset="card"
        :title="t('chat.setModelTitle')"
@@ -404,7 +410,7 @@ index d6e92a28..833d1e29 100644
            </div>
          </div>
        </NSpin>
-@@ -2896,187 +2834,30 @@ async function handleSessionModelCustomSubmit() {
+@@ -2901,187 +2840,30 @@ async function handleSessionModelCustomSubmit() {
    background-color: $bg-card;
  }
  
@@ -441,8 +447,7 @@ index d6e92a28..833d1e29 100644
 -}
 -
 -.session-model-group-header {
-+.session-model-form {
-   display: flex;
+-  display: flex;
 -  align-items: center;
 -  gap: 6px;
 -  padding: 8px;
@@ -487,7 +492,8 @@ index d6e92a28..833d1e29 100644
 -}
 -
 -.session-model-item {
--  display: flex;
++.session-model-form {
+   display: flex;
 -  align-items: center;
 -  gap: 8px;
 -  padding: 7px 10px;
@@ -601,7 +607,7 @@ index d6e92a28..833d1e29 100644
    padding-top: 12px;
    border-top: 1px solid $border-color;
  }
-@@ -3086,11 +2867,6 @@ async function handleSessionModelCustomSubmit() {
+@@ -3091,11 +2873,6 @@ async function handleSessionModelCustomSubmit() {
    gap: 8px;
  }
  
@@ -613,7 +619,7 @@ index d6e92a28..833d1e29 100644
  .session-model-custom-input {
    flex: 1;
  }
-@@ -3101,6 +2877,13 @@ async function handleSessionModelCustomSubmit() {
+@@ -3106,6 +2883,13 @@ async function handleSessionModelCustomSubmit() {
    color: $text-muted;
  }
  
@@ -627,7 +633,7 @@ index d6e92a28..833d1e29 100644
  .session-list {
    width: $sidebar-width;
    min-height: 0;
-@@ -3129,14 +2912,17 @@ async function handleSessionModelCustomSubmit() {
+@@ -3134,14 +2918,17 @@ async function handleSessionModelCustomSubmit() {
    }
  
    @media (max-width: $breakpoint-mobile) {
@@ -647,7 +653,7 @@ index d6e92a28..833d1e29 100644
  
      &.collapsed {
        transform: translateX(calc(-100% - 10px));
-@@ -3151,10 +2937,10 @@ async function handleSessionModelCustomSubmit() {
+@@ -3156,10 +2943,10 @@ async function handleSessionModelCustomSubmit() {
    }
  
    .session-backdrop {
