@@ -116,9 +116,63 @@ const currentToolCalls = computed(() => {
   return [...tools].reverse();
 });
 
+// --- Tool strip: anti-flicker + collapsible ---
+// Fast tools (hundreds of ms or less) complete before this delay and go
+// straight into the message list — the strip never flashes for them.
+const TOOL_STRIP_REVEAL_DELAY = 500;
+
+const toolStripExpanded = ref(false);
+const stripVisibleToolIds = ref<Set<string>>(new Set());
+const stripRevealTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+const currentRunningToolIds = computed(() => currentToolCalls.value.map((tool) => tool.id));
+
+function scheduleStripReveal(toolId: string) {
+  if (stripVisibleToolIds.value.has(toolId) || stripRevealTimers.has(toolId)) return;
+  const timer = setTimeout(() => {
+    stripRevealTimers.delete(toolId);
+    // Only reveal tools still running — finished ones surface in the message
+    // list (dialogue history) and never flash the live strip.
+    const stillRunning = chatStore.messages.some(
+      (m) => m.id === toolId && m.toolStatus === "running",
+    );
+    if (stillRunning) {
+      stripVisibleToolIds.value = new Set([...stripVisibleToolIds.value, toolId]);
+    }
+  }, TOOL_STRIP_REVEAL_DELAY);
+  stripRevealTimers.set(toolId, timer);
+}
+
+watch(currentRunningToolIds, (ids) => {
+  const idSet = new Set(ids);
+  for (const id of ids) scheduleStripReveal(id);
+  const next = new Set([...stripVisibleToolIds.value].filter((id) => idSet.has(id)));
+  if (next.size !== stripVisibleToolIds.value.size) {
+    stripVisibleToolIds.value = next;
+  }
+});
+
+// Tools that have been running longer than the reveal delay (still running).
 const visibleToolCalls = computed(() =>
-  currentToolCalls.value.filter((tool) => !!tool.toolName),
+  currentToolCalls.value.filter(
+    (tool) => !!tool.toolName && stripVisibleToolIds.value.has(tool.id),
+  ),
 );
+
+const stripSummaryText = computed(() => {
+  const count = currentToolCalls.value.length;
+  if (count <= 0) return t("chat.toolCallInProgress");
+  return t("chat.toolCallsInProgress", { count });
+});
+
+const stripToolNames = computed(() => {
+  const names = currentToolCalls.value.map((tool) => tool.toolName).filter(Boolean);
+  return names.slice(0, 2).join(", ");
+});
+
+function toggleToolStrip() {
+  toolStripExpanded.value = !toolStripExpanded.value;
+}
 
 const liveReasoningDetail = computed<{
   messageId: Message["id"]
@@ -625,6 +679,8 @@ watch(
 onBeforeUnmount(() => {
   stopThinkingTimer();
   saveSessionScrollPosition(activeSessionScrollKey.value);
+  for (const timer of stripRevealTimers.values()) clearTimeout(timer);
+  stripRevealTimers.clear();
 });
 
 onMounted(() => {
@@ -794,7 +850,29 @@ defineExpose({
                 class="tool-call-spinner"
               ></span>
             </div>
-            <!-- Tool calls -->
+            <!-- Tool calls (collapsible strip: collapsed to one line by default) -->
+            <button
+              v-if="visibleToolCalls.length > 0"
+              type="button"
+              class="tool-strip-toggle"
+              :class="{ expanded: toolStripExpanded }"
+              :aria-expanded="toolStripExpanded"
+              :title="toolStripExpanded ? t('chat.toolCallsCollapse') : t('chat.toolCallsExpand')"
+              @click="toggleToolStrip"
+            >
+              <span class="tool-call-spinner"></span>
+              <span class="tool-strip-summary">{{ stripSummaryText }}</span>
+              <span v-if="stripToolNames" class="tool-strip-names">{{ stripToolNames }}</span>
+              <svg
+                class="tool-strip-chevron"
+                :class="{ rotated: toolStripExpanded }"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            <div v-if="toolStripExpanded" class="tool-strip-body">
             <div
               v-for="tc in visibleToolCalls"
               :key="tc.id"
@@ -872,6 +950,14 @@ defineExpose({
                   fill="none"
                 />
               </svg>
+            </div>
+            <div
+              v-if="visibleToolCalls.length === 0"
+              class="tool-call-item tool-strip-pending"
+            >
+              <span class="tool-call-spinner"></span>
+              <span class="tool-strip-summary">{{ t('chat.toolCallInProgress') }}</span>
+            </div>
             </div>
           </div>
         </div>
@@ -1747,15 +1833,85 @@ defineExpose({
   width: 520px;
   min-width: 0;
   max-width: 100%;
-  height: 26px;
-  min-height: 26px;
-  max-height: 26px;
+}
+
+.tool-strip-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-size: 11px;
+  color: $text-secondary;
+  padding: 3px 8px;
+  background: rgba(0, 0, 0, 0.03);
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover,
+  &:focus-visible {
+    outline: none;
+    background: rgba(var(--accent-primary-rgb), 0.09);
+  }
+
+  .dark & {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.tool-strip-summary {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tool-strip-names {
+  flex: 1 1 0;
+  min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: $text-muted;
+  font-family: $font-code;
+}
+
+.tool-strip-chevron {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.18s ease;
+  color: $text-muted;
+
+  &.rotated {
+    transform: rotate(180deg);
+  }
+}
+
+.tool-strip-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  max-height: 180px;
+  overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+.tool-strip-pending {
+  color: $text-muted;
 }
 
 .tool-call-item {
