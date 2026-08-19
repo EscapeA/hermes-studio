@@ -59,6 +59,10 @@ NODE_ENV= npm run build && git push --force-with-lease escapea custom
 
 ## 历史
 
+- 2026-08-19 升级 0.6.44 → c246ba64（#2622 删旧官网 + 4 chat 修复 + upload 413 修复 + sessions-db 过滤重构）：
+  60 补丁重放仅 0040 冲突（上游 #2606 把折叠组状态抽成 useCollapsedProviderGroups composable；
+  解法=保留 NSelect 双下拉模板、删折叠死代码，补丁语义不变）。后端接口签名零变化（hstudio-mobile 无需改动）。
+  备份 tag：`backup/pre-upgrade-20260819-custom-0644`。
 - 2026-08-17 迁移：21 活跃分支（feat/feature/fix/*）+ dev/main → main/custom + patches/ + 32 archive 分支
 - 备份：tag `backup/pre-migration-20260817-dev`（旧 dev/main）、`backup/pre-upgrade-20260817`（迁移后首次升级前 custom）；全部 backup/* tag 已推远程
 - 旧分支全部保留在 `archive/*`（含 archive/dev-main），可随时对比/回滚
