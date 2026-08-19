@@ -36,11 +36,23 @@ git push escapea main
 
 # 2. 重放补丁串（custom 重建）
 git checkout -B custom main
+# ⚠️ patches/ 只在 custom 分支存在：checkout -B 会覆盖掉 working tree 的 patches/
+#   若丢失，从旧 custom tip 恢复：git checkout <旧custom-tip> -- patches/ 并 commit
 git am --3way patches/*/*.patch
 # 冲突：只解真正碰上游改动的补丁；上游已吸收某功能 → git am --skip 并从 patches/ 删除该文件
 
-# 3. 验证 + 部署
+# 2.5 ⚠️ 冲突解决后必须回写补丁文件（2026-08-19 实测踩坑）
+# 手工解决冲突 ≠ 补丁已更新！旧补丁文件仍是升级前版本，下次重放必冲突。
+# 铁律：解完冲突 → git add && git am --continue 后，
+#   git format-patch -1 <该补丁的commit> -o /tmp/xxx/ && cp /tmp/xxx/*.patch patches/<组>/<原文件名>.patch
+# 然后 commit 回写（docs: sync 0XX patch with conflict-resolved commit）
+
+# 3. 验证 + 部署（含可复现性验证，2026-08-19 新增，每次升级必做）
 NODE_ENV= npm run build
+# 临时分支从 main 重放补丁串，对比源码树必须 0 差异（否则某补丁文件没回写）：
+git checkout -B verify-am main && git checkout custom -- patches/ && git commit -m "tmp"
+git am --3way patches/*/*.patch && git diff verify-am custom --stat -- . ':(exclude)patches' ':(exclude)docs/openapi.json'
+git checkout custom && git branch -D verify-am
 git push --force-with-lease escapea custom   # CI → Build + CF Pages deploy
 ```
 
