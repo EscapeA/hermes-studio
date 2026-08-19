@@ -1,0 +1,291 @@
+From 2b80dace9a9bfa9ee82f0c02ec8c00788c288dcb Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Wed, 19 Aug 2026 23:13:59 +0800
+Subject: [PATCH] feat(chat): anti-flicker collapsible tool strip
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Fast tools (hundreds of ms or less) complete before a 500ms reveal delay
+and go straight into the message list — the live tool strip never flashes
+for them. Tools still running after the delay appear in a collapsible
+single-line strip ("Calling N tools · name ▾") that expands to the full
+list; finished tools leave the strip immediately. Timers are cleared on
+unmount so session switches never leak stale tools into the new panel.
+---
+ .../components/hermes/chat/MessageList.vue    | 170 +++++++++++++++++-
+ packages/client/src/i18n/locales/en.ts        |   4 +
+ packages/client/src/i18n/locales/zh-TW.ts     |   4 +
+ packages/client/src/i18n/locales/zh.ts        |   4 +
+ 4 files changed, 178 insertions(+), 4 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
+index dc2fc026..6c7c5689 100644
+--- a/packages/client/src/components/hermes/chat/MessageList.vue
++++ b/packages/client/src/components/hermes/chat/MessageList.vue
+@@ -100,15 +100,73 @@ const currentToolCalls = computed(() => {
+       break;
+     }
+   }
+-  // Only tool calls after the last user input, newest on top.
+-  const tools = msgs.filter((m, i) => m.role === "tool" && i > lastInputIdx);
++  // Only tools still running after the last user input, newest on top.
++  // Finished tools leave the live strip immediately and surface in the
++  // message list (dialogue history) instead of staying pinned.
++  const tools = msgs.filter(
++    (m, i) => m.role === "tool" && i > lastInputIdx && m.toolStatus === "running",
++  );
+   return [...tools].reverse();
+ });
+ 
++// --- Tool strip: anti-flicker + collapsible ---
++// Fast tools (hundreds of ms or less) complete before this delay and go
++// straight into the message list — the strip never flashes for them.
++const TOOL_STRIP_REVEAL_DELAY = 500;
++
++const toolStripExpanded = ref(false);
++const stripVisibleToolIds = ref<Set<string>>(new Set());
++const stripRevealTimers = new Map<string, ReturnType<typeof setTimeout>>();
++
++const currentRunningToolIds = computed(() => currentToolCalls.value.map((tool) => tool.id));
++
++function scheduleStripReveal(toolId: string) {
++  if (stripVisibleToolIds.value.has(toolId) || stripRevealTimers.has(toolId)) return;
++  const timer = setTimeout(() => {
++    stripRevealTimers.delete(toolId);
++    // Only reveal tools still running — finished ones surface in the message
++    // list (dialogue history) and never flash the live strip.
++    const stillRunning = chatStore.messages.some(
++      (m) => m.id === toolId && m.toolStatus === "running",
++    );
++    if (stillRunning) {
++      stripVisibleToolIds.value = new Set([...stripVisibleToolIds.value, toolId]);
++    }
++  }, TOOL_STRIP_REVEAL_DELAY);
++  stripRevealTimers.set(toolId, timer);
++}
++
++watch(currentRunningToolIds, (ids) => {
++  const idSet = new Set(ids);
++  for (const id of ids) scheduleStripReveal(id);
++  const next = new Set([...stripVisibleToolIds.value].filter((id) => idSet.has(id)));
++  if (next.size !== stripVisibleToolIds.value.size) {
++    stripVisibleToolIds.value = next;
++  }
++});
++
++// Tools that have been running longer than the reveal delay (still running).
+ const visibleToolCalls = computed(() =>
+-  currentToolCalls.value.filter((tool) => !!tool.toolName),
++  currentToolCalls.value.filter(
++    (tool) => !!tool.toolName && stripVisibleToolIds.value.has(tool.id),
++  ),
+ );
+ 
++const stripSummaryText = computed(() => {
++  const count = currentToolCalls.value.length;
++  if (count <= 0) return t("chat.toolCallInProgress");
++  return t("chat.toolCallsInProgress", { count });
++});
++
++const stripToolNames = computed(() => {
++  const names = currentToolCalls.value.map((tool) => tool.toolName).filter(Boolean);
++  return names.slice(0, 2).join(", ");
++});
++
++function toggleToolStrip() {
++  toolStripExpanded.value = !toolStripExpanded.value;
++}
++
+ const liveReasoningDetail = computed<{
+   messageId: Message["id"]
+   reasoning: string
+@@ -581,6 +639,8 @@ watch(
+ onBeforeUnmount(() => {
+   stopThinkingTimer();
+   saveSessionScrollPosition(activeSessionScrollKey.value);
++  for (const timer of stripRevealTimers.values()) clearTimeout(timer);
++  stripRevealTimers.clear();
+ });
+ 
+ onMounted(() => {
+@@ -743,7 +803,29 @@ defineExpose({
+                 class="tool-call-spinner"
+               ></span>
+             </div>
+-            <!-- Tool calls -->
++            <!-- Tool calls (collapsible strip: collapsed to one line by default) -->
++            <button
++              v-if="visibleToolCalls.length > 0"
++              type="button"
++              class="tool-strip-toggle"
++              :class="{ expanded: toolStripExpanded }"
++              :aria-expanded="toolStripExpanded"
++              :title="toolStripExpanded ? t('chat.toolCallsCollapse') : t('chat.toolCallsExpand')"
++              @click="toggleToolStrip"
++            >
++              <span class="tool-call-spinner"></span>
++              <span class="tool-strip-summary">{{ stripSummaryText }}</span>
++              <span v-if="stripToolNames" class="tool-strip-names">{{ stripToolNames }}</span>
++              <svg
++                class="tool-strip-chevron"
++                :class="{ rotated: toolStripExpanded }"
++                viewBox="0 0 24 24"
++                aria-hidden="true"
++              >
++                <polyline points="6 9 12 15 18 9" />
++              </svg>
++            </button>
++            <div v-if="toolStripExpanded" class="tool-strip-body">
+             <div
+               v-for="tc in visibleToolCalls"
+               :key="tc.id"
+@@ -822,6 +904,14 @@ defineExpose({
+                 />
+               </svg>
+             </div>
++            <div
++              v-if="visibleToolCalls.length === 0"
++              class="tool-call-item tool-strip-pending"
++            >
++              <span class="tool-call-spinner"></span>
++              <span class="tool-strip-summary">{{ t('chat.toolCallInProgress') }}</span>
++            </div>
++            </div>
+           </div>
+         </div>
+         </Transition>
+@@ -1634,6 +1724,74 @@ defineExpose({
+   gap: 4px;
+   width: 100%;
+   min-width: 0;
++}
++
++.tool-strip-toggle {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  width: fit-content;
++  max-width: 100%;
++  min-width: 0;
++  box-sizing: border-box;
++  font-size: 11px;
++  color: $text-secondary;
++  padding: 3px 8px;
++  background: rgba(0, 0, 0, 0.03);
++  border: none;
++  border-radius: $radius-sm;
++  cursor: pointer;
++  text-align: left;
++
++  &:hover,
++  &:focus-visible {
++    outline: none;
++    background: rgba(var(--accent-primary-rgb), 0.09);
++  }
++
++  .dark & {
++    background: rgba(255, 255, 255, 0.06);
++  }
++}
++
++.tool-strip-summary {
++  font-weight: 600;
++  white-space: nowrap;
++}
++
++.tool-strip-names {
++  flex: 1 1 0;
++  min-width: 0;
++  overflow: hidden;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++  color: $text-muted;
++  font-family: $font-code;
++}
++
++.tool-strip-chevron {
++  flex-shrink: 0;
++  width: 12px;
++  height: 12px;
++  fill: none;
++  stroke: currentColor;
++  stroke-width: 2;
++  stroke-linecap: round;
++  stroke-linejoin: round;
++  transition: transform 0.18s ease;
++  color: $text-muted;
++
++  &.rotated {
++    transform: rotate(180deg);
++  }
++}
++
++.tool-strip-body {
++  display: flex;
++  flex-direction: column;
++  gap: 4px;
++  width: 100%;
++  min-width: 0;
+   max-height: 180px;
+   overflow-y: auto;
+   scrollbar-width: none;
+@@ -1643,6 +1801,10 @@ defineExpose({
+   }
+ }
+ 
++.tool-strip-pending {
++  color: $text-muted;
++}
++
+ .tool-call-item {
+   display: flex;
+   align-items: center;
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 3866637b..ef34df9f 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -942,6 +942,10 @@ export default {
+     thinkingHide: 'Hide thinking',
+     thinkingDuration: 'Observed {duration}',
+     thinkingChars: '{count} chars',
++    toolCallInProgress: 'Calling tools…',
++    toolCallsInProgress: 'Calling {count} tools',
++    toolCallsExpand: 'Expand tool calls',
++    toolCallsCollapse: 'Collapse tool calls',
+     copyBubble: 'Copy message',
+     copiedBubble: 'Message copied',
+     copyFailed: 'Copy failed',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 1b073778..cbdb60fb 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -911,6 +911,10 @@ export default {
+     thinkingHide: '收起思考過程',
+     thinkingDuration: '已觀察 {duration}',
+     thinkingChars: '{count} 字',
++    toolCallInProgress: '正在呼叫工具…',
++    toolCallsInProgress: '正在呼叫 {count} 個工具',
++    toolCallsExpand: '展開工具呼叫',
++    toolCallsCollapse: '收起工具呼叫',
+     copyBubble: '複製訊息',
+     copiedBubble: '已複製',
+     copyFailed: '複製失敗',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index a280eaf6..f9dad80b 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -942,6 +942,10 @@ export default {
+     thinkingHide: '收起思考过程',
+     thinkingDuration: '已观察 {duration}',
+     thinkingChars: '{count} 字',
++    toolCallInProgress: '正在调用工具…',
++    toolCallsInProgress: '正在调用 {count} 个工具',
++    toolCallsExpand: '展开工具调用',
++    toolCallsCollapse: '收起工具调用',
+     copyBubble: '复制消息',
+     copiedBubble: '已复制',
+     copyFailed: '复制失败',
+-- 
+2.53.0
+
