@@ -1,4 +1,4 @@
-From 2b80dace9a9bfa9ee82f0c02ec8c00788c288dcb Mon Sep 17 00:00:00 2001
+From 8c353ba4948567644b239033c204f5e6ef6ef34a Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Wed, 19 Aug 2026 23:13:59 +0800
 Subject: [PATCH] feat(chat): anti-flicker collapsible tool strip
@@ -13,28 +13,17 @@ single-line strip ("Calling N tools · name ▾") that expands to the full
 list; finished tools leave the strip immediately. Timers are cleared on
 unmount so session switches never leak stale tools into the new panel.
 ---
- .../components/hermes/chat/MessageList.vue    | 170 +++++++++++++++++-
+ .../components/hermes/chat/MessageList.vue    | 166 +++++++++++++++++-
  packages/client/src/i18n/locales/en.ts        |   4 +
  packages/client/src/i18n/locales/zh-TW.ts     |   4 +
  packages/client/src/i18n/locales/zh.ts        |   4 +
- 4 files changed, 178 insertions(+), 4 deletions(-)
+ 4 files changed, 173 insertions(+), 5 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index dc2fc026..6c7c5689 100644
+index 034a3c05..55a5fbb3 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -100,15 +100,73 @@ const currentToolCalls = computed(() => {
-       break;
-     }
-   }
--  // Only tool calls after the last user input, newest on top.
--  const tools = msgs.filter((m, i) => m.role === "tool" && i > lastInputIdx);
-+  // Only tools still running after the last user input, newest on top.
-+  // Finished tools leave the live strip immediately and surface in the
-+  // message list (dialogue history) instead of staying pinned.
-+  const tools = msgs.filter(
-+    (m, i) => m.role === "tool" && i > lastInputIdx && m.toolStatus === "running",
-+  );
+@@ -112,10 +112,64 @@ const currentToolCalls = computed(() => {
    return [...tools].reverse();
  });
  
@@ -100,7 +89,7 @@ index dc2fc026..6c7c5689 100644
  const liveReasoningDetail = computed<{
    messageId: Message["id"]
    reasoning: string
-@@ -581,6 +639,8 @@ watch(
+@@ -635,6 +689,8 @@ watch(
  onBeforeUnmount(() => {
    stopThinkingTimer();
    saveSessionScrollPosition(activeSessionScrollKey.value);
@@ -109,7 +98,7 @@ index dc2fc026..6c7c5689 100644
  });
  
  onMounted(() => {
-@@ -743,7 +803,29 @@ defineExpose({
+@@ -802,7 +858,29 @@ defineExpose({
                  class="tool-call-spinner"
                ></span>
              </div>
@@ -140,7 +129,7 @@ index dc2fc026..6c7c5689 100644
              <div
                v-for="tc in visibleToolCalls"
                :key="tc.id"
-@@ -822,6 +904,14 @@ defineExpose({
+@@ -881,6 +959,14 @@ defineExpose({
                  />
                </svg>
              </div>
@@ -155,10 +144,13 @@ index dc2fc026..6c7c5689 100644
            </div>
          </div>
          </Transition>
-@@ -1634,6 +1724,74 @@ defineExpose({
-   gap: 4px;
-   width: 100%;
+@@ -1702,10 +1788,76 @@ defineExpose({
+   width: 520px;
    min-width: 0;
+   max-width: 100%;
+-  height: 26px;
+-  min-height: 26px;
+-  max-height: 26px;
 +}
 +
 +.tool-strip-toggle {
@@ -197,7 +189,7 @@ index dc2fc026..6c7c5689 100644
 +.tool-strip-names {
 +  flex: 1 1 0;
 +  min-width: 0;
-+  overflow: hidden;
+   overflow: hidden;
 +  text-overflow: ellipsis;
 +  white-space: nowrap;
 +  color: $text-muted;
@@ -227,10 +219,12 @@ index dc2fc026..6c7c5689 100644
 +  gap: 4px;
 +  width: 100%;
 +  min-width: 0;
-   max-height: 180px;
-   overflow-y: auto;
++  max-height: 180px;
++  overflow-y: auto;
    scrollbar-width: none;
-@@ -1643,6 +1801,10 @@ defineExpose({
+   -ms-overflow-style: none;
+   &::-webkit-scrollbar {
+@@ -1713,6 +1865,10 @@ defineExpose({
    }
  }
  
@@ -240,12 +234,12 @@ index dc2fc026..6c7c5689 100644
 +
  .tool-call-item {
    display: flex;
-   align-items: center;
+   flex: 1 1 0;
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 3866637b..ef34df9f 100644
+index 26f57c55..31cd73b5 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -942,6 +942,10 @@ export default {
+@@ -944,6 +944,10 @@ export default {
      thinkingHide: 'Hide thinking',
      thinkingDuration: 'Observed {duration}',
      thinkingChars: '{count} chars',
@@ -257,10 +251,10 @@ index 3866637b..ef34df9f 100644
      copiedBubble: 'Message copied',
      copyFailed: 'Copy failed',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 1b073778..cbdb60fb 100644
+index 398aec62..28e31a12 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -911,6 +911,10 @@ export default {
+@@ -913,6 +913,10 @@ export default {
      thinkingHide: '收起思考過程',
      thinkingDuration: '已觀察 {duration}',
      thinkingChars: '{count} 字',
@@ -272,10 +266,10 @@ index 1b073778..cbdb60fb 100644
      copiedBubble: '已複製',
      copyFailed: '複製失敗',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index a280eaf6..f9dad80b 100644
+index 8cede710..bd119e5d 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -942,6 +942,10 @@ export default {
+@@ -944,6 +944,10 @@ export default {
      thinkingHide: '收起思考过程',
      thinkingDuration: '已观察 {duration}',
      thinkingChars: '{count} 字',

@@ -24,7 +24,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 11-socket-stall | socket 卡死防护（服务端 backlog 检测断连 + 前端 REST 兜底刷新） | 001-002 |
 | 12-tool-strip | 工具面板防闪烁（500ms 延迟显示）+ 折叠单行（正在调用 N 个工具） | 001 |
 
-共 **61 个补丁**（含 01-ci/006 的 custom 分支切换）。
+共 **60 个补丁**（含 01-ci/006 的 custom 分支切换）。
 
 ## 升级 SOP（上游新版本）
 
@@ -72,6 +72,12 @@ NODE_ENV= npm run build && git push --force-with-lease escapea custom
 
 ## 历史
 
+- 2026-08-22 升级 0.6.44 → v0.6.45（f829a2ce #2665，16 PR：工具轨迹稳定化/ToolRunCard、备用 Provider 链管理、Studio 下载中心、群聊草稿、Pi 续接等）：
+  61 补丁重放仅 0047（live-reasoning-scroll）与 0061（tool-strip anti-flicker）冲突。
+  0047 = 上游 #2662 已把 LiveReasoningStatus 改为单行水平自动滚动（scrollReasoningToLatest，语义已吸收）→ **skip 并从补丁串删除**（05-chat/012-live-reasoning-scroll.patch）。
+  0061 = 上游 #2662 给 .tool-calls-panel 加固定 26px/overflow hidden（会锁死折叠条展开）→ 冲突解决保留补丁折叠结构、仅取上游 max-width:100%，已回写 patches/12-tool-strip/001-tool-strip-anti-flicker.patch。
+  后端接口零破坏（新增 run_marker 字段 + /api/hermes/config/fallback-providers，hstudio-mobile 无需改动）。
+  备份 tag：`backup/pre-upgrade-20260822-custom-0645`。
 - 2026-08-19 升级 0.6.44 → c246ba64（#2622 删旧官网 + 4 chat 修复 + upload 413 修复 + sessions-db 过滤重构）：
   60 补丁重放仅 0040 冲突（上游 #2606 把折叠组状态抽成 useCollapsedProviderGroups composable；
   解法=保留 NSelect 双下拉模板、删折叠死代码，补丁语义不变）。后端接口签名零变化（hstudio-mobile 无需改动）。
