@@ -1,0 +1,220 @@
+From ae0d191db3699e384186ffc5bcab6c207594ed1a Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 20 Jul 2026 20:37:37 +0800
+Subject: [PATCH 1/4] feat(settings): toggle session list agent/profile
+ identity row
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Add display.show_session_identity under Settings → Display. When off,
+sidebar session items hide the agent-type avatar, profile avatar, and
+profile name. Default remains on for existing behavior.
+---
+ packages/client/src/api/hermes/config.ts                    | 1 +
+ .../client/src/components/hermes/chat/SessionListItem.vue   | 5 ++++-
+ .../src/components/hermes/settings/DisplaySettings.vue      | 6 ++++++
+ packages/client/src/i18n/locales/de.ts                      | 2 ++
+ packages/client/src/i18n/locales/en.ts                      | 2 ++
+ packages/client/src/i18n/locales/es.ts                      | 2 ++
+ packages/client/src/i18n/locales/fr.ts                      | 2 ++
+ packages/client/src/i18n/locales/ja.ts                      | 2 ++
+ packages/client/src/i18n/locales/ko.ts                      | 2 ++
+ packages/client/src/i18n/locales/pt.ts                      | 2 ++
+ packages/client/src/i18n/locales/ru.ts                      | 2 ++
+ packages/client/src/i18n/locales/zh-TW.ts                   | 2 ++
+ packages/client/src/i18n/locales/zh.ts                      | 2 ++
+ 13 files changed, 31 insertions(+), 1 deletion(-)
+
+diff --git a/packages/client/src/api/hermes/config.ts b/packages/client/src/api/hermes/config.ts
+index 6db49d77..72b3298f 100644
+--- a/packages/client/src/api/hermes/config.ts
++++ b/packages/client/src/api/hermes/config.ts
+@@ -14,6 +14,7 @@ export interface DisplayConfig {
+   streaming?: boolean
+   inline_diffs?: boolean
+   show_cost?: boolean
++  show_session_identity?: boolean
+   skin?: string
+ }
+ 
+diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
+index 92f34147..a3ea44b4 100644
+--- a/packages/client/src/components/hermes/chat/SessionListItem.vue
++++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
+@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
+ import type { Session } from '@/stores/hermes/chat'
+ import { useAppStore } from '@/stores/hermes/app'
+ import { useProfilesStore } from '@/stores/hermes/profiles'
++import { useSettingsStore } from '@/stores/hermes/settings'
+ import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
+ import { formatTimestampMs } from '@/shared/session-display'
+ import { chatSessionAgentAvatar } from '@/utils/chat-agent-avatar'
+@@ -36,6 +37,8 @@ const emit = defineEmits<{
+ const { t } = useI18n()
+ const appStore = useAppStore()
+ const profilesStore = useProfilesStore()
++const settingsStore = useSettingsStore()
++const showSessionIdentity = computed(() => settingsStore.display.show_session_identity !== false)
+ const profileName = computed(() => props.session.profile || 'default')
+ const profileAvatar = computed(() => profilesStore.profiles.find(profile => profile.name === profileName.value)?.avatar)
+ const profileHasModels = computed(() => {
+@@ -147,7 +150,7 @@ onUnmounted(() => {
+         </span>
+         <span class="session-item-time">{{ formatTimestampMs(session.createdAt) }}</span>
+       </span>
+-      <span class="session-item-agent-row">
++      <span v-if="showSessionIdentity" class="session-item-agent-row">
+         <span class="session-item-agent-logo-wrap" :class="{ streaming }">
+           <img
+             class="session-item-agent-logo"
+diff --git a/packages/client/src/components/hermes/settings/DisplaySettings.vue b/packages/client/src/components/hermes/settings/DisplaySettings.vue
+index e2253c0a..99c3de5a 100644
+--- a/packages/client/src/components/hermes/settings/DisplaySettings.vue
++++ b/packages/client/src/components/hermes/settings/DisplaySettings.vue
+@@ -134,6 +134,12 @@ async function testCompletionNotification() {
+     <SettingRow :label="t('settings.display.showCost')" :hint="t('settings.display.showCostHint')">
+       <NSwitch :value="settingsStore.display.show_cost" @update:value="v => save({ show_cost: v })" />
+     </SettingRow>
++    <SettingRow :label="t('settings.display.showSessionIdentity')" :hint="t('settings.display.showSessionIdentityHint')">
++      <NSwitch
++        :value="settingsStore.display.show_session_identity !== false"
++        @update:value="v => save({ show_session_identity: v })"
++      />
++    </SettingRow>
+     <SettingRow :label="t('settings.display.inlineDiffs')" :hint="t('settings.display.inlineDiffsHint')">
+       <NSwitch :value="settingsStore.display.inline_diffs" @update:value="v => save({ inline_diffs: v })" />
+     </SettingRow>
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 58f6c981..52f311a1 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1640,6 +1640,8 @@ jobTriggered: 'Job ausgelost',
+       showReasoningHint: 'Denkprozess des Modells anzeigen',
+       showCost: 'Kosten anzeigen',
+       showCostHint: 'Token-Nutzung in Antworten anzeigen',
++      showSessionIdentity: 'Avatare & Profil in Sitzungsliste',
++      showSessionIdentityHint: 'Agent-Typ-Avatar, Profil-Avatar und Profilname in der Seitenleisten-Sitzungsliste anzeigen',
+       inlineDiffs: 'Inline-Diffs',
+       inlineDiffsHint: 'Codeanderungen inline anzeigen',
+       bellOnComplete: 'Abschluss-Signalton',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 3d4ab0c9..5934b553 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -2157,6 +2157,8 @@ export default {
+       showReasoningHint: 'Show model thinking process',
+       showCost: 'Show Cost',
+       showCostHint: 'Show token usage in replies',
++      showSessionIdentity: 'Session list avatars & profile',
++      showSessionIdentityHint: 'Show agent-type avatar, profile avatar, and profile name in the sidebar session list',
+       inlineDiffs: 'Inline Diffs',
+       inlineDiffsHint: 'Show code changes inline',
+       bellOnComplete: 'Completion Sound',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 3cf70563..c0085e9a 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1640,6 +1640,8 @@ jobTriggered: 'Job ejecutado',
+       showReasoningHint: 'Mostrar el proceso de pensamiento del modelo',
+       showCost: 'Mostrar costo',
+       showCostHint: 'Mostrar uso de tokens en las respuestas',
++      showSessionIdentity: 'Avatares y perfil en la lista de sesiones',
++      showSessionIdentityHint: 'Mostrar avatar del tipo de agente, avatar del perfil y nombre del perfil en la lista lateral de sesiones',
+       inlineDiffs: 'Diffs en linea',
+       inlineDiffsHint: 'Mostrar cambios de codigo en linea',
+       bellOnComplete: 'Sonido de finalizacion',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index d628e9d8..140fcc94 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1640,6 +1640,8 @@ jobTriggered: 'Job declenche',
+       showReasoningHint: 'Afficher le processus de reflexion du modele',
+       showCost: 'Afficher le cout',
+       showCostHint: 'Afficher l\'utilisation des jetons dans les reponses',
++      showSessionIdentity: 'Avatars et profil dans la liste',
++      showSessionIdentityHint: 'Afficher l\'avatar du type d\'agent, l\'avatar de profil et le nom de profil dans la liste des sessions',
+       inlineDiffs: 'Diffs en ligne',
+       inlineDiffsHint: 'Afficher les changements de code en ligne',
+       bellOnComplete: 'Son de fin',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index efb216df..243e0369 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1640,6 +1640,8 @@ export default {
+       showReasoningHint: 'モデルの思考プロセスを表示',
+       showCost: 'コストを表示',
+       showCostHint: '返信にトークン使用量を表示',
++      showSessionIdentity: 'セッション一覧のアバターとプロファイル',
++      showSessionIdentityHint: 'サイドバーのセッション一覧にエージェント種別アバター、プロファイルアバター、プロファイル名を表示',
+       inlineDiffs: 'インライン差分',
+       inlineDiffsHint: 'コード変更をインラインで表示',
+       bellOnComplete: '完了通知音',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 51c02e41..8bcc09b5 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1640,6 +1640,8 @@ export default {
+       showReasoningHint: '모델의 생각 과정 표시',
+       showCost: '비용 표시',
+       showCostHint: '응답에 토큰 사용량 표시',
++      showSessionIdentity: '세션 목록 아바타 및 프로필',
++      showSessionIdentityHint: '사이드바 세션 목록에 에이전트 유형 아바타, 프로필 아바타, 프로필 이름 표시',
+       inlineDiffs: '인라인 변경사항',
+       inlineDiffsHint: '코드 변경사항을 인라인으로 표시',
+       bellOnComplete: '완료 알림음',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 401c65a0..307bd66d 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1640,6 +1640,8 @@ jobTriggered: 'Job acionado',
+       showReasoningHint: 'Mostrar processo de pensamento do modelo',
+       showCost: 'Mostrar custo',
+       showCostHint: 'Mostrar uso de tokens nas respostas',
++      showSessionIdentity: 'Avatares e perfil na lista de sessoes',
++      showSessionIdentityHint: 'Mostrar avatar do tipo de agente, avatar do perfil e nome do perfil na lista lateral de sessoes',
+       inlineDiffs: 'Diffs em linha',
+       inlineDiffsHint: 'Mostrar alterações de código em linha',
+       bellOnComplete: 'Som de conclusão',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index ff62cdb7..c002f0ac 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -1895,6 +1895,8 @@ export default {
+       showReasoningHint: 'Отображать ход мыслей модели',
+       showCost: 'Показывать стоимость',
+       showCostHint: 'Отображать количество использованных токенов в ответе',
++      showSessionIdentity: 'Аватары и профиль в списке сессий',
++      showSessionIdentityHint: 'Показывать аватар типа агента, аватар профиля и имя профиля в боковом списке сессий',
+       inlineDiffs: 'Встроенные различия',
+       inlineDiffsHint: 'Отображать изменения в коде внутри строки',
+       bellOnComplete: 'Звук завершения',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 94b57503..a9665650 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -2083,6 +2083,8 @@ export default {
+       showReasoningHint: '展示模型思考過程',
+       showCost: '顯示費用',
+       showCostHint: '在回覆中顯示 token 使用量',
++      showSessionIdentity: '會話列表頭像與 Profile',
++      showSessionIdentityHint: '在側邊欄會話列表中顯示 Agent 類型頭像、Profile 頭像與設定名稱',
+       inlineDiffs: '內嵌差異',
+       inlineDiffsHint: '程式碼變更以內嵌方式顯示',
+       bellOnComplete: '完成提示音',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index af4e2a42..85bbbeb3 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -2189,6 +2189,8 @@ export default {
+       showReasoningHint: '展示模型思考过程',
+       showCost: '显示费用',
+       showCostHint: '在回复中显示 token 使用量',
++      showSessionIdentity: '会话列表头像与 Profile',
++      showSessionIdentityHint: '在侧边栏会话列表中显示 Agent 类型头像、Profile 头像与配置名',
+       inlineDiffs: '内联差异',
+       inlineDiffsHint: '代码变更以内联方式显示',
+       bellOnComplete: '完成提示音',
+-- 
+2.53.0
+
