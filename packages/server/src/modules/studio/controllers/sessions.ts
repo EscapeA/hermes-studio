@@ -473,6 +473,9 @@ export async function list(ctx: any) {
   const limit = ctx.query.limit ? parseInt(ctx.query.limit as string, 10) : undefined
   const profile = explicitProfileFilter(ctx)
   const effectiveLimit = limit && limit > 0 ? limit : 2000
+  // archived=1 → 只返回已归档会话（对齐移动端/归档页契约；上游补丁丢失后补回）。
+  // 无 archived 参数 → 默认排除已归档（原行为）。
+  const archivedOnly = ctx.query.archived === '1' || ctx.query.archived === 1
 
   const knownProfiles = profile ? null : new Set(listProfileNamesFromDisk())
   const allowedProfiles = allowedProfileSet(ctx)
@@ -486,10 +489,15 @@ export async function list(ctx: any) {
     excludeSessionIds: [...getPendingDeletedSessionIds()],
   })
   ctx.body = {
-    sessions: filterPendingDeletedSessions(filterArchivedSessions(filterByAllowedProfiles(ctx, allSessions).filter(s =>
-      isRequestedSessionSource(source, s.source) &&
-      (!knownProfiles || knownProfiles.has(s.profile || 'default')),
-    ))),
+    sessions: filterPendingDeletedSessions(
+      (archivedOnly
+        ? filterByAllowedProfiles(ctx, allSessions).filter(s => isArchivedSession(s))
+        : filterArchivedSessions(filterByAllowedProfiles(ctx, allSessions)))
+        .filter(s =>
+          isRequestedSessionSource(source, s.source) &&
+          (!knownProfiles || knownProfiles.has(s.profile || 'default')),
+        ),
+    ),
   }
 }
 
