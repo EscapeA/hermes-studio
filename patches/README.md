@@ -18,13 +18,13 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 05-chat | Chat 核心（fast-path、avatar、双下拉、identity、滚动） | 001-013 |
 | 06-mobile-input | 移动端输入（Enter 换行、模型下拉不弹键盘） | 001-002 |
 | 07-workflow | Workflow 移动端布局 + i18n | 001-002 |
-| 08-server | server 静态缓存头 | 001 |
+| 08-server | server 静态缓存头 + GET /sessions archived=1 恢复 | 001-002 |
 | 09-cleanup | locale 冲突标记清理 | 001 |
 | 10-perf-p1 | P1 性能（highlight core、comic 字体 woff2、locale 构建期合并、logo 单请求） | 001-004 |
 | 11-socket-stall | socket 卡死防护（服务端 backlog 检测断连 + 前端 REST 兜底刷新） | 001-002 |
 | 12-tool-strip | 工具面板防闪烁（500ms 延迟显示）+ 折叠单行（正在调用 N 个工具） | 001 |
 
-共 **60 个补丁**（含 01-ci/006 的 custom 分支切换）。
+共 **61 个补丁**（含 01-ci/006 的 custom 分支切换）。
 
 ## 升级 SOP（上游新版本）
 
@@ -72,6 +72,7 @@ NODE_ENV= npm run build && git push --force-with-lease escapea custom
 
 ## 历史
 
+- 2026-08-23 补回 0.6.45 升级丢失的 sessions 行为：上游重构 sessions 控制器丢 `GET /sessions` archived 查询参数（?archived=1 只返回活跃会话，hstudio-mobile 归档页坏）→ `fix(server): support archived=1 on GET /sessions`（patches/08-server/002-archived-query.patch）。**教训：升级后必查 sessions 控制器/DB 层的查询参数与过滤语义，不只查接口结构**（0.6.45 接口结构零破坏但行为变了）
 - 2026-08-22 升级 0.6.44 → v0.6.45（f829a2ce #2665，16 PR：工具轨迹稳定化/ToolRunCard、备用 Provider 链管理、Studio 下载中心、群聊草稿、Pi 续接等）：
   61 补丁重放仅 0047（live-reasoning-scroll）与 0061（tool-strip anti-flicker）冲突。
   0047 = 上游 #2662 已把 LiveReasoningStatus 改为单行水平自动滚动（scrollReasoningToLatest，语义已吸收）→ **skip 并从补丁串删除**（05-chat/012-live-reasoning-scroll.patch）。
