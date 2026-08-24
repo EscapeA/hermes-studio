@@ -1,0 +1,49 @@
+From 46c013a6faaa098c08fe6e5ca83eb7f89fc9a72c Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 23 Aug 2026 08:51:56 +0800
+Subject: [PATCH] fix(server): support archived=1 on GET /sessions (restore
+ archive list)
+
+Upstream rewrite of sessions controller dropped the archived query
+handling (patch lost in 0.6.4x upgrade): GET /sessions?archived=1
+returned active sessions only, breaking the mobile archive page.
+Restore: archived=1 filters to archived sessions only; absent =
+default exclude archived (original behavior).
+---
+ .../server/src/controllers/hermes/sessions.ts    | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/packages/server/src/controllers/hermes/sessions.ts b/packages/server/src/controllers/hermes/sessions.ts
+index 5e722786..875f6c01 100644
+--- a/packages/server/src/controllers/hermes/sessions.ts
++++ b/packages/server/src/controllers/hermes/sessions.ts
+@@ -458,14 +458,22 @@ export async function list(ctx: any) {
+   const limit = ctx.query.limit ? parseInt(ctx.query.limit as string, 10) : undefined
+   const profile = explicitProfileFilter(ctx)
+   const effectiveLimit = limit && limit > 0 ? limit : 2000
++  // archived=1 → 只返回已归档会话（对齐移动端/归档页契约；上游补丁丢失后补回）。
++  // 无 archived 参数 → 默认排除已归档（原行为）。
++  const archivedOnly = ctx.query.archived === '1' || ctx.query.archived === 1
+ 
+   const allSessions = localListSessions(profile, source, effectiveLimit)
+   const knownProfiles = profile ? null : new Set(listProfileNamesFromDisk())
+   ctx.body = {
+-    sessions: filterPendingDeletedSessions(filterArchivedSessions(filterByAllowedProfiles(ctx, allSessions).filter(s =>
+-      isRequestedSessionSource(source, s.source) &&
+-      (!knownProfiles || knownProfiles.has(s.profile || 'default')),
+-    ))),
++    sessions: filterPendingDeletedSessions(
++      (archivedOnly
++        ? filterByAllowedProfiles(ctx, allSessions).filter(s => isArchivedSession(s))
++        : filterArchivedSessions(filterByAllowedProfiles(ctx, allSessions)))
++        .filter(s =>
++          isRequestedSessionSource(source, s.source) &&
++          (!knownProfiles || knownProfiles.has(s.profile || 'default')),
++        ),
++    ),
+   }
+ }
+ 
+-- 
+2.53.0
+

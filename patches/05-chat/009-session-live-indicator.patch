@@ -1,0 +1,255 @@
+From eab621ff5c85c9e33ff7732749302263f3ccffc9 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 20 Jul 2026 23:21:16 +0800
+Subject: [PATCH 4/4] fix(chat): keep session live indicator when identity row
+ is hidden
+
+The working/live status was rendered only as a streaming class on the
+agent avatar row. Hiding display.show_session_identity therefore also
+hid the active-session marker. Add a title-row live dot independent of
+the identity row so working sessions stay visible either way.
+---
+ .../hermes/chat/SessionListItem.vue           | 40 +++++++++++++++++++
+ packages/client/src/i18n/locales/de.ts        |  1 +
+ packages/client/src/i18n/locales/en.ts        |  1 +
+ packages/client/src/i18n/locales/es.ts        |  1 +
+ packages/client/src/i18n/locales/fr.ts        |  1 +
+ packages/client/src/i18n/locales/ja.ts        |  1 +
+ packages/client/src/i18n/locales/ko.ts        |  1 +
+ packages/client/src/i18n/locales/pt.ts        |  1 +
+ packages/client/src/i18n/locales/ru.ts        |  1 +
+ packages/client/src/i18n/locales/zh-TW.ts     |  1 +
+ packages/client/src/i18n/locales/zh.ts        |  1 +
+ tests/client/session-list-item.test.ts        | 40 +++++++++++++++++++
+ 12 files changed, 90 insertions(+)
+
+diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
+index 0cec37aa..c1b44b67 100644
+--- a/packages/client/src/components/hermes/chat/SessionListItem.vue
++++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
+@@ -136,6 +136,12 @@ onUnmounted(() => {
+             </svg>
+           </span>
+           <span v-if="completedUnread" class="session-item-unread-dot" aria-hidden="true" />
++          <span
++            v-if="streaming"
++            class="session-item-live-dot"
++            :title="t('chat.sessionLive')"
++            :aria-label="t('chat.sessionLive')"
++          />
+           <span class="session-item-title" dir="auto">
+             {{ session.title }}
+           </span>
+@@ -305,6 +311,40 @@ onUnmounted(() => {
+   box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.12);
+ }
+ 
++/* Live/working indicator is independent of the agent/profile identity row.
++   Identity can be hidden via display settings; the live status must remain visible. */
++.session-item-live-dot {
++  flex: 0 0 auto;
++  width: 7px;
++  height: 7px;
++  margin-top: 5px;
++  border-radius: 50%;
++  background: #171717;
++  box-shadow:
++    0 0 0 2px rgba(23, 23, 23, 0.12),
++    0 0 8px rgba(255, 107, 107, 0.35);
++  animation: session-live-pulse 1.5s ease-in-out infinite;
++}
++
++.dark .session-item-live-dot {
++  background: #f5f5f5;
++  box-shadow:
++    0 0 0 2px rgba(245, 245, 245, 0.16),
++    0 0 10px rgba(255, 107, 107, 0.4);
++}
++
++@keyframes session-live-pulse {
++  0%,
++  100% {
++    transform: scale(1);
++    opacity: 1;
++  }
++  50% {
++    transform: scale(0.82);
++    opacity: 0.72;
++  }
++}
++
+ .session-item-time {
+   flex: 0 0 auto;
+   margin-top: 1px;
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 52f311a1..d7509477 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -756,6 +756,7 @@ export default {
+     clarifySubmit: 'Antworten',
+     clarifyDismiss: 'Schließen',
+     deleteSession: 'Diese Sitzung loschen?',
++    sessionLive: 'Sitzung arbeitet',
+     toggleBatchMode: 'Batch-Auswahl',
+     selectAll: 'Alle auswählen',
+     confirmBatchDelete: '{count} ausgewählte Sitzungen löschen?',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 5934b553..b7f0f824 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -831,6 +831,7 @@ export default {
+     clarifyDismiss: 'Dismiss',
+     newCliChat: 'New CLI',
+     deleteSession: 'Delete this session?',
++    sessionLive: 'Session is working',
+     sessionDeleted: 'Session deleted',
+     toggleBatchMode: 'Batch selection',
+     selectAll: 'Select all',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index c0085e9a..0360114d 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -756,6 +756,7 @@ export default {
+     clarifySubmit: 'Responder',
+     clarifyDismiss: 'Descartar',
+     deleteSession: 'Eliminar esta sesion?',
++    sessionLive: 'Sesion en curso',
+     toggleBatchMode: 'Selección por lotes',
+     selectAll: 'Seleccionar todo',
+     confirmBatchDelete: '¿Eliminar {count} sesiones seleccionadas?',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 140fcc94..d51b76a1 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -756,6 +756,7 @@ export default {
+     clarifySubmit: 'Répondre',
+     clarifyDismiss: 'Ignorer',
+     deleteSession: 'Supprimer cette session ?',
++    sessionLive: 'Session en cours',
+     toggleBatchMode: 'Sélection par lot',
+     selectAll: 'Tout sélectionner',
+     confirmBatchDelete: 'Supprimer {count} sessions sélectionnées?',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 243e0369..ad3ed4ca 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -756,6 +756,7 @@ export default {
+     clarifySubmit: '返信',
+     clarifyDismiss: '閉じる',
+     deleteSession: 'このセッションを削除しますか？',
++    sessionLive: 'セッション実行中',
+     toggleBatchMode: '一括選択',
+     selectAll: 'すべて選択',
+     confirmBatchDelete: '{count}件のセッションを削除しますか？',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 8bcc09b5..0ef8ce32 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -756,6 +756,7 @@ export default {
+     clarifySubmit: '답장',
+     clarifyDismiss: '무시',
+     deleteSession: '이 세션을 삭제하시겠습니까?',
++    sessionLive: '세션 작업 중',
+     toggleBatchMode: '일괄 선택',
+     selectAll: '모두 선택',
+     confirmBatchDelete: '선택한 {count}개의 세션을 삭제하시겠습니까?',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 307bd66d..0a2a17e4 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -756,6 +756,7 @@ export default {
+     clarifySubmit: 'Responder',
+     clarifyDismiss: 'Descartar',
+     deleteSession: 'Excluir esta sessão?',
++    sessionLive: 'Sessão em execução',
+     toggleBatchMode: 'Seleção em lote',
+     selectAll: 'Selecionar tudo',
+     confirmBatchDelete: 'Excluir {count} sessões selecionadas?',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index c002f0ac..c2a4a51f 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -694,6 +694,7 @@ export default {
+     approvalDeny: 'Отказать',
+     newCliChat: 'Новый CLI',
+     deleteSession: 'Удалить этот сеанс?',
++    sessionLive: 'Сессия выполняется',
+     sessionDeleted: 'Сеанс удалён',
+     toggleBatchMode: 'Пакетный выбор',
+     selectAll: 'Выбрать всё',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index a9665650..668be238 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -808,6 +808,7 @@ export default {
+     clarifySubmit: '回覆',
+     clarifyDismiss: '忽略',
+     deleteSession: '確定刪除此工作階段？',
++    sessionLive: '會話進行中',
+     sessionDeleted: '工作階段已刪除',
+     toggleBatchMode: '批次選取',
+     selectAll: '全選',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 85bbbeb3..9a0849af 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -831,6 +831,7 @@ export default {
+     clarifyDismiss: '忽略',
+     newCliChat: '新建 CLI',
+     deleteSession: '确定删除此会话？',
++    sessionLive: '会话进行中',
+     sessionDeleted: '会话已删除',
+     toggleBatchMode: '批量选择',
+     selectAll: '全选',
+diff --git a/tests/client/session-list-item.test.ts b/tests/client/session-list-item.test.ts
+index f4650c4e..07894411 100644
+--- a/tests/client/session-list-item.test.ts
++++ b/tests/client/session-list-item.test.ts
+@@ -353,4 +353,44 @@ describe('SessionListItem', () => {
+     expect(wrapper.get('.session-item-agent-logo').attributes('src')).toBe('/coding-agents/hermes.png')
+     expect(wrapper.find('.session-item-profile').exists()).toBe(true)
+   })
++  it('shows an independent live-status indicator when streaming', () => {
++    settingsDisplay.show_session_identity = false
++    const wrapper = mount(SessionListItem, {
++      props: {
++        session: { ...session, source: 'cli', agent: 'hermes' },
++        active: false,
++        pinned: false,
++        canDelete: true,
++        streaming: true,
++      },
++      global: {
++        stubs: {
++          ProfileAvatar: true,
++        },
++      },
++    })
++
++    expect(wrapper.find('.session-item-agent-row').exists()).toBe(false)
++    expect(wrapper.find('.session-item-live-dot').exists()).toBe(true)
++  })
++
++  it('does not show the live-status indicator when not streaming', () => {
++    const wrapper = mount(SessionListItem, {
++      props: {
++        session: { ...session, source: 'cli', agent: 'hermes' },
++        active: false,
++        pinned: false,
++        canDelete: true,
++        streaming: false,
++      },
++      global: {
++        stubs: {
++          ProfileAvatar: true,
++        },
++      },
++    })
++
++    expect(wrapper.find('.session-item-live-dot').exists()).toBe(false)
++  })
++
+ })
+-- 
+2.53.0
+
