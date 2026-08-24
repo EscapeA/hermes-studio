@@ -1,4 +1,4 @@
-From 26da99fa452210449910d62fe6d7c505781e985f Mon Sep 17 00:00:00 2001
+From f6a21364b59d50708f8feb160b587022507711f9 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 01:53:06 +0800
 Subject: [PATCH] perf(web): strip avatar payloads and open last session first
@@ -23,14 +23,14 @@ for the full session list.
  packages/server/src/routes/hermes/profiles.ts |   1 +
  .../chat-store-compression-state.test.ts      |   1 +
  .../client/chat-store-error-handling.test.ts  |   1 +
- .../chat-store-reasoning-effort.test.ts       |   1 +
+ .../chat-store-reasoning-effort.test.ts       |   3 +-
  .../client/chat-store-session-command.test.ts |   1 +
  .../client/chat-store-startup-session.test.ts | 106 ++++++++++++++++++
  tests/client/group-agent-avatar.test.ts       |   4 +
  tests/server/auth-routes-avatar.test.ts       |   8 ++
  tests/server/profiles-routes.test.ts          |  51 +++++++++
  tests/server/user-auth.test.ts                |   2 +
- 22 files changed, 393 insertions(+), 21 deletions(-)
+ 22 files changed, 394 insertions(+), 22 deletions(-)
  create mode 100644 tests/client/chat-store-startup-session.test.ts
 
 diff --git a/packages/client/src/api/auth.ts b/packages/client/src/api/auth.ts
@@ -168,10 +168,10 @@ index 0922e9b7..111a1f6e 100644
            />
          </div>
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 17a62bc4..beaa6a40 100644
+index 71178a36..d81008d0 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -1613,10 +1613,15 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1654,10 +1654,15 @@ export const useChatStore = defineStore('chat', () => {
            : storedId && sessions.value.some(s => s.id === storedId)
              ? storedId
              : sessions.value[0]?.id
@@ -190,7 +190,7 @@ index 17a62bc4..beaa6a40 100644
        }
      } catch (err) {
        if (requestSequence === loadSessionsRequestSequence) {
-@@ -1630,6 +1635,19 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1671,6 +1676,19 @@ export const useChatStore = defineStore('chat', () => {
      }
    }
  
@@ -210,7 +210,7 @@ index 17a62bc4..beaa6a40 100644
    // Refresh ONLY the session list metadata (titles, ordering, new/removed
    // sessions) without switching the active session or reloading its messages.
    // Used for live sync so sessions created elsewhere (CLI, Telegram, another
-@@ -1819,11 +1837,23 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1862,11 +1880,23 @@ export const useChatStore = defineStore('chat', () => {
      setItemBestEffort(storageKey(), sessionId)
      const legacyActiveKey = legacyStorageKey()
      if (legacyActiveKey) removeItem(legacyActiveKey)
@@ -237,7 +237,7 @@ index 17a62bc4..beaa6a40 100644
      beginMessageLoad(sessionId, requestSequence)
      let backgroundPendingOnResume = 0
  
-@@ -5189,6 +5219,7 @@ export const useChatStore = defineStore('chat', () => {
+@@ -5303,6 +5333,7 @@ export const useChatStore = defineStore('chat', () => {
      loadSessions,
      refreshSessionListOnly,
      refreshActiveSession,
@@ -246,10 +246,10 @@ index 17a62bc4..beaa6a40 100644
      noteThinkingDelta,
      noteReasoningStart,
 diff --git a/packages/client/src/stores/hermes/group-chat.ts b/packages/client/src/stores/hermes/group-chat.ts
-index 8b998bb9..dcb48fa9 100644
+index c7ca8837..4a0d5554 100644
 --- a/packages/client/src/stores/hermes/group-chat.ts
 +++ b/packages/client/src/stores/hermes/group-chat.ts
-@@ -810,7 +810,8 @@ export const useGroupChatStore = defineStore('groupChat', () => {
+@@ -886,7 +886,8 @@ export const useGroupChatStore = defineStore('groupChat', () => {
                  authUserId = user.id
                  userId.value = authenticatedGroupUserId(user.id)
                  if (!connectionName) userName.value = user.username
@@ -388,10 +388,10 @@ index 949c4727..d462d86b 100644
   * PUT /api/auth/avatar
   * Update the authenticated user's avatar. Body: { avatar: <json string> } OR
 diff --git a/packages/server/src/controllers/hermes/profiles.ts b/packages/server/src/controllers/hermes/profiles.ts
-index 7080925d..f4b54883 100644
+index a6421542..1ece782d 100644
 --- a/packages/server/src/controllers/hermes/profiles.ts
 +++ b/packages/server/src/controllers/hermes/profiles.ts
-@@ -33,6 +33,7 @@ interface ProfileAvatarResponse {
+@@ -34,6 +34,7 @@ interface ProfileAvatarResponse {
    type: 'generated' | 'image'
    seed?: string
    dataUrl?: string
@@ -399,7 +399,7 @@ index 7080925d..f4b54883 100644
    updatedAt?: number
  }
  
-@@ -187,7 +188,14 @@ function profileAvatarImagePath(name: string, file = 'avatar.bin'): string {
+@@ -188,7 +189,14 @@ function profileAvatarImagePath(name: string, file = 'avatar.bin'): string {
    return join(profileMetadataDir(name), file)
  }
  
@@ -415,7 +415,7 @@ index 7080925d..f4b54883 100644
    const metaPath = profileAvatarMetaPath(name)
    if (!existsSync(metaPath)) return null
    try {
-@@ -202,10 +210,17 @@ function readProfileAvatar(name: string): ProfileAvatarResponse | null {
+@@ -203,10 +211,17 @@ function readProfileAvatar(name: string): ProfileAvatarResponse | null {
      if (meta.type === 'image' && meta.file && meta.mime) {
        const imagePath = profileAvatarImagePath(name, meta.file)
        if (!existsSync(imagePath)) return null
@@ -435,7 +435,7 @@ index 7080925d..f4b54883 100644
          updatedAt: meta.updatedAt,
        }
      }
-@@ -495,7 +510,7 @@ export async function updateAvatar(ctx: any) {
+@@ -532,7 +547,7 @@ export async function updateAvatar(ctx: any) {
        const meta: ProfileAvatarMeta = { type: 'generated', seed, updatedAt }
        rmSync(profileAvatarImagePath(name), { force: true })
        await writeFile(profileAvatarMetaPath(name), JSON.stringify(meta, null, 2) + '\n', { mode: 0o600 })
@@ -444,7 +444,7 @@ index 7080925d..f4b54883 100644
        return
      }
  
-@@ -504,7 +519,7 @@ export async function updateAvatar(ctx: any) {
+@@ -541,7 +556,7 @@ export async function updateAvatar(ctx: any) {
        const meta: ProfileAvatarMeta = { type: 'image', file: 'avatar.bin', mime, updatedAt }
        await writeFile(profileAvatarImagePath(name), buffer, { mode: 0o600 })
        await writeFile(profileAvatarMetaPath(name), JSON.stringify(meta, null, 2) + '\n', { mode: 0o600 })
@@ -453,7 +453,7 @@ index 7080925d..f4b54883 100644
        return
      }
  
-@@ -528,6 +543,37 @@ export async function deleteAvatar(ctx: any) {
+@@ -565,6 +580,37 @@ export async function deleteAvatar(ctx: any) {
    }
  }
  
@@ -504,10 +504,10 @@ index d1961934..76c41abb 100644
  authProtectedRoutes.delete('/api/auth/password', ctrl.removePassword)
  authProtectedRoutes.get('/api/auth/users', requireSuperAdmin, ctrl.listManagedUsers)
 diff --git a/packages/server/src/routes/hermes/profiles.ts b/packages/server/src/routes/hermes/profiles.ts
-index 163bed78..b1cbc024 100644
+index 58ab32f9..b68ae7af 100644
 --- a/packages/server/src/routes/hermes/profiles.ts
 +++ b/packages/server/src/routes/hermes/profiles.ts
-@@ -12,6 +12,7 @@ profileRoutes.post('/api/hermes/profiles/:name/restart', ctrl.restartProfileRunt
+@@ -13,6 +13,7 @@ profileRoutes.post('/api/hermes/profiles/:name/restart', ctrl.restartProfileRunt
  profileRoutes.post('/api/hermes/profiles/:name/gateway/restart', ctrl.restartGatewayForProfile)
  profileRoutes.put('/api/hermes/profiles/:name/avatar', ctrl.updateAvatar)
  profileRoutes.delete('/api/hermes/profiles/:name/avatar', ctrl.deleteAvatar)
@@ -516,10 +516,10 @@ index 163bed78..b1cbc024 100644
  profileRoutes.delete('/api/hermes/profiles/:name', ctrl.remove)
  profileRoutes.post('/api/hermes/profiles/:name/rename', ctrl.rename)
 diff --git a/tests/client/chat-store-compression-state.test.ts b/tests/client/chat-store-compression-state.test.ts
-index 92019e36..8c1b044c 100644
+index 1139a807..c1df073e 100644
 --- a/tests/client/chat-store-compression-state.test.ts
 +++ b/tests/client/chat-store-compression-state.test.ts
-@@ -36,6 +36,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+@@ -37,6 +37,7 @@ vi.mock('@/api/hermes/sessions', () => ({
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
    fetchSessions: vi.fn(),
@@ -528,10 +528,10 @@ index 92019e36..8c1b044c 100644
    fetchWorkspaceRunChangeFile: vi.fn(async () => null),
    setSessionModel: vi.fn(),
 diff --git a/tests/client/chat-store-error-handling.test.ts b/tests/client/chat-store-error-handling.test.ts
-index 10da773f..eccecede 100644
+index 365c7017..c6dec2d6 100644
 --- a/tests/client/chat-store-error-handling.test.ts
 +++ b/tests/client/chat-store-error-handling.test.ts
-@@ -44,6 +44,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+@@ -45,6 +45,7 @@ vi.mock('@/api/hermes/sessions', () => ({
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
    fetchSessions: vi.fn(),
@@ -540,22 +540,24 @@ index 10da773f..eccecede 100644
    fetchWorkspaceRunChangeFile: vi.fn(async () => null),
    setSessionModel: vi.fn(),
 diff --git a/tests/client/chat-store-reasoning-effort.test.ts b/tests/client/chat-store-reasoning-effort.test.ts
-index c85f5ba6..9b910d63 100644
+index c77d7bec..7e74a279 100644
 --- a/tests/client/chat-store-reasoning-effort.test.ts
 +++ b/tests/client/chat-store-reasoning-effort.test.ts
-@@ -32,6 +32,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+@@ -41,7 +41,8 @@ vi.mock('@/api/hermes/sessions', () => ({
+   archiveSession: vi.fn(),
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
-   fetchSessions: vi.fn(),
+-  fetchSessions: sessionsApi.fetchSessions,
++  fetchSessions: vi.fn(),
 +  fetchSessionMessagesPage: vi.fn(),
    fetchWorkspaceRunChangesForSession: vi.fn(async () => []),
    fetchWorkspaceRunChangeFile: vi.fn(async () => null),
-   setSessionModel: vi.fn(),
+   setSessionModel: sessionsApi.setSessionModel,
 diff --git a/tests/client/chat-store-session-command.test.ts b/tests/client/chat-store-session-command.test.ts
-index a052e73e..0ba5c78a 100644
+index 02efcf4f..9ed40d4d 100644
 --- a/tests/client/chat-store-session-command.test.ts
 +++ b/tests/client/chat-store-session-command.test.ts
-@@ -55,6 +55,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+@@ -56,6 +56,7 @@ vi.mock('@/api/hermes/sessions', () => ({
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
    fetchSessions: vi.fn(),
@@ -720,10 +722,10 @@ index e9d1cbfc..b184f2a3 100644
      const { authProtectedRoutes } = await import('../../packages/server/src/routes/auth')
      const ctrl = await import('../../packages/server/src/controllers/auth')
 diff --git a/tests/server/profiles-routes.test.ts b/tests/server/profiles-routes.test.ts
-index 82400f6f..ada6aeee 100644
+index 9a3b12a1..7a2b026f 100644
 --- a/tests/server/profiles-routes.test.ts
 +++ b/tests/server/profiles-routes.test.ts
-@@ -461,6 +461,57 @@ describe('Profile Routes', () => {
+@@ -543,6 +543,57 @@ describe('Profile Routes', () => {
        expect(readFileSync(join(dir, 'avatar.bin')).toString()).toBe('avatar-png')
      })
  
