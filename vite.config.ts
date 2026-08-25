@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import type { Plugin, ProxyOptions } from 'vite'
-import { resolve } from 'path'
-import { readFileSync } from 'fs'
+import { dirname, resolve } from 'path'
+import { existsSync, readFileSync } from 'fs'
 import { transformSync } from 'esbuild'
 import pkg from './package.json'
 
@@ -59,13 +59,48 @@ function mergeMessagesWithFallback(
   return merged
 }
 
-function loadLocaleModule(locale: string): Record<string, unknown> {
-  const source = readFileSync(resolve(LOCALES_DIR, `${locale}.ts`), 'utf8')
+/**
+ * Load a .ts module as CJS at build time, resolving relative imports from its
+ * own directory (locale files import sibling modules like '../social-messages').
+ * Node's native require cannot load .ts, so relative .ts dependencies are
+ * transformed with esbuild and executed through the same loader.
+ */
+function loadTsModuleAsCjs(
+  filePath: string,
+  seen = new Set<string>(),
+): Record<string, unknown> {
+  const absPath = resolve(filePath)
+  if (seen.has(absPath)) return {}
+  seen.add(absPath)
+  const source = readFileSync(absPath, 'utf8')
   const { code } = transformSync(source, { loader: 'ts', format: 'cjs' })
   const module = { exports: {} as Record<string, unknown> }
+  const baseDir = dirname(absPath)
+  const customRequire = (id: string): unknown => {
+    if (id.startsWith('.')) {
+      const candidates = [
+        resolve(baseDir, id),
+        `${resolve(baseDir, id)}.ts`,
+        `${resolve(baseDir, id)}.js`,
+        `${resolve(baseDir, id)}/index.ts`,
+        `${resolve(baseDir, id)}/index.js`,
+      ]
+      for (const candidate of candidates) {
+        if (existsSync(candidate)) return loadTsModuleAsCjs(candidate, seen)
+      }
+      throw new Error(`Cannot resolve '${id}' from ${baseDir}`)
+    }
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require(id)
+  }
   // eslint-disable-next-line no-new-func
-  new Function('module', 'exports', 'require', code)(module, module.exports, require)
-  const exported = (module.exports as Record<string, unknown>).default as Record<string, unknown>
+  new Function('module', 'exports', 'require', code)(module, module.exports, customRequire)
+  return module.exports
+}
+
+function loadLocaleModule(locale: string): Record<string, unknown> {
+  const moduleExports = loadTsModuleAsCjs(resolve(LOCALES_DIR, `${locale}.ts`))
+  const exported = (moduleExports as { default?: Record<string, unknown> }).default as Record<string, unknown>
   return exported
 }
 
