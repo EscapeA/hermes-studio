@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import thinkingImage from '@/assets/thinking.gif'
+
+const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
 
 const props = defineProps<{
   reasoning?: string | null
@@ -10,57 +12,21 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
-const reasoningBody = ref<HTMLElement | null>(null)
-let scrollFrame = 0
-let visibleReasoningId = props.reasoningId
 
-const reasoningLine = computed(() => {
-  return (props.reasoning || '').replace(/\s+/g, ' ').trim()
-})
+const reasoningBodyRef = ref<HTMLElement | null>(null)
 
-function scrollReasoningToLatest(reset = false) {
-  const element = reasoningBody.value
-  if (!element) return
-
-  cancelAnimationFrame(scrollFrame)
-  if (reset) element.scrollLeft = 0
-
-  const start = element.scrollLeft
-  const target = Math.max(0, element.scrollWidth - element.clientWidth)
-  const distance = target - start
-  if (distance <= 0) {
-    element.scrollLeft = target
-    return
-  }
-
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-    element.scrollLeft = target
-    return
-  }
-
-  const duration = Math.min(120, Math.max(45, distance * 2.5))
-  const startedAt = performance.now()
-  const advance = (now: number) => {
-    const progress = Math.min(1, (now - startedAt) / duration)
-    const eased = 1 - (1 - progress) ** 3
-    element.scrollLeft = start + distance * eased
-    if (progress < 1) scrollFrame = requestAnimationFrame(advance)
-  }
-  scrollFrame = requestAnimationFrame(advance)
-}
-
+// 流式思考内容更新时自动滚动到底部，始终展示最新输出的部分
 watch(
-  [reasoningLine, () => props.reasoningId],
-  async () => {
-    const reset = visibleReasoningId !== props.reasoningId
-    visibleReasoningId = props.reasoningId
-    await nextTick()
-    scrollReasoningToLatest(reset)
+  () => props.reasoning,
+  () => {
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        const el = reasoningBodyRef.value
+        if (el) el.scrollTop = el.scrollHeight
+      })
+    })
   },
-  { immediate: true, flush: 'post' },
 )
-
-onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
 </script>
 
 <template>
@@ -78,15 +44,18 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
       </div>
     </div>
     <div
+      v-if="reasoning"
+      :key="reasoningId ?? reasoning"
       class="live-reasoning-detail"
-      :class="{ 'is-empty': !reasoningLine }"
       :data-reasoning-id="reasoningId"
     >
       <div class="live-reasoning-label">
         <span aria-hidden="true">💭</span>
         <span>{{ t('chat.thinkingLabel') }}</span>
       </div>
-      <div ref="reasoningBody" class="live-reasoning-body">{{ reasoningLine }}</div>
+      <div ref="reasoningBodyRef" class="live-reasoning-body">
+        <MarkdownRenderer :content="reasoning" />
+      </div>
     </div>
   </div>
 </template>
@@ -98,15 +67,10 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  flex: 0 0 78px;
   gap: 8px;
   width: 100%;
   max-width: 100%;
-  height: 78px;
-  min-height: 78px;
-  max-height: 78px;
   min-width: 0;
-  overflow: hidden;
 }
 
 .thinking-status {
@@ -115,10 +79,7 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
   gap: 10px;
   width: 100%;
   min-width: 0;
-  height: 40px;
   min-height: 40px;
-  max-height: 40px;
-  overflow: hidden;
 }
 
 .thinking-avatar {
@@ -136,14 +97,11 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
 .thinking-status-copy {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   column-gap: 8px;
   row-gap: 2px;
   min-width: 0;
-  height: 20px;
   min-height: 20px;
-  max-height: 20px;
-  overflow: hidden;
 }
 
 .thinking-status-label {
@@ -187,28 +145,14 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
 }
 
 .live-reasoning-detail {
-  display: flex;
-  align-items: center;
-  flex: 0 0 30px;
-  gap: 8px;
   width: 520px;
   max-width: 100%;
-  height: 30px;
-  min-height: 30px;
-  max-height: 30px;
   min-width: 0;
   box-sizing: border-box;
-  padding: 5px 10px;
+  padding: 7px 10px;
   border-radius: $radius-sm;
   background: rgba(0, 0, 0, 0.025);
   color: $text-secondary;
-  contain: layout paint;
-  transition: opacity 80ms linear;
-
-  &.is-empty {
-    opacity: 0;
-    pointer-events: none;
-  }
 
   .dark & {
     background: rgba(255, 255, 255, 0.045);
@@ -218,27 +162,26 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
 .live-reasoning-label {
   display: flex;
   align-items: center;
-  flex: 0 0 auto;
   gap: 5px;
+  margin-bottom: 4px;
   color: $text-muted;
   font-size: 11px;
   font-weight: 500;
 }
 
 .live-reasoning-body {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow-x: hidden;
-  overflow-y: hidden;
-  white-space: nowrap;
-  text-overflow: clip;
+  max-height: 220px;
+  overflow-y: auto;
   font-size: 13px;
-  line-height: 20px;
+  line-height: 1.55;
   opacity: 0.9;
-  scrollbar-width: none;
 
-  &::-webkit-scrollbar {
-    display: none;
+  :deep(.markdown-body > :first-child) {
+    margin-top: 0;
+  }
+
+  :deep(.markdown-body > :last-child) {
+    margin-bottom: 0;
   }
 }
 
@@ -251,5 +194,4 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
     background-position: 0% 0;
   }
 }
-
 </style>
