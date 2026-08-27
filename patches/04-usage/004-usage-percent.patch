@@ -1,0 +1,62 @@
+From bdb9a982d4a1f4495cca77a5d32ac5e367407e74 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 14:17:08 +0800
+Subject: [PATCH 1/2] feat(chat): show context usage percentage with warning
+ colors
+
+---
+ .../src/components/hermes/chat/ChatInput.vue  | 24 ++++++++++++++++---
+ 1 file changed, 21 insertions(+), 3 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index 3423d2af..7dd15838 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -799,8 +799,6 @@ const totalTokens = computed(() => {
+ })
+ const showContextUsage = computed(() => !!chatStore.activeSession)
+ 
+-const remainingTokens = computed(() => Math.max(0, contextLength.value - totalTokens.value))
+-
+ const usagePercent = computed(() =>
+   Math.min((totalTokens.value / contextLength.value) * 100, 100),
+ )
+@@ -1096,7 +1094,14 @@ function isImage(type: string): boolean {
+             </template>
+             <span>{{ t('chat.contextClickToEdit') }}</span>
+           </NTooltip>
+-          · {{ t('chat.contextRemaining') }} {{ formatTokens(remainingTokens) }}
++          · <span
++            class="context-percent"
++            :class="{
++              'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
++              'context-percent-danger': usagePercent > 80,
++            }"
++            >{{ usagePercent.toFixed(1) }}%</span
++          >
+         </span>
+         <div class="context-bar">
+           <div
+@@ -1789,6 +1794,19 @@ function isImage(type: string): boolean {
+   }
+ }
+ 
++.context-percent {
++  font-weight: 600;
++  color: inherit;
++
++  &.context-percent-warn {
++    color: #e8a735;
++  }
++
++  &.context-percent-danger {
++    color: #e85d4a;
++  }
++}
++
+ .context-limit-editable {
+   cursor: pointer;
+   border-bottom: 1px dashed transparent;
+-- 
+2.53.0
+

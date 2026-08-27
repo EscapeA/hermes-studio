@@ -1,0 +1,101 @@
+From 10acae3845d15ca65161207df32f773afe9be197 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 12 Sep 2026 12:33:27 +0800
+Subject: [PATCH] fix(chat): tighten run indicator and composer spacing
+
+- .thinking-status min-height 40px -> 32px (row inner padding 9 -> 5px)
+
+- .live-reasoning-status gap 8px -> 4px (status row to streaming reasoning detail)
+
+- .streaming-indicator: padding 4px -> 0 4px, gap 8px -> 4px (status row to tool strip), margin-top -6px (eats part of the preceding row's 16px gap)
+
+- message list trailing padding 20px -> 10px while the run indicator is active (queued/floating prompt branches keep their reserved space)
+
+- composer top padding 8px -> 6px (desktop 6px 20px 14px, mobile 6px 12px 12px)
+---
+ .../client/src/components/hermes/chat/ChatInput.vue |  4 ++--
+ .../components/hermes/chat/LiveReasoningStatus.vue  |  4 ++--
+ .../src/components/hermes/chat/MessageList.vue      | 13 +++++++++++--
+ 3 files changed, 15 insertions(+), 6 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index 582157e54..cb90d62c8 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -1692,7 +1692,7 @@ function openAttachmentPreview(attachment: Attachment) {
+ .chat-input-area {
+   position: relative;
+   z-index: 80;
+-  padding: 8px 20px 14px;
++  padding: 6px 20px 14px;
+   border-top: 0;
+   background-color: $bg-main-surface;
+   flex-shrink: 0;
+@@ -2091,7 +2091,7 @@ function openAttachmentPreview(attachment: Attachment) {
+ @media (max-width: 768px) {
+   .chat-input-area {
+     --voice-overlay-mobile-bottom-offset: 146px;
+-    padding: 8px 12px 12px;
++    padding: 6px 12px 12px;
+   }
+ 
+   .input-top-bar {
+diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+index e1a9573e3..8ebaf0f5a 100644
+--- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
++++ b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+@@ -63,7 +63,7 @@ watch(
+   display: flex;
+   flex-direction: column;
+   align-items: flex-start;
+-  gap: 8px;
++  gap: 4px;
+   width: 100%;
+   max-width: 100%;
+   min-width: 0;
+@@ -75,7 +75,7 @@ watch(
+   gap: 10px;
+   width: 100%;
+   min-width: 0;
+-  min-height: 40px;
++  min-height: 32px;
+ }
+ 
+ .thinking-status-copy {
+diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
+index 9eabfc6f2..8471e64e7 100644
+--- a/packages/client/src/components/hermes/chat/MessageList.vue
++++ b/packages/client/src/components/hermes/chat/MessageList.vue
+@@ -428,6 +428,10 @@ const virtualListPadding = computed(() => {
+   if (queuedMessages.value.length > 0 && hasFloatingPrompt.value) return "20px 20px 380px";
+   if (queuedMessages.value.length > 0) return "20px 20px 260px";
+   if (hasFloatingPrompt.value) return clarifyCompact.value ? "20px 20px 80px" : "20px 20px 260px";
++  // The run indicator sits directly above the composer, so the default 20px
++  // trailing padding reads as a large empty gap while only the status row is
++  // visible. Keep it tight for the duration of the run.
++  if (isRunIndicatorActive.value) return "20px 20px 10px";
+   return "20px";
+ });
+ 
+@@ -1899,11 +1903,16 @@ defineExpose({
+   display: flex;
+   flex-direction: column;
+   align-items: flex-start;
+-  gap: 8px;
++  // Tight run block: no vertical padding, 4px between the status row and the
++  // reasoning detail / tool strip, and a negative top margin that eats 6px of
++  // the preceding message row's 16px gap. Keep total trailing space in sync
++  // with the run-state list padding in virtualListPadding (bottom 10px).
++  gap: 4px;
++  margin-top: -6px;
+   width: 100%;
+   max-width: 100%;
+   min-width: 0;
+-  padding: 4px;
++  padding: 0 4px;
+   box-sizing: border-box;
+ }
+ 
+-- 
+2.53.0
+

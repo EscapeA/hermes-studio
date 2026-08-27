@@ -1,0 +1,48 @@
+From 47cd6a8badf2f4d04f318b59201a9dc138d548e9 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 5 Sep 2026 20:36:41 +0800
+Subject: [PATCH] fix(chat): unclip expanded tool detail inside tool strip body
+
+Clicking a running tool item toggled the expanded state, but the detail
+section never became visible: .tool-call-item kept flex:1 1 0 (flex-basis
+0 + flex-shrink 1) inside the column .tool-strip-body, so the expanded
+item was compressed back to ~26px, and .tool-strip-body's max-height:
+180px clipped whatever remained.
+
+- .tool-call-item.expanded: flex:0 0 auto (flex:none) so the item grows
+  to its content height and cannot be shrunk by the flex container
+- .tool-strip-body:has(.tool-call-item.expanded): max-height:none so an
+  expanded detail is fully visible (the args <pre> still scrolls at
+  200px internally)
+---
+ packages/client/src/components/hermes/chat/MessageList.vue | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
+index e9e145ed5..f71901228 100644
+--- a/packages/client/src/components/hermes/chat/MessageList.vue
++++ b/packages/client/src/components/hermes/chat/MessageList.vue
+@@ -1977,6 +1977,12 @@ defineExpose({
+   &::-webkit-scrollbar {
+     display: none;
+   }
++
++  // When any tool item is expanded to review its arguments, let the body
++  // grow past the compact 180px cap so the detail section is fully visible.
++  &:has(.tool-call-item.expanded) {
++    max-height: none;
++  }
+ }
+ 
+ .tool-strip-pending {
+@@ -2027,6 +2033,7 @@ defineExpose({
+   }
+ 
+   &.expanded {
++    flex: 0 0 auto;
+     align-items: flex-start;
+     height: auto;
+     min-height: 26px;
+-- 
+2.53.0
+

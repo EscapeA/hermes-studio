@@ -1,0 +1,49 @@
+From 0f7955ec6e00fc2f472e3806c5342183532c0389 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 5 Sep 2026 20:21:35 +0800
+Subject: [PATCH] fix(chat): stack tool strip toggle above tool list, drop
+ fixed height
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+.tool-calls-panel was flex-direction:row with flex:0 0 26px, so the
+'Calling N tools' toggle and the expanded tool items sat side by side in
+one row and the panel height was locked to 26px — on narrow screens the
+tool name got truncated to 'execute_c…' and expanded detail was
+squeezed.
+
+- panel: flex-wrap:wrap + flex:0 0 auto (height adapts to content)
+- .tool-strip-body: flex:1 1 100% so the tool list wraps to its own
+  full-width row below the toggle
+---
+ packages/client/src/components/hermes/chat/MessageList.vue | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
+index 5c0193eb..e9e145ed 100644
+--- a/packages/client/src/components/hermes/chat/MessageList.vue
++++ b/packages/client/src/components/hermes/chat/MessageList.vue
+@@ -1893,9 +1893,9 @@ defineExpose({
+ 
+ .tool-calls-panel {
+   display: flex;
+-  flex: 0 0 26px;
++  flex: 0 0 auto;
+   flex-direction: row;
+-  flex-wrap: nowrap;
++  flex-wrap: wrap;
+   align-items: stretch;
+   gap: 4px;
+   width: 520px;
+@@ -1965,6 +1965,7 @@ defineExpose({
+ 
+ .tool-strip-body {
+   display: flex;
++  flex: 1 1 100%;
+   flex-direction: column;
+   gap: 4px;
+   width: 100%;
+-- 
+2.53.0
+
