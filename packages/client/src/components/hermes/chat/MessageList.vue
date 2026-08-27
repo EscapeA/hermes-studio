@@ -1967,17 +1967,12 @@ defineExpose({
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  flex: 0 0 120px;
   gap: calc(8px * var(--spacing-scale, 1));
   width: 100%;
   max-width: 100%;
-  height: 120px;
-  min-height: 120px;
-  max-height: 120px;
   min-width: 0;
   padding: calc(4px * var(--spacing-scale, 1));
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 .tool-calls-panel {
