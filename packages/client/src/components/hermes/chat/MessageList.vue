@@ -1667,17 +1667,12 @@ defineExpose({
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  flex: 0 0 120px;
   gap: 8px;
   width: 100%;
   max-width: 100%;
-  height: 120px;
-  min-height: 120px;
-  max-height: 120px;
   min-width: 0;
   padding: 4px;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 .tool-calls-panel {
