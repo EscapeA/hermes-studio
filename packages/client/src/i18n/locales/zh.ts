@@ -2469,7 +2469,7 @@ export default {
       showCost: '显示费用',
       showCostHint: '在回复中显示 token 使用量',
       showSessionIdentity: '会话列表头像与 Profile',
-      showSessionIdentityHint: '在侧边栏会话列表中显示 Agent 类型头像、Profile 头像与配置名',
+      showSessionIdentityHint: '在侧边栏会话列表与聊天消息中显示 Agent/Profile 头像与名称',
       inlineDiffs: '内联差异',
       inlineDiffsHint: '代码变更以内联方式显示',
       bellOnComplete: '完成提示音',
