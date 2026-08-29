@@ -240,6 +240,7 @@ const isCodingAgentSession = computed(() => {
     || runtime === "ekko-agent" || runtime === "ekko" || runtime === "claude"
     || runtime === "claude-code" || runtime === "codex" || runtime === "pi";
 });
+const showChatIdentity = computed(() => settingsStore.display.show_session_identity !== false);
 const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
 
 // Copy entire bubble content
@@ -1022,21 +1023,21 @@ onBeforeUnmount(() => {
     <template v-else>
       <div class="msg-body">
         <ProfileAvatar
-          v-if="message.role === 'assistant' && !isCodingAgentSession"
+          v-if="showChatIdentity && message.role === 'assistant' && !isCodingAgentSession"
           class="msg-avatar"
           :name="assistantProfileName"
           :avatar="assistantProfileAvatar"
           :size="40"
         />
         <img
-          v-else-if="message.role === 'assistant'"
+          v-else-if="showChatIdentity && message.role === 'assistant'"
           class="msg-avatar"
           :src="assistantAgent.src"
           :alt="assistantAgent.label"
           draggable="false"
         >
         <div class="msg-content" :class="message.role">
-          <div v-if="message.role === 'user'" class="message-author user-message-author">
+          <div v-if="showChatIdentity && message.role === 'user'" class="message-author user-message-author">
             <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
             <ProfileAvatar
               class="user-profile-avatar"
@@ -1045,7 +1046,7 @@ onBeforeUnmount(() => {
               :size="22"
             />
           </div>
-          <div v-if="message.role === 'assistant'" class="message-author assistant-message-author">
+          <div v-if="showChatIdentity && message.role === 'assistant'" class="message-author assistant-message-author">
             <img
               class="msg-avatar"
               :src="assistantAgent.src"

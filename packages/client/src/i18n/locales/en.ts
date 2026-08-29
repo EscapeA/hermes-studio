@@ -2440,7 +2440,7 @@ export default {
       showCost: 'Show Cost',
       showCostHint: 'Show token usage in replies',
       showSessionIdentity: 'Session list avatars & profile',
-      showSessionIdentityHint: 'Show agent-type avatar, profile avatar, and profile name in the sidebar session list',
+      showSessionIdentityHint: 'Show agent-type avatar, profile avatar, and profile name in the sidebar session list and chat messages',
       inlineDiffs: 'Inline Diffs',
       inlineDiffsHint: 'Show code changes inline',
       bellOnComplete: 'Completion Sound',

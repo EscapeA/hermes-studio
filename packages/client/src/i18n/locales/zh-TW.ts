@@ -2385,7 +2385,7 @@ export default {
       showCost: '顯示費用',
       showCostHint: '在回覆中顯示 token 使用量',
       showSessionIdentity: '會話列表頭像與 Profile',
-      showSessionIdentityHint: '在側邊欄會話列表中顯示 Agent 類型頭像、Profile 頭像與設定名稱',
+      showSessionIdentityHint: '在側邊欄會話列表與聊天訊息中顯示 Agent/Profile 頭像與名稱',
       inlineDiffs: '內嵌差異',
       inlineDiffsHint: '程式碼變更以內嵌方式顯示',
       bellOnComplete: '完成提示音',
