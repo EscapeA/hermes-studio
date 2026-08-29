@@ -1,4 +1,4 @@
-From 4941b53bcfb36be34cc376d669e6f4a2a7f9d954 Mon Sep 17 00:00:00 2001
+From 86f5e26a85d197c5ad713cdb9b4a0db121fbe34c Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Fri, 14 Aug 2026 18:54:27 +0800
 Subject: [PATCH] feat(chat): show session-lifetime token consumption in input
@@ -19,7 +19,7 @@ cache read/cache write/reasoning).
 - NPopover: hover on desktop, click on mobile; plain-text style matches
   existing context usage
 ---
- packages/client/src/api/hermes/sessions.ts    |  17 +++
+ packages/client/src/api/studio/sessions.ts    |  17 +++
  .../src/components/hermes/chat/ChatInput.vue  | 101 +++++++++++++++++-
  packages/client/src/i18n/locales/de.ts        |   2 +
  packages/client/src/i18n/locales/en.ts        |   2 +
@@ -31,16 +31,16 @@ cache read/cache write/reasoning).
  packages/client/src/i18n/locales/ru.ts        |   2 +
  packages/client/src/i18n/locales/zh-TW.ts     |   2 +
  packages/client/src/i18n/locales/zh.ts        |   2 +
- .../server/src/controllers/hermes/sessions.ts |   6 +-
- packages/server/src/db/hermes/usage-store.ts  |  39 +++++++
+ .../modules/studio/controllers/sessions.ts    |   6 +-
+ .../studio/repositories/usage-store.ts        |  39 +++++++
  14 files changed, 181 insertions(+), 2 deletions(-)
 
-diff --git a/packages/client/src/api/hermes/sessions.ts b/packages/client/src/api/hermes/sessions.ts
-index ef8ac9dd..d4d3eb48 100644
---- a/packages/client/src/api/hermes/sessions.ts
-+++ b/packages/client/src/api/hermes/sessions.ts
-@@ -657,6 +657,23 @@ export async function fetchSessionUsage(ids: string[]): Promise<Record<string, {
-   return request(`/api/hermes/sessions/usage?${params}`)
+diff --git a/packages/client/src/api/studio/sessions.ts b/packages/client/src/api/studio/sessions.ts
+index 11221b5b..587e34c9 100644
+--- a/packages/client/src/api/studio/sessions.ts
++++ b/packages/client/src/api/studio/sessions.ts
+@@ -671,6 +671,23 @@ export async function fetchSessionUsage(ids: string[]): Promise<Record<string, {
+   return request(`/api/studio/sessions/usage?${params}`)
  }
  
 +export interface SessionUsageTotal {
@@ -62,21 +62,21 @@ index ef8ac9dd..d4d3eb48 100644
 +
  export async function fetchSessionUsageSingle(id: string): Promise<{ input_tokens: number; output_tokens: number } | null> {
    try {
-     return await request<{ input_tokens: number; output_tokens: number }>(`/api/hermes/sessions/${id}/usage`)
+     return await request<{ input_tokens: number; output_tokens: number }>(`/api/studio/sessions/${id}/usage`)
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 6e4c089d..5fbfb1e0 100644
+index 82f75825..e393f67b 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -4,7 +4,7 @@ import { useChatStore } from '@/stores/hermes/chat'
  import { useAppStore } from '@/stores/hermes/app'
  import { useProfilesStore } from '@/stores/hermes/profiles'
  import { useSettingsStore } from '@/stores/hermes/settings'
--import { fetchContextLength } from '@/api/hermes/sessions'
-+import { fetchContextLength, fetchSessionUsageTotal } from '@/api/hermes/sessions'
+-import { fetchContextLength } from '@/api/studio/sessions'
++import { fetchContextLength, fetchSessionUsageTotal } from '@/api/studio/sessions'
  import { setModelContext } from '@/api/hermes/model-context'
+ import { fetchSocialMessagePlatforms } from '@/api/studio/social-messages'
  import { fetchSkills, type SkillCategory, type SkillInfo } from '@/api/hermes/skills'
- import { deleteSkillBundleApi, fetchSkillBundles, type SkillBundleInfo } from '@/api/hermes/skill-bundles'
-@@ -812,6 +812,76 @@ function formatTokens(n: number): string {
+@@ -859,6 +859,76 @@ function formatTokens(n: number): string {
    return String(n)
  }
  
@@ -153,7 +153,7 @@ index 6e4c089d..5fbfb1e0 100644
  // --- File attachment helpers ---
  
  function addFile(file: File) {
-@@ -1091,6 +1161,16 @@ function isImage(type: string): boolean {
+@@ -1178,6 +1248,16 @@ function isImage(type: string): boolean {
          @dblclick="resetTextareaHeight"
        ></div>
        <div v-if="showContextUsage" class="context-usage-row">
@@ -170,7 +170,7 @@ index 6e4c089d..5fbfb1e0 100644
          <span class="context-info" :class="{ 'context-warning': usagePercent > 80 }">
            {{ formatTokens(totalTokens) }} /
            <NTooltip trigger="hover" :disabled="isMobileViewport">
-@@ -1815,6 +1895,25 @@ function isImage(type: string): boolean {
+@@ -1902,6 +1982,25 @@ function isImage(type: string): boolean {
    }
  }
  
@@ -197,10 +197,10 @@ index 6e4c089d..5fbfb1e0 100644
    cursor: pointer;
    border-bottom: 1px dashed transparent;
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 2d5bd820..6b84d98c 100644
+index 2475a31e..6b6df47c 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -602,6 +602,8 @@ export default {
+@@ -770,6 +770,8 @@ export default {
    // Chat
    chat: {
      contextRemaining: 'übrig',
@@ -210,10 +210,10 @@ index 2d5bd820..6b84d98c 100644
      contextEditTitle: 'Kontextlänge bearbeiten',
      contextEditDesc: 'Kontextlängenlimit für aktuelles Modell festlegen (in Tokens)',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 62a7672e..b28ed972 100644
+index a2480a72..ccec4b93 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -659,6 +659,8 @@ export default {
+@@ -827,6 +827,8 @@ export default {
    // Chat
    chat: {
      contextRemaining: 'remaining',
@@ -223,10 +223,10 @@ index 62a7672e..b28ed972 100644
      contextEditTitle: 'Edit Context Length',
      contextEditDesc: 'Set context length limit for current model (in tokens)',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 63274d1a..24fb212b 100644
+index a0067b5c..0dca42ae 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -602,6 +602,8 @@ export default {
+@@ -770,6 +770,8 @@ export default {
    // Chat
    chat: {
      contextRemaining: 'restante',
@@ -236,10 +236,10 @@ index 63274d1a..24fb212b 100644
      contextEditTitle: 'Editar longitud del contexto',
      contextEditDesc: 'Establecer el límite de longitud del contexto para el modelo actual (en tokens)',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 8df36b49..104ec14e 100644
+index 1fba0626..142a32bf 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -601,6 +601,8 @@ export default {
+@@ -769,6 +769,8 @@ export default {
    // Chat
    chat: {
      contextRemaining: 'restant',
@@ -249,10 +249,10 @@ index 8df36b49..104ec14e 100644
      contextEditTitle: 'Modifier la longueur du contexte',
      contextEditDesc: 'Définir la limite de longueur du contexte pour le modèle actuel (en tokens)',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 90d996c5..3d2a79c6 100644
+index d87186a2..e6652396 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -602,6 +602,8 @@ export default {
+@@ -770,6 +770,8 @@ export default {
    // チャット
    chat: {
      contextRemaining: '残り',
@@ -262,10 +262,10 @@ index 90d996c5..3d2a79c6 100644
      contextEditTitle: 'コンテキスト長を編集',
      contextEditDesc: '現在のモデルのコンテキスト長制限を設定（トークン数）',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 08b4345a..7ff8a745 100644
+index 155fb6e5..95130805 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -602,6 +602,8 @@ export default {
+@@ -770,6 +770,8 @@ export default {
    // 채팅
    chat: {
      contextRemaining: '남음',
@@ -275,10 +275,10 @@ index 08b4345a..7ff8a745 100644
      contextEditTitle: '컨텍스트 길이 편집',
      contextEditDesc: '현재 모델의 컨텍스트 길이 제한 설정 (토큰 수)',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index a029f1ce..afa80261 100644
+index 22497d3f..bb1cd44d 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -602,6 +602,8 @@ export default {
+@@ -770,6 +770,8 @@ export default {
    // Chat
    chat: {
      contextRemaining: 'restante',
@@ -288,10 +288,10 @@ index a029f1ce..afa80261 100644
      contextEditTitle: 'Editar tamanho do contexto',
      contextEditDesc: 'Definir o limite de tamanho do contexto para o modelo atual (em tokens)',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 5b9184ec..3c9be828 100644
+index d8816c81..854698fc 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -533,6 +533,8 @@ export default {
+@@ -701,6 +701,8 @@ export default {
  
    chat: {
      contextRemaining: 'Осталось',
@@ -301,10 +301,10 @@ index 5b9184ec..3c9be828 100644
      contextEditTitle: 'Изменить размер контекста',
      contextEditDesc: 'Установите лимит размера контекста для текущей модели (в токенах)',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index d272dbd2..91a513ae 100644
+index 6399f8dd..e619d81c 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -632,6 +632,8 @@ export default {
+@@ -800,6 +800,8 @@ export default {
    // 對話
    chat: {
      contextRemaining: '剩餘',
@@ -314,10 +314,10 @@ index d272dbd2..91a513ae 100644
      contextEditTitle: '編輯上下文長度',
      contextEditDesc: '設定目前模型的上下文長度限制（token 數量）',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index dc8d41ec..81f4924b 100644
+index 8d1f1419..6bafd39d 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -659,6 +659,8 @@ export default {
+@@ -827,6 +827,8 @@ export default {
    // 对话
    chat: {
      contextRemaining: '剩余',
@@ -326,20 +326,20 @@ index dc8d41ec..81f4924b 100644
      contextClickToEdit: '点击编辑上下文长度',
      contextEditTitle: '编辑上下文长度',
      contextEditDesc: '设置当前模型的上下文长度限制（token 数量）',
-diff --git a/packages/server/src/controllers/hermes/sessions.ts b/packages/server/src/controllers/hermes/sessions.ts
-index 33c9869e..2b60fc82 100644
---- a/packages/server/src/controllers/hermes/sessions.ts
-+++ b/packages/server/src/controllers/hermes/sessions.ts
-@@ -14,7 +14,7 @@ import {
+diff --git a/packages/server/src/modules/studio/controllers/sessions.ts b/packages/server/src/modules/studio/controllers/sessions.ts
+index d7121e57..c9011759 100644
+--- a/packages/server/src/modules/studio/controllers/sessions.ts
++++ b/packages/server/src/modules/studio/controllers/sessions.ts
+@@ -27,7 +27,7 @@ import {
    updateSessionStats as localUpdateSessionStats,
- } from '../../db/hermes/session-store'
- import { buildDbExportHistory, ExportCompressor } from '../../lib/context-compressor/export-compressor'
--import { getLocalUsageStats, getRecordedUsageSessionIds, getUsage, getUsageBatch } from '../../db/hermes/usage-store'
-+import { getLocalUsageStats, getRecordedUsageSessionIds, getUsage, getUsageBatch, getUsageTotals } from '../../db/hermes/usage-store'
+ } from '../public/sessions'
+ import { buildDbExportHistory, ExportCompressor } from '../services/context-compressor/export-compressor'
+-import { getLocalUsageStats, getRecordedUsageSessionIds, getUsage, getUsageBatch } from '../public/sessions'
++import { getLocalUsageStats, getRecordedUsageSessionIds, getUsage, getUsageBatch, getUsageTotals } from '../public/sessions'
  import {
    SESSION_CATEGORY_NAME_MAX_LENGTH,
    createSessionCategory,
-@@ -1333,6 +1333,10 @@ export async function usageBatch(ctx: any) {
+@@ -1373,6 +1373,10 @@ export async function usageBatch(ctx: any) {
  export async function usageSingle(ctx: any) {
    const session = localGetSession(ctx.params.id)
    if (denySessionAccess(ctx, session)) return
@@ -350,11 +350,11 @@ index 33c9869e..2b60fc82 100644
    const result = getUsage(ctx.params.id)
    if (!result) {
      ctx.body = { input_tokens: 0, output_tokens: 0 }
-diff --git a/packages/server/src/db/hermes/usage-store.ts b/packages/server/src/db/hermes/usage-store.ts
-index 790057c7..dd3a7a73 100644
---- a/packages/server/src/db/hermes/usage-store.ts
-+++ b/packages/server/src/db/hermes/usage-store.ts
-@@ -180,6 +180,45 @@ export function getUsage(sessionId: string): UsageRecord | undefined {
+diff --git a/packages/server/src/modules/studio/repositories/usage-store.ts b/packages/server/src/modules/studio/repositories/usage-store.ts
+index c8a44fea..d8b437b3 100644
+--- a/packages/server/src/modules/studio/repositories/usage-store.ts
++++ b/packages/server/src/modules/studio/repositories/usage-store.ts
+@@ -193,6 +193,45 @@ export function getUsage(sessionId: string): UsageRecord | undefined {
    }
  }
  

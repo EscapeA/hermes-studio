@@ -1,4 +1,4 @@
-From d3b0c872c2716abc7f37b08568f2c9ff3914f424 Mon Sep 17 00:00:00 2001
+From 13f6dedcb941c651feef9372e4e785a1ad9f14ae Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 23:12:24 +0800
 Subject: [PATCH] fix(chat): restore profile avatar for regular sessions in
@@ -9,12 +9,12 @@ all assistant messages. Regular Hermes sessions now fall back to the
 profile avatar (uploaded/generated) again; coding-agent sessions keep
 the runtime agent icon. Update pi-chat-avatar source assertions.
 ---
- .../components/hermes/chat/MessageItem.vue    | 22 ++++++++++++++++++-
- tests/client/pi-chat-avatar.test.ts           | 11 ++++++----
- 2 files changed, 28 insertions(+), 5 deletions(-)
+ .../components/hermes/chat/MessageItem.vue    | 28 ++++++++++++++++++-
+ tests/client/pi-chat-avatar.test.ts           | 11 +++++---
+ 2 files changed, 34 insertions(+), 5 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
-index b5513461..ab9bea40 100644
+index 716d89a0..eac59d7e 100644
 --- a/packages/client/src/components/hermes/chat/MessageItem.vue
 +++ b/packages/client/src/components/hermes/chat/MessageItem.vue
 @@ -15,6 +15,8 @@ import { useChatStore } from "@/stores/hermes/chat";
@@ -26,7 +26,15 @@ index b5513461..ab9bea40 100644
  import { chatSessionAgentAvatar, type ChatAgentAvatar } from "@/utils/chat-agent-avatar";
  import ToolChangeCard from "./ToolChangeCard.vue";
  import {
-@@ -215,8 +217,19 @@ const chatStore = useChatStore();
+@@ -32,7 +34,6 @@ import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subag
+ import type { WorkspaceRunChangeSummary } from "@/api/studio/sessions";
+ import { isServerTtsProvider } from "@/api/studio/tts";
+ import type { ProfileAvatar as ProfileAvatarData } from "@/api/hermes/profiles";
+-import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";
+ 
+ const MarkdownRenderer = defineAsyncComponent(async () => (await import("./MarkdownRenderer.vue")).default);
+ 
+@@ -225,8 +226,19 @@ const chatStore = useChatStore();
  const filesStore = useFilesStore();
  const toolPanelStore = useToolPanelStore();
  const settingsStore = useSettingsStore();
@@ -46,7 +54,7 @@ index b5513461..ab9bea40 100644
  const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
  
  // Copy entire bubble content
-@@ -953,8 +966,15 @@ onBeforeUnmount(() => {
+@@ -1008,6 +1020,20 @@ onBeforeUnmount(() => {
      </template>
      <template v-else>
        <div class="msg-body">
@@ -57,12 +65,16 @@ index b5513461..ab9bea40 100644
 +          :avatar="assistantProfileAvatar"
 +          :size="40"
 +        />
-         <img
--          v-if="message.role === 'assistant'"
++        <img
 +          v-else-if="message.role === 'assistant'"
-           class="msg-avatar"
-           :src="assistantAgent.src"
-           :alt="assistantAgent.label"
++          class="msg-avatar"
++          :src="assistantAgent.src"
++          :alt="assistantAgent.label"
++          draggable="false"
++        >
+         <div class="msg-content" :class="message.role">
+           <div v-if="message.role === 'user'" class="message-author user-message-author">
+             <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
 diff --git a/tests/client/pi-chat-avatar.test.ts b/tests/client/pi-chat-avatar.test.ts
 index 4fe6ac05..1fd72581 100644
 --- a/tests/client/pi-chat-avatar.test.ts

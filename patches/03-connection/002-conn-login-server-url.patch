@@ -1,7 +1,7 @@
-From 61a8b29b4c64715eb47f9eb5945ec4268f642fbf Mon Sep 17 00:00:00 2001
+From d651967e80f39a4539a823ebe52bfcbbceba194b Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 17 Jun 2026 12:38:00 +0800
-Subject: [PATCH 02/11] feat: add server URL editor to login page
+Subject: [PATCH] feat: add server URL editor to login page
 
 - Add collapsible server URL editor on login page
 - Auto-show if custom URL is already configured
@@ -13,7 +13,7 @@ Subject: [PATCH 02/11] feat: add server URL editor to login page
  1 file changed, 148 insertions(+), 3 deletions(-)
 
 diff --git a/packages/client/src/views/LoginView.vue b/packages/client/src/views/LoginView.vue
-index b0378e96..3c04f1cf 100644
+index 6a1816ac..fb0d2460 100644
 --- a/packages/client/src/views/LoginView.vue
 +++ b/packages/client/src/views/LoginView.vue
 @@ -2,7 +2,7 @@
@@ -22,7 +22,7 @@ index b0378e96..3c04f1cf 100644
  import { useI18n } from "vue-i18n";
 -import { setApiKey, clearApiKey, hasApiKey } from "@/api/client";
 +import { setApiKey, clearApiKey, hasApiKey, getBaseUrlValue, setServerUrl } from "@/api/client";
- import { fetchAuthStatus, loginWithPassword } from "@/api/auth";
+ import { fetchAuthStatus, loginWithPassword } from "@/api/studio/auth";
  import { isDesktopShell } from "@/utils/desktop-bridge";
  import { resolveLoginRedirect } from "@/utils/login-redirect";
 @@ -19,6 +19,9 @@ const loading = ref(false);

@@ -1,22 +1,22 @@
-From db040ef1c41db1219640b599183a672cd409ee0a Mon Sep 17 00:00:00 2001
+From 5b40688c5767bd58c9273e34172eb72219c65bec Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 17 Jun 2026 12:44:52 +0800
-Subject: [PATCH 03/11] fix: auth.ts use custom base URL for fetch calls
+Subject: [PATCH] fix: auth.ts use custom base URL for fetch calls
 
 - Import getBaseUrlValue from client.ts
 - Use custom server URL for auth/status and auth/login endpoints
 - This ensures authentication works with custom backend servers
 ---
- packages/client/src/api/auth.ts | 8 +++++---
+ packages/client/src/api/studio/auth.ts | 8 +++++---
  1 file changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/packages/client/src/api/auth.ts b/packages/client/src/api/auth.ts
-index f692d610..60543265 100644
---- a/packages/client/src/api/auth.ts
-+++ b/packages/client/src/api/auth.ts
+diff --git a/packages/client/src/api/studio/auth.ts b/packages/client/src/api/studio/auth.ts
+index 4e1ff1de..a8021d6f 100644
+--- a/packages/client/src/api/studio/auth.ts
++++ b/packages/client/src/api/studio/auth.ts
 @@ -1,4 +1,4 @@
--import { request } from './client'
-+import { request, getBaseUrlValue } from './client'
+-import { request } from '../client'
++import { request, getBaseUrlValue } from '../client'
  import type { UserThemeSettings } from './theme'
  
  export interface AuthStatus {

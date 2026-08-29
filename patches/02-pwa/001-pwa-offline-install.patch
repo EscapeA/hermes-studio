@@ -1,8 +1,8 @@
-From 8f38f09571dc289eb733ce28a08c119ecc211e90 Mon Sep 17 00:00:00 2001
+From 80548297009cb2e28dff8e3614ad3364c54c2767 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 7 Jul 2026 10:11:13 +0800
-Subject: [PATCH 1/5] feat(pwa): add offline support, service worker caching,
- and install button
+Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
+ install button
 
 - sw.js: three-tier caching (Cache-First for hashed assets, Network-First for navigation, SWR for public assets), excludes API/WS/Socket.IO paths
 - offline.html: bilingual offline fallback page with dark mode support
@@ -8929,22 +8929,22 @@ index 00000000..b775142a
 +  return cached || fetchPromise;
 +}
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index 95eac8e5..95af17aa 100644
+index c8e0cfab..6e835d81 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -7,6 +7,7 @@ import { getThemeOverrides } from '@/styles/theme'
- import { useTheme } from '@/composables/useTheme'
- import { useKeyboard } from '@/composables/useKeyboard'
- import { useSessionSearch } from '@/composables/useSessionSearch'
-+import { usePwa } from '@/composables/usePwa'
- import { useAppStore } from '@/stores/hermes/app'
- import AuthEventListener from '@/components/auth/AuthEventListener.vue'
- import { desktopBridge } from '@/utils/desktop-bridge'
-@@ -112,6 +113,7 @@ onUnmounted(() => {
- })
+@@ -25,6 +25,7 @@ import AuthEventListener from "@/components/auth/AuthEventListener.vue";
+ import { desktopBridge } from "@/utils/desktop-bridge";
+ import { naiveLocaleFor } from "@/constants/naiveLocale";
+ import { naiveRtlFor } from "@/constants/naiveRtl";
++import { usePwa } from "@/composables/usePwa";
  
- useKeyboard()
-+usePwa()
+ const AppSidebar = defineAsyncComponent(
+   async () => (await import("@/components/layout/AppSidebar.vue")).default,
+@@ -215,6 +216,7 @@ onUnmounted(() => {
+ });
+ 
+ useKeyboard();
++usePwa();
  </script>
  
  <template>
@@ -9069,10 +9069,10 @@ index 00000000..1ee3936c
 +  return { updateAvailable, applyUpdate }
 +}
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 3d4ab0c9..f184b0a4 100644
+index 133f30f2..8b7f7418 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -3253,4 +3253,7 @@ export default {
+@@ -3521,4 +3521,7 @@ export default {
      new_0_6_42_9: 'MiniMax image-to-video generation now supports Global and China official v1 endpoints, URL, base64, and local image inputs, task polling, and automatic download with Profile API keys (#2512)',
      new_0_6_41_1: 'Local STT now works reliably in npm-installed Hermes Web UI by pinning sherpa-onnx native runtimes to the same version as the Node.js wrapper on macOS, Windows, and Linux (#2464)',
    },
@@ -9081,10 +9081,10 @@ index 3d4ab0c9..f184b0a4 100644
 +  },
  }
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index af4e2a42..5238cb9f 100644
+index 85459be6..d7f77b10 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -3295,4 +3295,7 @@ export default {
+@@ -3569,4 +3569,7 @@ export default {
      new_0_6_42_9: 'MiniMax 图生视频现支持 Global 与中国区官方 v1 接口，可接收 URL、base64 或本地图片，轮询任务并使用 Profile API Key 自动下载结果（#2512）',
      new_0_6_41_1: '修复通过 npm 安装 Hermes Web UI 后本地 STT 无法可靠识别的问题：在 macOS、Windows 和 Linux 上将 sherpa-onnx 原生运行时固定为与 Node.js 封装相同的版本（#2464）',
    },
