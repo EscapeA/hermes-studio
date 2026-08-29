@@ -1,0 +1,251 @@
+From fbd4d5e0d1b639947227e33f79df21da25f3e3fc Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Tue, 7 Jul 2026 10:47:15 +0800
+Subject: [PATCH] test: add getBaseUrlValue mock to all @/api/client test mocks
+
+connection-settings feature introduced getBaseUrlValue export;
+18 test files missing the mock caused vitest to throw.
+---
+ tests/client/app-store.test.ts                          | 3 ++-
+ tests/client/chat-store-compression-state.test.ts       | 1 +
+ tests/client/chat-store-error-handling.test.ts          | 1 +
+ tests/client/chat-store-reasoning-effort.test.ts        | 1 +
+ tests/client/chat-store-reasoning-tool-boundary.test.ts | 1 +
+ tests/client/chat-store-session-command.test.ts         | 1 +
+ tests/client/chat-store-session-order.test.ts           | 1 +
+ tests/client/chat-view-tab-title.test.ts                | 1 +
+ tests/client/conversations-api.test.ts                  | 1 +
+ tests/client/default-credential-prompt.test.ts          | 1 +
+ tests/client/folder-picker-windows-drives.test.ts       | 1 +
+ tests/client/group-chat-store-baseline.test.ts          | 1 +
+ tests/client/group-chat-store-streaming.test.ts         | 1 +
+ tests/client/group-message-list-scroll.test.ts          | 1 +
+ tests/client/kanban-task-drawer.test.ts                 | 1 +
+ tests/client/login-view.test.ts                         | 1 +
+ tests/client/models-store.test.ts                       | 3 ++-
+ tests/client/router-login-redirect.test.ts              | 1 +
+ 18 files changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/tests/client/app-store.test.ts b/tests/client/app-store.test.ts
+index 1b22f350..10f0fe27 100644
+--- a/tests/client/app-store.test.ts
++++ b/tests/client/app-store.test.ts
+@@ -14,7 +14,8 @@ const mockSystemApi = vi.hoisted(() => ({
+ }))
+ 
+ vi.mock('@/api/hermes/system', () => mockSystemApi)
+-vi.mock('@/api/client', () => ({ hasApiKey: () => true }))
++vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''), hasApiKey: () => true }))
+ 
+ import { useAppStore } from '@/stores/hermes/app'
+ 
+diff --git a/tests/client/chat-store-compression-state.test.ts b/tests/client/chat-store-compression-state.test.ts
+index 6a4d991a..92019e36 100644
+--- a/tests/client/chat-store-compression-state.test.ts
++++ b/tests/client/chat-store-compression-state.test.ts
+@@ -26,6 +26,7 @@ vi.mock('@/api/hermes/chat', () => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   getActiveProfileName: () => 'default',
+   hasApiKey: () => false,
+ }))
+diff --git a/tests/client/chat-store-error-handling.test.ts b/tests/client/chat-store-error-handling.test.ts
+index f9ddec62..10da773f 100644
+--- a/tests/client/chat-store-error-handling.test.ts
++++ b/tests/client/chat-store-error-handling.test.ts
+@@ -34,6 +34,7 @@ vi.mock('@/api/hermes/chat', () => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   getActiveProfileName: () => 'default',
+   hasApiKey: () => false,
+ }))
+diff --git a/tests/client/chat-store-reasoning-effort.test.ts b/tests/client/chat-store-reasoning-effort.test.ts
+index 1c2e1cce..c85f5ba6 100644
+--- a/tests/client/chat-store-reasoning-effort.test.ts
++++ b/tests/client/chat-store-reasoning-effort.test.ts
+@@ -23,6 +23,7 @@ vi.mock('@/api/hermes/chat', () => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   getActiveProfileName: () => 'default',
+ }))
+ 
+diff --git a/tests/client/chat-store-reasoning-tool-boundary.test.ts b/tests/client/chat-store-reasoning-tool-boundary.test.ts
+index 58f4bca0..03060d95 100644
+--- a/tests/client/chat-store-reasoning-tool-boundary.test.ts
++++ b/tests/client/chat-store-reasoning-tool-boundary.test.ts
+@@ -29,6 +29,7 @@ vi.mock('@/api/hermes/chat', () => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   getActiveProfileName: () => 'default',
+   hasApiKey: () => false,
+ }))
+diff --git a/tests/client/chat-store-session-command.test.ts b/tests/client/chat-store-session-command.test.ts
+index 3cbeabcf..a052e73e 100644
+--- a/tests/client/chat-store-session-command.test.ts
++++ b/tests/client/chat-store-session-command.test.ts
+@@ -45,6 +45,7 @@ vi.mock('@/api/hermes/chat', () => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   getActiveProfileName: () => 'default',
+   hasApiKey: () => false,
+ }))
+diff --git a/tests/client/chat-store-session-order.test.ts b/tests/client/chat-store-session-order.test.ts
+index 2b24dde8..8533dfdd 100644
+--- a/tests/client/chat-store-session-order.test.ts
++++ b/tests/client/chat-store-session-order.test.ts
+@@ -31,6 +31,7 @@ vi.mock('@/api/hermes/chat', () => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   getActiveProfileName: () => 'default',
+ }))
+ 
+diff --git a/tests/client/chat-view-tab-title.test.ts b/tests/client/chat-view-tab-title.test.ts
+index 4da197c2..83db81da 100644
+--- a/tests/client/chat-view-tab-title.test.ts
++++ b/tests/client/chat-view-tab-title.test.ts
+@@ -54,6 +54,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   getActiveProfileName: () => 'default',
+ }))
+ 
+diff --git a/tests/client/conversations-api.test.ts b/tests/client/conversations-api.test.ts
+index 4030db7f..c446adac 100644
+--- a/tests/client/conversations-api.test.ts
++++ b/tests/client/conversations-api.test.ts
+@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
+ const mockRequest = vi.hoisted(() => vi.fn())
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   request: mockRequest,
+ }))
+ 
+diff --git a/tests/client/default-credential-prompt.test.ts b/tests/client/default-credential-prompt.test.ts
+index 81083943..2b55d50c 100644
+--- a/tests/client/default-credential-prompt.test.ts
++++ b/tests/client/default-credential-prompt.test.ts
+@@ -24,6 +24,7 @@ vi.mock('@/api/auth', () => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   getApiKey: mockGetApiKey,
+ }))
+ 
+diff --git a/tests/client/folder-picker-windows-drives.test.ts b/tests/client/folder-picker-windows-drives.test.ts
+index 135c268d..e9518253 100644
+--- a/tests/client/folder-picker-windows-drives.test.ts
++++ b/tests/client/folder-picker-windows-drives.test.ts
+@@ -14,6 +14,7 @@ const dialogMock = vi.hoisted(() => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   request: requestMock,
+ }))
+ 
+diff --git a/tests/client/group-chat-store-baseline.test.ts b/tests/client/group-chat-store-baseline.test.ts
+index 771b7fa7..1b1d2059 100644
+--- a/tests/client/group-chat-store-baseline.test.ts
++++ b/tests/client/group-chat-store-baseline.test.ts
+@@ -63,6 +63,7 @@ const groupChatApiMock = vi.hoisted(() => {
+   }
+ })
+ const clientApiMock = vi.hoisted(() => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   getApiKey: vi.fn(() => 'test-token'),
+   getBaseUrlValue: vi.fn(() => ''),
+   getActiveProfileName: vi.fn(() => 'research'),
+diff --git a/tests/client/group-chat-store-streaming.test.ts b/tests/client/group-chat-store-streaming.test.ts
+index de08f185..2775c820 100644
+--- a/tests/client/group-chat-store-streaming.test.ts
++++ b/tests/client/group-chat-store-streaming.test.ts
+@@ -42,6 +42,7 @@ const groupChatApiMock = vi.hoisted(() => {
+   }
+ })
+ const clientApiMock = vi.hoisted(() => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   getApiKey: vi.fn(() => 'test-token'),
+   getBaseUrlValue: vi.fn(() => ''),
+   getActiveProfileName: vi.fn(() => 'research'),
+diff --git a/tests/client/group-message-list-scroll.test.ts b/tests/client/group-message-list-scroll.test.ts
+index 87eeb94b..d5b716df 100644
+--- a/tests/client/group-message-list-scroll.test.ts
++++ b/tests/client/group-message-list-scroll.test.ts
+@@ -23,6 +23,7 @@ vi.mock('@/composables/useToolTraceVisibility', () => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   getActiveProfileName: vi.fn(() => 'default'),
+   getApiKey: vi.fn(() => 'test-token'),
+   getStoredUsername: vi.fn(() => null),
+diff --git a/tests/client/kanban-task-drawer.test.ts b/tests/client/kanban-task-drawer.test.ts
+index e5445f29..69972c34 100644
+--- a/tests/client/kanban-task-drawer.test.ts
++++ b/tests/client/kanban-task-drawer.test.ts
+@@ -39,6 +39,7 @@ vi.mock('vue-router', () => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   request: mockRequest,
+ }))
+ 
+diff --git a/tests/client/login-view.test.ts b/tests/client/login-view.test.ts
+index 92d85e67..2809cf6c 100644
+--- a/tests/client/login-view.test.ts
++++ b/tests/client/login-view.test.ts
+@@ -26,6 +26,7 @@ vi.mock('vue-i18n', () => ({
+ }))
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   setApiKey: mockSetApiKey,
+   clearApiKey: mockClearApiKey,
+   hasApiKey: mockHasApiKey,
+diff --git a/tests/client/models-store.test.ts b/tests/client/models-store.test.ts
+index f1ef3300..c5fe10ba 100644
+--- a/tests/client/models-store.test.ts
++++ b/tests/client/models-store.test.ts
+@@ -14,7 +14,8 @@ const mockSystemApi = vi.hoisted(() => ({
+ }))
+ 
+ vi.mock('@/api/hermes/system', () => mockSystemApi)
+-vi.mock('@/api/client', () => ({ hasApiKey: () => true }))
++vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''), hasApiKey: () => true }))
+ 
+ import { useAppStore } from '@/stores/hermes/app'
+ import { useModelsStore } from '@/stores/hermes/models'
+diff --git a/tests/client/router-login-redirect.test.ts b/tests/client/router-login-redirect.test.ts
+index 53d24187..2095d5f4 100644
+--- a/tests/client/router-login-redirect.test.ts
++++ b/tests/client/router-login-redirect.test.ts
+@@ -5,6 +5,7 @@ const mockHasApiKey = vi.hoisted(() => vi.fn())
+ const mockIsStoredSuperAdmin = vi.hoisted(() => vi.fn())
+ 
+ vi.mock('@/api/client', () => ({
++  getBaseUrlValue: vi.fn(() => ''),
+   hasApiKey: mockHasApiKey,
+   isStoredSuperAdmin: mockIsStoredSuperAdmin,
+ }))
+-- 
+2.53.0
+

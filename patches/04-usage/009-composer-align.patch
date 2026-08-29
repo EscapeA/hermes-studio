@@ -1,0 +1,129 @@
+From 1607aff1a0bc94a2c5b1d6b34888a0c2da19c1f6 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 00:08:44 +0800
+Subject: [PATCH] fix(chat): align session and context usage on one composer
+ row
+
+Put both token lines in the same flex row so they share height, size, and percent weight.
+---
+ .../src/components/hermes/chat/ChatInput.vue  | 65 +++++++++++--------
+ 1 file changed, 39 insertions(+), 26 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index e2c31b8a..fe6f6282 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -1166,18 +1166,19 @@ function isImage(type: string): boolean {
+         @mousedown="startResize"
+         @dblclick="resetTextareaHeight"
+       ></div>
+-      <div v-if="showContextUsage && showSessionUsage" class="session-usage-corner">
+-        <NPopover
+-          :trigger="isMobileViewport ? 'click' : 'hover'"
+-          placement="bottom-start"
+-        >
+-          <template #trigger>
+-            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · {{ cacheHitRatePercent }}%</span>
+-          </template>
+-          <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
+-        </NPopover>
+-      </div>
+       <div v-if="showContextUsage" class="context-usage-row">
++        <div class="session-usage-slot">
++          <NPopover
++            v-if="showSessionUsage"
++            :trigger="isMobileViewport ? 'click' : 'hover'"
++            placement="bottom-start"
++          >
++            <template #trigger>
++              <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · <span class="session-percent">{{ cacheHitRatePercent }}%</span></span>
++            </template>
++            <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
++          </NPopover>
++        </div>
+         <span class="context-info" :class="{ 'context-warning': usagePercent > 80 }">
+           {{ formatTokens(totalTokens) }} /
+           <NTooltip trigger="hover" :disabled="isMobileViewport">
+@@ -1854,33 +1855,41 @@ function isImage(type: string): boolean {
+   color: $text-muted;
+ }
+ 
+-.session-usage-corner {
+-  position: absolute;
+-  top: 9px;
+-  left: 14px;
+-  z-index: 1;
+-  min-width: 0;
+-  max-width: calc(100% - 28px);
+-}
+-
+ .context-usage-row {
+   display: flex;
+   align-items: center;
+-  justify-content: flex-end;
+-  gap: 7px;
++  justify-content: space-between;
++  gap: 8px;
+   position: absolute;
+   top: 9px;
++  left: 14px;
+   right: 14px;
+   z-index: 1;
+   min-width: 0;
+-  max-width: calc(100% - 28px);
+   padding: 0;
+   color: $text-muted;
++  font-size: 11px;
++  line-height: 14px;
+   pointer-events: auto;
++
++  :deep(.n-popover-trigger),
++  :deep(.n-tooltip-trigger) {
++    display: inline-flex;
++    align-items: center;
++    font-size: inherit;
++    line-height: inherit;
++  }
++}
++
++.session-usage-slot {
++  display: flex;
++  align-items: center;
++  min-width: 0;
+ }
+ 
+ .context-info {
+-  font-size: 11px;
++  font-size: inherit;
++  line-height: inherit;
+   color: inherit;
+   min-width: 0;
+   white-space: nowrap;
+@@ -1890,10 +1899,13 @@ function isImage(type: string): boolean {
+   }
+ }
+ 
+-.context-percent {
++.context-percent,
++.session-percent {
+   font-weight: 600;
+   color: inherit;
++}
+ 
++.context-percent {
+   &.context-percent-warn {
+     color: #e8a735;
+   }
+@@ -1904,7 +1916,8 @@ function isImage(type: string): boolean {
+ }
+ 
+ .session-tokens-used {
+-  font-size: 11px;
++  font-size: inherit;
++  line-height: inherit;
+   color: inherit;
+   min-width: 0;
+   white-space: nowrap;
+-- 
+2.53.0
+

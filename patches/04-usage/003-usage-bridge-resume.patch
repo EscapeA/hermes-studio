@@ -1,0 +1,98 @@
+From ada773e384361a87936ec769ac35b8276eb8f2a0 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sun, 19 Jul 2026 17:32:59 +0800
+Subject: [PATCH 3/3] fix(chat): keep bridge resume polling after model.usage
+ apply failures
+
+Wrap resume snapshot model.usage handling so usage/context UI updates cannot
+abort cursor advancement. Update resume test mocks for the new usage helpers.
+---
+ .../hermes/run-chat/handle-bridge-run.ts      | 17 ++++++--
+ tests/server/run-chat-bridge-resume.test.ts   | 40 +++++++++++++++++++
+ 2 files changed, 53 insertions(+), 4 deletions(-)
+
+diff --git a/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts b/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
+index fcfd5046..eaa89b0e 100644
+--- a/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
++++ b/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
+@@ -897,10 +897,19 @@ export async function resumeBridgeRun(
+       if (!event || typeof event !== 'object' || Array.isArray(event)) continue
+       const bridgeEvent = event as Record<string, unknown>
+       if (bridgeEvent.event === 'model.usage') {
+-        recordBridgeModelUsage(sessionId, runId, bridgeEvent, profile, {
+-          model: args.model,
+-          provider: args.provider,
+-        }, { state, emit })
++        try {
++          recordBridgeModelUsage(sessionId, runId, bridgeEvent, profile, {
++            model: args.model,
++            provider: args.provider,
++          }, { state, emit })
++        } catch (usageErr) {
++          // Never block resume cursor advancement on usage accounting failures.
++          bridgeLogger.warn({
++            err: usageErr instanceof Error ? { message: usageErr.message, name: usageErr.name } : usageErr,
++            sessionId,
++            runId,
++          }, '[chat-run-socket] failed to apply model.usage during bridge resume snapshot')
++        }
+       }
+     }
+     const output = typeof snapshot.output === 'string' ? snapshot.output : deltas.join('')
+diff --git a/tests/server/run-chat-bridge-resume.test.ts b/tests/server/run-chat-bridge-resume.test.ts
+index aeec4f46..4443a720 100644
+--- a/tests/server/run-chat-bridge-resume.test.ts
++++ b/tests/server/run-chat-bridge-resume.test.ts
+@@ -55,9 +55,49 @@ vi.mock('../../packages/server/src/services/hermes/run-chat/usage', () => ({
+   estimateUsageTokensFromMessages: estimateUsageTokensFromMessagesMock,
+   getCachedBridgeContextOverhead: vi.fn(() => undefined),
+   updateMessageContextTokenUsage: vi.fn((_sid, state, _emit, tokens) => {
++    if (typeof state.apiPromptTokens === 'number' && Number.isFinite(state.apiPromptTokens) && state.apiPromptTokens >= 0) {
++      return state.contextTokens
++    }
+     state.contextTokens = tokens
+     return tokens
+   }),
++  applyApiPromptContextTokens: vi.fn((_sid, state, emit, promptTokens, usage) => {
++    if (typeof promptTokens !== 'number' || !Number.isFinite(promptTokens) || promptTokens < 0) {
++      return state.contextTokens
++    }
++    const normalized = Math.floor(promptTokens)
++    state.apiPromptTokens = normalized
++    state.contextTokens = normalized
++    emit('usage.updated', {
++      event: 'usage.updated',
++      session_id: _sid,
++      inputTokens: usage?.inputTokens ?? state.inputTokens ?? 0,
++      outputTokens: usage?.outputTokens ?? state.outputTokens ?? 0,
++      contextTokens: normalized,
++    })
++    return normalized
++  }),
++  clearApiPromptContextTokens: vi.fn((state) => {
++    state.apiPromptTokens = undefined
++  }),
++  hasApiPromptContextTokens: vi.fn((state) => (
++    typeof state.apiPromptTokens === 'number'
++    && Number.isFinite(state.apiPromptTokens)
++    && state.apiPromptTokens >= 0
++  )),
++  resolveApiPromptTokens: vi.fn((raw, normalized) => {
++    if (raw && typeof raw === 'object') {
++      if (typeof raw.prompt_tokens === 'number') return raw.prompt_tokens
++      if (typeof raw.promptTokens === 'number') return raw.promptTokens
++      const uncached = Number(raw.input_tokens ?? raw.inputTokens ?? normalized?.inputTokens ?? 0)
++      const cacheRead = Number(raw.cache_read_tokens ?? raw.cacheReadTokens ?? normalized?.cacheReadTokens ?? 0)
++      const cacheWrite = Number(raw.cache_write_tokens ?? raw.cacheWriteTokens ?? normalized?.cacheWriteTokens ?? 0)
++      if (Number.isFinite(uncached) && uncached >= 0) {
++        return Math.floor(uncached + (cacheRead > 0 ? cacheRead : 0) + (cacheWrite > 0 ? cacheWrite : 0))
++      }
++    }
++    return typeof normalized?.inputTokens === 'number' ? normalized.inputTokens : undefined
++  }),
+ }))
+ 
+ function createNamespace() {
+-- 
+2.53.0
+
