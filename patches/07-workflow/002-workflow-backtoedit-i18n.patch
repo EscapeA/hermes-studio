@@ -1,0 +1,68 @@
+From 50079efa6a55996406bb1e4969706a7c49e8b825 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Wed, 5 Aug 2026 02:08:55 +0800
+Subject: [PATCH] fix(i18n): add missing workflow.actions.backToEdit
+ translations (fr/es/de/pt)
+
+---
+ packages/client/src/i18n/locales/de.ts | 2 +-
+ packages/client/src/i18n/locales/es.ts | 2 +-
+ packages/client/src/i18n/locales/fr.ts | 2 +-
+ packages/client/src/i18n/locales/pt.ts | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 5f0349ef..74df37ed 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -2454,7 +2454,7 @@ jobTriggered: 'Job ausgelost',
+     canvasAriaLabel: 'Workflow-Arbeitsfläche',
+     workspace: { title: 'Arbeitsbereich auswählen', select: 'Arbeitsbereich auswählen', clear: 'Arbeitsbereich entfernen' },
+     actions: {
+-      newWorkflow: 'Neuer Workflow', addNode: 'Knoten hinzufügen', createWorkflowFirst: 'Bitte zuerst einen Workflow erstellen', reset: 'Zurücksetzen',
++      newWorkflow: 'Neuer Workflow', addNode: 'Knoten hinzufügen', createWorkflowFirst: 'Bitte zuerst einen Workflow erstellen', reset: 'Zurücksetzen', backToEdit: 'Zurück zur Bearbeitung',
+       startExecution: 'Ausführung starten', executionPending: 'Die Workflow-Ausführung ist noch nicht verbunden', executionStarted: 'Workflow-Ausführung gestartet', executionCompleted: 'Workflow-Ausführung abgeschlossen', executionFailed: 'Workflow-Ausführung fehlgeschlagen',
+       rerunDownstreamKeepNode: 'Diesen Knoten beibehalten und nachgelagerte Knoten ausführen', rerunDownstreamClearNode: 'Diesen Knoten leeren und nachgelagerte Knoten ausführen', rerunDownstreamStarted: 'Erneute Ausführung der nachgelagerten Knoten gestartet', rerunFromNodeStarted: 'Erneute Ausführung ab diesem Knoten gestartet', rerunFailed: 'Erneute Workflow-Ausführung fehlgeschlagen',
+       deleteNode: 'Knoten löschen', deleteEdge: 'Verbindung löschen', editEdge: 'Verbindung bearbeiten', undo: 'Rückgängig',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 0f08bf24..b3143ffa 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -2454,7 +2454,7 @@ jobTriggered: 'Job ejecutado',
+     canvasAriaLabel: 'Lienzo del Workflow',
+     workspace: { title: 'Seleccionar espacio de trabajo', select: 'Seleccionar espacio de trabajo', clear: 'Limpiar espacio de trabajo' },
+     actions: {
+-      newWorkflow: 'Nuevo Workflow', addNode: 'Añadir nodo', createWorkflowFirst: 'Crea primero un Workflow', reset: 'Restablecer',
++      newWorkflow: 'Nuevo Workflow', addNode: 'Añadir nodo', createWorkflowFirst: 'Crea primero un Workflow', reset: 'Restablecer', backToEdit: 'Volver a edición',
+       startExecution: 'Iniciar ejecución', executionPending: 'La ejecución del Workflow aún no está conectada', executionStarted: 'Ejecución del Workflow iniciada', executionCompleted: 'Ejecución del Workflow completada', executionFailed: 'La ejecución del Workflow ha fallado',
+       rerunDownstreamKeepNode: 'Conservar este nodo y ejecutar los siguientes', rerunDownstreamClearNode: 'Limpiar este nodo y ejecutar los siguientes', rerunDownstreamStarted: 'Reejecución de los nodos siguientes iniciada', rerunFromNodeStarted: 'Reejecución iniciada desde este nodo', rerunFailed: 'La reejecución del Workflow ha fallado',
+       deleteNode: 'Eliminar nodo', deleteEdge: 'Eliminar conexión', editEdge: 'Editar conexión', undo: 'Deshacer',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 0bc2fa4a..864980e3 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -2453,7 +2453,7 @@ jobTriggered: 'Job declenche',
+     canvasAriaLabel: 'Canevas du Workflow',
+     workspace: { title: 'Sélectionner un espace de travail', select: 'Sélectionner un espace de travail', clear: 'Effacer l’espace de travail' },
+     actions: {
+-      newWorkflow: 'Nouveau Workflow', addNode: 'Ajouter un nœud', createWorkflowFirst: 'Créez d’abord un Workflow', reset: 'Réinitialiser',
++      newWorkflow: 'Nouveau Workflow', addNode: 'Ajouter un nœud', createWorkflowFirst: 'Créez d’abord un Workflow', reset: 'Réinitialiser', backToEdit: 'Revenir à la modification',
+       startExecution: 'Démarrer l’exécution', executionPending: 'L’exécution du Workflow n’est pas encore connectée', executionStarted: 'Exécution du Workflow démarrée', executionCompleted: 'Exécution du Workflow terminée', executionFailed: 'Échec de l’exécution du Workflow',
+       rerunDownstreamKeepNode: 'Conserver ce nœud et exécuter la suite', rerunDownstreamClearNode: 'Effacer ce nœud et exécuter la suite', rerunDownstreamStarted: 'Réexécution de la suite démarrée', rerunFromNodeStarted: 'Réexécution démarrée depuis ce nœud', rerunFailed: 'Échec de la réexécution du Workflow',
+       deleteNode: 'Supprimer le nœud', deleteEdge: 'Supprimer la connexion', editEdge: 'Modifier la connexion', undo: 'Annuler',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 40fa767d..fdc11821 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -2454,7 +2454,7 @@ jobTriggered: 'Job acionado',
+     canvasAriaLabel: 'Tela do Workflow',
+     workspace: { title: 'Selecionar espaço de trabalho', select: 'Selecionar espaço de trabalho', clear: 'Limpar espaço de trabalho' },
+     actions: {
+-      newWorkflow: 'Novo Workflow', addNode: 'Adicionar nó', createWorkflowFirst: 'Crie um Workflow primeiro', reset: 'Redefinir',
++      newWorkflow: 'Novo Workflow', addNode: 'Adicionar nó', createWorkflowFirst: 'Crie um Workflow primeiro', reset: 'Redefinir', backToEdit: 'Voltar para edição',
+       startExecution: 'Iniciar execução', executionPending: 'A execução do Workflow ainda não está conectada', executionStarted: 'Execução do Workflow iniciada', executionCompleted: 'Execução do Workflow concluída', executionFailed: 'Falha na execução do Workflow',
+       rerunDownstreamKeepNode: 'Manter este nó e executar os seguintes', rerunDownstreamClearNode: 'Limpar este nó e executar os seguintes', rerunDownstreamStarted: 'Reexecução dos nós seguintes iniciada', rerunFromNodeStarted: 'Reexecução iniciada a partir deste nó', rerunFailed: 'Falha ao reexecutar o Workflow',
+       deleteNode: 'Excluir nó', deleteEdge: 'Excluir conexão', editEdge: 'Editar conexão', undo: 'Desfazer',
+-- 
+2.53.0
+

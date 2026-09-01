@@ -1,0 +1,36 @@
+From 11b949f425dbc21d9825b5398d1bd6035c7e9a6b Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Fri, 19 Jun 2026 08:50:20 +0800
+Subject: [PATCH] fix: upload uses custom backend URL to prevent 405
+
+chat.ts and group-chat.ts /upload endpoints now use getBaseUrlValue()
+instead of bare '/upload', matching the backend connection settings.
+---
+ packages/client/src/stores/hermes/chat.ts | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
+index 291b5d48..7a1eb7f4 100644
+--- a/packages/client/src/stores/hermes/chat.ts
++++ b/packages/client/src/stores/hermes/chat.ts
+@@ -1,6 +1,6 @@
+ import { startRunViaSocket, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
+ import { archiveSession as archiveSessionApi, deleteSession as deleteSessionApi, fetchSessionMessagesPage, fetchSessions, fetchWorkspaceRunChangeFile, setSessionModel, setSessionPushEnabled as persistSessionPushEnabled, setSessionReasoningEffort as persistSessionReasoningEffort, type HermesMessage, type SessionSummary, type WorkspaceRunChangeFileDetail, type WorkspaceRunChangeSummary } from '@/api/studio/sessions'
+-import { getActiveProfileName } from '@/api/client'
++import { getActiveProfileName, getBaseUrlValue } from '@/api/client'
+ import { inferCodingAgentApiMode, normalizeCodingAgentApiMode, type ChatCodingAgentId } from '@/api/coding-agents'
+ import { getDownloadUrl } from '@/api/studio/download'
+ import type { ProviderApiMode } from '@/api/studio/provider-api-mode'
+@@ -584,7 +584,8 @@ async function uploadFiles(attachments: Attachment[]): Promise<{ name: string; p
+   const headers: Record<string, string> = {}
+   if (token) headers.Authorization = `Bearer ${token}`
+   if (profileName) headers['X-Hermes-Profile'] = profileName
+-  const res = await fetch('/api/studio/uploads', {
++  const base = getBaseUrlValue()
++  const res = await fetch(`${base}/api/studio/uploads`, {
+     method: 'POST',
+     body: formData,
+     headers,
+-- 
+2.53.0
+

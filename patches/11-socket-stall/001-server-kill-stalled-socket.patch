@@ -1,0 +1,98 @@
+From cb6849bba3a93f67dee97eda9476092d019a354c Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 09:33:58 +0800
+Subject: [PATCH 1/2] fix(server): kill stalled chat-run sockets with
+ non-draining write backlog
+
+A phone PWA on a flaky tailscale/relay link can go half-open: the TCP
+connection stays ESTAB but frames we emit for the session pile up in the
+send buffer (observed Send-Q growing 478 -> 4649 bytes) and the client
+never sees new messages. Add a 5s health check that inspects each
+socket's underlying transport writableLength; if the backlog exceeds
+256KB and has not drained across two checks, force-disconnect so
+socket.io-client's reconnection + resume path re-syncs the session.
+---
+ .../src/services/hermes/run-chat/index.ts     | 49 +++++++++++++++++++
+ 1 file changed, 49 insertions(+)
+
+diff --git a/packages/server/src/services/hermes/run-chat/index.ts b/packages/server/src/services/hermes/run-chat/index.ts
+index 61b98e63..0d040202 100644
+--- a/packages/server/src/services/hermes/run-chat/index.ts
++++ b/packages/server/src/services/hermes/run-chat/index.ts
+@@ -223,6 +223,9 @@ export class ChatRunSocket {
+   private backgroundBrokerId?: string
+   private backgroundPollRetryAt = 0
+   private backgroundActivityGraceUntil = 0
++  /** socketId → last observed write-backlog bytes (stalled-connection detection) */
++  private socketBacklog = new Map<string, number>()
++  private socketHealthTimer?: NodeJS.Timeout
+   private closing = false
+ 
+   constructor(io: Server) {
+@@ -235,10 +238,51 @@ export class ChatRunSocket {
+     this.nsp.on('connection', this.onConnection.bind(this))
+     this.backgroundPollTimer = setInterval(() => void this.pollBackgroundWork(), 500)
+     this.backgroundPollTimer.unref?.()
++    this.socketHealthTimer = setInterval(() => this.checkSocketHealth(), 5_000)
++    this.socketHealthTimer.unref?.()
+     void this.pollBackgroundWork()
+     logger.info('[chat-run-socket] Socket.IO ready at /chat-run')
+   }
+ 
++  /**
++   * Detect socket connections whose TCP write buffer has been accumulating for
++   * multiple checks without draining. This happens when a client (e.g. a phone
++   * PWA on a flaky tailscale/relay link) goes half-open: the transport stays
++   * ESTAB on our side, but frames we emit for the session pile up in the send
++   * buffer and the client never sees new messages. Force-disconnecting such a
++   * socket lets socket.io-client's reconnection + resume path re-sync it.
++   */
++  private checkSocketHealth(): void {
++    const KILL_BACKLOG_BYTES = 256 * 1024
++    for (const socket of this.nsp.sockets.values()) {
++      try {
++        const raw = (socket.conn?.transport as any)?.socket as
++          | { writableLength?: number }
++          | undefined
++        if (!raw || typeof raw.writableLength !== 'number') continue
++        const buffered = raw.writableLength || 0
++        const prev = this.socketBacklog.get(socket.id)
++        if (buffered > KILL_BACKLOG_BYTES && prev != null && buffered >= prev) {
++          const rooms = Array.from(socket.rooms || [])
++            .filter(room => room.startsWith('session:'))
++            .slice(0, 5)
++          logger.warn(
++            `[chat-run-socket] killing stalled socket (write backlog not draining) socketId=${socket.id} buffered=${buffered} rooms=${rooms.join(',')}`,
++          )
++          socket.disconnect(true)
++          this.socketBacklog.delete(socket.id)
++          continue
++        }
++        this.socketBacklog.set(socket.id, buffered)
++      } catch {
++        // Ignore per-socket inspection errors; a socket mid-close can throw.
++      }
++    }
++    for (const id of Array.from(this.socketBacklog.keys())) {
++      if (!this.nsp.sockets.has(id)) this.socketBacklog.delete(id)
++    }
++  }
++
+   // --- Auth middleware ---
+ 
+   private async authMiddleware(socket: Socket, next: (err?: Error) => void) {
+@@ -2052,6 +2096,11 @@ export class ChatRunSocket {
+       clearInterval(this.backgroundPollTimer)
+       this.backgroundPollTimer = undefined
+     }
++    if (this.socketHealthTimer) {
++      clearInterval(this.socketHealthTimer)
++      this.socketHealthTimer = undefined
++    }
++    this.socketBacklog.clear()
+     const releaseClaims: Array<Promise<unknown>> = []
+     for (const [sessionId, state] of this.sessionMap.entries()) {
+       if (state.abortController) {
+-- 
+2.53.0
+

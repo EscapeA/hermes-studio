@@ -1,0 +1,431 @@
+From 0c7aac68b3cce46133ef778477b35995b57faa77 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sun, 19 Jul 2026 17:05:12 +0800
+Subject: [PATCH 1/3] feat(chat): use latest API prompt_tokens for context
+ usage UI
+
+Wire bridge model.usage prompt_tokens (log "in=") into session.contextTokens
+so ChatInput shows real provider-reported context occupancy instead of the
+local message/fixed estimate. Prefer the latest non-estimated prompt_tokens
+per run, skip final local estimate overwrite while that value is known, and
+clear it after compression so post-compact local estimates can resume until
+the next real API usage event.
+---
+ .../hermes/run-chat/handle-bridge-run.ts      |  45 ++++++-
+ .../src/services/hermes/run-chat/types.ts     |   2 +
+ .../src/services/hermes/run-chat/usage.ts     |  29 +++++
+ .../run-chat-api-prompt-context.test.ts       |  72 +++++++++++
+ .../run-chat-bridge-final-context.test.ts     | 118 +++++++++++++++++-
+ 5 files changed, 260 insertions(+), 6 deletions(-)
+ create mode 100644 tests/server/run-chat-api-prompt-context.test.ts
+
+diff --git a/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts b/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
+index d1dc4fb1..00df0d6a 100644
+--- a/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
++++ b/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
+@@ -12,10 +12,13 @@ import { AgentBridgeClient, type AgentBridgeContextEstimate, type AgentBridgeMes
+ import { contentBlocksToString, convertContentBlocksForAgent, extractTextForPreview, isContentBlockArray } from './content-blocks'
+ import { buildCompressedHistory, buildDbSnapshotAwareHistory, forceCompressBridgeHistory, pushState, replaceState } from './compression'
+ import {
++  applyApiPromptContextTokens,
+   calcAndUpdateUsage,
++  clearApiPromptContextTokens,
+   contextTokensWithCachedOverhead,
+   estimateUsageTokensFromMessages,
+   getCachedBridgeContextOverhead,
++  hasApiPromptContextTokens,
+   updateMessageContextTokenUsage,
+ } from './usage'
+ import {
+@@ -896,7 +899,7 @@ export async function resumeBridgeRun(
+         recordBridgeModelUsage(sessionId, runId, bridgeEvent, profile, {
+           model: args.model,
+           provider: args.provider,
+-        })
++        }, { state, emit })
+       }
+     }
+     const output = typeof snapshot.output === 'string' ? snapshot.output : deltas.join('')
+@@ -1021,6 +1024,17 @@ async function refreshFinalContextUsage(args: {
+       { excludeLastUser: false },
+       { model: args.model, provider: args.provider },
+     )
++    if (hasApiPromptContextTokens(args.state)) {
++      bridgeLogger.info({
++        sessionId: args.sessionId,
++        profile: args.profile,
++        model: args.model,
++        provider: args.provider,
++        apiPromptTokens: args.state.apiPromptTokens,
++        contextTokens: args.state.contextTokens,
++      }, '[chat-run-socket] keeping API prompt_tokens for context usage')
++      return args.state.contextTokens
++    }
+     const finalMessageUsage = estimateUsageTokensFromMessages(finalHistory)
+     const finalMessageTokens = finalMessageUsage.inputTokens + finalMessageUsage.outputTokens
+     await ensureBridgeFixedContext({
+@@ -1091,7 +1105,11 @@ function recordBridgeModelUsage(
+   event: Record<string, unknown>,
+   profile: string,
+   modelContext: { model?: string | null; provider?: string | null },
+-): void {
++  live?: {
++    state: SessionState
++    emit: (event: string, payload: any) => void
++  },
++): number | undefined {
+   const usage = normalizeTokenUsage(event.usage)
+   if (usage.isEstimated) {
+     bridgeLogger.warn({
+@@ -1099,7 +1117,7 @@ function recordBridgeModelUsage(
+       bridgeRunId,
+       apiRequestId: event.api_request_id,
+     }, '[chat-run-socket] ignoring incomplete Hermes model usage event')
+-    return
++    return live?.state.contextTokens
+   }
+ 
+   const apiRequestId = stringValue(event.api_request_id)
+@@ -1111,7 +1129,7 @@ function recordBridgeModelUsage(
+   const requestKey = apiRequestId || fallbackId
+   if (!requestKey) {
+     bridgeLogger.warn({ sessionId, bridgeRunId }, '[chat-run-socket] ignoring Hermes model usage event without request identity')
+-    return
++    return live?.state.contextTokens
+   }
+ 
+   recordSessionUsage({
+@@ -1127,6 +1145,21 @@ function recordBridgeModelUsage(
+     profile,
+     isEstimated: false,
+   })
++
++  // Context-window UI: use the latest real API prompt_tokens (log "in="), not in+out total.
++  if (live) {
++    return applyApiPromptContextTokens(
++      sessionId,
++      live.state,
++      live.emit,
++      usage.inputTokens,
++      {
++        inputTokens: live.state.inputTokens ?? 0,
++        outputTokens: live.state.outputTokens ?? 0,
++      },
++    )
++  }
++  return undefined
+ }
+ 
+ async function applyBridgeChunkAsync(
+@@ -1189,7 +1222,7 @@ async function applyBridgeChunkAsync(
+         emit,
+       )
+     } else if (evType === 'model.usage') {
+-      recordBridgeModelUsage(sessionId, chunk.run_id, ev, profile, modelContext)
++      recordBridgeModelUsage(sessionId, chunk.run_id, ev, profile, modelContext, { state, emit })
+     } else if (evType === 'session.title.updated') {
+       syncBridgeGeneratedTitle(sessionId, (ev as any).title, emit)
+     } else if (evType === 'bridge.context.ready') {
+@@ -1503,6 +1536,8 @@ async function applyBridgeChunkAsync(
+       emit('compression.completed', payload)
+       const usage = await calcAndUpdateUsage(sessionId, state, emit)
+       if (messageAfterTokensWithInput != null) {
++        // History shrank; drop last API prompt so local estimate can fill until the next real usage.
++        clearApiPromptContextTokens(state)
+         updateMessageContextTokenUsage(sessionId, state, emit, messageAfterTokensWithInput, usage)
+       }
+     } else if (evType === 'bridge.compression.failed') {
+diff --git a/packages/server/src/services/hermes/run-chat/types.ts b/packages/server/src/services/hermes/run-chat/types.ts
+index 6172b78b..da2b524b 100644
+--- a/packages/server/src/services/hermes/run-chat/types.ts
++++ b/packages/server/src/services/hermes/run-chat/types.ts
+@@ -109,6 +109,8 @@ export interface SessionState {
+   inputTokens?: number
+   outputTokens?: number
+   contextTokens?: number
++  /** Last real API prompt_tokens (in=) for context-window UI; blocks local estimate overwrite. */
++  apiPromptTokens?: number
+   bridgeContext?: BridgeContextState
+   isAborting?: boolean
+   queue: QueuedRun[]
+diff --git a/packages/server/src/services/hermes/run-chat/usage.ts b/packages/server/src/services/hermes/run-chat/usage.ts
+index 97b34eaa..2e370c00 100644
+--- a/packages/server/src/services/hermes/run-chat/usage.ts
++++ b/packages/server/src/services/hermes/run-chat/usage.ts
+@@ -229,6 +229,31 @@ export function updateContextTokenUsage(
+   return normalizedContextTokens
+ }
+ 
++export function applyApiPromptContextTokens(
++  sid: string,
++  state: SessionState,
++  emit: (event: string, payload: any) => void,
++  promptTokens: number | null | undefined,
++  usage?: { inputTokens: number; outputTokens: number },
++): number | undefined {
++  if (typeof promptTokens !== 'number' || !Number.isFinite(promptTokens) || promptTokens < 0) {
++    return state.contextTokens
++  }
++  const normalized = Math.floor(promptTokens)
++  state.apiPromptTokens = normalized
++  return updateContextTokenUsage(sid, state, emit, normalized, usage)
++}
++
++export function clearApiPromptContextTokens(state: SessionState): void {
++  state.apiPromptTokens = undefined
++}
++
++export function hasApiPromptContextTokens(state: SessionState): boolean {
++  return typeof state.apiPromptTokens === 'number'
++    && Number.isFinite(state.apiPromptTokens)
++    && state.apiPromptTokens >= 0
++}
++
+ export function getCachedBridgeContextOverhead(state: SessionState): number | undefined {
+   const fixedContextTokens = state.bridgeContext?.fixedContextTokens
+   if (typeof fixedContextTokens !== 'number' || !Number.isFinite(fixedContextTokens) || fixedContextTokens < 0) {
+@@ -252,6 +277,10 @@ export function updateMessageContextTokenUsage(
+   messageTokens: number | null | undefined,
+   usage?: { inputTokens: number; outputTokens: number },
+ ): number | undefined {
++  // Prefer real API prompt_tokens over local message/fixed estimates for the UI meter.
++  if (hasApiPromptContextTokens(state)) {
++    return state.contextTokens
++  }
+   if (typeof messageTokens !== 'number' || !Number.isFinite(messageTokens) || messageTokens < 0) {
+     return state.contextTokens
+   }
+diff --git a/tests/server/run-chat-api-prompt-context.test.ts b/tests/server/run-chat-api-prompt-context.test.ts
+new file mode 100644
+index 00000000..090a9257
+--- /dev/null
++++ b/tests/server/run-chat-api-prompt-context.test.ts
+@@ -0,0 +1,72 @@
++import { describe, expect, it, vi } from 'vitest'
++import {
++  applyApiPromptContextTokens,
++  clearApiPromptContextTokens,
++  hasApiPromptContextTokens,
++  updateMessageContextTokenUsage,
++} from '../../packages/server/src/services/hermes/run-chat/usage'
++import type { SessionState } from '../../packages/server/src/services/hermes/run-chat/types'
++
++function makeState(partial: Partial<SessionState> = {}): SessionState {
++  return {
++    messages: [],
++    isWorking: false,
++    events: [],
++    queue: [],
++    ...partial,
++  }
++}
++
++describe('API prompt_tokens context usage', () => {
++  it('applies prompt_tokens as contextTokens and marks apiPromptTokens', () => {
++    const state = makeState()
++    const emit = vi.fn()
++    const result = applyApiPromptContextTokens('s1', state, emit, 153386, {
++      inputTokens: 10,
++      outputTokens: 2,
++    })
++    expect(result).toBe(153386)
++    expect(state.apiPromptTokens).toBe(153386)
++    expect(state.contextTokens).toBe(153386)
++    expect(emit).toHaveBeenCalledWith('usage.updated', expect.objectContaining({
++      session_id: 's1',
++      contextTokens: 153386,
++      inputTokens: 10,
++      outputTokens: 2,
++    }))
++  })
++
++  it('uses the latest prompt_tokens when applied repeatedly', () => {
++    const state = makeState()
++    const emit = vi.fn()
++    applyApiPromptContextTokens('s1', state, emit, 1000)
++    applyApiPromptContextTokens('s1', state, emit, 153386)
++    expect(state.contextTokens).toBe(153386)
++    expect(state.apiPromptTokens).toBe(153386)
++  })
++
++  it('blocks local message estimates after real API prompt is known', () => {
++    const state = makeState({ bridgeContext: { fixedContextTokens: 20_000 } })
++    const emit = vi.fn()
++    applyApiPromptContextTokens('s1', state, emit, 153386)
++    emit.mockClear()
++    const kept = updateMessageContextTokenUsage('s1', state, emit, 18, {
++      inputTokens: 1,
++      outputTokens: 1,
++    })
++    expect(kept).toBe(153386)
++    expect(state.contextTokens).toBe(153386)
++    expect(emit).not.toHaveBeenCalled()
++  })
++
++  it('allows local estimates again after clearApiPromptContextTokens', () => {
++    const state = makeState({ bridgeContext: { fixedContextTokens: 100 } })
++    const emit = vi.fn()
++    applyApiPromptContextTokens('s1', state, emit, 153386)
++    clearApiPromptContextTokens(state)
++    expect(hasApiPromptContextTokens(state)).toBe(false)
++    const next = updateMessageContextTokenUsage('s1', state, emit, 50)
++    expect(next).toBe(150)
++    expect(state.contextTokens).toBe(150)
++  })
++})
+diff --git a/tests/server/run-chat-bridge-final-context.test.ts b/tests/server/run-chat-bridge-final-context.test.ts
+index 7cda8a85..5b875278 100644
+--- a/tests/server/run-chat-bridge-final-context.test.ts
++++ b/tests/server/run-chat-bridge-final-context.test.ts
+@@ -39,7 +39,24 @@ const updateContextTokenUsageMock = vi.fn((sid: string, state: any, emit: any, c
+ })
+ const getCachedBridgeContextOverheadMock = vi.fn(() => undefined)
+ const contextTokensWithCachedOverheadMock = vi.fn((_state: any, messageTokens: number) => messageTokens)
+-const updateMessageContextTokenUsageMock = vi.fn((sid: string, state: any, emit: any, messageTokens: number, usage?: { inputTokens: number; outputTokens: number }) => updateContextTokenUsageMock(sid, state, emit, messageTokens, usage))
++const updateMessageContextTokenUsageMock = vi.fn((sid: string, state: any, emit: any, messageTokens: number, usage?: { inputTokens: number; outputTokens: number }) => {
++  if (typeof state.apiPromptTokens === 'number' && Number.isFinite(state.apiPromptTokens) && state.apiPromptTokens >= 0) {
++    return state.contextTokens
++  }
++  return updateContextTokenUsageMock(sid, state, emit, messageTokens, usage)
++})
++const applyApiPromptContextTokensMock = vi.fn((sid: string, state: any, emit: any, promptTokens: number, usage?: { inputTokens: number; outputTokens: number }) => {
++  state.apiPromptTokens = Math.floor(promptTokens)
++  return updateContextTokenUsageMock(sid, state, emit, Math.floor(promptTokens), usage)
++})
++const clearApiPromptContextTokensMock = vi.fn((state: any) => {
++  state.apiPromptTokens = undefined
++})
++const hasApiPromptContextTokensMock = vi.fn((state: any) => (
++  typeof state.apiPromptTokens === 'number'
++  && Number.isFinite(state.apiPromptTokens)
++  && state.apiPromptTokens >= 0
++))
+ const flushBridgePendingToDbMock = vi.fn()
+ const ensureOpenBridgeAssistantMessageMock = vi.fn()
+ const syncBridgeReasoningToMessageMock = vi.fn()
+@@ -90,6 +107,9 @@ vi.mock('../../packages/server/src/services/hermes/run-chat/usage', () => ({
+   contextTokensWithCachedOverhead: contextTokensWithCachedOverheadMock,
+   updateContextTokenUsage: updateContextTokenUsageMock,
+   updateMessageContextTokenUsage: updateMessageContextTokenUsageMock,
++  applyApiPromptContextTokens: applyApiPromptContextTokensMock,
++  clearApiPromptContextTokens: clearApiPromptContextTokensMock,
++  hasApiPromptContextTokens: hasApiPromptContextTokensMock,
+ }))
+ 
+ vi.mock('../../packages/server/src/services/hermes/run-chat/bridge-message', () => ({
+@@ -196,9 +216,24 @@ describe('bridge run final context usage', () => {
+       return typeof fixed === 'number' ? fixed + messageTokens : messageTokens
+     })
+     updateMessageContextTokenUsageMock.mockImplementation((sid: string, state: any, emit: any, messageTokens: number, usage?: { inputTokens: number; outputTokens: number }) => {
++      if (typeof state.apiPromptTokens === 'number' && Number.isFinite(state.apiPromptTokens) && state.apiPromptTokens >= 0) {
++        return state.contextTokens
++      }
+       const contextTokens = contextTokensWithCachedOverheadMock(state, messageTokens)
+       return updateContextTokenUsageMock(sid, state, emit, contextTokens, usage)
+     })
++    applyApiPromptContextTokensMock.mockImplementation((sid: string, state: any, emit: any, promptTokens: number, usage?: { inputTokens: number; outputTokens: number }) => {
++      state.apiPromptTokens = Math.floor(promptTokens)
++      return updateContextTokenUsageMock(sid, state, emit, Math.floor(promptTokens), usage)
++    })
++    clearApiPromptContextTokensMock.mockImplementation((state: any) => {
++      state.apiPromptTokens = undefined
++    })
++    hasApiPromptContextTokensMock.mockImplementation((state: any) => (
++      typeof state.apiPromptTokens === 'number'
++      && Number.isFinite(state.apiPromptTokens)
++      && state.apiPromptTokens >= 0
++    ))
+   })
+ 
+   afterEach(() => {
+@@ -1249,6 +1284,87 @@ describe('bridge run final context usage', () => {
+     }))
+   })
+ 
++  it('sets contextTokens from the latest real API prompt_tokens and keeps it over final local estimate', async () => {
++    const emit = vi.fn()
++    const nsp = makeNamespace(emit)
++    const socket = makeSocket()
++    const state = makeState()
++    const sessionMap = new Map([['session-1', state]])
++    const bridge = {
++      chat: vi.fn().mockResolvedValue({ run_id: 'run-1', status: 'started' }),
++      contextEstimate: vi.fn().mockResolvedValue({
++        token_count: 999,
++        fixed_context_tokens: 900,
++        message_count: 2,
++      }),
++      streamOutput: vi.fn(async function* () {
++        yield {
++          run_id: 'run-1',
++          done: false,
++          status: 'running',
++          events: [{
++            event: 'model.usage',
++            api_request_id: 'req-1',
++            turn_id: 'turn-1',
++            api_call_count: 1,
++            model: 'grok-4.5',
++            provider: 'custom',
++            usage: {
++              prompt_tokens: 1000,
++              completion_tokens: 10,
++              total_tokens: 1010,
++            },
++          }],
++        }
++        yield {
++          run_id: 'run-1',
++          done: true,
++          status: 'completed',
++          output: 'done',
++          events: [{
++            event: 'model.usage',
++            api_request_id: 'req-2',
++            turn_id: 'turn-1',
++            api_call_count: 2,
++            model: 'grok-4.5',
++            provider: 'custom',
++            usage: {
++              prompt_tokens: 153386,
++              completion_tokens: 861,
++              total_tokens: 154247,
++            },
++          }],
++        }
++      }),
++    } as any
++
++    const { handleBridgeRun } = await import('../../packages/server/src/services/hermes/run-chat/handle-bridge-run')
++    await handleBridgeRun(
++      nsp,
++      socket,
++      { input: 'hello', session_id: 'session-1' },
++      'default',
++      sessionMap,
++      bridge,
++      false,
++      vi.fn(),
++      vi.fn(),
++    )
++
++    expect(applyApiPromptContextTokensMock).toHaveBeenCalled()
++    const lastApply = applyApiPromptContextTokensMock.mock.calls.at(-1)
++    expect(lastApply?.[3]).toBe(153386)
++    expect(state.apiPromptTokens).toBe(153386)
++    expect(state.contextTokens).toBe(153386)
++    expect(emit).toHaveBeenCalledWith('usage.updated', expect.objectContaining({
++      contextTokens: 153386,
++    }))
++    // Final local estimate path must not clobber the real API prompt.
++    expect(emit).toHaveBeenCalledWith('run.completed', expect.objectContaining({
++      contextTokens: 153386,
++    }))
++  })
++
+   it('uses cached fixed context instead of bridge estimate when available', async () => {
+     const emit = vi.fn()
+     const nsp = makeNamespace(emit)
+-- 
+2.53.0
+
