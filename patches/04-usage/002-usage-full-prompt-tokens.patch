@@ -1,0 +1,197 @@
+From 13753a071ff166b4fb335fa260cf5dc5e9f9ecdd Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sun, 19 Jul 2026 17:22:13 +0800
+Subject: [PATCH 2/3] fix(chat): use full prompt_tokens (in=) not uncached
+ input for context UI
+
+Hermes CanonicalUsage.input_tokens is uncached-only. Context occupancy must
+use prompt_tokens (= input + cache_read + cache_write), matching agent log in=.
+---
+ .../hermes/run-chat/handle-bridge-run.ts      |  7 ++-
+ .../src/services/hermes/run-chat/usage.ts     | 46 +++++++++++++++++++
+ .../run-chat-api-prompt-context.test.ts       | 26 +++++++++++
+ .../run-chat-bridge-final-context.test.ts     | 23 ++++++++++
+ 4 files changed, 100 insertions(+), 2 deletions(-)
+
+diff --git a/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts b/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
+index 00df0d6a..fcfd5046 100644
+--- a/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
++++ b/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
+@@ -19,6 +19,7 @@ import {
+   estimateUsageTokensFromMessages,
+   getCachedBridgeContextOverhead,
+   hasApiPromptContextTokens,
++  resolveApiPromptTokens,
+   updateMessageContextTokenUsage,
+ } from './usage'
+ import {
+@@ -1146,13 +1147,15 @@ function recordBridgeModelUsage(
+     isEstimated: false,
+   })
+ 
+-  // Context-window UI: use the latest real API prompt_tokens (log "in="), not in+out total.
++  // Context-window UI: use full prompt occupancy (log "in=" / prompt_tokens).
++  // Hermes CanonicalUsage.input_tokens is uncached-only; prompt_tokens = input+cache_read+cache_write.
+   if (live) {
++    const promptTokens = resolveApiPromptTokens(event.usage, usage)
+     return applyApiPromptContextTokens(
+       sessionId,
+       live.state,
+       live.emit,
+-      usage.inputTokens,
++      promptTokens,
+       {
+         inputTokens: live.state.inputTokens ?? 0,
+         outputTokens: live.state.outputTokens ?? 0,
+diff --git a/packages/server/src/services/hermes/run-chat/usage.ts b/packages/server/src/services/hermes/run-chat/usage.ts
+index 2e370c00..082ccfbc 100644
+--- a/packages/server/src/services/hermes/run-chat/usage.ts
++++ b/packages/server/src/services/hermes/run-chat/usage.ts
+@@ -229,6 +229,52 @@ export function updateContextTokenUsage(
+   return normalizedContextTokens
+ }
+ 
++
++/** Full context occupancy from Hermes model.usage (log "in=" / prompt_tokens). */
++export function resolveApiPromptTokens(rawUsage: unknown, normalized?: { inputTokens: number; cacheReadTokens?: number; cacheWriteTokens?: number }): number | undefined {
++  const root = rawUsage && typeof rawUsage === 'object' && !Array.isArray(rawUsage)
++    ? rawUsage as Record<string, any>
++    : {}
++  const nested = root.usage && typeof root.usage === 'object' && !Array.isArray(root.usage)
++    ? root.usage as Record<string, any>
++    : root
++  const candidates = [
++    nested.prompt_tokens,
++    nested.promptTokens,
++    nested.total_tokens != null && nested.completion_tokens != null
++      ? Number(nested.total_tokens) - Number(nested.completion_tokens)
++      : undefined,
++    nested.totalTokens != null && nested.completionTokens != null
++      ? Number(nested.totalTokens) - Number(nested.completionTokens)
++      : undefined,
++  ]
++  for (const value of candidates) {
++    if (typeof value === 'number' && Number.isFinite(value) && value >= 0) return Math.floor(value)
++    if (typeof value === 'string' && value.trim()) {
++      const n = Number(value)
++      if (Number.isFinite(n) && n >= 0) return Math.floor(n)
++    }
++  }
++  // CanonicalUsage from agent hook: input is uncached; full prompt = input+cache_read+cache_write
++  if (normalized) {
++    const uncached = Math.max(0, Math.floor(normalized.inputTokens || 0))
++    const cacheRead = Math.max(0, Math.floor(normalized.cacheReadTokens || 0))
++    const cacheWrite = Math.max(0, Math.floor(normalized.cacheWriteTokens || 0))
++    const sum = uncached + cacheRead + cacheWrite
++    if (sum > 0) return sum
++  }
++  // raw canonical fields without prompt_tokens key
++  const uncached = Number(nested.input_tokens ?? nested.inputTokens)
++  const cacheRead = Number(nested.cache_read_tokens ?? nested.cacheReadTokens ?? 0)
++  const cacheWrite = Number(nested.cache_write_tokens ?? nested.cacheWriteTokens ?? 0)
++  if (Number.isFinite(uncached) && uncached >= 0) {
++    const sum = Math.floor(uncached) + (Number.isFinite(cacheRead) && cacheRead > 0 ? Math.floor(cacheRead) : 0)
++      + (Number.isFinite(cacheWrite) && cacheWrite > 0 ? Math.floor(cacheWrite) : 0)
++    if (sum > 0) return sum
++  }
++  return undefined
++}
++
+ export function applyApiPromptContextTokens(
+   sid: string,
+   state: SessionState,
+diff --git a/tests/server/run-chat-api-prompt-context.test.ts b/tests/server/run-chat-api-prompt-context.test.ts
+index 090a9257..0d74cce3 100644
+--- a/tests/server/run-chat-api-prompt-context.test.ts
++++ b/tests/server/run-chat-api-prompt-context.test.ts
+@@ -3,6 +3,7 @@ import {
+   applyApiPromptContextTokens,
+   clearApiPromptContextTokens,
+   hasApiPromptContextTokens,
++  resolveApiPromptTokens,
+   updateMessageContextTokenUsage,
+ } from '../../packages/server/src/services/hermes/run-chat/usage'
+ import type { SessionState } from '../../packages/server/src/services/hermes/run-chat/types'
+@@ -59,6 +60,31 @@ describe('API prompt_tokens context usage', () => {
+     expect(emit).not.toHaveBeenCalled()
+   })
+ 
++
++  it('resolves full prompt_tokens from Hermes canonical usage (uncached + cache)', () => {
++    // mirrors agent log: in=158201 cache=156416/158201 → uncached input=1785
++    expect(resolveApiPromptTokens({
++      input_tokens: 1785,
++      output_tokens: 171,
++      cache_read_tokens: 156416,
++      cache_write_tokens: 0,
++      prompt_tokens: 158201,
++      total_tokens: 158372,
++    })).toBe(158201)
++
++    // without explicit prompt_tokens, sum buckets
++    expect(resolveApiPromptTokens({
++      input_tokens: 1785,
++      output_tokens: 171,
++      cache_read_tokens: 156416,
++    })).toBe(158201)
++
++    // via normalized CanonicalUsage-like object
++    expect(resolveApiPromptTokens(
++      { input_tokens: 1785, cache_read_tokens: 156416 },
++      { inputTokens: 1785, cacheReadTokens: 156416, cacheWriteTokens: 0 },
++    )).toBe(158201)
++  })
+   it('allows local estimates again after clearApiPromptContextTokens', () => {
+     const state = makeState({ bridgeContext: { fixedContextTokens: 100 } })
+     const emit = vi.fn()
+diff --git a/tests/server/run-chat-bridge-final-context.test.ts b/tests/server/run-chat-bridge-final-context.test.ts
+index 5b875278..3edd335c 100644
+--- a/tests/server/run-chat-bridge-final-context.test.ts
++++ b/tests/server/run-chat-bridge-final-context.test.ts
+@@ -57,6 +57,17 @@ const hasApiPromptContextTokensMock = vi.fn((state: any) => (
+   && Number.isFinite(state.apiPromptTokens)
+   && state.apiPromptTokens >= 0
+ ))
++const resolveApiPromptTokensMock = vi.fn((raw: any, normalized?: any) => {
++  if (raw && typeof raw === 'object') {
++    if (typeof raw.prompt_tokens === 'number') return raw.prompt_tokens
++    if (typeof raw.promptTokens === 'number') return raw.promptTokens
++    const uncached = Number(raw.input_tokens ?? raw.inputTokens ?? normalized?.inputTokens ?? 0)
++    const cacheRead = Number(raw.cache_read_tokens ?? raw.cacheReadTokens ?? normalized?.cacheReadTokens ?? 0)
++    const cacheWrite = Number(raw.cache_write_tokens ?? raw.cacheWriteTokens ?? normalized?.cacheWriteTokens ?? 0)
++    if (Number.isFinite(uncached) && uncached >= 0) return Math.floor(uncached + (cacheRead > 0 ? cacheRead : 0) + (cacheWrite > 0 ? cacheWrite : 0))
++  }
++  return normalized?.inputTokens
++})
+ const flushBridgePendingToDbMock = vi.fn()
+ const ensureOpenBridgeAssistantMessageMock = vi.fn()
+ const syncBridgeReasoningToMessageMock = vi.fn()
+@@ -110,6 +121,7 @@ vi.mock('../../packages/server/src/services/hermes/run-chat/usage', () => ({
+   applyApiPromptContextTokens: applyApiPromptContextTokensMock,
+   clearApiPromptContextTokens: clearApiPromptContextTokensMock,
+   hasApiPromptContextTokens: hasApiPromptContextTokensMock,
++  resolveApiPromptTokens: resolveApiPromptTokensMock,
+ }))
+ 
+ vi.mock('../../packages/server/src/services/hermes/run-chat/bridge-message', () => ({
+@@ -234,6 +246,17 @@ describe('bridge run final context usage', () => {
+       && Number.isFinite(state.apiPromptTokens)
+       && state.apiPromptTokens >= 0
+     ))
++    resolveApiPromptTokensMock.mockImplementation((raw: any, normalized?: any) => {
++      if (raw && typeof raw === 'object') {
++        if (typeof raw.prompt_tokens === 'number') return raw.prompt_tokens
++        if (typeof raw.promptTokens === 'number') return raw.promptTokens
++        const uncached = Number(raw.input_tokens ?? raw.inputTokens ?? normalized?.inputTokens ?? 0)
++        const cacheRead = Number(raw.cache_read_tokens ?? raw.cacheReadTokens ?? normalized?.cacheReadTokens ?? 0)
++        const cacheWrite = Number(raw.cache_write_tokens ?? raw.cacheWriteTokens ?? normalized?.cacheWriteTokens ?? 0)
++        if (Number.isFinite(uncached) && uncached >= 0) return Math.floor(uncached + (cacheRead > 0 ? cacheRead : 0) + (cacheWrite > 0 ? cacheWrite : 0))
++      }
++      return normalized?.inputTokens
++    })
+   })
+ 
+   afterEach(() => {
+-- 
+2.53.0
+

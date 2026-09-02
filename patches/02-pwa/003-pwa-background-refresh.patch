@@ -1,0 +1,66 @@
+From 8cbc4840f7624d0b07ad75e5ec278bd977a8d17f Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 21:55:42 +0800
+Subject: [PATCH 3/5] fix(pwa): keep background refresh alive with waitUntil +
+ clarify cross-origin note
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- staleWhileRevalidate now receives the fetch event and wraps the background
+  refresh in event.waitUntil so the worker isn't terminated mid-refresh
+- comment: session-list SWR intentionally runs before the same-origin gate,
+  so cross-origin CORS calls (CF Pages frontend → tailscale backend) also
+  benefit — previous comment claimed they were excluded
+---
+ packages/client/public/sw.js | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/packages/client/public/sw.js b/packages/client/public/sw.js
+index 38540878..c623e129 100644
+--- a/packages/client/public/sw.js
++++ b/packages/client/public/sw.js
+@@ -80,16 +80,18 @@ self.addEventListener('fetch', (event) => {
+     return;
+   }
+ 
+-  // Session list → SWR (serve cache instantly, refresh in background)
++  // Session list → SWR (serve cache instantly, refresh in background).
++  // Matched before the same-origin gate on purpose: cross-origin CORS calls
++  // (e.g. CF Pages frontend → tailscale backend) also benefit from SWR.
+   if (isSessionListRequest(url)) {
+-    event.respondWith(staleWhileRevalidate(request, API_CACHE));
++    event.respondWith(staleWhileRevalidate(request, API_CACHE, event));
+     return;
+   }
+ 
+   // Never intercept API/WebSocket/Socket.IO
+   if (isExcluded(url)) return;
+ 
+-  // Only handle same-origin requests
++  // Only handle same-origin requests (session list already handled above)
+   if (url.origin !== self.location.origin) return;
+ 
+   if (isHashedAsset(url)) {
+@@ -146,7 +148,7 @@ async function networkFirst(request, cacheName) {
+   }
+ }
+ 
+-async function staleWhileRevalidate(request, cacheName) {
++async function staleWhileRevalidate(request, cacheName, event) {
+   const cache = await caches.open(cacheName);
+   const cached = await cache.match(request);
+   const fetchPromise = fetch(request).then(response => {
+@@ -155,5 +157,9 @@ async function staleWhileRevalidate(request, cacheName) {
+     }
+     return response;
+   }).catch(() => cached);
++  // Keep the background refresh alive for the whole SW lifecycle, even when
++  // the page already received the cached (stale) response — otherwise the
++  // browser may terminate the worker before the refresh completes.
++  if (event && fetchPromise) event.waitUntil(fetchPromise);
+   return cached || fetchPromise;
+ }
+-- 
+2.53.0
+
