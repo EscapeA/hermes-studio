@@ -161,6 +161,11 @@ function applyClasses() {
   isComic.value = style.value === 'comic'
   document.documentElement.classList.toggle('dark', dark)
   document.documentElement.classList.toggle('comic', isComic.value)
+  // Sync CSS color-scheme so the browser/WebView knows the page supports
+  // dark mode (mirrors next-themes' enableColorScheme). Without it, Android
+  // WebView's FORCE_DARK falls back to UA algorithmic darkening (inverts
+  // images/icons) or refuses to follow the system theme at all.
+  document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
   applyCustomization()
   applyThemeColorMeta()
 }
@@ -275,9 +280,34 @@ function resetCustomization(): Promise<void> {
 applyClasses()
 void loadBackground()
 
+// Android WebView does not fire matchMedia change events when the host app
+// toggles FORCE_DARK (WebView treats it as a static render switch). Detect
+// system dark/light transitions via visibility changes + a low-frequency
+// poll so pages driven by JS theme classes still follow the system theme.
+// Browsers fire the real change event; the poll stays dormant once seen.
+let lastObservedSystemDark: boolean | null = null
+let webviewChangeEventSeen = false
+function sampleSystemDark() {
+  if (brightness.value !== 'system') return
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  if (lastObservedSystemDark !== null && lastObservedSystemDark !== dark) {
+    applyClasses()
+  }
+  lastObservedSystemDark = dark
+}
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   if (brightness.value === 'system') applyClasses()
+  webviewChangeEventSeen = true
 })
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) sampleSystemDark()
+})
+window.setInterval(() => {
+  if (webviewChangeEventSeen) return
+  sampleSystemDark()
+}, 1000)
+
+
 
 watch(brightness, (mode) => {
   localStorage.setItem(BRIGHTNESS_KEY, mode)
