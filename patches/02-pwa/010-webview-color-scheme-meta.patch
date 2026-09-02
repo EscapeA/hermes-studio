@@ -1,0 +1,36 @@
+From 46fda089d2e9da58c891f56fb93a76becb9a4545 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 01:56:18 +0800
+Subject: [PATCH] fix(webview): declare color-scheme meta so Android WebView
+ honors web theme in dark mode
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+hermes-studio ships its own prefers-color-scheme dark theme, but without
+<meta name="color-scheme" content="dark light"> Android WebView's
+FORCE_DARK (DARK_STRATEGY_PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING)
+cannot detect that the page supports a dark theme, so it falls back to
+UA algorithmic darkening — inverting images/icons (negative look).
+
+Adding the meta tag lets WebView evaluate prefers-color-scheme normally;
+the page then applies its own dark theme and icons keep their colors.
+---
+ packages/client/index.html | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/packages/client/index.html b/packages/client/index.html
+index 6f5afdb4..ef57e8f3 100644
+--- a/packages/client/index.html
++++ b/packages/client/index.html
+@@ -3,6 +3,7 @@
+ 
+ <head>
+   <meta charset="UTF-8" />
++  <meta name="color-scheme" content="dark light" />
+   <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+   <link rel="apple-touch-icon" href="/logo.png" />
+   <link rel="manifest" href="/manifest.webmanifest" />
+-- 
+2.53.0
+
