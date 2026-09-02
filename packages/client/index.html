@@ -123,6 +123,14 @@
           document.documentElement.classList.add('comic');
         }
 
+        // Declare CSS color-scheme synchronously (mirrors octopus/next-themes'
+        // enableColorScheme). Android WebView's FORCE_DARK reads HTML's
+        // color-scheme at first paint to decide whether the page supports a
+        // dark theme — without it, it falls back to UA algorithmic darkening
+        // (inverts images/icons) or fails to follow the system theme. Waiting
+        // until Vue mounts is too late for the initial paint decision.
+        document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+
         const desktop = window.hermesDesktop;
         if (desktop?.isDesktop) {
           document.documentElement.classList.add('hermes-desktop-shell');
