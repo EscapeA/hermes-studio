@@ -64,6 +64,14 @@ textarea {
   font-family: inherit;
 }
 
+/* WebView (web-to-app) 壳在 FORCE_DARK 下会对 <img> 做 user-agent 算法反色，
+   导致 PNG 头像/logo 变成负片。img 是内容图片（非跟随主题的 UI 图元），
+   用 per-element opt-out 声明为仅浅色，阻止 WebView 对图片反色，
+   不影响页面其他部分跟随系统深浅。 */
+img {
+  color-scheme: only light;
+}
+
 :root {
   --vh: 1vh;
 }
