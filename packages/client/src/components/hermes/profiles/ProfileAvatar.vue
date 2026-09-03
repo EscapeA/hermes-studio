@@ -44,6 +44,9 @@ const style = computed(() => ({
   border-radius: 50%;
   overflow: hidden;
   background: var(--bg-secondary);
+  /* Declare as still-light so WebView FORCE_DARK won't algorithmically
+     darken (invert) the avatar image/inline SVG in the shell APK. */
+  color-scheme: only light;
 }
 
 .profile-avatar-image,
