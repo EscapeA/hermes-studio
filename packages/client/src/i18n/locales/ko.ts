@@ -1355,6 +1355,9 @@ export default {
     clarifySendFailed: '답변 전달이 확인되지 않았습니다. 답변은 보관되어 있습니다. 다시 시도해 주세요.',
     approvalSendFailed: '승인 응답이 확인되지 않았습니다. 다시 시도해 주세요.',
     clarifyDismiss: '무시',
+
+    clarifyCollapse: '접기',
+    clarifyExpand: '펼치기',
     interactionExpired: '요청 시간이 초과되어 닫혔습니다.',
     interactionCountdown: '{time} 남음',
     interactionCountdownElapsed: '00:00 · 서버 확인 대기 중',

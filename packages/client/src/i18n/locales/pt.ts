@@ -1355,6 +1355,9 @@ export default {
     clarifySendFailed: 'A entrega da resposta não foi confirmada. A resposta foi mantida. Tente novamente.',
     approvalSendFailed: 'Sua decisão de aprovação não foi confirmada. Tente novamente.',
     clarifyDismiss: 'Descartar',
+
+    clarifyCollapse: 'Recolher',
+    clarifyExpand: 'Expandir',
     interactionExpired: 'A solicitação expirou e foi fechada.',
     interactionCountdown: '{time} restante',
     interactionCountdownElapsed: '00:00 · Aguardando confirmação do servidor',

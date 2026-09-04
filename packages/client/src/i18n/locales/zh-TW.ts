@@ -1408,6 +1408,9 @@ export default {
     clarifySendFailed: '回答尚未確認送達，請重試。已保留你的答案。',
     approvalSendFailed: '審批結果尚未確認，請重試。',
     clarifyDismiss: '忽略',
+
+    clarifyCollapse: '收起',
+    clarifyExpand: '展開',
     interactionExpired: '此請求已逾時，已關閉。',
     interactionCountdown: '剩餘 {time}',
     interactionCountdownElapsed: '00:00 · 等待伺服器確認',
