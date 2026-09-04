@@ -1408,6 +1408,9 @@ export default {
     clarifySendFailed: 'لم يتم تأكيد وصول إجابتك. تم الاحتفاظ بها. يرجى المحاولة مجددًا.',
     approvalSendFailed: 'لم يتم تأكيد قرار الموافقة. يرجى المحاولة مجددًا.',
     clarifyDismiss: 'تجاهل',
+
+    clarifyCollapse: 'طي',
+    clarifyExpand: 'توسيع',
     interactionExpired: 'انتهت مهلة هذا الطلب وتم إغلاقه.',
     interactionCountdown: 'متبقٍ {time}',
     interactionCountdownElapsed: '00:00 · في انتظار تأكيد الخادم',

@@ -1355,6 +1355,9 @@ export default {
     clarifySendFailed: 'Ihre Antwort wurde noch nicht bestätigt. Bitte versuchen Sie es erneut. Ihre Antwort bleibt erhalten.',
     approvalSendFailed: 'Ihre Genehmigungsentscheidung wurde nicht bestätigt. Bitte versuchen Sie es erneut.',
     clarifyDismiss: 'Schließen',
+
+    clarifyCollapse: 'Einklappen',
+    clarifyExpand: 'Aufklappen',
     interactionExpired: 'Diese Anfrage ist abgelaufen und wurde geschlossen.',
     interactionCountdown: '{time} verbleibend',
     interactionCountdownElapsed: '00:00 · Serverbestätigung ausstehend',

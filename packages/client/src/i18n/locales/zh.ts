@@ -1417,6 +1417,9 @@ export default {
     clarifySendFailed: '回答尚未确认送达，请重试。已保留你的答案。',
     approvalSendFailed: '审批结果尚未确认，请重试。',
     clarifyDismiss: '忽略',
+
+    clarifyCollapse: '收起',
+    clarifyExpand: '展开',
     interactionExpired: '该请求已超时，已关闭。',
     interactionCountdown: '剩余 {time}',
     interactionCountdownElapsed: '00:00 · 等待服务端确认',

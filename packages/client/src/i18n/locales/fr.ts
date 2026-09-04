@@ -1355,6 +1355,9 @@ export default {
     clarifySendFailed: 'La réception de votre réponse reste à confirmer. Elle a été conservée. Veuillez réessayer.',
     approvalSendFailed: 'Votre décision d’approbation n’a pas été confirmée. Veuillez réessayer.',
     clarifyDismiss: 'Ignorer',
+
+    clarifyCollapse: 'Réduire',
+    clarifyExpand: 'Développer',
     interactionExpired: 'Cette demande a expiré et a été fermée.',
     interactionCountdown: '{time} restante',
     interactionCountdownElapsed: '00:00 · Confirmation du serveur en attente',
