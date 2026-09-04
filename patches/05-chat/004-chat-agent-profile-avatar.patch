@@ -1,0 +1,106 @@
+From 13f6dedcb941c651feef9372e4e785a1ad9f14ae Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 23:12:24 +0800
+Subject: [PATCH] fix(chat): restore profile avatar for regular sessions in
+ MessageItem
+
+0.6.43 (#2528) replaced the profile avatar with hardcoded agent icons for
+all assistant messages. Regular Hermes sessions now fall back to the
+profile avatar (uploaded/generated) again; coding-agent sessions keep
+the runtime agent icon. Update pi-chat-avatar source assertions.
+---
+ .../components/hermes/chat/MessageItem.vue    | 28 ++++++++++++++++++-
+ tests/client/pi-chat-avatar.test.ts           | 11 +++++---
+ 2 files changed, 34 insertions(+), 5 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
+index 716d89a0..eac59d7e 100644
+--- a/packages/client/src/components/hermes/chat/MessageItem.vue
++++ b/packages/client/src/components/hermes/chat/MessageItem.vue
+@@ -15,6 +15,8 @@ import { useChatStore } from "@/stores/hermes/chat";
+ import { useFilesStore } from "@/stores/hermes/files";
+ import { useToolPanelStore } from "@/stores/hermes/tool-panel";
+ import { useSettingsStore } from "@/stores/hermes/settings";
++import { useProfilesStore } from "@/stores/hermes/profiles";
++import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";
+ import { chatSessionAgentAvatar, type ChatAgentAvatar } from "@/utils/chat-agent-avatar";
+ import ToolChangeCard from "./ToolChangeCard.vue";
+ import {
+@@ -32,7 +34,6 @@ import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subag
+ import type { WorkspaceRunChangeSummary } from "@/api/studio/sessions";
+ import { isServerTtsProvider } from "@/api/studio/tts";
+ import type { ProfileAvatar as ProfileAvatarData } from "@/api/hermes/profiles";
+-import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";
+ 
+ const MarkdownRenderer = defineAsyncComponent(async () => (await import("./MarkdownRenderer.vue")).default);
+ 
+@@ -225,8 +226,19 @@ const chatStore = useChatStore();
+ const filesStore = useFilesStore();
+ const toolPanelStore = useToolPanelStore();
+ const settingsStore = useSettingsStore();
++const profilesStore = useProfilesStore();
+ const speech = useGlobalSpeech();
+ const voiceSettings = useVoiceSettings();
++const assistantProfileName = computed(() => chatStore.activeSession?.profile || profilesStore.activeProfileName || "default");
++const assistantProfileAvatar = computed(() => profilesStore.profiles.find(profile => profile.name === assistantProfileName.value)?.avatar);
++const isCodingAgentSession = computed(() => {
++  const session = chatStore.activeSession;
++  if (!session) return false;
++  const runtime = String(session.codingAgentId || session.agent || "").trim().toLowerCase();
++  return session.source === "coding_agent" || session.source === "global_agent"
++    || runtime === "ekko-agent" || runtime === "ekko" || runtime === "claude"
++    || runtime === "claude-code" || runtime === "codex" || runtime === "pi";
++});
+ const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
+ 
+ // Copy entire bubble content
+@@ -1008,6 +1020,20 @@ onBeforeUnmount(() => {
+     </template>
+     <template v-else>
+       <div class="msg-body">
++        <ProfileAvatar
++          v-if="message.role === 'assistant' && !isCodingAgentSession"
++          class="msg-avatar"
++          :name="assistantProfileName"
++          :avatar="assistantProfileAvatar"
++          :size="40"
++        />
++        <img
++          v-else-if="message.role === 'assistant'"
++          class="msg-avatar"
++          :src="assistantAgent.src"
++          :alt="assistantAgent.label"
++          draggable="false"
++        >
+         <div class="msg-content" :class="message.role">
+           <div v-if="message.role === 'user'" class="message-author user-message-author">
+             <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
+diff --git a/tests/client/pi-chat-avatar.test.ts b/tests/client/pi-chat-avatar.test.ts
+index 4fe6ac05..1fd72581 100644
+--- a/tests/client/pi-chat-avatar.test.ts
++++ b/tests/client/pi-chat-avatar.test.ts
+@@ -2,14 +2,17 @@ import { readFileSync } from 'fs'
+ import { describe, expect, it } from 'vitest'
+ 
+ describe('Pi chat identity', () => {
+-  it('uses the active Agent avatar for assistant messages', () => {
++  it('uses profile avatar for regular sessions and Agent avatar for coding-agent sessions', () => {
+     const source = readFileSync('packages/client/src/components/hermes/chat/MessageItem.vue', 'utf8')
+ 
+-    expect(source).toContain('v-if="message.role === \'assistant\'"')
++    expect(source).toContain("v-if=\"message.role === 'assistant' && !isCodingAgentSession\"")
++    // Regular Hermes sessions fall back to the profile avatar (uploaded/generated).
++    expect(source).toContain('assistantProfileName')
++    expect(source).toContain('assistantProfileAvatar')
++    expect(source).toContain('!isCodingAgentSession')
++    // Coding-agent sessions keep the runtime agent icon.
+     expect(source).toContain(':src="assistantAgent.src"')
+     expect(source).toContain(':alt="assistantAgent.label"')
+-    expect(source).not.toContain('assistantProfileName')
+-    expect(source).not.toContain('assistantProfileAvatar')
+     expect(source).toMatch(/\.msg-avatar\s*\{[^}]*object-fit: cover;/s)
+     expect(source).toMatch(/\.msg-avatar\s*\{[^}]*border: 1px solid #fff;/s)
+     expect(source).not.toMatch(/\.msg-avatar\s*\{[^}]*padding:/s)
+-- 
+2.53.0
+

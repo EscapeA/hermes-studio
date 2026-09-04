@@ -1,0 +1,38 @@
+From d1c972769ca73808c8d5157a48d2eaaae66090ce Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 08:12:18 +0800
+Subject: [PATCH] feat(chat): tint user message bubbles light blue
+
+Give user message bubbles a subtle blue tint (light #e8f0fe / dark
+#1e2a3a) so user and agent messages are distinguishable at a glance.
+Assistant bubbles keep the neutral gray. Applies to both one-on-one
+chat and group chat via the shared --msg-user-bg variable.
+---
+ packages/client/src/styles/variables.scss | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/packages/client/src/styles/variables.scss b/packages/client/src/styles/variables.scss
+index 2afc1f4e..07a7e8ac 100644
+--- a/packages/client/src/styles/variables.scss
++++ b/packages/client/src/styles/variables.scss
+@@ -53,7 +53,7 @@
+   --git-decoration-conflicting: #ad0707;
+ 
+   // Message bubbles
+-  --msg-user-bg: #f5f5f5;
++  --msg-user-bg: #e8f0fe;
+   --msg-assistant-bg: #f5f5f5;
+   --msg-system-border: #bdbdbd;
+ 
+@@ -120,7 +120,7 @@
+   --git-decoration-conflicting: #e4676b;
+ 
+   // Message bubbles
+-  --msg-user-bg: #292929;
++  --msg-user-bg: #1e2a3a;
+   --msg-assistant-bg: #292929;
+   --msg-system-border: #555555;
+ 
+-- 
+2.53.0
+

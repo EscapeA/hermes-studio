@@ -1,0 +1,128 @@
+From 07fae9a2122aa3f704656e5c82b7b996a8d84edb Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 20 Jul 2026 21:34:38 +0800
+Subject: [PATCH] test(client): mock settings store for SessionListItem
+ identity toggle
+
+Mounting SessionListItem now reads useSettingsStore for
+show_session_identity. Mock the store in unit tests and cover hide/
+default-on identity row behavior so CI pinia mount failures stop.
+---
+ tests/client/display-settings.test.ts  |  1 +
+ tests/client/session-list-item.test.ts | 67 +++++++++++++++++++++++++-
+ 2 files changed, 67 insertions(+), 1 deletion(-)
+
+diff --git a/tests/client/display-settings.test.ts b/tests/client/display-settings.test.ts
+index 90399f19..cf315966 100644
+--- a/tests/client/display-settings.test.ts
++++ b/tests/client/display-settings.test.ts
+@@ -10,6 +10,7 @@ const mockSettingsStore = vi.hoisted(() => ({
+     compact: false,
+     show_reasoning: true,
+     show_cost: false,
++    show_session_identity: true,
+     inline_diffs: true,
+     chat_input_height: 160,
+     bell_on_complete: false,
+diff --git a/tests/client/session-list-item.test.ts b/tests/client/session-list-item.test.ts
+index e77185f7..37d8d65e 100644
+--- a/tests/client/session-list-item.test.ts
++++ b/tests/client/session-list-item.test.ts
+@@ -1,9 +1,13 @@
+ // @vitest-environment jsdom
+-import { describe, expect, it, vi } from 'vitest'
++import { beforeEach, describe, expect, it, vi } from 'vitest'
+ import { mount } from '@vue/test-utils'
+ import { defineComponent } from 'vue'
+ import SessionListItem from '@/components/hermes/chat/SessionListItem.vue'
+ 
++const settingsDisplay = vi.hoisted(() => ({
++  show_session_identity: true as boolean | undefined,
++}))
++
+ vi.mock('@/stores/hermes/app', () => ({
+   useAppStore: () => ({
+     profileModelGroups: [],
+@@ -14,6 +18,12 @@ vi.mock('@/stores/hermes/profiles', () => ({
+   useProfilesStore: () => ({ profiles: [] }),
+ }))
+ 
++vi.mock('@/stores/hermes/settings', () => ({
++  useSettingsStore: () => ({
++    display: settingsDisplay,
++  }),
++}))
++
+ vi.mock('vue-i18n', () => ({
+   useI18n: () => ({ t: (key: string) => key }),
+ }))
+@@ -50,6 +60,18 @@ const session = {
+ }
+ 
+ describe('SessionListItem', () => {
++  beforeEach(() => {
++    settingsDisplay.show_session_identity = true
++  })
++
++  it('uses a one-pixel white outline without internal avatar padding', () => {
++    const source = readFileSync('packages/client/src/components/hermes/chat/SessionListItem.vue', 'utf8')
++
++    expect(source).toMatch(/\.session-item-agent-logo\s*\{[^}]*border: 1px solid #fff;/s)
++    expect(source).not.toMatch(/\.session-item-agent-logo\s*\{[^}]*padding:/s)
++    expect(source).not.toMatch(/\.session-item-agent-logo\s*\{[^}]*background:/s)
++  })
++
+   it('renders normal mode as a link to the session route', () => {
+     const wrapper = mount(SessionListItem, {
+       props: {
+@@ -289,4 +311,47 @@ describe('SessionListItem', () => {
+     expect(logo.attributes('alt')).toBe('Codex')
+     expect(wrapper.find('.session-item-agent-name').exists()).toBe(false)
+   })
++
++  it('hides the agent/profile identity row when show_session_identity is false', () => {
++    settingsDisplay.show_session_identity = false
++    const wrapper = mount(SessionListItem, {
++      props: {
++        session: { ...session, source: 'cli', agent: 'hermes' },
++        active: false,
++        pinned: false,
++        canDelete: true,
++      },
++      global: {
++        stubs: {
++          ProfileAvatar: true,
++        },
++      },
++    })
++
++    expect(wrapper.find('.session-item-agent-row').exists()).toBe(false)
++    expect(wrapper.find('.session-item-agent-logo').exists()).toBe(false)
++    expect(wrapper.find('.session-item-profile').exists()).toBe(false)
++  })
++
++  it('shows the agent/profile identity row by default', () => {
++    settingsDisplay.show_session_identity = undefined
++    const wrapper = mount(SessionListItem, {
++      props: {
++        session: { ...session, source: 'cli', agent: 'hermes' },
++        active: false,
++        pinned: false,
++        canDelete: true,
++        showProfile: true,
++      },
++      global: {
++        stubs: {
++          ProfileAvatar: true,
++        },
++      },
++    })
++
++    expect(wrapper.find('.session-item-agent-row').exists()).toBe(true)
++    expect(wrapper.get('.session-item-agent-logo').attributes('src')).toBe('/coding-agents/hermes.png')
++    expect(wrapper.find('.session-item-profile').exists()).toBe(true)
++  })
+ })
+-- 
+2.53.0
+

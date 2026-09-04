@@ -1,0 +1,281 @@
+From 5fd16381ceaf64a77fb21a6a6a540e76554787d6 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 07:56:54 +0800
+Subject: [PATCH] feat(chat): hide chat message identities behind session
+ identity toggle
+
+Extend display.show_session_identity (settings.display.showSessionIdentity)
+to also control the chat view: when off, hide the assistant message-side
+profile/agent avatar, the assistant author row, and the user author row
+(profile name + avatar). Sidebar session list behavior is unchanged.
+Default remains on. Hint text updated in all locales.
+---
+ .../components/hermes/chat/MessageItem.vue    |  9 +--
+ packages/client/src/i18n/locales/de.ts        |  2 +-
+ packages/client/src/i18n/locales/en.ts        |  2 +-
+ packages/client/src/i18n/locales/es.ts        |  2 +-
+ packages/client/src/i18n/locales/fr.ts        |  2 +-
+ packages/client/src/i18n/locales/ja.ts        |  2 +-
+ packages/client/src/i18n/locales/ko.ts        |  2 +-
+ packages/client/src/i18n/locales/pt.ts        |  2 +-
+ packages/client/src/i18n/locales/ru.ts        |  2 +-
+ packages/client/src/i18n/locales/zh-TW.ts     |  2 +-
+ packages/client/src/i18n/locales/zh.ts        |  2 +-
+ .../message-item-identity-toggle.test.ts      | 69 +++++++++++++++++++
+ 12 files changed, 84 insertions(+), 14 deletions(-)
+ create mode 100644 tests/client/message-item-identity-toggle.test.ts
+
+diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
+index eac59d7e..1117ed93 100644
+--- a/packages/client/src/components/hermes/chat/MessageItem.vue
++++ b/packages/client/src/components/hermes/chat/MessageItem.vue
+@@ -239,6 +239,7 @@ const isCodingAgentSession = computed(() => {
+     || runtime === "ekko-agent" || runtime === "ekko" || runtime === "claude"
+     || runtime === "claude-code" || runtime === "codex" || runtime === "pi";
+ });
++const showChatIdentity = computed(() => settingsStore.display.show_session_identity !== false);
+ const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
+ 
+ // Copy entire bubble content
+@@ -1021,21 +1022,21 @@ onBeforeUnmount(() => {
+     <template v-else>
+       <div class="msg-body">
+         <ProfileAvatar
+-          v-if="message.role === 'assistant' && !isCodingAgentSession"
++          v-if="showChatIdentity && message.role === 'assistant' && !isCodingAgentSession"
+           class="msg-avatar"
+           :name="assistantProfileName"
+           :avatar="assistantProfileAvatar"
+           :size="40"
+         />
+         <img
+-          v-else-if="message.role === 'assistant'"
++          v-else-if="showChatIdentity && message.role === 'assistant'"
+           class="msg-avatar"
+           :src="assistantAgent.src"
+           :alt="assistantAgent.label"
+           draggable="false"
+         >
+         <div class="msg-content" :class="message.role">
+-          <div v-if="message.role === 'user'" class="message-author user-message-author">
++          <div v-if="showChatIdentity && message.role === 'user'" class="message-author user-message-author">
+             <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
+             <ProfileAvatar
+               class="user-profile-avatar"
+@@ -1044,7 +1045,7 @@ onBeforeUnmount(() => {
+               :size="22"
+             />
+           </div>
+-          <div v-if="message.role === 'assistant'" class="message-author assistant-message-author">
++          <div v-if="showChatIdentity && message.role === 'assistant'" class="message-author assistant-message-author">
+             <img
+               class="msg-avatar"
+               :src="assistantAgent.src"
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index a5b5f56c..742201ba 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1858,7 +1858,7 @@ jobTriggered: 'Job ausgelost',
+       showCost: 'Kosten anzeigen',
+       showCostHint: 'Token-Nutzung in Antworten anzeigen',
+       showSessionIdentity: 'Avatare & Profil in Sitzungsliste',
+-      showSessionIdentityHint: 'Agent-Typ-Avatar, Profil-Avatar und Profilname in der Seitenleisten-Sitzungsliste anzeigen',
++      showSessionIdentityHint: 'Agent-Typ-Avatar, Profil-Avatar und Profilname in der Sitzungsliste und in Chat-Nachrichten anzeigen',
+       inlineDiffs: 'Inline-Diffs',
+       inlineDiffsHint: 'Codeanderungen inline anzeigen',
+       bellOnComplete: 'Abschluss-Signalton',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 919eceae..884c7aa7 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -2403,7 +2403,7 @@ export default {
+       showCost: 'Show Cost',
+       showCostHint: 'Show token usage in replies',
+       showSessionIdentity: 'Session list avatars & profile',
+-      showSessionIdentityHint: 'Show agent-type avatar, profile avatar, and profile name in the sidebar session list',
++      showSessionIdentityHint: 'Show agent-type avatar, profile avatar, and profile name in the sidebar session list and chat messages',
+       inlineDiffs: 'Inline Diffs',
+       inlineDiffsHint: 'Show code changes inline',
+       bellOnComplete: 'Completion Sound',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index d0e5bc22..1a3f4160 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1858,7 +1858,7 @@ jobTriggered: 'Job ejecutado',
+       showCost: 'Mostrar costo',
+       showCostHint: 'Mostrar uso de tokens en las respuestas',
+       showSessionIdentity: 'Avatares y perfil en la lista de sesiones',
+-      showSessionIdentityHint: 'Mostrar avatar del tipo de agente, avatar del perfil y nombre del perfil en la lista lateral de sesiones',
++      showSessionIdentityHint: 'Mostrar avatar del tipo de agente, avatar del perfil y nombre del perfil en la lista de sesiones y en los mensajes',
+       inlineDiffs: 'Diffs en linea',
+       inlineDiffsHint: 'Mostrar cambios de codigo en linea',
+       bellOnComplete: 'Sonido de finalizacion',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 1b5ccb9f..2b59d2f0 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1857,7 +1857,7 @@ jobTriggered: 'Job declenche',
+       showCost: 'Afficher le cout',
+       showCostHint: 'Afficher l\'utilisation des jetons dans les reponses',
+       showSessionIdentity: 'Avatars et profil dans la liste',
+-      showSessionIdentityHint: 'Afficher l\'avatar du type d\'agent, l\'avatar de profil et le nom de profil dans la liste des sessions',
++      showSessionIdentityHint: 'Afficher l\'avatar du type d\'agent, l\'avatar de profil et le nom de profil dans la liste des sessions et les messages',
+       inlineDiffs: 'Diffs en ligne',
+       inlineDiffsHint: 'Afficher les changements de code en ligne',
+       bellOnComplete: 'Son de fin',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index f7673ea4..ec130fcd 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1858,7 +1858,7 @@ export default {
+       showCost: 'コストを表示',
+       showCostHint: '返信にトークン使用量を表示',
+       showSessionIdentity: 'セッション一覧のアバターとプロファイル',
+-      showSessionIdentityHint: 'サイドバーのセッション一覧にエージェント種別アバター、プロファイルアバター、プロファイル名を表示',
++      showSessionIdentityHint: 'サイドバーのセッション一覧とチャットメッセージにエージェント種別アバター、プロファイルアバター、プロファイル名を表示',
+       inlineDiffs: 'インライン差分',
+       inlineDiffsHint: 'コード変更をインラインで表示',
+       bellOnComplete: '完了通知音',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 05af0320..ffc484d1 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1858,7 +1858,7 @@ export default {
+       showCost: '비용 표시',
+       showCostHint: '응답에 토큰 사용량 표시',
+       showSessionIdentity: '세션 목록 아바타 및 프로필',
+-      showSessionIdentityHint: '사이드바 세션 목록에 에이전트 유형 아바타, 프로필 아바타, 프로필 이름 표시',
++      showSessionIdentityHint: '사이드바 세션 목록과 채팅 메시지에 에이전트 유형 아바타, 프로필 아바타, 프로필 이름 표시',
+       inlineDiffs: '인라인 변경사항',
+       inlineDiffsHint: '코드 변경사항을 인라인으로 표시',
+       bellOnComplete: '완료 알림음',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 777130db..e9024ae6 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1858,7 +1858,7 @@ jobTriggered: 'Job acionado',
+       showCost: 'Mostrar custo',
+       showCostHint: 'Mostrar uso de tokens nas respostas',
+       showSessionIdentity: 'Avatares e perfil na lista de sessoes',
+-      showSessionIdentityHint: 'Mostrar avatar do tipo de agente, avatar do perfil e nome do perfil na lista lateral de sessoes',
++      showSessionIdentityHint: 'Mostrar avatar do tipo de agente, avatar do perfil e nome do perfil na lista de sessões e nas mensagens',
+       inlineDiffs: 'Diffs em linha',
+       inlineDiffsHint: 'Mostrar alterações de código em linha',
+       bellOnComplete: 'Som de conclusão',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 1e9afb11..a6f97bd7 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -2136,7 +2136,7 @@ export default {
+       showCost: 'Показывать стоимость',
+       showCostHint: 'Отображать количество использованных токенов в ответе',
+       showSessionIdentity: 'Аватары и профиль в списке сессий',
+-      showSessionIdentityHint: 'Показывать аватар типа агента, аватар профиля и имя профиля в боковом списке сессий',
++      showSessionIdentityHint: 'Показывать аватар типа агента, аватар профиля и имя профиля в списке сессий и сообщениях чата',
+       inlineDiffs: 'Встроенные различия',
+       inlineDiffsHint: 'Отображать изменения в коде внутри строки',
+       bellOnComplete: 'Звук завершения',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 348e23c8..737bd92c 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -2328,7 +2328,7 @@ export default {
+       showCost: '顯示費用',
+       showCostHint: '在回覆中顯示 token 使用量',
+       showSessionIdentity: '會話列表頭像與 Profile',
+-      showSessionIdentityHint: '在側邊欄會話列表中顯示 Agent 類型頭像、Profile 頭像與設定名稱',
++      showSessionIdentityHint: '在側邊欄會話列表與聊天訊息中顯示 Agent/Profile 頭像與名稱',
+       inlineDiffs: '內嵌差異',
+       inlineDiffsHint: '程式碼變更以內嵌方式顯示',
+       bellOnComplete: '完成提示音',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index c8ade27b..70b94540 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -2441,7 +2441,7 @@ export default {
+       showCost: '显示费用',
+       showCostHint: '在回复中显示 token 使用量',
+       showSessionIdentity: '会话列表头像与 Profile',
+-      showSessionIdentityHint: '在侧边栏会话列表中显示 Agent 类型头像、Profile 头像与配置名',
++      showSessionIdentityHint: '在侧边栏会话列表与聊天消息中显示 Agent/Profile 头像与名称',
+       inlineDiffs: '内联差异',
+       inlineDiffsHint: '代码变更以内联方式显示',
+       bellOnComplete: '完成提示音',
+diff --git a/tests/client/message-item-identity-toggle.test.ts b/tests/client/message-item-identity-toggle.test.ts
+new file mode 100644
+index 00000000..77870d29
+--- /dev/null
++++ b/tests/client/message-item-identity-toggle.test.ts
+@@ -0,0 +1,69 @@
++// @vitest-environment jsdom
++import { describe, expect, it, vi } from 'vitest'
++import { mount } from '@vue/test-utils'
++import { createPinia, setActivePinia } from 'pinia'
++import type { DisplayConfig } from '@/api/hermes/config'
++
++const settingsDisplay: DisplayConfig = {}
++
++vi.mock('@/stores/hermes/settings', () => ({
++  useSettingsStore: () => ({ display: settingsDisplay }),
++}))
++
++vi.mock('@/stores/hermes/profiles', () => ({
++  useProfilesStore: () => ({ profiles: [], activeProfileName: 'default' }),
++}))
++
++vi.mock('vue-i18n', () => ({
++  useI18n: () => ({ t: (key: string) => key }),
++}))
++
++vi.mock('naive-ui', () => ({
++  useMessage: () => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn(), info: vi.fn() }),
++}))
++
++import MessageItem from '@/components/hermes/chat/MessageItem.vue'
++import type { Message } from '@/stores/hermes/chat'
++
++function mountMessage(role: 'user' | 'assistant') {
++  return mount(MessageItem, {
++    props: {
++      message: {
++        id: `identity-${role}`,
++        role,
++        content: 'Hello',
++        timestamp: Date.now(),
++      } satisfies Message,
++      assistantAgent: { label: 'Ekko', src: '/coding-agents/ekko-agent.png' },
++      userProfileName: 'Researcher',
++    },
++    global: { stubs: { MarkdownRenderer: true } },
++  })
++}
++
++describe('MessageItem chat identity toggle', () => {
++  it('hides author rows and message avatars when show_session_identity is false', () => {
++    settingsDisplay.show_session_identity = false
++    setActivePinia(createPinia())
++
++    const user = mountMessage('user')
++    expect(user.find('.user-message-author').exists()).toBe(false)
++    expect(user.find('.user-profile-avatar').exists()).toBe(false)
++
++    const assistant = mountMessage('assistant')
++    expect(assistant.find('.assistant-message-author').exists()).toBe(false)
++    expect(assistant.find('.msg-avatar').exists()).toBe(false)
++  })
++
++  it('shows author rows and message avatars by default', () => {
++    settingsDisplay.show_session_identity = undefined
++    setActivePinia(createPinia())
++
++    const user = mountMessage('user')
++    expect(user.find('.user-message-author').exists()).toBe(true)
++
++    const assistant = mountMessage('assistant')
++    expect(assistant.find('.assistant-message-author').exists()).toBe(true)
++    expect(assistant.find('.msg-avatar').exists()).toBe(true)
++  })
++})
+-- 
+2.53.0
+
