@@ -304,14 +304,20 @@ const canInsertQueuedMessages = computed(() => {
 const visibleApproval = computed(() => chatStore.activePendingApproval);
 const visibleClarify = computed(() => chatStore.activePendingClarify);
 const clarifyResponse = ref("");
+const clarifyCollapsed = ref(false);
 watch(
   () => visibleClarify.value?.clarifyId,
-  () => { clarifyResponse.value = visibleClarify.value?.initialResponse || ""; },
+  () => {
+    clarifyResponse.value = visibleClarify.value?.initialResponse || "";
+    clarifyCollapsed.value = false;
+  },
 );
 const hasFloatingPrompt = computed(() => !!visibleApproval.value || !!visibleClarify.value);
+const clarifyCompact = computed(() => !!visibleClarify.value && clarifyCollapsed.value);
 const virtualListPadding = computed(() => {
   if (queuedMessages.value.length > 0 && hasFloatingPrompt.value) return "20px 20px 380px";
-  if (queuedMessages.value.length > 0 || hasFloatingPrompt.value) return "20px 20px 260px";
+  if (queuedMessages.value.length > 0) return "20px 20px 260px";
+  if (hasFloatingPrompt.value) return clarifyCompact.value ? "20px 20px 80px" : "20px 20px 260px";
   return "20px";
 });
 
@@ -994,7 +1000,42 @@ defineExpose({
             </span>
             <span>{{ t("chat.clarifyKicker") }}</span>
             <PendingInteractionCountdown :deadline="visibleClarify.countdownDeadline" />
+            <button
+              type="button"
+              class="clarify-collapse-btn"
+              :title="clarifyCollapsed ? t('chat.clarifyExpand') : t('chat.clarifyCollapse')"
+              :aria-label="clarifyCollapsed ? t('chat.clarifyExpand') : t('chat.clarifyCollapse')"
+              @click="clarifyCollapsed = !clarifyCollapsed"
+            >
+              <svg
+                v-if="clarifyCollapsed"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+              <svg
+                v-else
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m18 15-6-6-6 6" />
+              </svg>
+            </button>
           </div>
+          <template v-if="!clarifyCollapsed">
           <div class="approval-float-title">{{ t("chat.clarifyTitle") }}</div>
           <div class="approval-float-desc">{{ visibleClarify.question }}</div>
           <div
@@ -1025,6 +1066,7 @@ defineExpose({
               {{ t("chat.clarifySubmit") }}
             </NButton>
           </div>
+          </template>
         </div>
       </Transition>
       <Transition name="queue-float">
@@ -1139,6 +1181,26 @@ defineExpose({
   line-height: 1.2;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.clarify-collapse-btn {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: currentColor;
+  cursor: pointer;
+  flex: 0 0 auto;
+
+  &:hover {
+    background: rgba(var(--accent-primary-rgb), 0.12);
+  }
 }
 
 .approval-float-icon {

@@ -942,6 +942,8 @@ export default {
     interactionExpired: 'Время ожидания запроса истекло, окно закрыто.',
     interactionCountdown: 'Осталось {time}',
     interactionCountdownElapsed: '00:00 · Ожидание подтверждения сервера',
+    clarifyCollapse: 'Свернуть',
+    clarifyExpand: 'Развернуть',
     newCliChat: 'Новый CLI',
     deleteSession: 'Удалить этот сеанс?',
     sessionLive: 'Сессия выполняется',

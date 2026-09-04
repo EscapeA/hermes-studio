@@ -159,6 +159,7 @@ const localRoomsCollapsed = ref(false)
 const remoteRoomsCollapsed = ref(false)
 const isDecidingAgentPairing = ref(false)
 const clarifyResponse = ref('')
+const clarifyCollapsed = ref(false)
 const allowGuestAgentsDraft = ref(false)
 const maxGuestAgentsPerMemberDraft = ref(1)
 const allowRemoteWorkspaceAccessDraft = ref(false)
@@ -661,7 +662,10 @@ const visibleClarify = computed(() =>
 )
 watch(
     () => visibleClarify.value?.clarifyId,
-    () => { clarifyResponse.value = visibleClarify.value?.initialResponse || '' },
+    () => {
+        clarifyResponse.value = visibleClarify.value?.initialResponse || ''
+        clarifyCollapsed.value = false
+    },
 )
 const visibleAgentPairing = computed(() =>
     currentRoomCanManage.value ? pendingAgentPairings.value[0] || null : null,
@@ -2512,7 +2516,22 @@ function handleClarifyKeydown(event: KeyboardEvent) {
                                     </span>
                                     <span>{{ t('chat.clarifyKicker') }}</span>
                                     <PendingInteractionCountdown :deadline="visibleClarify.countdownDeadline" />
+                                    <button
+                                        type="button"
+                                        class="clarify-collapse-btn"
+                                        :title="clarifyCollapsed ? t('chat.clarifyExpand') : t('chat.clarifyCollapse')"
+                                        :aria-label="clarifyCollapsed ? t('chat.clarifyExpand') : t('chat.clarifyCollapse')"
+                                        @click="clarifyCollapsed = !clarifyCollapsed"
+                                    >
+                                        <svg v-if="clarifyCollapsed" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="m6 9 6 6 6-6" />
+                                        </svg>
+                                        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="m18 15-6-6-6 6" />
+                                        </svg>
+                                    </button>
                                 </div>
+                                <template v-if="!clarifyCollapsed">
                                 <div class="approval-float-title">
                                     <span v-if="visibleClarify.agentName">@{{ visibleClarify.agentName }} · </span>{{ t('chat.clarifyTitle') }}
                                 </div>
@@ -2531,6 +2550,7 @@ function handleClarifyKeydown(event: KeyboardEvent) {
                                         {{ t('chat.clarifySubmit') }}
                                     </NButton>
                                 </div>
+                                </template>
                             </div>
                         </Transition>
                     </div>
@@ -3532,6 +3552,26 @@ export default defineComponent({ components: { CreateRoomForm } })
     line-height: 1.2;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+}
+
+.clarify-collapse-btn {
+    margin-inline-start: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: currentColor;
+    cursor: pointer;
+    flex: 0 0 auto;
+
+    &:hover {
+        background: rgba(var(--accent-primary-rgb), 0.12);
+    }
 }
 
 .approval-float-icon {

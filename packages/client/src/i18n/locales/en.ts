@@ -1061,6 +1061,9 @@ export default {
     clarifyPlaceholder: 'Type your answer...',
     clarifySubmit: 'Reply',
     clarifyDismiss: 'Dismiss',
+
+    clarifyCollapse: 'Collapse',
+    clarifyExpand: 'Expand',
     interactionExpired: 'This request has timed out and was closed.',
     interactionCountdown: '{time} remaining',
     interactionCountdownElapsed: '00:00 · Awaiting server confirmation',

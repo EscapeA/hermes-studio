@@ -984,6 +984,9 @@ export default {
     clarifyPlaceholder: '回答を入力...',
     clarifySubmit: '返信',
     clarifyDismiss: '閉じる',
+
+    clarifyCollapse: '折りたたむ',
+    clarifyExpand: '展開',
     interactionExpired: 'このリクエストはタイムアウトしたため、閉じられました。',
     interactionCountdown: '残り {time}',
     interactionCountdownElapsed: '00:00 · サーバー確認待ち',

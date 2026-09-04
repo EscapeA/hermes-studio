@@ -1052,6 +1052,9 @@ export default {
     clarifyPlaceholder: '輸入你的回答...',
     clarifySubmit: '回覆',
     clarifyDismiss: '忽略',
+
+    clarifyCollapse: '收起',
+    clarifyExpand: '展開',
     interactionExpired: '此請求已逾時，已關閉。',
     interactionCountdown: '剩餘 {time}',
     interactionCountdownElapsed: '00:00 · 等待伺服器確認',

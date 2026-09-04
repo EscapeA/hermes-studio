@@ -984,6 +984,9 @@ export default {
     clarifyPlaceholder: 'Escriba su respuesta...',
     clarifySubmit: 'Responder',
     clarifyDismiss: 'Descartar',
+
+    clarifyCollapse: 'Contraer',
+    clarifyExpand: 'Expandir',
     interactionExpired: 'La solicitud agotó el tiempo de espera y se cerró.',
     interactionCountdown: 'Quedan {time}',
     interactionCountdownElapsed: '00:00 · Esperando confirmación del servidor',

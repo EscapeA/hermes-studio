@@ -983,6 +983,9 @@ export default {
     clarifyPlaceholder: 'Tapez votre réponse...',
     clarifySubmit: 'Répondre',
     clarifyDismiss: 'Ignorer',
+
+    clarifyCollapse: 'Réduire',
+    clarifyExpand: 'Développer',
     interactionExpired: 'Cette demande a expiré et a été fermée.',
     interactionCountdown: '{time} restante',
     interactionCountdownElapsed: '00:00 · Confirmation du serveur en attente',

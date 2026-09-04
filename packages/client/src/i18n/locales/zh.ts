@@ -1061,6 +1061,9 @@ export default {
     clarifyPlaceholder: '输入你的回答...',
     clarifySubmit: '回复',
     clarifyDismiss: '忽略',
+
+    clarifyCollapse: '收起',
+    clarifyExpand: '展开',
     interactionExpired: '该请求已超时，已关闭。',
     interactionCountdown: '剩余 {time}',
     interactionCountdownElapsed: '00:00 · 等待服务端确认',
