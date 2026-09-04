@@ -980,6 +980,9 @@ export default {
     clarifyPlaceholder: '답변 입력...',
     clarifySubmit: '답장',
     clarifyDismiss: '무시',
+
+    clarifyCollapse: '접기',
+    clarifyExpand: '펼치기',
     interactionExpired: '요청 시간이 초과되어 닫혔습니다.',
     interactionCountdown: '{time} 남음',
     interactionCountdownElapsed: '00:00 · 서버 확인 대기 중',

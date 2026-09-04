@@ -980,6 +980,9 @@ export default {
     clarifyPlaceholder: 'Geben Sie Ihre Antwort ein...',
     clarifySubmit: 'Antworten',
     clarifyDismiss: 'Schließen',
+
+    clarifyCollapse: 'Einklappen',
+    clarifyExpand: 'Aufklappen',
     interactionExpired: 'Diese Anfrage ist abgelaufen und wurde geschlossen.',
     interactionCountdown: '{time} verbleibend',
     interactionCountdownElapsed: '00:00 · Serverbestätigung ausstehend',

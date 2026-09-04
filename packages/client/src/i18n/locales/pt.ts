@@ -980,6 +980,9 @@ export default {
     clarifyPlaceholder: 'Digite sua resposta...',
     clarifySubmit: 'Responder',
     clarifyDismiss: 'Descartar',
+
+    clarifyCollapse: 'Recolher',
+    clarifyExpand: 'Expandir',
     interactionExpired: 'A solicitação expirou e foi fechada.',
     interactionCountdown: '{time} restante',
     interactionCountdownElapsed: '00:00 · Aguardando confirmação do servidor',

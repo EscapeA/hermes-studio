@@ -1031,6 +1031,9 @@ export default {
     clarifyPlaceholder: 'اكتب إجابتك...',
     clarifySubmit: 'رد',
     clarifyDismiss: 'تجاهل',
+
+    clarifyCollapse: 'طي',
+    clarifyExpand: 'توسيع',
     interactionExpired: 'انتهت مهلة هذا الطلب وتم إغلاقه.',
     interactionCountdown: 'متبقٍ {time}',
     interactionCountdownElapsed: '00:00 · في انتظار تأكيد الخادم',
