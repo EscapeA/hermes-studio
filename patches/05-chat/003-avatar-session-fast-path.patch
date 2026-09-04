@@ -1,4 +1,4 @@
-From f6a21364b59d50708f8feb160b587022507711f9 Mon Sep 17 00:00:00 2001
+From e53a90159a4da47f893251e376ad98d396fba9e9 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 01:53:06 +0800
 Subject: [PATCH] perf(web): strip avatar payloads and open last session first
@@ -8,8 +8,8 @@ by serving images from dedicated authenticated URLs. Open the stored
 session immediately on chat mount so the latest 20 messages do not wait
 for the full session list.
 ---
- packages/client/src/api/auth.ts               |   2 +
  packages/client/src/api/hermes/profiles.ts    |   1 +
+ packages/client/src/api/studio/auth.ts        |   2 +
  .../hermes/profiles/ProfileAvatar.vue         |  66 ++++++++++-
  .../hermes/settings/AccountSettings.vue       |   2 +-
  packages/client/src/stores/hermes/chat.ts     |  43 ++++++-
@@ -17,10 +17,10 @@ for the full session list.
  .../client/src/utils/group-agent-avatar.ts    |   9 +-
  packages/client/src/views/hermes/ChatView.vue |   7 +-
  .../src/views/hermes/GlobalAgentView.vue      |   7 +-
- packages/server/src/controllers/auth.ts       |  41 ++++++-
- .../server/src/controllers/hermes/profiles.ts |  56 ++++++++-
- packages/server/src/routes/auth.ts            |   1 +
- packages/server/src/routes/hermes/profiles.ts |   1 +
+ .../modules/hermes/controllers/profiles.ts    |  56 ++++++++-
+ .../src/modules/hermes/routes/profiles.ts     |   1 +
+ .../src/modules/studio/controllers/auth.ts    |  41 ++++++-
+ .../server/src/modules/studio/routes/auth.ts  |   1 +
  .../chat-store-compression-state.test.ts      |   1 +
  .../client/chat-store-error-handling.test.ts  |   1 +
  .../chat-store-reasoning-effort.test.ts       |   3 +-
@@ -33,10 +33,22 @@ for the full session list.
  22 files changed, 394 insertions(+), 22 deletions(-)
  create mode 100644 tests/client/chat-store-startup-session.test.ts
 
-diff --git a/packages/client/src/api/auth.ts b/packages/client/src/api/auth.ts
-index 60543265..cbade3b1 100644
---- a/packages/client/src/api/auth.ts
-+++ b/packages/client/src/api/auth.ts
+diff --git a/packages/client/src/api/hermes/profiles.ts b/packages/client/src/api/hermes/profiles.ts
+index 608d3901..b8168eda 100644
+--- a/packages/client/src/api/hermes/profiles.ts
++++ b/packages/client/src/api/hermes/profiles.ts
+@@ -24,6 +24,7 @@ export interface ProfileAvatar {
+   type: 'generated' | 'image'
+   seed?: string
+   dataUrl?: string
++  url?: string
+   updatedAt?: number
+ }
+ 
+diff --git a/packages/client/src/api/studio/auth.ts b/packages/client/src/api/studio/auth.ts
+index a8021d6f..72817253 100644
+--- a/packages/client/src/api/studio/auth.ts
++++ b/packages/client/src/api/studio/auth.ts
 @@ -45,12 +45,14 @@ export interface CurrentUser {
    updated_at: number
    last_login_at: number | null
@@ -52,33 +64,21 @@ index 60543265..cbade3b1 100644
    seed?: string
  }
  
-diff --git a/packages/client/src/api/hermes/profiles.ts b/packages/client/src/api/hermes/profiles.ts
-index 608d3901..b8168eda 100644
---- a/packages/client/src/api/hermes/profiles.ts
-+++ b/packages/client/src/api/hermes/profiles.ts
-@@ -24,6 +24,7 @@ export interface ProfileAvatar {
-   type: 'generated' | 'image'
-   seed?: string
-   dataUrl?: string
-+  url?: string
-   updatedAt?: number
- }
- 
 diff --git a/packages/client/src/components/hermes/profiles/ProfileAvatar.vue b/packages/client/src/components/hermes/profiles/ProfileAvatar.vue
-index 5a07b681..9381306c 100644
+index 3d68c01a..99953796 100644
 --- a/packages/client/src/components/hermes/profiles/ProfileAvatar.vue
 +++ b/packages/client/src/components/hermes/profiles/ProfileAvatar.vue
 @@ -1,7 +1,8 @@
  <script setup lang="ts">
 -import { computed } from 'vue'
 +import { computed, onUnmounted, ref, watch } from 'vue'
- import multiavatar from '@multiavatar/multiavatar'
+ import boring from 'boring-avatars-vanilla'
  import type { ProfileAvatar } from '@/api/hermes/profiles'
 +import { getApiKey, getBaseUrlValue } from '@/api/client'
  
  const props = withDefaults(defineProps<{
    name: string
-@@ -18,14 +19,73 @@ const style = computed(() => ({
+@@ -22,14 +23,73 @@ const style = computed(() => ({
    height: `${props.size}px`,
    flexBasis: `${props.size}px`,
  }))
@@ -155,7 +155,7 @@ index 5a07b681..9381306c 100644
        draggable="false"
      >
 diff --git a/packages/client/src/components/hermes/settings/AccountSettings.vue b/packages/client/src/components/hermes/settings/AccountSettings.vue
-index 0922e9b7..111a1f6e 100644
+index 6e2bc58d..72411c83 100644
 --- a/packages/client/src/components/hermes/settings/AccountSettings.vue
 +++ b/packages/client/src/components/hermes/settings/AccountSettings.vue
 @@ -250,7 +250,7 @@ onMounted(() => { loadLockedIps(); });
@@ -168,10 +168,10 @@ index 0922e9b7..111a1f6e 100644
            />
          </div>
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 71178a36..d81008d0 100644
+index 3633c27d..3e3b3340 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -1654,10 +1654,15 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1736,10 +1736,15 @@ export const useChatStore = defineStore('chat', () => {
            : storedId && sessions.value.some(s => s.id === storedId)
              ? storedId
              : sessions.value[0]?.id
@@ -190,7 +190,7 @@ index 71178a36..d81008d0 100644
        }
      } catch (err) {
        if (requestSequence === loadSessionsRequestSequence) {
-@@ -1671,6 +1676,19 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1753,6 +1758,19 @@ export const useChatStore = defineStore('chat', () => {
      }
    }
  
@@ -210,7 +210,7 @@ index 71178a36..d81008d0 100644
    // Refresh ONLY the session list metadata (titles, ordering, new/removed
    // sessions) without switching the active session or reloading its messages.
    // Used for live sync so sessions created elsewhere (CLI, Telegram, another
-@@ -1862,11 +1880,23 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1946,11 +1964,23 @@ export const useChatStore = defineStore('chat', () => {
      setItemBestEffort(storageKey(), sessionId)
      const legacyActiveKey = legacyStorageKey()
      if (legacyActiveKey) removeItem(legacyActiveKey)
@@ -237,7 +237,7 @@ index 71178a36..d81008d0 100644
      beginMessageLoad(sessionId, requestSequence)
      let backgroundPendingOnResume = 0
  
-@@ -5303,6 +5333,7 @@ export const useChatStore = defineStore('chat', () => {
+@@ -5466,6 +5496,7 @@ export const useChatStore = defineStore('chat', () => {
      loadSessions,
      refreshSessionListOnly,
      refreshActiveSession,
@@ -246,10 +246,10 @@ index 71178a36..d81008d0 100644
      noteThinkingDelta,
      noteReasoningStart,
 diff --git a/packages/client/src/stores/hermes/group-chat.ts b/packages/client/src/stores/hermes/group-chat.ts
-index c7ca8837..4a0d5554 100644
+index f06ee88b..377030cf 100644
 --- a/packages/client/src/stores/hermes/group-chat.ts
 +++ b/packages/client/src/stores/hermes/group-chat.ts
-@@ -886,7 +886,8 @@ export const useGroupChatStore = defineStore('groupChat', () => {
+@@ -896,7 +896,8 @@ export const useGroupChatStore = defineStore('groupChat', () => {
                  authUserId = user.id
                  userId.value = authenticatedGroupUserId(user.id)
                  if (!connectionName) userName.value = user.username
@@ -260,10 +260,10 @@ index c7ca8837..4a0d5554 100644
          }
          const socket = connectGroupChat({
 diff --git a/packages/client/src/utils/group-agent-avatar.ts b/packages/client/src/utils/group-agent-avatar.ts
-index d2159652..d0640b38 100644
+index da8fcf39..8717fd27 100644
 --- a/packages/client/src/utils/group-agent-avatar.ts
 +++ b/packages/client/src/utils/group-agent-avatar.ts
-@@ -16,8 +16,13 @@ export function parseStoredAvatar(raw: unknown): ProfileAvatar | null {
+@@ -17,8 +17,13 @@ export function parseStoredAvatar(raw: unknown): ProfileAvatar | null {
          if (parsed?.type === 'generated' && typeof parsed.seed === 'string' && parsed.seed) {
              return { type: 'generated', seed: parsed.seed }
          }
@@ -280,10 +280,10 @@ index d2159652..d0640b38 100644
      } catch {
          // Invalid persisted avatars fall back to the runtime's default icon.
 diff --git a/packages/client/src/views/hermes/ChatView.vue b/packages/client/src/views/hermes/ChatView.vue
-index 2a716034..8b635aeb 100644
+index 715f0918..4adb312a 100644
 --- a/packages/client/src/views/hermes/ChatView.vue
 +++ b/packages/client/src/views/hermes/ChatView.vue
-@@ -58,6 +58,8 @@ async function applyRouteProfile() {
+@@ -65,6 +65,8 @@ async function applyRouteProfile() {
  onMounted(async () => {
    chatStore.setRuntimeMode('default')
    appStore.loadModels()
@@ -292,7 +292,7 @@ index 2a716034..8b635aeb 100644
    // 先加载 profile，确保缓存 key 使用正确的 profile name；同时预取显示设置，
    // 让聊天完成提示音不依赖用户先打开 Settings 页面。
    await Promise.all([
-@@ -66,7 +68,10 @@ onMounted(async () => {
+@@ -73,7 +75,10 @@ onMounted(async () => {
    ])
    chatStore.validateSessionProfileFilter(profilesStore.profiles.map(profile => profile.name))
    await applyRouteProfile()
@@ -328,70 +328,11 @@ index 34a7b030..d1bf3ee1 100644
  })
  
  onUnmounted(() => {
-diff --git a/packages/server/src/controllers/auth.ts b/packages/server/src/controllers/auth.ts
-index 949c4727..d462d86b 100644
---- a/packages/server/src/controllers/auth.ts
-+++ b/packages/server/src/controllers/auth.ts
-@@ -64,7 +64,7 @@ export async function currentUser(ctx: Context) {
-       created_at: user.created_at,
-       updated_at: user.updated_at,
-       last_login_at: user.last_login_at,
--      avatar: user.avatar || '',
-+      hasAvatar: Boolean(user.avatar),
-       requiresCredentialChange: process.env.HERMES_DESKTOP === 'true'
-         ? false
-         : user.username === DEFAULT_USERNAME && verifyPassword(DEFAULT_PASSWORD, user.password_hash),
-@@ -107,6 +107,45 @@ export async function getMyAvatar(ctx: Context) {
-   ctx.body = { avatar: getUserAvatar(userId) }
- }
- 
-+/**
-+ * GET /api/auth/avatar/image
-+ * Stream the authenticated user's image avatar as bytes (for <img src>).
-+ */
-+export async function getMyAvatarImage(ctx: Context) {
-+  const userId = ctx.state.user?.id
-+  if (!userId) {
-+    ctx.status = 401
-+    ctx.body = { error: 'Unauthorized' }
-+    return
-+  }
-+  const raw = getUserAvatar(userId)
-+  if (!raw) {
-+    ctx.status = 404
-+    ctx.body = { error: 'Avatar not found' }
-+    return
-+  }
-+  try {
-+    const parsed = JSON.parse(raw) as { type?: string; dataUrl?: string }
-+    if (parsed?.type !== 'image' || typeof parsed.dataUrl !== 'string') {
-+      ctx.status = 404
-+      ctx.body = { error: 'Avatar image not found' }
-+      return
-+    }
-+    const match = parsed.dataUrl.match(/^data:(image\/(?:png|jpeg|webp|svg\+xml));base64,([a-zA-Z0-9+/=]+)$/)
-+    if (!match) {
-+      ctx.status = 404
-+      ctx.body = { error: 'Avatar image not found' }
-+      return
-+    }
-+    ctx.set('Content-Type', match[1])
-+    ctx.set('Cache-Control', 'private, max-age=60')
-+    ctx.body = Buffer.from(match[2], 'base64')
-+  } catch {
-+    ctx.status = 404
-+    ctx.body = { error: 'Avatar image not found' }
-+  }
-+}
-+
- /**
-  * PUT /api/auth/avatar
-  * Update the authenticated user's avatar. Body: { avatar: <json string> } OR
-diff --git a/packages/server/src/controllers/hermes/profiles.ts b/packages/server/src/controllers/hermes/profiles.ts
-index a6421542..1ece782d 100644
---- a/packages/server/src/controllers/hermes/profiles.ts
-+++ b/packages/server/src/controllers/hermes/profiles.ts
-@@ -34,6 +34,7 @@ interface ProfileAvatarResponse {
+diff --git a/packages/server/src/modules/hermes/controllers/profiles.ts b/packages/server/src/modules/hermes/controllers/profiles.ts
+index 1ba480c4..b1bccf0a 100644
+--- a/packages/server/src/modules/hermes/controllers/profiles.ts
++++ b/packages/server/src/modules/hermes/controllers/profiles.ts
+@@ -44,6 +44,7 @@ interface ProfileAvatarResponse {
    type: 'generated' | 'image'
    seed?: string
    dataUrl?: string
@@ -399,7 +340,7 @@ index a6421542..1ece782d 100644
    updatedAt?: number
  }
  
-@@ -188,7 +189,14 @@ function profileAvatarImagePath(name: string, file = 'avatar.bin'): string {
+@@ -174,7 +175,14 @@ function profileAvatarImagePath(name: string, file = 'avatar.bin'): string {
    return join(profileMetadataDir(name), file)
  }
  
@@ -415,7 +356,7 @@ index a6421542..1ece782d 100644
    const metaPath = profileAvatarMetaPath(name)
    if (!existsSync(metaPath)) return null
    try {
-@@ -203,10 +211,17 @@ function readProfileAvatar(name: string): ProfileAvatarResponse | null {
+@@ -189,10 +197,17 @@ function readProfileAvatar(name: string): ProfileAvatarResponse | null {
      if (meta.type === 'image' && meta.file && meta.mime) {
        const imagePath = profileAvatarImagePath(name, meta.file)
        if (!existsSync(imagePath)) return null
@@ -491,22 +432,10 @@ index a6421542..1ece782d 100644
  export async function runtimeStatus(ctx: any) {
    const name = String(ctx.params.name || '').trim() || 'default'
    if (denyProfile(ctx, name)) return
-diff --git a/packages/server/src/routes/auth.ts b/packages/server/src/routes/auth.ts
-index d1961934..76c41abb 100644
---- a/packages/server/src/routes/auth.ts
-+++ b/packages/server/src/routes/auth.ts
-@@ -16,6 +16,7 @@ authProtectedRoutes.get('/api/auth/me', ctrl.currentUser)
- authProtectedRoutes.post('/api/auth/change-password', ctrl.changePassword)
- authProtectedRoutes.post('/api/auth/change-username', ctrl.changeUsername)
- authProtectedRoutes.get('/api/auth/avatar', ctrl.getMyAvatar)
-+authProtectedRoutes.get('/api/auth/avatar/image', ctrl.getMyAvatarImage)
- authProtectedRoutes.put('/api/auth/avatar', ctrl.updateMyAvatar)
- authProtectedRoutes.delete('/api/auth/password', ctrl.removePassword)
- authProtectedRoutes.get('/api/auth/users', requireSuperAdmin, ctrl.listManagedUsers)
-diff --git a/packages/server/src/routes/hermes/profiles.ts b/packages/server/src/routes/hermes/profiles.ts
-index 58ab32f9..b68ae7af 100644
---- a/packages/server/src/routes/hermes/profiles.ts
-+++ b/packages/server/src/routes/hermes/profiles.ts
+diff --git a/packages/server/src/modules/hermes/routes/profiles.ts b/packages/server/src/modules/hermes/routes/profiles.ts
+index 7974fb1d..29b4d426 100644
+--- a/packages/server/src/modules/hermes/routes/profiles.ts
++++ b/packages/server/src/modules/hermes/routes/profiles.ts
 @@ -13,6 +13,7 @@ profileRoutes.post('/api/hermes/profiles/:name/restart', ctrl.restartProfileRunt
  profileRoutes.post('/api/hermes/profiles/:name/gateway/restart', ctrl.restartGatewayForProfile)
  profileRoutes.put('/api/hermes/profiles/:name/avatar', ctrl.updateAvatar)
@@ -515,11 +444,82 @@ index 58ab32f9..b68ae7af 100644
  profileRoutes.get('/api/hermes/profiles/:name', ctrl.get)
  profileRoutes.delete('/api/hermes/profiles/:name', ctrl.remove)
  profileRoutes.post('/api/hermes/profiles/:name/rename', ctrl.rename)
+diff --git a/packages/server/src/modules/studio/controllers/auth.ts b/packages/server/src/modules/studio/controllers/auth.ts
+index 0711b0aa..d12aaab9 100644
+--- a/packages/server/src/modules/studio/controllers/auth.ts
++++ b/packages/server/src/modules/studio/controllers/auth.ts
+@@ -63,7 +63,7 @@ export async function currentUser(ctx: Context) {
+       created_at: user.created_at,
+       updated_at: user.updated_at,
+       last_login_at: user.last_login_at,
+-      avatar: user.avatar || '',
++      hasAvatar: Boolean(user.avatar),
+       requiresCredentialChange: process.env.HERMES_DESKTOP === 'true'
+         ? false
+         : user.username === DEFAULT_USERNAME && verifyPassword(DEFAULT_PASSWORD, user.password_hash),
+@@ -106,6 +106,45 @@ export async function getMyAvatar(ctx: Context) {
+   ctx.body = { avatar: getUserAvatar(userId) }
+ }
+ 
++/**
++ * GET /api/auth/avatar/image
++ * Stream the authenticated user's image avatar as bytes (for <img src>).
++ */
++export async function getMyAvatarImage(ctx: Context) {
++  const userId = ctx.state.user?.id
++  if (!userId) {
++    ctx.status = 401
++    ctx.body = { error: 'Unauthorized' }
++    return
++  }
++  const raw = getUserAvatar(userId)
++  if (!raw) {
++    ctx.status = 404
++    ctx.body = { error: 'Avatar not found' }
++    return
++  }
++  try {
++    const parsed = JSON.parse(raw) as { type?: string; dataUrl?: string }
++    if (parsed?.type !== 'image' || typeof parsed.dataUrl !== 'string') {
++      ctx.status = 404
++      ctx.body = { error: 'Avatar image not found' }
++      return
++    }
++    const match = parsed.dataUrl.match(/^data:(image\/(?:png|jpeg|webp|svg\+xml));base64,([a-zA-Z0-9+/=]+)$/)
++    if (!match) {
++      ctx.status = 404
++      ctx.body = { error: 'Avatar image not found' }
++      return
++    }
++    ctx.set('Content-Type', match[1])
++    ctx.set('Cache-Control', 'private, max-age=60')
++    ctx.body = Buffer.from(match[2], 'base64')
++  } catch {
++    ctx.status = 404
++    ctx.body = { error: 'Avatar image not found' }
++  }
++}
++
+ /**
+  * PUT /api/auth/avatar
+  * Update the authenticated user's avatar. Body: { avatar: <json string> } OR
+diff --git a/packages/server/src/modules/studio/routes/auth.ts b/packages/server/src/modules/studio/routes/auth.ts
+index ed9d2a1a..07d1e42f 100644
+--- a/packages/server/src/modules/studio/routes/auth.ts
++++ b/packages/server/src/modules/studio/routes/auth.ts
+@@ -16,6 +16,7 @@ authProtectedRoutes.get('/api/auth/me', ctrl.currentUser)
+ authProtectedRoutes.post('/api/auth/change-password', ctrl.changePassword)
+ authProtectedRoutes.post('/api/auth/change-username', ctrl.changeUsername)
+ authProtectedRoutes.get('/api/auth/avatar', ctrl.getMyAvatar)
++authProtectedRoutes.get('/api/auth/avatar/image', ctrl.getMyAvatarImage)
+ authProtectedRoutes.put('/api/auth/avatar', ctrl.updateMyAvatar)
+ authProtectedRoutes.delete('/api/auth/password', ctrl.removePassword)
+ authProtectedRoutes.get('/api/auth/users', requireSuperAdmin, ctrl.listManagedUsers)
 diff --git a/tests/client/chat-store-compression-state.test.ts b/tests/client/chat-store-compression-state.test.ts
-index 1139a807..c1df073e 100644
+index 68a95c86..6fedb211 100644
 --- a/tests/client/chat-store-compression-state.test.ts
 +++ b/tests/client/chat-store-compression-state.test.ts
-@@ -37,6 +37,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+@@ -37,6 +37,7 @@ vi.mock('@/api/studio/sessions', () => ({
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
    fetchSessions: vi.fn(),
@@ -528,10 +528,10 @@ index 1139a807..c1df073e 100644
    fetchWorkspaceRunChangeFile: vi.fn(async () => null),
    setSessionModel: vi.fn(),
 diff --git a/tests/client/chat-store-error-handling.test.ts b/tests/client/chat-store-error-handling.test.ts
-index 365c7017..c6dec2d6 100644
+index 42be8799..bb03c25f 100644
 --- a/tests/client/chat-store-error-handling.test.ts
 +++ b/tests/client/chat-store-error-handling.test.ts
-@@ -45,6 +45,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+@@ -45,6 +45,7 @@ vi.mock('@/api/studio/sessions', () => ({
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
    fetchSessions: vi.fn(),
@@ -540,10 +540,10 @@ index 365c7017..c6dec2d6 100644
    fetchWorkspaceRunChangeFile: vi.fn(async () => null),
    setSessionModel: vi.fn(),
 diff --git a/tests/client/chat-store-reasoning-effort.test.ts b/tests/client/chat-store-reasoning-effort.test.ts
-index c77d7bec..7e74a279 100644
+index b349d00c..6636d753 100644
 --- a/tests/client/chat-store-reasoning-effort.test.ts
 +++ b/tests/client/chat-store-reasoning-effort.test.ts
-@@ -41,7 +41,8 @@ vi.mock('@/api/hermes/sessions', () => ({
+@@ -42,7 +42,8 @@ vi.mock('@/api/studio/sessions', () => ({
    archiveSession: vi.fn(),
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
@@ -554,10 +554,10 @@ index c77d7bec..7e74a279 100644
    fetchWorkspaceRunChangeFile: vi.fn(async () => null),
    setSessionModel: sessionsApi.setSessionModel,
 diff --git a/tests/client/chat-store-session-command.test.ts b/tests/client/chat-store-session-command.test.ts
-index 02efcf4f..9ed40d4d 100644
+index 66547627..220db8e1 100644
 --- a/tests/client/chat-store-session-command.test.ts
 +++ b/tests/client/chat-store-session-command.test.ts
-@@ -56,6 +56,7 @@ vi.mock('@/api/hermes/sessions', () => ({
+@@ -56,6 +56,7 @@ vi.mock('@/api/studio/sessions', () => ({
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
    fetchSessions: vi.fn(),
@@ -693,10 +693,10 @@ index 1f10ef7f..8fdf500d 100644
  
    it('falls back to the matching single-chat agent icon', () => {
 diff --git a/tests/server/auth-routes-avatar.test.ts b/tests/server/auth-routes-avatar.test.ts
-index e9d1cbfc..b184f2a3 100644
+index 8375882b..2e1b2c9d 100644
 --- a/tests/server/auth-routes-avatar.test.ts
 +++ b/tests/server/auth-routes-avatar.test.ts
-@@ -11,6 +11,7 @@ vi.mock('../../packages/server/src/controllers/auth', () => ({
+@@ -11,6 +11,7 @@ vi.mock('../../packages/server/src/modules/studio/controllers/auth', () => ({
    changePassword: vi.fn(async (ctx: any) => { ctx.body = { ok: true } }),
    changeUsername: vi.fn(async (ctx: any) => { ctx.body = { ok: true } }),
    getMyAvatar: vi.fn(async (ctx: any) => { ctx.body = { avatar: '' } }),
@@ -719,13 +719,13 @@ index e9d1cbfc..b184f2a3 100644
 +  })
 +
    it('routes GET /api/auth/avatar to getMyAvatar', async () => {
-     const { authProtectedRoutes } = await import('../../packages/server/src/routes/auth')
-     const ctrl = await import('../../packages/server/src/controllers/auth')
+     const { authProtectedRoutes } = await import('../../packages/server/src/modules/studio/routes/auth')
+     const ctrl = await import('../../packages/server/src/modules/studio/controllers/auth')
 diff --git a/tests/server/profiles-routes.test.ts b/tests/server/profiles-routes.test.ts
-index 9a3b12a1..7a2b026f 100644
+index 6aad19ac..4f682b06 100644
 --- a/tests/server/profiles-routes.test.ts
 +++ b/tests/server/profiles-routes.test.ts
-@@ -543,6 +543,57 @@ describe('Profile Routes', () => {
+@@ -702,6 +702,57 @@ describe('Profile Routes', () => {
        expect(readFileSync(join(dir, 'avatar.bin')).toString()).toBe('avatar-png')
      })
  
@@ -784,10 +784,10 @@ index 9a3b12a1..7a2b026f 100644
        const webUiHome = await mkdtemp(join(tmpdir(), 'hermes-web-ui-avatar-'))
        tempHomes.push(webUiHome)
 diff --git a/tests/server/user-auth.test.ts b/tests/server/user-auth.test.ts
-index 6c1dec76..2358f2b3 100644
+index 7a856d50..08f426b1 100644
 --- a/tests/server/user-auth.test.ts
 +++ b/tests/server/user-auth.test.ts
-@@ -506,6 +506,8 @@ describe('user auth tables and middleware', () => {
+@@ -509,6 +509,8 @@ describe('user auth tables and middleware', () => {
      } as any
      await ctrl.currentUser(defaultCtx)
      expect(defaultCtx.body.user.requiresCredentialChange).toBe(true)
