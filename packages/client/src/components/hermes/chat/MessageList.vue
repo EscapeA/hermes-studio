@@ -1977,6 +1977,12 @@ defineExpose({
   &::-webkit-scrollbar {
     display: none;
   }
+
+  // When any tool item is expanded to review its arguments, let the body
+  // grow past the compact 180px cap so the detail section is fully visible.
+  &:has(.tool-call-item.expanded) {
+    max-height: none;
+  }
 }
 
 .tool-strip-pending {
@@ -2027,6 +2033,7 @@ defineExpose({
   }
 
   &.expanded {
+    flex: 0 0 auto;
     align-items: flex-start;
     height: auto;
     min-height: 26px;
