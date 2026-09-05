@@ -1893,9 +1893,9 @@ defineExpose({
 
 .tool-calls-panel {
   display: flex;
-  flex: 0 0 26px;
+  flex: 0 0 auto;
   flex-direction: row;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: stretch;
   gap: 4px;
   width: 520px;
@@ -1965,6 +1965,7 @@ defineExpose({
 
 .tool-strip-body {
   display: flex;
+  flex: 1 1 100%;
   flex-direction: column;
   gap: 4px;
   width: 100%;
