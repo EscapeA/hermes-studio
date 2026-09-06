@@ -485,7 +485,12 @@ export async function list(ctx: any) {
   const allSessions = localListSessions(profile, source, effectiveLimit, {
     sources: source ? undefined : requestedSessionSources(),
     profiles: visibleProfiles,
-    includeArchived: false,
+    // includeArchived: true — 归档会话必须在数据源层可见，archived=1
+    // 分支才捞得到（002 补丁只加了 archivedOnly 过滤分支，漏了这里；
+    // includeArchived: false 在 SQL 层就排除归档 → 归档页恒空）。
+    // 默认分支（无 archived 参数）仍由下方 filterArchivedSessions 排除
+    // 归档，主列表行为不变。
+    includeArchived: true,
     excludeSessionIds: [...getPendingDeletedSessionIds()],
   })
   ctx.body = {
