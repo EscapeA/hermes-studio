@@ -503,7 +503,10 @@ export async function list(ctx: any) {
     ...(includedIds !== undefined ? { includeSessionIds: includedIds } : {}),
     sources: source ? undefined : requestedSessionSources(),
     profiles: visibleProfiles,
-    includeArchived: false,
+    // includeArchived 只在归档页（archived=1）放行：归档行必须在数据源层可见，
+    // 否则 SQL 层就排除归档 → 归档页恒空；默认列表显式 false，保证 0.7.19 新增的
+    // 按分类分页窗口与 total 统计不被归档行污染。
+    includeArchived: archivedOnly ? true : false,
     excludeSessionIds: [...getPendingDeletedSessionIds(), ...excludedIds],
   }
   const allSessions = localListSessions(profile, source, effectiveLimit + (paginated ? 1 : 0), {
