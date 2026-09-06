@@ -1,0 +1,44 @@
+From 9ba5f16199c2df62d79721a404396ac6422eae41 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 6 Sep 2026 16:14:50 +0800
+Subject: [PATCH] =?UTF-8?q?fix(server):=20archived=3D1=20=E6=95=B0?=
+ =?UTF-8?q?=E6=8D=AE=E6=BA=90=E6=94=BE=E8=A1=8C=E5=BD=92=E6=A1=A3=E2=80=94?=
+ =?UTF-8?q?=E2=80=94=E4=BF=AE=E5=A4=8D=E5=BD=92=E6=A1=A3=E9=A1=B5=E6=81=92?=
+ =?UTF-8?q?=E7=A9=BA?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+002 补丁只补了 archivedOnly 过滤分支，但 list() 数据源
+localListSessions 仍 includeArchived:false，SQL 层就排除归档
+→ archived=1 恒返回空（归档页白列表）。
+
+改为 includeArchived:true：archived=1 分支能捞到归档会话；
+默认分支仍由 filterArchivedSessions 排除，主列表行为不变。
+/sessions/hermes 合并路径（mergeHermesHistorySessions）不受影响，
+主列表混显+归档图标现状保持。
+---
+ packages/server/src/modules/studio/controllers/sessions.ts | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/packages/server/src/modules/studio/controllers/sessions.ts b/packages/server/src/modules/studio/controllers/sessions.ts
+index ffdd330a7..97437fd01 100644
+--- a/packages/server/src/modules/studio/controllers/sessions.ts
++++ b/packages/server/src/modules/studio/controllers/sessions.ts
+@@ -484,7 +484,12 @@ export async function list(ctx: any) {
+   const allSessions = localListSessions(profile, source, effectiveLimit, {
+     sources: source ? undefined : requestedSessionSources(),
+     profiles: visibleProfiles,
+-    includeArchived: false,
++    // includeArchived: true — 归档会话必须在数据源层可见，archived=1
++    // 分支才捞得到（002 补丁只加了 archivedOnly 过滤分支，漏了这里；
++    // includeArchived: false 在 SQL 层就排除归档 → 归档页恒空）。
++    // 默认分支（无 archived 参数）仍由下方 filterArchivedSessions 排除
++    // 归档，主列表行为不变。
++    includeArchived: true,
+     excludeSessionIds: [...getPendingDeletedSessionIds()],
+   })
+   ctx.body = {
+-- 
+2.53.0
+
