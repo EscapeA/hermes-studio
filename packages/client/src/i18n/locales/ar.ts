@@ -483,7 +483,6 @@ export default {
     chat: 'محادثة',
     backToChat: 'رجوع',
     search: 'بحث',
-    apiRelay: 'ترحيل API',
     history: 'السجل',
     jobs: 'المهام المجدولة',
     kanban: 'كانبان',
