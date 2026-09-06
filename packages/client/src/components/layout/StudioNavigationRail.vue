@@ -26,7 +26,6 @@ const activeKey = computed(() => {
   if (['hermes.chat', 'hermes.session', 'hermes.globalAgent', 'hermes.globalAgentSession'].includes(name)) return 'chat'
   if (name.startsWith('hermes.groupChat')) return 'group'
   if (name.startsWith('hermes.history')) return 'history'
-  if (name === 'hermes.apiRelay') return 'apiRelay'
   return entries.value.find(entry => entry.route === name)?.key || 'settings'
 })
 const mobileNavigation = useMobileNavigation()
@@ -48,14 +47,6 @@ function handleNavigate(key: string) {
           </RouteLinkItem>
         </template>
         {{ t(entry.label) }}
-      </NTooltip>
-      <NTooltip placement="right" trigger="hover">
-        <template #trigger>
-          <RouteLinkItem class="studio-navigation-rail__item" :to="{ name: 'hermes.apiRelay' }" :active="activeKey === 'apiRelay'" :aria-label="t('sidebar.apiRelay')" @click="handleNavigate('apiRelay')">
-            <img class="api-relay-logo" src="/relay-logo.png" width="24" height="24" alt="" aria-hidden="true" />
-          </RouteLinkItem>
-        </template>
-        {{ t('sidebar.apiRelay') }}
       </NTooltip>
     </nav>
     <div class="studio-navigation-rail__bottom">
@@ -100,9 +91,7 @@ function handleNavigate(key: string) {
   overflow-y: auto;
   scrollbar-width: none;
 }
-.studio-navigation-rail__bottom { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; }
-.api-relay-logo { border-radius: 4px; }
-.studio-navigation-rail__item {
+.studio-navigation-rail__bottom { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; }.studio-navigation-rail__item {
   display: grid;
   place-items: center;
   flex: 0 0 44px;
