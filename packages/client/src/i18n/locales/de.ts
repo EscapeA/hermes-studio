@@ -343,7 +343,6 @@ export default {
     chat: 'Chat',
     backToChat: 'Zuruck',
     search: 'Suche',
-    apiRelay: 'API-Relay',
     history: 'Verlauf',
     jobs: 'Geplante Aufgaben',
     models: 'Modelle',
