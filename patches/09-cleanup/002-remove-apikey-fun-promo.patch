@@ -1,0 +1,256 @@
+From 1613634fe3343be187ad95cfc867d60cddc8c30f Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 6 Sep 2026 09:25:42 +0800
+Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
+ apiRelay button, FUN_LINK_MAP hint, apiRelay locale keys)
+
+---
+ .../hermes/models/ProviderFormModal.vue       | 36 -------------------
+ .../src/components/layout/PageSidebarNav.vue  | 20 -----------
+ packages/client/src/i18n/locales/ar.ts        |  1 -
+ packages/client/src/i18n/locales/de.ts        |  1 -
+ packages/client/src/i18n/locales/en.ts        |  1 -
+ packages/client/src/i18n/locales/es.ts        |  1 -
+ packages/client/src/i18n/locales/fr.ts        |  1 -
+ packages/client/src/i18n/locales/ja.ts        |  1 -
+ packages/client/src/i18n/locales/ko.ts        |  1 -
+ packages/client/src/i18n/locales/pt.ts        |  1 -
+ packages/client/src/i18n/locales/ru.ts        |  1 -
+ packages/client/src/i18n/locales/zh-TW.ts     |  1 -
+ packages/client/src/i18n/locales/zh.ts        |  1 -
+ 13 files changed, 67 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/models/ProviderFormModal.vue b/packages/client/src/components/hermes/models/ProviderFormModal.vue
+index 8a44b9edf..0bf710d83 100644
+--- a/packages/client/src/components/hermes/models/ProviderFormModal.vue
++++ b/packages/client/src/components/hermes/models/ProviderFormModal.vue
+@@ -128,13 +128,6 @@ const canFetchProviderCatalog = computed(() =>
+   )),
+ )
+ 
+-const FUN_LINK_MAP: Record<string, string> = {
+-  'fun-codex': 'https://apikey.fun/register?aff=LIBAPI',
+-  'fun-claude': 'https://apikey.fun/register?aff=LIBAPI',
+-}
+-
+-const funProviderLink = computed(() => selectedPreset.value ? FUN_LINK_MAP[selectedPreset.value] || '' : '')
+-
+ async function switchToApiKeyFunPreset(providerKey: ApiKeyFunPresetProvider, preferredModel: string) {
+   const apiKey = formData.value.api_key
+   const contextLength = formData.value.context_length
+@@ -500,12 +493,6 @@ function handleClose() {
+           :placeholder="t('models.chooseProvider')"
+           filterable
+         />
+-        <div v-if="selectedPreset && funProviderLink" class="fun-provider-hint">
+-          <a :href="funProviderLink" target="_blank" rel="noopener noreferrer">
+-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+-            {{ t('models.getApiKey') }}
+-          </a>
+-        </div>
+       </NFormItem>
+ 
+       <NFormItem v-if="providerType === 'custom'" :label="t('models.name')">
+@@ -630,29 +617,6 @@ function handleClose() {
+ </template>
+ 
+ <style scoped lang="scss">
+-.fun-provider-hint {
+-  margin-top: 6px;
+-  font-size: 12px;
+-
+-  a {
+-    display: inline-flex;
+-    align-items: center;
+-    gap: 6px;
+-    padding: 4px 8px;
+-    white-space: nowrap;
+-    color: var(--accent-primary);
+-    text-decoration: none;
+-    opacity: 0.7;
+-    transition: opacity 0.2s;
+-
+-    svg {
+-      flex-shrink: 0;
+-    }
+-
+-    &:hover { opacity: 1; }
+-  }
+-}
+-
+ .modal-footer {
+   display: flex;
+   justify-content: flex-end;
+diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
+index 40a521b90..ecc95606a 100644
+--- a/packages/client/src/components/layout/PageSidebarNav.vue
++++ b/packages/client/src/components/layout/PageSidebarNav.vue
+@@ -58,11 +58,6 @@ function openWorkflow() {
+   if (props.active === 'workflow') return
+   void router.push({ name: 'hermes.workflow' })
+ }
+-
+-function openApiRelay() {
+-  if (typeof window === 'undefined') return
+-  window.open('https://apikey.fun/register?aff=LIBAPI', '_blank', 'noopener,noreferrer')
+-}
+ </script>
+ 
+ <template>
+@@ -173,21 +168,6 @@ function openApiRelay() {
+         </svg>
+         <span>{{ t('sidebar.models') }}</span>
+       </button>
+-      <button class="page-sidebar-tab" type="button" @click="openApiRelay">
+-        <svg
+-          width="15"
+-          height="15"
+-          viewBox="0 0 24 24"
+-          fill="none"
+-          stroke="currentColor"
+-          stroke-width="1.8"
+-        >
+-          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+-          <polyline points="15 3 21 3 21 9" />
+-          <line x1="10" y1="14" x2="21" y2="3" />
+-        </svg>
+-        <span>{{ t('sidebar.apiRelay') }}</span>
+-      </button>
+     </div>
+     <div class="conversation-switch conversation-switch--four" role="tablist" aria-label="Conversation type">
+       <NTooltip trigger="hover" placement="top">
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index 24b0dfbfd..f8ede3f6f 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -326,7 +326,6 @@ export default {
+     chat: 'محادثة',
+     backToChat: 'رجوع',
+     search: 'بحث',
+-    apiRelay: 'ترحيل API',
+     history: 'السجل',
+     jobs: 'المهام المجدولة',
+     kanban: 'كانبان',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 53d6508e5..91e2b2b3f 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -339,7 +339,6 @@ export default {
+     chat: 'Chat',
+     backToChat: 'Zuruck',
+     search: 'Suche',
+-    apiRelay: 'API-Relay',
+     history: 'Verlauf',
+     jobs: 'Geplante Aufgaben',
+     models: 'Modelle',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 9d4d9808d..cce381052 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -327,7 +327,6 @@ export default {
+     chat: 'Chat',
+     backToChat: 'Back',
+     search: 'Search',
+-    apiRelay: 'API Relay',
+     history: 'History',
+     jobs: 'Jobs',
+     kanban: 'Kanban',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 2a749975d..5c5ff1060 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -339,7 +339,6 @@ export default {
+     chat: 'Chat',
+     backToChat: 'Volver',
+     search: 'Buscar',
+-    apiRelay: 'API Relay',
+     history: 'Historial',
+     jobs: 'Tareas programadas',
+     models: 'Modelos',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 47fd313af..b4d05b676 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -338,7 +338,6 @@ export default {
+     chat: 'Discussion',
+     backToChat: 'Retour',
+     search: 'Rechercher',
+-    apiRelay: 'API Relay',
+     history: 'Historique',
+     jobs: 'Taches planifiees',
+     models: 'Modeles',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 241785947..bc5d5337f 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -339,7 +339,6 @@ export default {
+     chat: 'チャット',
+     backToChat: '戻る',
+     search: '検索',
+-    apiRelay: 'APIリレー',
+     history: '履歴',
+     jobs: 'ジョブ',
+     models: 'モデル',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 8f149c9dc..f237f712b 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -339,7 +339,6 @@ export default {
+     chat: '채팅',
+     backToChat: '뒤로',
+     search: '검색',
+-    apiRelay: 'API 릴레이',
+     history: '기록',
+     jobs: '예약 작업',
+     models: '모델',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index ababe3ae2..d5135b577 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -339,7 +339,6 @@ export default {
+     chat: 'Chat',
+     backToChat: 'Voltar',
+     search: 'Pesquisar',
+-    apiRelay: 'API Relay',
+     history: 'Histórico',
+     jobs: 'Tarefas agendadas',
+     models: 'Modelos',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index a98e64e0b..ea27bd93b 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -253,7 +253,6 @@ export default {
+     chat: 'Чат',
+     backToChat: 'Назад',
+     search: 'Поиск',
+-    apiRelay: 'Ретранслятор API',
+     history: 'История',
+     jobs: 'Задачи',
+     kanban: 'Канбан',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 5725861ab..03f693fd7 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -327,7 +327,6 @@ export default {
+     chat: '對話',
+     backToChat: '返回',
+     search: '搜尋',
+-    apiRelay: '中轉站',
+     history: '歷史',
+     jobs: '任務',
+     kanban: '看板',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index ce619c720..c22e30e6f 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -327,7 +327,6 @@ export default {
+     chat: '对话',
+     backToChat: '返回',
+     search: '搜索',
+-    apiRelay: '饲料',
+     history: '历史',
+     jobs: '任务',
+     kanban: '看板',
+-- 
+2.53.0
+
