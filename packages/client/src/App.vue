@@ -188,7 +188,6 @@ const usesPageSidebar = computed(() =>
     "hermes.agentManager",
     "hermes.models",
     "hermes.usage",
-    "hermes.apiRelay",
     "hermes.history",
     "hermes.historySession",
     "hermes.globalAgent",

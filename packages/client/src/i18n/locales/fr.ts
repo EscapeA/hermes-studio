@@ -695,7 +695,6 @@ export default {
     chat: 'Discussion',
     backToChat: 'Retour',
     search: 'Rechercher',
-    apiRelay: 'API Relay',
     history: 'Historique',
     jobs: 'Taches planifiees',
     models: 'Modeles',

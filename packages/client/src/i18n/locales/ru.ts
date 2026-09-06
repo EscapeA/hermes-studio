@@ -531,7 +531,6 @@ export default {
     },
   },
 
-
   common: {
     close: 'Закрыть',
     loading: 'Загрузка...',
@@ -609,7 +608,6 @@ export default {
     chat: 'Чат',
     backToChat: 'Назад',
     search: 'Поиск',
-    apiRelay: 'Ретранслятор API',
     history: 'История',
     jobs: 'Задачи',
     kanban: 'Канбан',
@@ -1013,7 +1011,6 @@ export default {
     pinned: 'Закреплено',
   },
 
-
   drawer: {
     terminal: 'Терминал',
     files: 'Рабочая область',
@@ -1033,7 +1030,6 @@ export default {
     status: { idle: 'Готово', paused: 'Микрофон выключен', listening: 'Слушаю', processing: 'Распознавание', thinking: '{agent} думает', speaking: '{agent} говорит', error: 'Голосовая связь прервана' },
     hint: { idle: 'Нажмите в центре, чтобы начать голосовую реплику', paused: 'Включите микрофон, когда будете готовы', listening: 'Сделайте паузу для отправки или нажмите для завершения', listeningManual: 'Идет запись. Нажмите в центре еще раз, чтобы остановить и распознать речь', processing: 'Преобразую речь в текст', thinking: 'Сообщение отправлено в текущий разговор', speaking: 'Ответ можно прервать в любое время', error: 'Нажмите в центре, чтобы повторить' },
   },
-
 
   chat: {
     selectMessages: "Выбрать сообщения",
@@ -1416,7 +1412,6 @@ export default {
     speechNotSupported: 'Этот браузер не поддерживает воспроизведение речи',
   },
 
-
   workflow: {
     listActions: 'Действия со списком рабочих процессов',
     quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
@@ -1681,7 +1676,6 @@ export default {
     newNodeTitle: 'Узел {count}',
   },
 
-
   kanban: {
     title: 'Канбан',
     createTask: 'Создать задачу',
@@ -1817,7 +1811,6 @@ export default {
     },
   },
 
-
   scheduleBuilder: { time: 'Время', hour: 'Час', minute: 'Минута', weekday: 'День недели', monthDay: 'День месяца' },
   jobs: {
     title: 'Периодические задачи',
@@ -1905,7 +1898,6 @@ export default {
     },
   },
 
-
   skills: {
     filterBySource: "Фильтр по источнику",
     title: 'Навыки',
@@ -1967,7 +1959,6 @@ export default {
     writeApprovalDeleteSkill: 'Это подтверждение удалит skill {skill}.',
     writeApprovalRemoveFile: 'Это подтверждение удалит {file} из skill {skill}.',
   },
-
 
   plugins: {
     title: 'Плагины',
@@ -2039,7 +2030,6 @@ export default {
     },
   },
 
-
   petdex: {
     title: 'Petdex Pets',
     subtitle: 'Browse the public petdex catalog used by Hermes desktop pets.',
@@ -2077,7 +2067,6 @@ export default {
     noSoul: 'Нет конфигурации души.',
     soulPlaceholder: 'Введите конфигурацию души...',
   },
-
 
   models: {
     importTitle: "Импорт провайдера",
@@ -2336,7 +2325,6 @@ export default {
     fetchFailed: 'Не удалось получить модели',
   },
 
-
   profiles: {
     title: 'Профили',
     create: 'Создать профиль',
@@ -2420,7 +2408,6 @@ export default {
     },
   },
 
-
   logs: {
     file: "Файл журнала",
     level: "Уровень журнала",
@@ -2432,7 +2419,6 @@ export default {
     refresh: 'Обновить',
     noEntries: 'Нет записей',
   },
-
 
   theme: {
     presets: themePresetMessages['ru'],
@@ -3004,11 +2990,9 @@ export default {
       providerEdge: 'Edge TTS (бесплатно, не требует API-ключа)',
       providerMimo: 'MiMo TTS',
 
-
       webspeechVoice: 'Тембр',
       webspeechVoiceHint: 'Выберите голос из предложенных браузером или системой',
       webspeechVoicePlaceholder: 'Автоматический (голос по умолчанию)',
-
 
       openaiKey: 'API-ключ',
       openaiKeyHint: 'API-ключ OpenAI с правами TTS',
@@ -3018,7 +3002,6 @@ export default {
       openaiModelHint: 'tts-1 (быстрая) / tts-1-hd (высокое качество)',
       openaiVoice: 'Тембр',
       openaiVoiceHint: 'Тембр для синтеза речи',
-
 
       customHint: 'Поддерживается любая служба TTS, совместимая с OpenAI, включая GPT-SoVITS, CosyVoice и т.п.',
       customUrl: 'URL API',
@@ -3039,7 +3022,6 @@ export default {
       edgePitch: 'Высота тона',
       edgePitchHint: 'Регулировка высоты тона (–20 … +20 Гц)',
 
-
       testTitle: 'Тестовое прослушивание',
       testText: 'Тестовый текст',
       testTextPlaceholder: 'Введите тестовый текст...',
@@ -3047,7 +3029,6 @@ export default {
       testButton: 'Прослушать',
       testButtonPlaying: 'Воспроизведение...',
       testFailed: 'Ошибка теста: {error}',
-
 
       mimoHint: 'MiMo TTS от Xiaomi. Поддерживает три режима: предустановленные тембры, дизайн тембра и клонирование тембра.',
       mimoApiKey: 'API-ключ',
@@ -3074,7 +3055,6 @@ export default {
       mimoStylePromptPlaceholder: 'Например: используйте лёгкий, приподнятый тон, темп речи чуть выше среднего',
     },
   },
-
 
   platform: {
     requireMention: "Требуется упоминание {'@'}",
@@ -3168,7 +3148,6 @@ export default {
     qqQrScanHint: 'Отсканируйте QR-код с помощью QQ или откройте ссылку на телефоне, чтобы завершить привязку',
   },
 
-
   gateways: {
     title: 'Шлюзы',
     running: 'Работает',
@@ -3178,14 +3157,12 @@ export default {
     stopFailed: 'Ошибка остановки',
   },
 
-
   language: {
     label: 'Язык',
     zh: 'Китайский',
     en: 'Английский',
     ru: 'Русский',
   },
-
 
   terminal: {
     sessions: 'Сеансы',
@@ -3198,7 +3175,6 @@ export default {
     connectionClosed: 'Соединение с терминалом закрыто',
     connectionError: 'Ошибка соединения с терминалом',
   },
-
 
   groupChat: {
     migrationNoticeTitle: "Групповые чаты скоро будут отключены",
@@ -3433,7 +3409,6 @@ export default {
     summaryNever: 'Никогда',
     summaryLoadFailed: 'Не удалось загрузить резюме комнаты',
   },
-
 
   usage: {
     origin: {

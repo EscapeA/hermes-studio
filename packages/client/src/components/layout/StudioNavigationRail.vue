@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { deploymentUrl } from '@/utils/deployment-url'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -44,11 +43,28 @@ const activeKey = computed(() => {
   if (name.startsWith('hermes.history')) return 'history'
   if (name === 'hermes.apiRelay') return 'apiRelay'
   if (name === 'studio.pluginPage') return 'plugin:' + String(route.params.pluginId)
+  if (mobileNavigation && (key.startsWith('plugin:') || ['studioPlugins', 'connections', 'agents', 'models', 'usage', 'apiRelay'].includes(key))) {
+      <div v-if="entry.key === 'studioPlugins' && pluginEntries.length" class="studio-navigation-rail__plugins" role="group" :aria-label="t('studioPlugins.workspace')">
+        <NTooltip v-for="{ plugin, view } in pluginEntries" :key="plugin.manifest.id + ':' + view.id" placement="right" trigger="hover">
+          <template #trigger><RouteLinkItem class="studio-navigation-rail__item" :to="pluginPageLocation(plugin, view.id)" :active="pluginActive(plugin.manifest.id, view)" :aria-label="view.title" @click="handleNavigate('plugin:' + plugin.manifest.id)"><PluginNavigationIcon :icon="view.icon" :size="22" /></RouteLinkItem></template>
+          {{ view.title }}
+        </NTooltip>
+      </div>
+      </template>
+      <NTooltip placement="right" trigger="hover">
+        <template #trigger>
+          <RouteLinkItem class="studio-navigation-rail__item" :to="{ name: 'hermes.apiRelay' }" :active="activeKey === 'apiRelay'" :aria-label="t('sidebar.apiRelay')" @click="handleNavigate('apiRelay')">
+            <img class="api-relay-logo" :src="deploymentUrl('/relay-logo.png')" width="24" height="24" alt="" aria-hidden="true" />
+          </RouteLinkItem>
+        </template>
+        {{ t('sidebar.apiRelay') }}
+      </NTooltip>
+.studio-navigation-rail__plugins { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid $border-color; }
+.api-relay-logo { border-radius: var(--radius-component, 4px); }
   return entries.value.find(entry => entry.route === name)?.key || 'settings'
 })
 const mobileNavigation = useMobileNavigation()
 function handleNavigate(key: string) {
-  if (mobileNavigation && (key.startsWith('plugin:') || ['studioPlugins', 'connections', 'agents', 'models', 'usage', 'apiRelay'].includes(key))) {
     mobileNavigation.open.value = false
   }
 }
@@ -68,21 +84,6 @@ function handleNavigate(key: string) {
           </RouteLinkItem>
         </template>
         {{ t(entry.label) }}
-      </NTooltip>
-      <div v-if="entry.key === 'studioPlugins' && pluginEntries.length" class="studio-navigation-rail__plugins" role="group" :aria-label="t('studioPlugins.workspace')">
-        <NTooltip v-for="{ plugin, view } in pluginEntries" :key="plugin.manifest.id + ':' + view.id" placement="right" trigger="hover">
-          <template #trigger><RouteLinkItem class="studio-navigation-rail__item" :to="pluginPageLocation(plugin, view.id)" :active="pluginActive(plugin.manifest.id, view)" :aria-label="view.title" @click="handleNavigate('plugin:' + plugin.manifest.id)"><PluginNavigationIcon :icon="view.icon" :size="22" /></RouteLinkItem></template>
-          {{ view.title }}
-        </NTooltip>
-      </div>
-      </template>
-      <NTooltip placement="right" trigger="hover">
-        <template #trigger>
-          <RouteLinkItem class="studio-navigation-rail__item" :to="{ name: 'hermes.apiRelay' }" :active="activeKey === 'apiRelay'" :aria-label="t('sidebar.apiRelay')" @click="handleNavigate('apiRelay')">
-            <img class="api-relay-logo" :src="deploymentUrl('/relay-logo.png')" width="24" height="24" alt="" aria-hidden="true" />
-          </RouteLinkItem>
-        </template>
-        {{ t('sidebar.apiRelay') }}
       </NTooltip>
     </nav>
     <div class="studio-navigation-rail__bottom">
@@ -128,8 +129,6 @@ function handleNavigate(key: string) {
   scrollbar-width: none;
 }
 .studio-navigation-rail__bottom { display: flex; flex-direction: column; gap: calc(8px * var(--spacing-scale, 1)); padding-top: 12px; }
-.studio-navigation-rail__plugins { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid $border-color; }
-.api-relay-logo { border-radius: var(--radius-component, 4px); }
 .studio-navigation-rail__avatar { aspect-ratio: 1; flex-shrink: 0; border-radius: 4px; object-fit: contain; }
 .studio-navigation-rail__item {
   display: grid;
