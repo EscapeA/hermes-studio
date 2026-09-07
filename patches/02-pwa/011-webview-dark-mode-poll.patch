@@ -1,0 +1,70 @@
+From a6d2a2174817ecb5f085311f40732998bf56151b Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 02:39:38 +0800
+Subject: [PATCH] fix(theme): sync CSS color-scheme + poll system dark in
+ WebView
+
+Android WebView does not fire matchMedia change events when the host app
+toggles FORCE_DARK (static render switch), so JS-driven theme classes
+stay stuck at the initial value. Mirror next-themes' enableColorScheme
+behavior (html.style.colorScheme) so WebView knows the page supports dark
+mode, and add a low-frequency poll (dormant in browsers once the real
+change event fires) to catch system dark/light transitions in WebView.
+---
+ packages/client/src/composables/useTheme.ts | 30 +++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
+
+diff --git a/packages/client/src/composables/useTheme.ts b/packages/client/src/composables/useTheme.ts
+index 8b6ec36f..979f6efc 100644
+--- a/packages/client/src/composables/useTheme.ts
++++ b/packages/client/src/composables/useTheme.ts
+@@ -143,6 +143,11 @@ function applyClasses() {
+   isComic.value = style.value === 'comic'
+   document.documentElement.classList.toggle('dark', dark)
+   document.documentElement.classList.toggle('comic', isComic.value)
++  // Sync CSS color-scheme so the browser/WebView knows the page supports
++  // dark mode (mirrors next-themes' enableColorScheme). Without it, Android
++  // WebView's FORCE_DARK falls back to UA algorithmic darkening (inverts
++  // images/icons) or refuses to follow the system theme at all.
++  document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+   applyCustomization()
+ }
+ 
+@@ -256,9 +261,34 @@ function resetCustomization(): Promise<void> {
+ applyClasses()
+ void loadBackground()
+ 
++// Android WebView does not fire matchMedia change events when the host app
++// toggles FORCE_DARK (WebView treats it as a static render switch). Detect
++// system dark/light transitions via visibility changes + a low-frequency
++// poll so pages driven by JS theme classes still follow the system theme.
++// Browsers fire the real change event; the poll stays dormant once seen.
++let lastObservedSystemDark: boolean | null = null
++let webviewChangeEventSeen = false
++function sampleSystemDark() {
++  if (brightness.value !== 'system') return
++  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
++  if (lastObservedSystemDark !== null && lastObservedSystemDark !== dark) {
++    applyClasses()
++  }
++  lastObservedSystemDark = dark
++}
+ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+   if (brightness.value === 'system') applyClasses()
++  webviewChangeEventSeen = true
++})
++document.addEventListener('visibilitychange', () => {
++  if (!document.hidden) sampleSystemDark()
+ })
++window.setInterval(() => {
++  if (webviewChangeEventSeen) return
++  sampleSystemDark()
++}, 1000)
++
++
+ 
+ watch(brightness, (mode) => {
+   localStorage.setItem(BRIGHTNESS_KEY, mode)
+-- 
+2.53.0
+

@@ -1,0 +1,348 @@
+From 6c44a2559fae63621b64d64407336e9824531177 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Thu, 18 Jun 2026 22:49:45 +0800
+Subject: [PATCH] fix: connection i18n for all locales + preserve saved servers
+ on logout
+
+- zh.ts: remove duplicate connection object
+- zh-TW/de/es/fr/ja/ko/pt/ru: add sidebar.connection + tabs.connection translations
+- AppSidebar: replace localStorage.clear() with selective auth-only removal
+  (hermes_server_url, hermes_saved_servers now survive logout)
+---
+ .../client/src/components/layout/AppSidebar.vue |  4 +++-
+ packages/client/src/i18n/locales/de.ts          | 17 +++++++++++++++++
+ packages/client/src/i18n/locales/es.ts          | 17 +++++++++++++++++
+ packages/client/src/i18n/locales/fr.ts          | 17 +++++++++++++++++
+ packages/client/src/i18n/locales/ja.ts          | 17 +++++++++++++++++
+ packages/client/src/i18n/locales/ko.ts          | 17 +++++++++++++++++
+ packages/client/src/i18n/locales/pt.ts          | 17 +++++++++++++++++
+ packages/client/src/i18n/locales/ru.ts          | 17 +++++++++++++++++
+ packages/client/src/i18n/locales/zh-TW.ts       | 17 +++++++++++++++++
+ packages/client/src/i18n/locales/zh.ts          | 16 ----------------
+ 10 files changed, 139 insertions(+), 17 deletions(-)
+
+diff --git a/packages/client/src/components/layout/AppSidebar.vue b/packages/client/src/components/layout/AppSidebar.vue
+index 099de4e1..6d6619c7 100644
+--- a/packages/client/src/components/layout/AppSidebar.vue
++++ b/packages/client/src/components/layout/AppSidebar.vue
+@@ -72,7 +72,9 @@ function handleReloadClient() {
+ async function handleLogout() {
+   const userId = getStoredUserId();
+   if (userId) await clearThemeBackgroundCache(userId);
+-  localStorage.clear();
++  // Only clear auth-related keys; preserve connection, theme, locale, etc.
++  localStorage.removeItem('hermes_api_key');
++  localStorage.removeItem('hermes_active_profile_name');
+   window.location.reload();
+ }
+ 
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 56c242f3..1671df9e 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -341,6 +341,22 @@ export default {
+     apiRelay: 'API-Relay',
+     history: 'Verlauf',
+     jobs: 'Geplante Aufgaben',
++    connection: {
++      title: 'Backend-Verbindung',
++      description: 'Konfigurieren Sie die Adresse des Hermes Web UI Backend-Servers. Leer lassen, um die aktuelle Seitenadresse zu verwenden.',
++      placeholder: 'z.B. http://192.168.1.100:6060',
++      namePlaceholder: 'Servername (optional)',
++      current: 'Aktuelle Verbindung',
++      same_origin: 'Gleicher Ursprung (aktuelle Seitenadresse)',
++      reset: 'Auf Standard zurücksetzen',
++      saved: 'Gespeichert',
++      reload_hint: 'Seite neu laden, um die neue Adresse anzuwenden.',
++      saveToList: 'Zur Liste hinzufügen',
++      savedServers: 'Gespeicherte Server',
++      active: 'Aktiv',
++      switch: 'Wechseln',
++      removeConfirm: 'Diesen Server entfernen?',
++    },
+     models: 'Modelle',
+     profiles: 'Profile',
+     plugins: 'Plugins',
+@@ -1767,6 +1783,7 @@ jobTriggered: 'Job ausgelost',
+       apiServer: 'API-Server',
+       models: 'Modelle',
+       voice: 'Sprache',
++      connection: 'Verbindung',
+     },
+     webhooks: {
+       title: 'Webhooks',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 072620ac..9ce66787 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -341,6 +341,22 @@ export default {
+     apiRelay: 'API Relay',
+     history: 'Historial',
+     jobs: 'Tareas programadas',
++    connection: {
++      title: 'Conexión del backend',
++      description: 'Configure la dirección del servidor backend de Hermes Web UI. Déjelo vacío para usar la dirección de la página actual.',
++      placeholder: 'ej. http://192.168.1.100:6060',
++      namePlaceholder: 'Nombre del servidor (opcional)',
++      current: 'Conexión actual',
++      same_origin: 'Mismo origen (dirección de la página actual)',
++      reset: 'Restablecer por defecto',
++      saved: 'Guardado',
++      reload_hint: 'Recargue la página para aplicar la nueva dirección.',
++      saveToList: 'Agregar a la lista',
++      savedServers: 'Servidores guardados',
++      active: 'Activo',
++      switch: 'Cambiar',
++      removeConfirm: '¿Eliminar este servidor?',
++    },
+     models: 'Modelos',
+     profiles: 'Perfiles',
+     plugins: 'Plugins',
+@@ -1767,6 +1783,7 @@ jobTriggered: 'Job ejecutado',
+       apiServer: 'Servidor API',
+       models: 'Modelos',
+       voice: 'Voz',
++      connection: 'Conexión',
+     },
+     webhooks: {
+       title: 'Webhooks',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 4668eb7f..82f99caf 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -341,6 +341,22 @@ export default {
+     apiRelay: 'API Relay',
+     history: 'Historique',
+     jobs: 'Taches planifiees',
++    connection: {
++      title: 'Connexion backend',
++      description: "Configurez l'adresse du serveur backend Hermes Web UI. Laissez vide pour utiliser l'adresse de la page actuelle.",
++      placeholder: 'ex. http://192.168.1.100:6060',
++      namePlaceholder: 'Nom du serveur (optionnel)',
++      current: 'Connexion actuelle',
++      same_origin: 'Même origine (adresse de la page actuelle)',
++      reset: 'Réinitialiser par défaut',
++      saved: 'Enregistré',
++      reload_hint: "Rechargez la page pour appliquer la nouvelle adresse.",
++      saveToList: 'Ajouter à la liste',
++      savedServers: 'Serveurs enregistrés',
++      active: 'Actif',
++      switch: 'Basculer',
++      removeConfirm: 'Supprimer ce serveur ?',
++    },
+     models: 'Modeles',
+     profiles: 'Profils',
+     plugins: 'Plugins',
+@@ -1767,6 +1783,7 @@ jobTriggered: 'Job declenche',
+       apiServer: 'Serveur API',
+       models: 'Modèles',
+       voice: 'Voix',
++      connection: 'Connexion',
+     },
+     webhooks: {
+       title: 'Webhooks',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 217e4974..577fb567 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -341,6 +341,22 @@ export default {
+     apiRelay: 'APIリレー',
+     history: '履歴',
+     jobs: 'ジョブ',
++    connection: {
++      title: 'バックエンド接続',
++      description: 'Hermes Web UI バックエンドサーバーのアドレスを設定します。空にすると現在のページアドレスを使用します。',
++      placeholder: '例: http://192.168.1.100:6060',
++      namePlaceholder: 'サーバー名（任意）',
++      current: '現在の接続',
++      same_origin: '同源（現在のページアドレス）',
++      reset: 'デフォルトに戻す',
++      saved: '保存済み',
++      reload_hint: 'ページを再読み込みして新しいアドレスを適用します。',
++      saveToList: 'リストに追加',
++      savedServers: '保存されたサーバー',
++      active: 'アクティブ',
++      switch: '切り替え',
++      removeConfirm: 'このサーバーを削除しますか？',
++    },
+     models: 'モデル',
+     profiles: 'プロファイル',
+     plugins: 'プラグイン',
+@@ -1767,6 +1783,7 @@ export default {
+       apiServer: 'API サーバー',
+       models: 'モデル',
+       voice: '音声',
++      connection: '接続',
+     },
+     webhooks: {
+       title: 'Webhook',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 5e6354b8..e8022c55 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -341,6 +341,22 @@ export default {
+     apiRelay: 'API 릴레이',
+     history: '기록',
+     jobs: '예약 작업',
++    connection: {
++      title: '백엔드 연결',
++      description: 'Hermes Web UI 백엔드 서버 주소를 설정합니다. 비워두면 현재 페이지 주소를 사용합니다.',
++      placeholder: '예: http://192.168.1.100:6060',
++      namePlaceholder: '서버 이름 (선택)',
++      current: '현재 연결',
++      same_origin: '동일 출처 (현재 페이지 주소)',
++      reset: '기본값으로 초기화',
++      saved: '저장됨',
++      reload_hint: '페이지를 새로고침하여 새 주소를 적용합니다.',
++      saveToList: '목록에 추가',
++      savedServers: '저장된 서버',
++      active: '활성',
++      switch: '전환',
++      removeConfirm: '이 서버를 제거하시겠습니까?',
++    },
+     models: '모델',
+     profiles: '프로필',
+     plugins: '플러그인',
+@@ -1767,6 +1783,7 @@ export default {
+       apiServer: 'API 서버',
+       models: '모델',
+       voice: '음성',
++      connection: '연결',
+     },
+     webhooks: {
+       title: '웹훅',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 9929c4af..a91726eb 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -341,6 +341,22 @@ export default {
+     apiRelay: 'API Relay',
+     history: 'Histórico',
+     jobs: 'Tarefas agendadas',
++    connection: {
++      title: 'Conexão do backend',
++      description: 'Configure o endereço do servidor backend do Hermes Web UI. Deixe vazio para usar o endereço da página atual.',
++      placeholder: 'ex. http://192.168.1.100:6060',
++      namePlaceholder: 'Nome do servidor (opcional)',
++      current: 'Conexão atual',
++      same_origin: 'Mesma origem (endereço da página atual)',
++      reset: 'Redefinir para padrão',
++      saved: 'Salvo',
++      reload_hint: 'Recarregue a página para aplicar o novo endereço.',
++      saveToList: 'Adicionar à lista',
++      savedServers: 'Servidores salvos',
++      active: 'Ativo',
++      switch: 'Alternar',
++      removeConfirm: 'Remover este servidor?',
++    },
+     models: 'Modelos',
+     profiles: 'Perfis',
+     plugins: 'Plugins',
+@@ -1767,6 +1783,7 @@ jobTriggered: 'Job acionado',
+       apiServer: 'Servidor API',
+       models: 'Modelos',
+       voice: 'Voz',
++      connection: 'Conexão',
+     },
+     webhooks: {
+       title: 'Webhooks',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 918f68e7..aa4d1de2 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -257,6 +257,22 @@ export default {
+     jobs: 'Задачи',
+     kanban: 'Канбан',
+     workflow: 'Рабочий процесс',
++    connection: {
++      title: 'Подключение к бэкенду',
++      description: 'Настройте адрес сервера бэкенда Hermes Web UI. Оставьте пустым для использования адреса текущей страницы.',
++      placeholder: 'напр. http://192.168.1.100:6060',
++      namePlaceholder: 'Имя сервера (необязательно)',
++      current: 'Текущее подключение',
++      same_origin: 'Тот же источник (адрес текущей страницы)',
++      reset: 'Сбросить по умолчанию',
++      saved: 'Сохранено',
++      reload_hint: 'Перезагрузите страницу для применения нового адреса.',
++      saveToList: 'Добавить в список',
++      savedServers: 'Сохранённые серверы',
++      active: 'Активен',
++      switch: 'Переключить',
++      removeConfirm: 'Удалить этот сервер?',
++    },
+     models: 'Модели',
+     profiles: 'Профили',
+     plugins: 'Плагины',
+@@ -2020,6 +2036,7 @@ export default {
+       apiServer: 'API-сервер',
+       models: 'Модели',
+       voice: 'Голос',
++      connection: 'Подключение',
+     },
+     webhooks: {
+       title: 'Вебхуки',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 0b191eeb..b9ed77b5 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -331,6 +331,22 @@ export default {
+     jobs: '任務',
+     kanban: '看板',
+     workflow: '工作流',
++    connection: {
++      title: '後端連線',
++      description: '設定 Hermes Web UI 後端伺服器位址。留空則使用當前頁面位址。',
++      placeholder: '例如: http://192.168.1.100:6060',
++      namePlaceholder: '伺服器名稱（選填）',
++      current: '當前連線',
++      same_origin: '同源（當前頁面位址）',
++      reset: '重置為預設',
++      saved: '已儲存',
++      reload_hint: '重新載入頁面以套用新位址。',
++      saveToList: '加入儲存清單',
++      savedServers: '已儲存的伺服器',
++      active: '使用中',
++      switch: '切換',
++      removeConfirm: '確定移除此伺服器？',
++    },
+     models: '模型',
+     profiles: '設定檔',
+     plugins: '插件',
+@@ -2208,6 +2224,7 @@ export default {
+       apiServer: 'API 伺服器',
+       models: '模型',
+       voice: '語音',
++      connection: '連線',
+     },
+     webhooks: {
+       title: 'Webhook',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index d82549a0..acfc4f35 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -347,22 +347,6 @@ export default {
+       switch: '切换',
+       removeConfirm: '确定移除这个服务器吗？',
+     },
+-    connection: {
+-      title: '后端连接',
+-      description: '配置 Hermes Web UI 后端服务器地址。留空则使用当前页面地址。',
+-      placeholder: '例如: http://192.168.1.100:6060',
+-      namePlaceholder: '服务器名称（可选）',
+-      current: '当前连接',
+-      same_origin: '同源（当前页面地址）',
+-      reset: '重置为默认',
+-      saved: '已保存',
+-      reload_hint: '刷新页面以应用新地址。',
+-      saveToList: '添加到保存列表',
+-      savedServers: '已保存服务器',
+-      active: '当前使用',
+-      switch: '切换',
+-      removeConfirm: '确定删除此服务器？',
+-    },
+     models: '模型',
+     profiles: '配置',
+     plugins: '插件',
+-- 
+2.53.0
+
