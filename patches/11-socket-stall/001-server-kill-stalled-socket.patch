@@ -1,8 +1,8 @@
-From cb6849bba3a93f67dee97eda9476092d019a354c Mon Sep 17 00:00:00 2001
+From ad6215a404fdbf66b074cfc43e9c2d1b50064a9f Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 09:33:58 +0800
-Subject: [PATCH 1/2] fix(server): kill stalled chat-run sockets with
- non-draining write backlog
+Subject: [PATCH] fix(server): kill stalled chat-run sockets with non-draining
+ write backlog
 
 A phone PWA on a flaky tailscale/relay link can go half-open: the TCP
 connection stays ESTAB but frames we emit for the session pile up in the
@@ -12,14 +12,14 @@ socket's underlying transport writableLength; if the backlog exceeds
 256KB and has not drained across two checks, force-disconnect so
 socket.io-client's reconnection + resume path re-syncs the session.
 ---
- .../src/services/hermes/run-chat/index.ts     | 49 +++++++++++++++++++
+ .../src/modules/studio/sockets/chat-run.ts    | 49 +++++++++++++++++++
  1 file changed, 49 insertions(+)
 
-diff --git a/packages/server/src/services/hermes/run-chat/index.ts b/packages/server/src/services/hermes/run-chat/index.ts
-index 61b98e63..0d040202 100644
---- a/packages/server/src/services/hermes/run-chat/index.ts
-+++ b/packages/server/src/services/hermes/run-chat/index.ts
-@@ -223,6 +223,9 @@ export class ChatRunSocket {
+diff --git a/packages/server/src/modules/studio/sockets/chat-run.ts b/packages/server/src/modules/studio/sockets/chat-run.ts
+index 25efdb72d..bb76b13ee 100644
+--- a/packages/server/src/modules/studio/sockets/chat-run.ts
++++ b/packages/server/src/modules/studio/sockets/chat-run.ts
+@@ -382,6 +382,9 @@ export class ChatRunSocket {
    private backgroundBrokerId?: string
    private backgroundPollRetryAt = 0
    private backgroundActivityGraceUntil = 0
@@ -29,7 +29,7 @@ index 61b98e63..0d040202 100644
    private closing = false
  
    constructor(io: Server) {
-@@ -235,10 +238,51 @@ export class ChatRunSocket {
+@@ -524,10 +527,51 @@ export class ChatRunSocket {
      this.nsp.on('connection', this.onConnection.bind(this))
      this.backgroundPollTimer = setInterval(() => void this.pollBackgroundWork(), 500)
      this.backgroundPollTimer.unref?.()
@@ -81,9 +81,9 @@ index 61b98e63..0d040202 100644
    // --- Auth middleware ---
  
    private async authMiddleware(socket: Socket, next: (err?: Error) => void) {
-@@ -2052,6 +2096,11 @@ export class ChatRunSocket {
-       clearInterval(this.backgroundPollTimer)
-       this.backgroundPollTimer = undefined
+@@ -2693,6 +2737,11 @@ export class ChatRunSocket {
+         error: { code: 'calendar_failed' },
+       })
      }
 +    if (this.socketHealthTimer) {
 +      clearInterval(this.socketHealthTimer)

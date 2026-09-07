@@ -1,4 +1,4 @@
-From 13f6dedcb941c651feef9372e4e785a1ad9f14ae Mon Sep 17 00:00:00 2001
+From cf9529453160a53a078c0e1371ffcb343d849f94 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 23:12:24 +0800
 Subject: [PATCH] fix(chat): restore profile avatar for regular sessions in
@@ -14,7 +14,7 @@ the runtime agent icon. Update pi-chat-avatar source assertions.
  2 files changed, 34 insertions(+), 5 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
-index 716d89a0..eac59d7e 100644
+index b15b96d2e..18273167c 100644
 --- a/packages/client/src/components/hermes/chat/MessageItem.vue
 +++ b/packages/client/src/components/hermes/chat/MessageItem.vue
 @@ -15,6 +15,8 @@ import { useChatStore } from "@/stores/hermes/chat";
@@ -31,10 +31,10 @@ index 716d89a0..eac59d7e 100644
  import { isServerTtsProvider } from "@/api/studio/tts";
  import type { ProfileAvatar as ProfileAvatarData } from "@/api/hermes/profiles";
 -import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";
+ import ImagePreviewOverlay from "./ImagePreviewOverlay.vue";
  
  const MarkdownRenderer = defineAsyncComponent(async () => (await import("./MarkdownRenderer.vue")).default);
- 
-@@ -225,8 +226,19 @@ const chatStore = useChatStore();
+@@ -226,8 +227,19 @@ const chatStore = useChatStore();
  const filesStore = useFilesStore();
  const toolPanelStore = useToolPanelStore();
  const settingsStore = useSettingsStore();
@@ -54,7 +54,7 @@ index 716d89a0..eac59d7e 100644
  const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
  
  // Copy entire bubble content
-@@ -1008,6 +1020,20 @@ onBeforeUnmount(() => {
+@@ -1009,6 +1021,20 @@ onBeforeUnmount(() => {
      </template>
      <template v-else>
        <div class="msg-body">
@@ -76,7 +76,7 @@ index 716d89a0..eac59d7e 100644
            <div v-if="message.role === 'user'" class="message-author user-message-author">
              <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
 diff --git a/tests/client/pi-chat-avatar.test.ts b/tests/client/pi-chat-avatar.test.ts
-index 4fe6ac05..1fd72581 100644
+index 4fe6ac05c..1fd725812 100644
 --- a/tests/client/pi-chat-avatar.test.ts
 +++ b/tests/client/pi-chat-avatar.test.ts
 @@ -2,14 +2,17 @@ import { readFileSync } from 'fs'
