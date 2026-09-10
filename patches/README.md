@@ -26,6 +26,17 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 
 共 **77 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001）。
 
+**0.7.19 重放（2026-09-11，上游 b09dafb23）**：77/77 全部落位（无空提交），**8 处冲突已回写**：
+02-pwa/001（上游品牌 Ekko Studio 改写 index.html/manifest/test → 取上游品牌值 + 保留我方 PWA 增量）、
+02-pwa/007（上游修改 logo-original.png vs 我方删除 → 上游全树无引用，接受删除；补丁重生成后内嵌上游新版 pre-image）、
+02-pwa/010（color-scheme meta 与上游新 favicon 行重叠 → 保留双方）、
+03-connection/007（chat.ts import-only 双侧合并）、
+08-server/002（**上游重写 sessions 控制器**（分类分页 #2977 + filtered totals #2982）→ 保留上游分页/total 结构，仅重新植入 archivedOnly 过滤分支，`includeArchived` 交由 003 处理）、
+08-server/003（**改为条件式** `includeArchived: archivedOnly ? true : false` —— store 层只有 `=== false` 才拼 `COALESCE(s.is_archived,0)=0`，不传 = 包含归档；默认列表显式 false 才不污染上游分页窗口与 total）、
+11-socket-stall/001（chat-run.ts close()：上游 mobile-health 清理 + 我方 watchdog/backlog 清理都保留）、
+11-socket-stall/002（客户端 chat.ts：上游 runtimeGeneration 守卫 + 我方心跳都保留）。
+预演与验证记录：`/home/aries/hermes_workspace/hermes-studio-0.7.19-upgrade/`（构建全绿、相关单测 95/95、归档语义 3 条真实 SQLite 集成测试通过）。
+
 ## 升级 SOP（上游新版本）
 
 ```bash

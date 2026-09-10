@@ -1,4 +1,4 @@
-From 80548297009cb2e28dff8e3614ad3364c54c2767 Mon Sep 17 00:00:00 2001
+From 3e3f1fdb194f98bc755c84cd6bb98cfdf8f44a97 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 7 Jul 2026 10:11:13 +0800
 Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
@@ -12,7 +12,7 @@ Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
 - index.html: dark/light theme-color media queries, mobile-web-app-capable, black-translucent status bar
 - Updated pwa-metadata test assertions for new manifest structure
 ---
- packages/client/index.html                    |  11 +-
+ packages/client/index.html                    |   9 +-
  packages/client/public/icon-192.png           | Bin 0 -> 58690 bytes
  packages/client/public/icon-512.png           | Bin 0 -> 393228 bytes
  packages/client/public/manifest.webmanifest   |  20 +--
@@ -23,8 +23,8 @@ Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
  packages/client/src/composables/usePwa.ts     |  52 +++++++
  packages/client/src/i18n/locales/en.ts        |   3 +
  packages/client/src/i18n/locales/zh.ts        |   3 +
- tests/client/pwa-metadata.test.ts             |  19 +--
- 12 files changed, 342 insertions(+), 21 deletions(-)
+ tests/client/pwa-metadata.test.ts             |  17 ++-
+ 12 files changed, 340 insertions(+), 19 deletions(-)
  create mode 100644 packages/client/public/icon-192.png
  create mode 100644 packages/client/public/icon-512.png
  create mode 100644 packages/client/public/offline.html
@@ -33,13 +33,13 @@ Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
  create mode 100644 packages/client/src/composables/usePwa.ts
 
 diff --git a/packages/client/index.html b/packages/client/index.html
-index 6f5afdb4..a9e87987 100644
+index e43016517..5fcf52abb 100644
 --- a/packages/client/index.html
 +++ b/packages/client/index.html
-@@ -4,11 +4,16 @@
+@@ -4,10 +4,15 @@
  <head>
    <meta charset="UTF-8" />
-   <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 -  <link rel="apple-touch-icon" href="/logo.png" />
 +  <link rel="apple-touch-icon" href="/icon-192.png" />
    <link rel="manifest" href="/manifest.webmanifest" />
@@ -50,12 +50,10 @@ index 6f5afdb4..a9e87987 100644
 +  <meta name="mobile-web-app-capable" content="yes" />
 +  <meta name="mobile-web-app-status-bar-style" content="black-translucent" />
    <meta name="apple-mobile-web-app-capable" content="yes" />
--  <meta name="apple-mobile-web-app-title" content="Hermes Studio" />
 +  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-+  <meta name="apple-mobile-web-app-title" content="Hermes" />
+   <meta name="apple-mobile-web-app-title" content="Ekko Studio" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-   <title>Hermes Studio</title>
-   <style>
+   <title>Ekko Studio</title>
 diff --git a/packages/client/public/icon-192.png b/packages/client/public/icon-192.png
 new file mode 100644
 index 0000000000000000000000000000000000000000..ed0c3fa0e405b4129fe195557f14fb1b9490eebc
@@ -8687,13 +8685,13 @@ literal 0
 HcmV?d00001
 
 diff --git a/packages/client/public/manifest.webmanifest b/packages/client/public/manifest.webmanifest
-index df086e94..c8c84479 100644
+index c13bd74ff..2c8e11135 100644
 --- a/packages/client/public/manifest.webmanifest
 +++ b/packages/client/public/manifest.webmanifest
 @@ -2,17 +2,19 @@
-   "name": "Hermes Studio",
-   "short_name": "Hermes",
-   "description": "Self-hosted AI chat dashboard for Hermes Agent",
+   "name": "Ekko Studio",
+   "short_name": "Ekko Studio",
+   "description": "Ekko Studio is a local-first AI workspace for multi-agent chat, coding, and visual workflows, available on desktop and the web.",
 -  "start_url": "/#/hermes/chat",
 +  "id": "/",
 +  "start_url": "/",
@@ -8721,7 +8719,7 @@ index df086e94..c8c84479 100644
  }
 diff --git a/packages/client/public/offline.html b/packages/client/public/offline.html
 new file mode 100644
-index 00000000..ae84c133
+index 000000000..ae84c1337
 --- /dev/null
 +++ b/packages/client/public/offline.html
 @@ -0,0 +1,58 @@
@@ -8785,7 +8783,7 @@ index 00000000..ae84c133
 +</html>
 diff --git a/packages/client/public/sw.js b/packages/client/public/sw.js
 new file mode 100644
-index 00000000..b775142a
+index 000000000..b775142ab
 --- /dev/null
 +++ b/packages/client/public/sw.js
 @@ -0,0 +1,139 @@
@@ -8929,10 +8927,10 @@ index 00000000..b775142a
 +  return cached || fetchPromise;
 +}
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index c8e0cfab..6e835d81 100644
+index 283796a91..ce1dd633b 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -25,6 +25,7 @@ import AuthEventListener from "@/components/auth/AuthEventListener.vue";
+@@ -28,6 +28,7 @@ import AuthEventListener from "@/components/auth/AuthEventListener.vue";
  import { desktopBridge } from "@/utils/desktop-bridge";
  import { naiveLocaleFor } from "@/constants/naiveLocale";
  import { naiveRtlFor } from "@/constants/naiveRtl";
@@ -8940,7 +8938,7 @@ index c8e0cfab..6e835d81 100644
  
  const AppSidebar = defineAsyncComponent(
    async () => (await import("@/components/layout/AppSidebar.vue")).default,
-@@ -215,6 +216,7 @@ onUnmounted(() => {
+@@ -241,6 +242,7 @@ onUnmounted(() => {
  });
  
  useKeyboard();
@@ -8950,7 +8948,7 @@ index c8e0cfab..6e835d81 100644
  <template>
 diff --git a/packages/client/src/components/hermes/PwaInstallButton.vue b/packages/client/src/components/hermes/PwaInstallButton.vue
 new file mode 100644
-index 00000000..abf71ac7
+index 000000000..abf71ac7d
 --- /dev/null
 +++ b/packages/client/src/components/hermes/PwaInstallButton.vue
 @@ -0,0 +1,56 @@
@@ -9012,7 +9010,7 @@ index 00000000..abf71ac7
 +</template>
 diff --git a/packages/client/src/composables/usePwa.ts b/packages/client/src/composables/usePwa.ts
 new file mode 100644
-index 00000000..1ee3936c
+index 000000000..1ee3936c6
 --- /dev/null
 +++ b/packages/client/src/composables/usePwa.ts
 @@ -0,0 +1,52 @@
@@ -9069,41 +9067,40 @@ index 00000000..1ee3936c
 +  return { updateAvailable, applyUpdate }
 +}
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 133f30f2..8b7f7418 100644
+index 2339048c4..6bfb388fe 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -3521,4 +3521,7 @@ export default {
-     new_0_6_42_9: 'MiniMax image-to-video generation now supports Global and China official v1 endpoints, URL, base64, and local image inputs, task polling, and automatic download with Profile API keys (#2512)',
-     new_0_6_41_1: 'Local STT now works reliably in npm-installed Hermes Web UI by pinning sherpa-onnx native runtimes to the same version as the Node.js wrapper on macOS, Windows, and Linux (#2464)',
+@@ -3576,4 +3576,7 @@ export default {
+     new_0_7_0_10: 'The English and Chinese READMEs now document the five runtimes, three Agent families, module ownership, canonical APIs, and current development and validation workflows (#2745)',
+     new_0_7_0_11: 'Device Connections now shows only Android and iOS download cards; official Apple releases are labeled App Store instead of TestFlight · App Store',
    },
 +  pwa: {
 +    install: 'Install App',
 +  },
  }
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 85459be6..d7f77b10 100644
+index 69fbeab93..d6e33153a 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -3569,4 +3569,7 @@ export default {
-     new_0_6_42_9: 'MiniMax 图生视频现支持 Global 与中国区官方 v1 接口，可接收 URL、base64 或本地图片，轮询任务并使用 Profile API Key 自动下载结果（#2512）',
-     new_0_6_41_1: '修复通过 npm 安装 Hermes Web UI 后本地 STT 无法可靠识别的问题：在 macOS、Windows 和 Linux 上将 sherpa-onnx 原生运行时固定为与 Node.js 封装相同的版本（#2464）',
+@@ -3624,4 +3624,7 @@ export default {
+     new_0_7_0_10: '中英文 README 已更新，完整说明五种运行时、三类 Agent、模块归属、规范 API，以及当前开发和验证流程（#2745）',
+     new_0_7_0_11: '“设备互联”现仅显示 Android 和 iOS 下载卡片；Apple 正式版只标记为 App Store，不再显示 TestFlight · App Store',
    },
 +  pwa: {
 +    install: '安装应用',
 +  },
  }
 diff --git a/tests/client/pwa-metadata.test.ts b/tests/client/pwa-metadata.test.ts
-index 002060da..bab934e6 100644
+index 0c19546c8..b2e579fb3 100644
 --- a/tests/client/pwa-metadata.test.ts
 +++ b/tests/client/pwa-metadata.test.ts
-@@ -6,22 +6,23 @@ describe('PWA metadata', () => {
+@@ -6,23 +6,24 @@ describe('PWA metadata', () => {
      const html = readFileSync('packages/client/index.html', 'utf8')
  
      expect(html).toContain('rel="manifest" href="/manifest.webmanifest"')
 -    expect(html).toContain('rel="apple-touch-icon" href="/logo.png"')
--    expect(html).toContain('name="apple-mobile-web-app-title" content="Hermes Studio"')
 +    expect(html).toContain('rel="apple-touch-icon" href="/icon-192.png"')
-+    expect(html).toContain('name="apple-mobile-web-app-title" content="Hermes"')
+     expect(html).toContain('name="apple-mobile-web-app-title" content="Ekko Studio"')
 +    expect(html).toContain('name="mobile-web-app-capable"')
 +    expect(html).toContain('name="apple-mobile-web-app-capable"')
 +    expect(html).toContain('name="apple-mobile-web-app-status-bar-style"')
@@ -9113,7 +9110,8 @@ index 002060da..bab934e6 100644
 +  it('ships a standalone web manifest with proper icons', () => {
      const manifest = JSON.parse(readFileSync('packages/client/public/manifest.webmanifest', 'utf8'))
  
-     expect(manifest.name).toBe('Hermes Studio')
+     expect(manifest.name).toBe('Ekko Studio')
+     expect(manifest.short_name).toBe('Ekko Studio')
      expect(manifest.display).toBe('standalone')
 -    expect(manifest.start_url).toBe('/#/hermes/chat')
 +    expect(manifest.start_url).toBe('/')

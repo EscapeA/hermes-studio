@@ -1,8 +1,8 @@
-From 17653caa2be01259829862e4d7b1696120b482ee Mon Sep 17 00:00:00 2001
+From e5b3b1c8d1a8566aa2b763fa799986811254099c Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 09:33:59 +0800
-Subject: [PATCH 2/2] fix(client): stall watchdog falls back to REST refresh
- when socket goes quiet
+Subject: [PATCH] fix(client): stall watchdog falls back to REST refresh when
+ socket goes quiet
 
 When the server reports a session as working but no socket event arrives
 for 15s (half-open websocket on a flaky tailscale/relay link), refresh
@@ -15,28 +15,28 @@ session.
  1 file changed, 27 insertions(+)
 
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index beaa6a40..42f2eb23 100644
+index 53af10453..94cb856c7 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -1248,6 +1248,8 @@ export const useChatStore = defineStore('chat', () => {
-   const streamStates = ref<Map<string, { abort: () => void }>>(new Map())
-   /** sessionId → server-reported isWorking status */
-   const serverWorking = ref<Set<string>>(new Set())
+@@ -1366,6 +1366,8 @@ export const useChatStore = defineStore('chat', () => {
+       setBackgroundPending(sessionId, evt.background_pending)
+     }
+   }
 +  /** sessionId → last socket event arrival time (stall watchdog heartbeat) */
 +  const lastSocketEventAt = new Map<string, number>()
    /** sessionIds with a terminal /fork command submitted but not settled yet */
    const pendingForkCommands = ref<Set<string>>(new Set())
    /** Sessions that completed while the user was viewing another session. */
-@@ -4283,6 +4285,8 @@ export const useChatStore = defineStore('chat', () => {
+@@ -4655,6 +4657,8 @@ export const useChatStore = defineStore('chat', () => {
      // Shared event handler — filters by session_id tag
      function handleEvent(evt: RunEvent) {
-       if (closed) return
+       if (closed || generation !== runtimeGeneration) return
 +      // Any socket event counts as a liveness heartbeat for the stall watchdog
 +      lastSocketEventAt.set(sid, Date.now())
        // Filter events for this session (server tags all events with session_id)
        if (evt.session_id && evt.session_id !== sid) return
-       const eventRunMarker = readRunMarker(evt)
-@@ -5061,6 +5065,29 @@ export const useChatStore = defineStore('chat', () => {
+       applyBackgroundPendingEvent(sid, evt)
+@@ -5390,6 +5394,29 @@ export const useChatStore = defineStore('chat', () => {
      }, 12_000)
    }
  
