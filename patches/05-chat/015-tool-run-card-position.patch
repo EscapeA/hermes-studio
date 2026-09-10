@@ -1,0 +1,96 @@
+From 9878d6907f045cec5f552fd828a44f7705fbefcf Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Fri, 28 Aug 2026 07:50:09 +0800
+Subject: [PATCH] fix(chat): anchor tool-run card at run end and unclip
+ streaming tools
+
+- tool-run-grouping: emit the collapsed tool-run card at the LAST completed
+  tool of the run instead of the first, so during an active run the card
+  follows the advancing tool calls instead of being pinned at the first
+  call where the user can no longer see it.
+- MessageList: drop the fixed 120px height + overflow:hidden on
+  .streaming-indicator (upstream #2662 paired it with the single-line
+  marquee reasoning). With multi-line reasoning restored, the fixed box
+  clipped the live tool strip; height is now content-driven.
+---
+ .../components/hermes/chat/MessageList.vue    |  5 -----
+ .../hermes/chat/tool-run-grouping.ts          | 21 ++++++++++++++-----
+ 2 files changed, 16 insertions(+), 10 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
+index 13dace02..e0237a7f 100644
+--- a/packages/client/src/components/hermes/chat/MessageList.vue
++++ b/packages/client/src/components/hermes/chat/MessageList.vue
+@@ -1736,17 +1736,12 @@ defineExpose({
+   display: flex;
+   flex-direction: column;
+   align-items: flex-start;
+-  flex: 0 0 120px;
+   gap: 8px;
+   width: 100%;
+   max-width: 100%;
+-  height: 120px;
+-  min-height: 120px;
+-  max-height: 120px;
+   min-width: 0;
+   padding: 4px;
+   box-sizing: border-box;
+-  overflow: hidden;
+ }
+ 
+ .tool-calls-panel {
+diff --git a/packages/client/src/components/hermes/chat/tool-run-grouping.ts b/packages/client/src/components/hermes/chat/tool-run-grouping.ts
+index 7c54e339..52b74c2d 100644
+--- a/packages/client/src/components/hermes/chat/tool-run-grouping.ts
++++ b/packages/client/src/components/hermes/chat/tool-run-grouping.ts
+@@ -2,18 +2,24 @@ import type { Message } from '@/stores/hermes/chat'
+ 
+ export function groupCompletedToolsByRun(messages: Message[]): Message[] {
+   const toolsByRun = new Map<string, Message[]>()
+-  for (const message of messages) {
+-    const runId = message.runMarker?.trim()
+-    if (message.role !== 'tool' || message.toolStatus === 'running' || !runId) continue
++  const runMaxIndex = new Map<string, number>()
++  for (let i = 0; i < messages.length; i++) {
++    const message = messages[i]
++    const runId = message.role === 'tool' && message.toolStatus !== 'running'
++      ? message.runMarker?.trim()
++      : undefined
++    if (!runId) continue
+     const tools = toolsByRun.get(runId) || []
+     tools.push(message)
+     toolsByRun.set(runId, tools)
++    runMaxIndex.set(runId, i)
+   }
+   if (toolsByRun.size === 0) return messages
+ 
+   const emittedRuns = new Set<string>()
+   const grouped: Message[] = []
+-  for (const message of messages) {
++  for (let i = 0; i < messages.length; i++) {
++    const message = messages[i]
+     const runId = message.role === 'tool' && message.toolStatus !== 'running'
+       ? message.runMarker?.trim()
+       : undefined
+@@ -21,6 +27,11 @@ export function groupCompletedToolsByRun(messages: Message[]): Message[] {
+       grouped.push(message)
+       continue
+     }
++    // Skip earlier completed tools of the same run; emit the collapsed card in
++    // place of the LAST completed tool so it stays near the end of the run
++    // (and near the live view bottom) instead of being anchored at the first
++    // tool call of the run.
++    if (i !== runMaxIndex.get(runId)) continue
+     if (emittedRuns.has(runId)) continue
+     emittedRuns.add(runId)
+     const tools = toolsByRun.get(runId)
+@@ -40,4 +51,4 @@ export function groupCompletedToolsByRun(messages: Message[]): Message[] {
+     })
+   }
+   return grouped
+-}
++}
+\ No newline at end of file
+-- 
+2.53.0
+

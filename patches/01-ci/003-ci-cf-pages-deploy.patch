@@ -1,0 +1,48 @@
+From 7db549b00c831b73e911df0e44b0fe71a5905900 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 22 Jun 2026 01:21:50 +0800
+Subject: [PATCH] ci: add CF Pages deploy after build on dev/main
+
+---
+ .github/workflows/build.yml | 28 ++++++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+
+diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
+index 97915b7f..806fc4a2 100644
+--- a/.github/workflows/build.yml
++++ b/.github/workflows/build.yml
+@@ -44,3 +44,31 @@ jobs:
+ 
+       - name: Build
+         run: npm run build
++
++      - name: Upload client dist
++        uses: actions/upload-artifact@v4
++        with:
++          name: hermes-studio-client-dist
++          path: dist/client/
++
++  deploy:
++    needs: build
++    if: github.event_name == 'push' && github.ref == 'refs/heads/dev/main'
++    runs-on: ubuntu-latest
++    permissions:
++      contents: read
++      deployments: write
++
++    steps:
++      - name: Download client dist
++        uses: actions/download-artifact@v4
++        with:
++          name: hermes-studio-client-dist
++          path: dist/client/
++
++      - name: Deploy to Cloudflare Pages
++        uses: cloudflare/wrangler-action@v3
++        with:
++          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
++          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
++          command: pages deploy dist/client --project-name=hermes-studio --branch=main
+-- 
+2.53.0
+
