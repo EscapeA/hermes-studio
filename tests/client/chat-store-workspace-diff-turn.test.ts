@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { alignWorkspaceChangeAssistantMessage, attachWorkspaceChangesToExactTurns, useChatStore } from '@/stores/hermes/chat'
+import { alignWorkspaceChangeAssistantMessage, attachRunSpeedToTurn, attachWorkspaceChangesToExactTurns, useChatStore, type Message } from '@/stores/hermes/chat'
 
 const sessionApi = vi.hoisted(() => ({
   fetchSessions: vi.fn(),
@@ -235,5 +235,53 @@ describe('chat workspace diff turn association', () => {
     expect(store.activeSession?.messages.find(message => message.id === '2')?.workspaceChanges?.[0]?.change_id).toBe('change-1')
     expect(store.activeSession?.messages.find(message => message.id === '4')?.workspaceChanges?.[0]?.change_id).toBe('change-2')
     expect(sessionApi.fetchSessionMessagesPage).toHaveBeenCalledWith('session-1', 2, 150, 'default')
+  })
+})
+
+describe('run speed turn attachment', () => {
+  function message(id: string, role: Message['role'], isStreaming = false): Message {
+    return { id, role, content: '', timestamp: 1, isStreaming }
+  }
+
+  it('hangs the reading on the message the run produced', () => {
+    const messages: Message[] = [
+      message('1', 'user'),
+      message('2', 'assistant'),   // previous turn, predates this run
+      message('3', 'user'),
+      message('4', 'assistant'),   // this run's answer
+    ]
+
+    expect(attachRunSpeedToTurn(messages, '2', { tokens: 630, elapsedMs: 4_033 })).toBe(true)
+
+    expect(messages[3].runSpeed).toEqual({ tokens: 630, elapsedMs: 4_033 })
+    expect(messages[1].runSpeed).toBeUndefined()
+  })
+
+  it('leaves the previous turn alone when the run emitted no assistant text', () => {
+    // The user's case: the agent goes straight to thinking/tool calls, so this
+    // run owns no message at all. Stamping the newest assistant message would
+    // overwrite the previous turn with this run's speed.
+    const messages: Message[] = [
+      message('1', 'user'),
+      message('2', 'assistant'),   // previous turn
+      message('3', 'user'),
+      message('4', 'tool'),        // this run only ran tools so far
+    ]
+
+    expect(attachRunSpeedToTurn(messages, '2', { tokens: 900, elapsedMs: 5_000 })).toBe(false)
+    expect(messages[1].runSpeed).toBeUndefined()
+  })
+
+  it('attaches when the run started before any assistant message existed', () => {
+    const messages: Message[] = [message('1', 'user'), message('2', 'assistant')]
+
+    expect(attachRunSpeedToTurn(messages, '', { tokens: 100, elapsedMs: 1_000 })).toBe(true)
+    expect(messages[1].runSpeed).toEqual({ tokens: 100, elapsedMs: 1_000 })
+  })
+
+  it('does nothing when the transcript has no assistant message at all', () => {
+    const messages: Message[] = [message('1', 'user'), message('2', 'tool')]
+
+    expect(attachRunSpeedToTurn(messages, '', { tokens: 10, elapsedMs: 500 })).toBe(false)
   })
 })
