@@ -131,7 +131,8 @@ describe('SubagentStreamPanel', () => {
       },
     })
 
-    expect(wrapper.find('.subagent-run-indicator .thinking-avatar').exists()).toBe(true)
+    expect(wrapper.find('.subagent-run-indicator .thinking-status-label').exists()).toBe(true)
+    expect(wrapper.find('.subagent-run-indicator .thinking-avatar').exists()).toBe(false)
     expect(wrapper.get('.subagent-run-indicator .live-reasoning-detail').text()).toContain('Summarize the result.')
     expect(wrapper.get('.subagent-run-indicator .live-reasoning-detail').text()).not.toContain('Inspect the worker.')
     expect(wrapper.get('.subagent-live-tool').text()).toContain('read_file')
