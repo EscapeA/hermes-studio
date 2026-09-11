@@ -1188,6 +1188,8 @@ export default {
     executionDuration: '执行时长',
     thinkingLabel: '思考过程',
     thinkingInProgress: '正在思考',
+    tokensPerSecond: '{tps} tok/s',
+    turnAverageSpeed: '本轮平均速度：{tps} tok/s',
     thinkingShow: '展开思考过程',
     thinkingHide: '收起思考过程',
     thinkingDuration: '已观察 {duration}',

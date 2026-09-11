@@ -17,6 +17,7 @@ import { showCompletionNotification } from '@/utils/completion-notification'
 import { detectThinkingBoundary } from '@/utils/thinking-parser'
 import { isKnownBridgeSessionCommand } from '@/utils/hermes/bridge-session-commands'
 import { responseErrorMessage } from '@/utils/http-error'
+import { toRunSpeedReading, type RunSpeedReading } from '@/utils/run-speed'
 import {
   isPendingInteractionExpiredError,
   notifyPendingInteractionExpired,
@@ -92,6 +93,13 @@ export interface Message {
   toolStatus?: 'running' | 'done' | 'error'
   toolDuration?: number  // 工具执行时长（秒）
   workspaceChanges?: WorkspaceRunChangeSummary[]
+  /**
+   * Decode speed of this turn's finished API calls (tokens over decode wall
+   * time). Hung on the message instead of kept in run state because the
+   * run-scoped "thinking" indicator unmounts when the run ends, which would
+   * take the number with it.
+   */
+  runSpeed?: RunSpeedReading
   isStreaming?: boolean
   attachments?: Attachment[]
   // 思考/推理文本。两条来源：
@@ -553,6 +561,43 @@ export function attachWorkspaceChangesToExactTurns(
     const target = assistantMessageId ? assistantById.get(assistantMessageId) : undefined
     if (target) target.workspaceChanges!.push(change)
   }
+}
+
+/**
+ * Pick the message this run's reading belongs on.
+ *
+ * The newest assistant message is the one the run produced — unless it is the
+ * message that already existed when the run started, which means the run emitted
+ * no assistant text at all (it went straight to thinking/tool calls). Stamping
+ * the number there would overwrite the previous turn with this run's speed.
+ * @param messages - Session messages, oldest first.
+ * @param anchorId - Id of the newest assistant message that predates the run.
+ * @returns The message to read the speed from, or null when the run owns none.
+ */
+export function resolveRunSpeedTurnMessage(messages: Message[], anchorId: string): Message | null {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index].role !== 'assistant') continue
+    return String(messages[index].id) === anchorId ? null : messages[index]
+  }
+  return null
+}
+
+/**
+ * Hang a finished run's decode speed on the message that owns it.
+ * @param messages - Session messages, oldest first.
+ * @param anchorId - Id of the newest assistant message that predates the run.
+ * @param reading - Latest reading for the session's run.
+ * @returns True when a message took the reading.
+ */
+export function attachRunSpeedToTurn(
+  messages: Message[],
+  anchorId: string,
+  reading: RunSpeedReading,
+): boolean {
+  const target = resolveRunSpeedTurnMessage(messages, anchorId)
+  if (!target) return false
+  target.runSpeed = reading
+  return true
 }
 
 function isToolOutputError(output: unknown): boolean {
@@ -1385,14 +1430,100 @@ export const useChatStore = defineStore('chat', () => {
    */
   const runStartedAt = ref<Map<string, number>>(new Map())
 
+  /**
+   * sessionId → decode speed of the run's most recently finished API call. Feeds
+   * the number shown next to the thinking timer while the run is live; it is
+   * handed to the turn's message when the run ends.
+   */
+  const runSpeed = ref<Map<string, RunSpeedReading>>(new Map())
+
+  function setRunSpeed(sessionId: string, reading: RunSpeedReading) {
+    runSpeed.value = new Map(runSpeed.value).set(sessionId, reading)
+  }
+
+  function clearRunSpeed(sessionId: string) {
+    if (!runSpeed.value.has(sessionId)) return
+    const next = new Map(runSpeed.value)
+    next.delete(sessionId)
+    runSpeed.value = next
+  }
+
+  /**
+   * sessionId → id of the newest assistant message that predates the run. A run
+   * that never emits assistant text has no message of its own, and this is what
+   * keeps its number off the previous turn's message.
+   */
+  const runSpeedAnchor = ref<Map<string, string>>(new Map())
+
+  /** Newest assistant message in a session's transcript, streaming or not. */
+  function latestAssistantId(sessionId: string): string {
+    const messages = sessions.value.find(session => session.id === sessionId)?.messages || []
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index].role === 'assistant') return String(messages[index].id)
+    }
+    return ''
+  }
+
+  /** Newest assistant message that was already finished when the run started. */
+  function settledAssistantId(sessionId: string): string {
+    const messages = sessions.value.find(session => session.id === sessionId)?.messages || []
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index].role === 'assistant' && !messages[index].isStreaming) {
+        return String(messages[index].id)
+      }
+    }
+    return ''
+  }
+
+  /** Hang a reading on the run's own message, when the run produced one. */
+  function applyRunSpeedToTurn(sessionId: string, reading: RunSpeedReading) {
+    const anchorId = runSpeedAnchor.value.get(sessionId) ?? ''
+    if (anchorId !== '' && latestAssistantId(sessionId) === anchorId) return
+    const target = sessions.value.find(session => session.id === sessionId)
+    if (target) attachRunSpeedToTurn(target.messages, anchorId, reading)
+  }
+
+  /**
+   * Hand the live reading to the turn when its run ends, so the number stays
+   * readable on the message after the thinking indicator unmounts.
+   * @param sessionId - Session whose run just ended.
+   */
+  function settleRunSpeed(sessionId: string) {
+    const reading = runSpeed.value.get(sessionId)
+    if (!reading) return
+    applyRunSpeedToTurn(sessionId, reading)
+    clearRunSpeed(sessionId)
+  }
+
+  /**
+   * Pick the `speed` reading off a run event, if it carries one.
+   *
+   * While the run is live it feeds the thinking indicator; a reading that lands
+   * after the run already ended belongs on the turn's message instead.
+   * @param sessionId - Session the event belongs to.
+   * @param evt - Run event carrying an optional `speed` reading.
+   */
+  function applyRunSpeedEvent(sessionId: string, evt: unknown) {
+    const reading = toRunSpeedReading((evt as { speed?: unknown } | null)?.speed)
+    if (!reading) return
+    if (!isSessionWorking(sessionId)) {
+      applyRunSpeedToTurn(sessionId, reading)
+      return
+    }
+    setRunSpeed(sessionId, reading)
+  }
+
   function setRunStartedAt(sessionId: string, startedAt: number) {
     if (!sessionId || !(startedAt > 0)) return
     if (runStartedAt.value.get(sessionId) === startedAt) return
     runStartedAt.value = new Map(runStartedAt.value).set(sessionId, startedAt)
+    runSpeedAnchor.value = new Map(runSpeedAnchor.value).set(sessionId, settledAssistantId(sessionId))
   }
 
   function clearRunStartedAt(sessionId: string) {
-    if (!sessionId || !runStartedAt.value.has(sessionId)) return
+    if (!sessionId) return
+    settleRunSpeed(sessionId)
+    if (!runStartedAt.value.has(sessionId)) return
     const next = new Map(runStartedAt.value)
     next.delete(sessionId)
     runStartedAt.value = next
@@ -4448,6 +4579,7 @@ export const useChatStore = defineStore('chat', () => {
             }
 
             case 'usage.updated': {
+              applyRunSpeedEvent(sid, evt)
               const target = sessions.value.find(s => s.id === sid)
               if (target) {
                 target.inputTokens = (evt as any).inputTokens
@@ -5116,6 +5248,7 @@ export const useChatStore = defineStore('chat', () => {
         }
 
         case 'usage.updated': {
+          applyRunSpeedEvent(sid, evt)
           const target = sessions.value.find(s => s.id === sid)
           if (target) {
             target.inputTokens = (evt as any).inputTokens
@@ -5488,6 +5621,7 @@ export const useChatStore = defineStore('chat', () => {
     isSessionLive,
     isSessionWorking,
     runStartedAt,
+    runSpeed,
     isSessionCompletedUnread,
     clearSessionCompletedUnread,
     sessionProfileFilter,
