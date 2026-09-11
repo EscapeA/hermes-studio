@@ -1228,6 +1228,7 @@ export default {
     unchangedLines: '변경 없음 {count}줄',
     executionDuration: '실행 시간',    thinkingLabel: '사고 과정',
     thinkingInProgress: '사고 중',
+    tokensPerSecond: '{tps} tok/s',
     thinkingShow: '사고 과정 펼치기',
     thinkingHide: '사고 과정 접기',
     thinkingDuration: '관측 {duration}',
