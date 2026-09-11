@@ -1,6 +1,6 @@
 import { bridgeLogger } from '../../public/logging'
 import type { SessionState } from '../chat-run/types'
-import { applyApiPromptContextTokens, resolveApiPromptTokens } from '../chat-run/usage'
+import { applyApiPromptContextTokens, foldDecodeCallResult, resolveApiPromptTokens } from '../chat-run/usage'
 import { normalizeTokenUsage, recordSessionUsage } from './usage-recorder'
 
 function stringValue(value: unknown): string {
@@ -59,6 +59,13 @@ export function recordBridgeModelUsage(
   // Context-window UI: use full prompt occupancy (log "in=" / prompt_tokens).
   // Hermes CanonicalUsage.input_tokens is uncached-only; prompt_tokens = input+cache_read+cache_write.
   if (live) {
+    // Decode throughput: settle this call's provider timing into the run fold
+    // and reset the live anchor. Calls without a recorded first chunk
+    // (non-streamed, failed stream, partial stub) drop out of the fold.
+    foldDecodeCallResult(live.state, usage.outputTokens, {
+      firstChunkAt: event.first_chunk_at,
+      endedAt: event.ended_at,
+    })
     const promptTokens = resolveApiPromptTokens(event.usage, usage)
     return applyApiPromptContextTokens(
       sessionId,
