@@ -24,6 +24,7 @@ import { notifyComputerUseStarted } from '@/composables/useComputerUsePermission
 import { detectThinkingBoundary } from '@/utils/thinking-parser'
 import { isKnownBridgeSessionCommand } from '@/utils/hermes/bridge-session-commands'
 import { responseErrorMessage } from '@/utils/http-error'
+import { toRunSpeedReading, type RunSpeedReading } from '@/utils/run-speed'
 import {
   isPendingInteractionExpiredError,
   notifyPendingInteractionExpired,
@@ -1424,6 +1425,38 @@ export const useChatStore = defineStore('chat', () => {
    */
   const runStartedAt = ref<Map<string, number>>(new Map())
 
+  /**
+   * sessionId → decode speed of the run's most recently finished API call. Feeds
+   * the number shown next to the thinking timer while the run is live; it is
+   * handed to the turn's message when the run ends.
+   */
+  const runSpeed = ref<Map<string, RunSpeedReading>>(new Map())
+
+  function setRunSpeed(sessionId: string, reading: RunSpeedReading) {
+    runSpeed.value = new Map(runSpeed.value).set(sessionId, reading)
+  }
+
+  function clearRunSpeed(sessionId: string) {
+    if (!runSpeed.value.has(sessionId)) return
+    const next = new Map(runSpeed.value)
+    next.delete(sessionId)
+    runSpeed.value = next
+  }
+
+  /**
+   * Pick the `speed` reading off a run event, if it carries one. It only feeds
+   * the live reading beside the thinking timer; a reading that lands after the
+   * run ended is dropped, since that indicator is already unmounted.
+   * @param sessionId - Session the event belongs to.
+   * @param evt - Run event carrying an optional `speed` reading.
+   */
+  function applyRunSpeedEvent(sessionId: string, evt: unknown) {
+    const reading = toRunSpeedReading((evt as { speed?: unknown } | null)?.speed)
+    if (!reading) return
+    if (!isSessionWorking(sessionId)) return
+    setRunSpeed(sessionId, reading)
+  }
+
   function setRunStartedAt(sessionId: string, startedAt: number) {
     if (!sessionId || !(startedAt > 0)) return
     if (runStartedAt.value.get(sessionId) === startedAt) return
@@ -1431,7 +1464,9 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   function clearRunStartedAt(sessionId: string) {
-    if (!sessionId || !runStartedAt.value.has(sessionId)) return
+    if (!sessionId) return
+    clearRunSpeed(sessionId)
+    if (!runStartedAt.value.has(sessionId)) return
     const next = new Map(runStartedAt.value)
     next.delete(sessionId)
     runStartedAt.value = next
@@ -4603,6 +4638,7 @@ export const useChatStore = defineStore('chat', () => {
             }
 
             case 'usage.updated': {
+              applyRunSpeedEvent(sid, evt)
               const target = sessions.value.find(s => s.id === sid)
               if (target) {
                 applySessionTokenUsage(target, evt as any)
@@ -5269,6 +5305,7 @@ export const useChatStore = defineStore('chat', () => {
         }
 
         case 'usage.updated': {
+          applyRunSpeedEvent(sid, evt)
           const target = sessions.value.find(s => s.id === sid)
           if (target) {
             applySessionTokenUsage(target, evt as any)
@@ -5671,6 +5708,7 @@ export const useChatStore = defineStore('chat', () => {
     isSessionLive,
     isSessionWorking,
     runStartedAt,
+    runSpeed,
     isSessionCompletedUnread,
     clearSessionCompletedUnread,
     sessionProfileFilter,
