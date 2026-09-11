@@ -1501,6 +1501,7 @@ export default {
     executionDuration: 'وقت التنفيذ',
     thinkingLabel: 'التفكير',
     thinkingInProgress: 'التفكير',
+    tokensPerSecond: '{tps} tok/s',
     thinkingShow: 'إظهار التفكير',
     thinkingHide: 'إخفاء التفكير',
     thinkingDuration: 'المدة المرصودة {duration}',

@@ -1510,6 +1510,7 @@ export default {
     executionDuration: 'Execution time',
     thinkingLabel: 'Thinking',
     thinkingInProgress: 'Thinking',
+    tokensPerSecond: '{tps} tok/s',
     thinkingShow: 'Show thinking',
     thinkingHide: 'Hide thinking',
     thinkingDuration: 'Observed {duration}',
