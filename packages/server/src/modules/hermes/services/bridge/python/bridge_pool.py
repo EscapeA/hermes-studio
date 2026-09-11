@@ -234,6 +234,9 @@ class AgentPool:
             "api_duration": kwargs.get("api_duration"),
             "started_at": kwargs.get("started_at"),
             "ended_at": kwargs.get("ended_at"),
+            # First streamed chunk (epoch s) or None when the response was not
+            # streamed: decode throughput = output_tokens / (ended_at - first_chunk_at).
+            "first_chunk_at": kwargs.get("first_chunk_at"),
         })
 
     @staticmethod

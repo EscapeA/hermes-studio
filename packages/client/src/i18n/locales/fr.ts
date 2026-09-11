@@ -1082,6 +1082,8 @@ export default {
     unchangedLines: '{count} lignes inchangées',
     executionDuration: 'Temps d’exécution',    thinkingLabel: 'Raisonnement',
     thinkingInProgress: 'En réflexion',
+    tokensPerSecond: '{tps} tok/s',
+    turnAverageSpeed: 'Moyenne du tour : {tps} tok/s',
     thinkingShow: 'Afficher le raisonnement',
     thinkingHide: 'Masquer le raisonnement',
     thinkingDuration: 'Observé {duration}',
