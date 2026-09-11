@@ -1083,6 +1083,8 @@ export default {
     unchangedLines: '{count} líneas sin cambios',
     executionDuration: 'Tiempo de ejecución',    thinkingLabel: 'Pensamiento',
     thinkingInProgress: 'Pensando',
+    tokensPerSecond: '{tps} tok/s',
+    turnAverageSpeed: 'Promedio del turno: {tps} tok/s',
     thinkingShow: 'Mostrar pensamiento',
     thinkingHide: 'Ocultar pensamiento',
     thinkingDuration: 'Observado {duration}',
