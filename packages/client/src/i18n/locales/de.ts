@@ -1391,6 +1391,7 @@ export default {
     unchangedLines: '{count} unveränderte Zeilen',
     executionDuration: 'Ausführungszeit',    thinkingLabel: 'Denkprozess',
     thinkingInProgress: 'Denkt',
+    tokensPerSecond: '{tps} tok/s',
     thinkingShow: 'Denkprozess anzeigen',
     thinkingHide: 'Denkprozess ausblenden',
     thinkingDuration: 'Beobachtet {duration}',

@@ -25,6 +25,7 @@ import {
   clearApiPromptContextTokens,
   contextTokensWithCachedOverhead,
   estimateUsageTokensFromMessages,
+  foldDecodeCallResult,
   getCachedBridgeContextOverhead,
   hasApiPromptContextTokens,
   updateMessageContextTokenUsage,
