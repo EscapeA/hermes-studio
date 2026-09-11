@@ -15,7 +15,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 02-pwa | PWA（离线、SW 缓存、SWR、资源瘦身、_headers、状态栏主题色） | 001-009 |
 | 03-connection | 连接设置/自定义后端 URL | 001-011 |
 | 04-usage | 用量显示（prompt_tokens、百分比、session 累计、composer 对齐、运行中实时解码 tok/s） | 001-010 |
-| 05-chat | Chat 核心（fast-path、avatar、双下拉、identity、滚动、聊天身份开关、用户气泡蓝色、clarify 折叠收起、工具卡按轮分组） | 001-019 |
+| 05-chat | Chat 核心（fast-path、avatar、双下拉、identity、滚动、聊天身份开关、用户气泡蓝色、clarify 折叠收起、工具卡按轮分组、去「正在思考」gif 图标） | 001-020 |
 | 06-mobile-input | 移动端输入（Enter 换行、模型下拉不弹键盘） | 001-002 |
 | 07-workflow | Workflow 移动端布局 + i18n | 001-002 |
 | 08-server | server 静态缓存头 + GET /sessions archived=1 恢复 | 001-002 |
@@ -24,9 +24,9 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 11-socket-stall | socket 卡死防护（服务端 backlog 检测断连 + 前端 REST 兜底刷新） | 001-002 |
 | 12-tool-strip | 工具面板防闪烁（500ms 延迟显示）+ 折叠单行（正在调用 N 个工具）+ 运行中工具行展开详情 + toggle 与列表上下堆叠 + 展开详情解除高度限制 | 001-004 |
 
-共 **78 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001）。
+共 **79 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001）。
 
-**0.7.19 之后新增（2026-09-12）**：04-usage/010-每轮解码速度（run 态实时 + 单轮结束常驻在消息上）。
+**0.7.19 之后新增（2026-09-12）**：04-usage/010-每轮解码速度（run 态实时 + 单轮结束常驻在消息上）；05-chat/020-去掉 run 态「正在思考」左侧的 thinking.gif 图标（模板/导入/样式三层清理 + 单测与 e2e 断言同步；未导入的 gif 资产保留在源码树，构建产物不再打包）。
 链路：hermes-agent `post_api_request` hook 的 `first_chunk_at` → `bridge_pool.py` 透传 → `chat-run/usage.ts` 折叠（`output_tokens / (ended_at - first_chunk_at)`，仅按**调用**累加，无首 chunk 的调用整体退出）→ 每次调用完成时随 `usage.updated` 的 `speed` 字段下发一次 → 客户端两处显示：① **run 态**：`LiveReasoningStatus`（"正在思考"计时右侧）实时显示 `138 tok/s`；② **单轮结束时**：`clearRunStartedAt` → `settleRunSpeed` 把最后一个读数挂到**本轮最新 assistant 消息**上，`MessageItem` 在消息下方常驻 `本轮平均速度：145 tok/s`（`.assistant-run-speed`），随后清理 run 态读数避免重复显示。
 设计取舍（用户 2026-09-12 定，三轮收敛）：① **不做流式估算、不周期性下发** —— 一次调用完成只发一次，数字在工具执行/思考停顿期间保持不动（早期流式估算会因分母持续增长而一直下降，已废弃）；② **run 态 + 结束常驻两处都要** —— 只放 run 态则单轮结束即消失，只放消息上则运行中看不见；③ 读数**纯客户端**挂载，刷新/重开后丢失（用户已接受，未落库）。
 ⚠️ 该补丁改到 `bridge_pool.py`，热替脚本 `patch-hermes-web-ui-from-workspace-dist.sh` 已同步新增 `dist/server/agent-bridge/python/` 的 rsync 段（只换 index.js 不够，bridge worker 从**安装包**里加载这些 py 文件）。
