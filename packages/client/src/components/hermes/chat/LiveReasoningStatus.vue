@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
+import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import thinkingImage from '@/assets/thinking.gif'
 import type { ChatAgentAvatar } from '@/utils/chat-agent-avatar'
 
 const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
@@ -17,7 +16,6 @@ const props = withDefaults(defineProps<{
 }>(), {
   agent: () => ({ label: 'Hermes', src: '/coding-agents/hermes.png' }),
 })
-const isEkko = computed(() => props.agent.label === 'Ekko')
 
 const { t } = useI18n()
 
@@ -40,18 +38,6 @@ watch(
 <template>
   <div class="live-reasoning-status">
     <div class="thinking-status">
-      <img
-        :key="isEkko ? thinkingImage : agent.src"
-        :src="isEkko ? thinkingImage : agent.src"
-        data-agent-deployment-image="pending"
-        @load="($event.target as HTMLImageElement).dataset.agentDeploymentImage = 'ready'"
-        @error="($event.target as HTMLImageElement).dataset.agentDeploymentImage = 'error'"
-        alt=""
-        aria-hidden="true"
-        class="thinking-avatar"
-        :data-agent-deployment-target="deploymentSessionId || ''"
-        :class="isEkko ? 'thinking-avatar--animated' : 'thinking-avatar--logo'"
-      >
       <div class="thinking-status-copy">
         <span class="thinking-status-label">{{ t('chat.thinkingInProgress') }}</span>
         <span class="thinking-status-time">{{ elapsed }}</span>
@@ -95,27 +81,6 @@ watch(
   width: 100%;
   min-width: 0;
   min-height: 40px;
-}
-
-.thinking-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: $radius-md;
-  object-fit: cover;
-  flex-shrink: 0;
-
-  &--animated {
-    .dark & {
-      filter: brightness(1.18) contrast(1.08) saturate(1.08);
-    }
-  }
-}
-
-.thinking-avatar--logo {
-  box-sizing: border-box;
-  padding: 5px;
-  object-fit: contain;
-  background: #fff;
 }
 
 .thinking-status-copy {
