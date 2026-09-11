@@ -1304,6 +1304,7 @@ export default {
     unchangedLines: '{count} linhas inalteradas',
     executionDuration: 'Tempo de execução',    thinkingLabel: 'Raciocínio',
     thinkingInProgress: 'Pensando',
+    tokensPerSecond: '{tps} tok/s',
     thinkingShow: 'Mostrar raciocínio',
     thinkingHide: 'Ocultar raciocínio',
     thinkingDuration: 'Observado {duration}',
