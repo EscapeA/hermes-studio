@@ -27,6 +27,7 @@ import { messageScrollPositionKey, rememberMessageScrollPosition } from "./messa
 import { chatSessionAgentAvatar } from "@/utils/chat-agent-avatar";
 import { parseThinking } from "@/utils/thinking-parser";
 import { groupCompletedToolsByRun } from "./tool-run-grouping";
+import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-speed";
 
 const props = withDefaults(defineProps<{
   approvalPortalToBody?: boolean
@@ -136,6 +137,20 @@ function stopThinkingTimer() {
 
 const isRunIndicatorActive = computed(() => chatStore.isRunActive || !!chatStore.abortState);
 const formattedThinkingElapsed = computed(() => formatElapsed(thinkingElapsedMs.value));
+
+/**
+ * Decode speed of the run's latest finished API call, shown next to the thinking
+ * timer while the run is live; the settled value is later handed to the turn's
+ * message, so nothing is lost when this indicator unmounts.
+ */
+const liveSpeedLabel = computed(() => {
+  const sessionId = chatStore.activeSessionId;
+  const reading = sessionId ? chatStore.runSpeed.get(sessionId) : undefined;
+  if (!reading) return null;
+  const tps = runSpeedTokensPerSecond(reading);
+  if (tps == null) return null;
+  return t('chat.tokensPerSecond', { tps: formatTokensPerSecond(tps) });
+});
 
 const currentToolCalls = computed(() => {
   const msgs = chatStore.messages;
@@ -807,6 +822,7 @@ defineExpose({
             :reasoning="liveReasoningDetail?.reasoning"
             :reasoning-id="liveReasoningDetail?.messageId"
             :elapsed="formattedThinkingElapsed"
+            :speed="liveSpeedLabel"
           />
           <div v-if="visibleToolCalls.length > 0 || chatStore.compressionState || chatStore.abortState" class="tool-calls-panel">
             <!-- Abort indicator -->

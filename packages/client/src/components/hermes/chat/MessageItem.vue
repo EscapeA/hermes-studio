@@ -31,6 +31,7 @@ import { useGlobalSpeech } from "@/composables/useSpeech";
 import { useVoiceSettings } from "@/composables/useVoiceSettings";
 import { speedToEdgeRate, hzToEdgePitch } from "@/utils/ttsHelpers";
 import { formatChatTimestamp } from "@/utils/chat-timestamp";
+import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-speed";
 import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
 import type { WorkspaceRunChangeSummary } from "@/api/studio/sessions";
 import { isServerTtsProvider } from "@/api/studio/tts";
@@ -627,6 +628,18 @@ const hasAttachments = computed(
 const toolArgsPayload = computed(() => formatToolPayload(props.message.toolArgs));
 const toolResultPayload = computed(() => formatToolPayload(props.message.toolResult, true));
 const workspaceChanges = computed(() => props.message.workspaceChanges || []);
+
+/**
+ * The turn's average decode speed, shown under the message so it survives the
+ * run: the thinking indicator it is measured from unmounts when the run ends.
+ */
+const runSpeedLabel = computed(() => {
+  const reading = props.message.runSpeed;
+  if (!reading) return null;
+  const tps = runSpeedTokensPerSecond(reading);
+  if (tps == null) return null;
+  return t('chat.turnAverageSpeed', { tps: formatTokensPerSecond(tps) });
+});
 
 function isWorkspaceChangeExpanded(changeId: string): boolean {
   return expandedWorkspaceChangeIds.value.has(changeId);
@@ -1258,6 +1271,15 @@ onBeforeUnmount(() => {
               @toggle="toggleWorkspaceChange(change.change_id)"
               @select="file => openAssistantWorkspaceChangeFile(file, change)"
             />
+
+            <!-- Turn decode speed: kept on the message so it stays readable
+                 after the run ends (the thinking indicator is unmounted then). -->
+            <div
+              v-if="message.role === 'assistant' && runSpeedLabel"
+              class="assistant-run-speed"
+            >
+              {{ runSpeedLabel }}
+            </div>
 
             <!-- Render system message content -->
             <MarkdownRenderer
@@ -2094,6 +2116,15 @@ onBeforeUnmount(() => {
 
 .assistant-workspace-change {
   margin-top: 10px;
+}
+
+.assistant-run-speed {
+  margin-top: 8px;
+  color: $text-muted;
+  font-family: $font-code;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 18px;
 }
 
 @keyframes spin {

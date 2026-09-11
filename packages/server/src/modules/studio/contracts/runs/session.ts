@@ -142,6 +142,13 @@ export interface SessionState {
    * first render.
    */
   runStartedAt?: number
+  /**
+   * Decode-throughput fold for the current run: one reading per finished API
+   * call, accumulated here so the indicator shows the run's settled speed.
+   */
+  decodeMsTotal?: number
+  decodeTokensTotal?: number
+  decodeRunStartAt?: number
   events: Array<{ event: string; data: any }>
   abortController?: AbortController
   runId?: string

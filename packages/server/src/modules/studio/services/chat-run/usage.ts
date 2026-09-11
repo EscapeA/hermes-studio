@@ -219,12 +219,14 @@ export function updateContextTokenUsage(
   }
   const normalizedContextTokens = Math.floor(contextTokens)
   state.contextTokens = normalizedContextTokens
+  const speed = settledRunSpeed(state)
   emit('usage.updated', {
     event: 'usage.updated',
     session_id: sid,
     inputTokens: usage?.inputTokens ?? state.inputTokens ?? 0,
     outputTokens: usage?.outputTokens ?? state.outputTokens ?? 0,
     contextTokens: normalizedContextTokens,
+    ...(speed ? { speed } : {}),
   })
   return normalizedContextTokens
 }
@@ -337,4 +339,81 @@ export function updateMessageContextTokenUsage(
     contextTokensWithCachedOverhead(state, messageTokens),
     usage,
   )
+}
+
+// ─── Decode throughput (tokens/second) ───────────────────────────────────
+//
+// One reading per finished API call: output_tokens / (ended_at -
+// first_chunk_at). A call without a recorded first chunk (non-streamed, failed
+// stream, partial stub) drops out entirely rather than diluting the ratio, and
+// nothing is estimated while a call is still streaming — the display holds the
+// last finished call's number until the next one settles.
+
+/** Fold state backing run decode throughput; SessionState carries these fields. */
+export interface RunSpeedFoldState {
+  /** Run start the totals belong to; a new value re-scopes the fold. */
+  runStartedAt?: number
+  decodeRunStartAt?: number
+  decodeMsTotal?: number
+  decodeTokensTotal?: number
+}
+
+/** One reading: tokens over decode wall time. */
+export interface RunSpeedReading {
+  tokens: number
+  elapsedMs: number
+}
+
+function finiteEpochSeconds(value: unknown): number | undefined {
+  const seconds = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined
+}
+
+/**
+ * Drop the fold when a different run owns the session state.
+ *
+ * Session state outlives one run, so totals scoped to the previous run must not
+ * leak into the next one's display. `runStartedAt` is the run identity already
+ * carried by the state, so no run-start call site has to know about this fold.
+ * @param state - Run speed fold state (mutated when the run changed).
+ */
+function scopeRunSpeedToRun(state: RunSpeedFoldState): void {
+  const startedAt = state.runStartedAt
+  if (startedAt == null || state.decodeRunStartAt === startedAt) return
+  state.decodeRunStartAt = startedAt
+  state.decodeMsTotal = 0
+  state.decodeTokensTotal = 0
+}
+
+/**
+ * Fold one finished call into the run totals.
+ * @param state - Run speed fold state (mutated).
+ * @param outputTokens - Provider-reported completion tokens for the call.
+ * @param timing - Raw hook timing values (epoch seconds) for that same call.
+ */
+export function foldDecodeCallResult(
+  state: RunSpeedFoldState,
+  outputTokens: number,
+  timing: { firstChunkAt?: unknown; endedAt?: unknown },
+): void {
+  scopeRunSpeedToRun(state)
+  const firstChunkAt = finiteEpochSeconds(timing.firstChunkAt)
+  const endedAt = finiteEpochSeconds(timing.endedAt)
+  if (firstChunkAt == null || endedAt == null) return
+  const decodeMs = Math.round(Math.max(0, endedAt - firstChunkAt) * 1000)
+  if (decodeMs <= 0 || !(outputTokens > 0)) return
+  state.decodeMsTotal = (state.decodeMsTotal || 0) + decodeMs
+  state.decodeTokensTotal = (state.decodeTokensTotal || 0) + outputTokens
+}
+
+/**
+ * Settled reading over provider-timed calls only.
+ * @param state - Run speed fold state.
+ * @returns The reading, or undefined when no call carried usable timing.
+ */
+export function settledRunSpeed(state: RunSpeedFoldState): RunSpeedReading | undefined {
+  const elapsedMs = state.decodeMsTotal || 0
+  const tokens = state.decodeTokensTotal || 0
+  if (elapsedMs <= 0 || tokens <= 0) return undefined
+  return { tokens, elapsedMs }
 }

@@ -9,6 +9,8 @@ const props = defineProps<{
   reasoning?: string | null
   reasoningId?: string | number | null
   elapsed: string
+  /** Decode speed of the run's latest finished call, e.g. `94 tok/s`; hidden when null. */
+  speed?: string | null
 }>()
 
 const { t } = useI18n()
@@ -41,6 +43,7 @@ watch(
       <div class="thinking-status-copy">
         <span class="thinking-status-label">{{ t('chat.thinkingInProgress') }}</span>
         <span class="thinking-status-time">{{ elapsed }}</span>
+        <span v-if="speed" class="thinking-status-speed">{{ speed }}</span>
       </div>
     </div>
     <div
@@ -142,6 +145,17 @@ watch(
   font-variant-numeric: tabular-nums;
   line-height: 20px;
   min-width: 44px;
+}
+
+.thinking-status-speed {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 2px;
+  color: $text-muted;
+  font-family: $font-code;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 20px;
 }
 
 .live-reasoning-detail {
