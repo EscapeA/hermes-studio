@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import thinkingImage from '@/assets/thinking.gif'
 
 const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
 
@@ -34,12 +33,6 @@ watch(
 <template>
   <div class="live-reasoning-status">
     <div class="thinking-status">
-      <img
-        :src="thinkingImage"
-        alt=""
-        aria-hidden="true"
-        class="thinking-avatar"
-      >
       <div class="thinking-status-copy">
         <span class="thinking-status-label">{{ t('chat.thinkingInProgress') }}</span>
         <span class="thinking-status-time">{{ elapsed }}</span>
@@ -83,18 +76,6 @@ watch(
   width: 100%;
   min-width: 0;
   min-height: 40px;
-}
-
-.thinking-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: $radius-md;
-  object-fit: cover;
-  flex-shrink: 0;
-
-  .dark & {
-    filter: brightness(1.18) contrast(1.08) saturate(1.08);
-  }
 }
 
 .thinking-status-copy {
