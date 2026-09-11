@@ -71,6 +71,8 @@ const resolveApiPromptTokensMock = vi.fn((raw: any, normalized?: any) => {
   }
   return normalized?.inputTokens
 })
+const foldDecodeCallResultMock = vi.fn()
+const settledRunSpeedMock = vi.fn()
 const flushBridgePendingToDbMock = vi.fn()
 const ensureOpenBridgeAssistantMessageMock = vi.fn()
 const syncBridgeReasoningToMessageMock = vi.fn()
@@ -127,6 +129,8 @@ vi.mock('../../packages/server/src/modules/studio/services/chat-run/usage', () =
   clearApiPromptContextTokens: clearApiPromptContextTokensMock,
   hasApiPromptContextTokens: hasApiPromptContextTokensMock,
   resolveApiPromptTokens: resolveApiPromptTokensMock,
+  foldDecodeCallResult: foldDecodeCallResultMock,
+  settledRunSpeed: settledRunSpeedMock,
 }))
 
 vi.mock('../../packages/server/src/modules/studio/services/chat-run/bridge-message', () => ({
