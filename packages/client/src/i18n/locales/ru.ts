@@ -1061,6 +1061,8 @@ export default {
     executionDuration: 'Длительность выполнения',
     thinkingLabel: 'Процесс размышления',
     thinkingInProgress: 'Размышление',
+    tokensPerSecond: '{tps} tok/s',
+    turnAverageSpeed: 'Средняя скорость за ход: {tps} tok/s',
     thinkingShow: 'Развернуть процесс размышления',
     thinkingHide: 'Свернуть процесс размышления',
     thinkingDuration: 'Наблюдается {duration}',
