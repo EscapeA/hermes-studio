@@ -33,6 +33,7 @@ import { groupCompletedToolsByRun } from "./tool-run-grouping";
 import { useMessageSelection } from './useMessageSelection';
 import type { MessageSelectionRow } from './message-selection';
 import { desktopBridge } from '@/utils/desktop-bridge';
+import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-speed";
 
 const props = withDefaults(defineProps<{
   approvalPortalToBody?: boolean
@@ -109,6 +110,19 @@ function stopThinkingTimer() {
 
 const isRunIndicatorActive = computed(() => chatStore.isRunActive || chatStore.abortState?.aborting === true);
 const formattedThinkingElapsed = computed(() => formatElapsed(thinkingElapsedMs.value));
+
+/**
+ * Decode speed of the run's latest finished API call, shown next to the thinking
+ * timer while the run is live.
+ */
+const liveSpeedLabel = computed(() => {
+  const sessionId = chatStore.activeSessionId;
+  const reading = sessionId ? chatStore.runSpeed.get(sessionId) : undefined;
+  if (!reading) return null;
+  const tps = runSpeedTokensPerSecond(reading);
+  if (tps == null) return null;
+  return t('chat.tokensPerSecond', { tps: formatTokensPerSecond(tps) });
+});
 
 const currentToolCalls = computed(() => {
   const msgs = chatStore.messages;
@@ -868,6 +882,7 @@ defineExpose({
             :reasoning="liveReasoningDetail?.reasoning"
             :reasoning-id="liveReasoningDetail?.messageId"
             :elapsed="formattedThinkingElapsed"
+            :speed="liveSpeedLabel"
           />
           <div v-if="visibleToolCalls.length > 0 || chatStore.compressionState || chatStore.abortState" class="tool-calls-panel">
             <!-- Abort indicator -->
