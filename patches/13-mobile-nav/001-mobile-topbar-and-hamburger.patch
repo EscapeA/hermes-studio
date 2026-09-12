@@ -1,0 +1,232 @@
+From 92ec18eaef1bcc9379371ec701c6aa14b6402bc0 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 12 Sep 2026 11:59:49 +0800
+Subject: [PATCH] feat(mobile): compact top bar and single hamburger sidebar
+ toggle
+
+- Unify every mobile top bar on one height variable (38px) with symmetric vertical padding + min-height, so bar content centers on the fixed .hamburger-btn axis; the hamburger's own top derives from the same variable.
+
+- Replace the /logo.png brand image in the mobile hamburger button with an 18px stroke-1.5 three-line icon matching the built-in icon set (round caps, currentColor).
+
+- Hide the duplicate four-grid page-sidebar toggles on mobile in Models and Workflow (Chat/GroupChat/Connections/History/AgentManager already hide theirs upstream). TerminalView keeps its toggle: the hamburger there opens the app nav drawer, not the terminal session list.
+
+- KanbanView's two-row sticky header derives its top padding from the same variable so its first row stays aligned with the hamburger.
+---
+ packages/client/src/App.vue                   | 21 ++++++++++++++-----
+ .../src/components/hermes/chat/ChatPanel.vue  |  3 ++-
+ .../hermes/group-chat/GroupChatPanel.vue      |  3 ++-
+ packages/client/src/styles/global.scss        | 12 ++++++-----
+ packages/client/src/styles/variables.scss     |  9 ++++++++
+ .../client/src/views/hermes/HistoryView.vue   |  3 ++-
+ .../client/src/views/hermes/KanbanView.vue    |  6 +++++-
+ .../client/src/views/hermes/ModelsView.vue    |  7 +++++++
+ .../client/src/views/hermes/TerminalView.vue  |  3 ++-
+ .../client/src/views/hermes/WorkflowView.vue  |  6 +++++-
+ 10 files changed, 57 insertions(+), 16 deletions(-)
+
+diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
+index ce1dd633b..e8c951b5d 100644
+--- a/packages/client/src/App.vue
++++ b/packages/client/src/App.vue
+@@ -298,13 +298,24 @@ usePwa();
+               <button
+                 v-if="showMobileMenuButton"
+                 class="hamburger-btn"
++                :aria-label="t('sidebar.expand')"
+                 @click="handleMobileMenuClick"
+               >
+-                <img
+-                  src="/logo.png"
+-                  alt="Menu"
+-                  style="width: 24px; height: 24px"
+-                />
++                <svg
++                  width="18"
++                  height="18"
++                  viewBox="0 0 24 24"
++                  fill="none"
++                  stroke="currentColor"
++                  stroke-width="1.5"
++                  stroke-linecap="round"
++                  stroke-linejoin="round"
++                  aria-hidden="true"
++                >
++                  <line x1="3" y1="6" x2="21" y2="6" />
++                  <line x1="3" y1="12" x2="21" y2="12" />
++                  <line x1="3" y1="18" x2="21" y2="18" />
++                </svg>
+               </button>
+               <div
+                 v-if="!isLoginPage && showAppSidebar && appStore.sidebarOpen"
+diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
+index a8c30d1f1..1781b68f1 100644
+--- a/packages/client/src/components/hermes/chat/ChatPanel.vue
++++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
+@@ -4061,7 +4061,8 @@ async function handleSessionModelCustomSubmit() {
+ 
+ @media (max-width: $breakpoint-mobile) {
+   .chat-header {
+-    padding: calc(16px + env(safe-area-inset-top, 0px)) 12px 16px 52px;
++    min-height: $mobile-topbar-min-height;
++    padding: $mobile-topbar-padding;
+   }
+ 
+   .header-sidebar-toggle {
+diff --git a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
+index b17f88a3d..b6c1dc8a1 100644
+--- a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
++++ b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
+@@ -5270,7 +5270,8 @@ export default defineComponent({ components: { CreateRoomForm } })
+     }
+ 
+     .chat-header {
+-        padding: 16px 12px 16px 52px;
++        min-height: $mobile-topbar-min-height;
++        padding: $mobile-topbar-padding;
+     }
+ 
+     .group-summary-inline-status {
+diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
+index b32a75d64..c6ec545da 100644
+--- a/packages/client/src/styles/global.scss
++++ b/packages/client/src/styles/global.scss
+@@ -294,21 +294,22 @@ a {
+ }
+ 
+ // Hamburger button (mobile only)
++// Centered on the mobile top bar ($mobile-topbar-height) it sits on.
+ .hamburger-btn {
+   display: none;
+   position: fixed;
+-  top: calc(10px + env(safe-area-inset-top, 0px));
++  top: calc((#{$mobile-topbar-height} - 36px) / 2 + env(safe-area-inset-top, 0px));
+   left: 12px;
+   z-index: 99;
+   width: 36px;
+   height: 36px;
++  padding: 0;
+   border: none;
+-  background: $bg-card;
+-  border-radius: $radius-sm;
++  background: transparent;
++  color: $text-primary;
+   cursor: pointer;
+   align-items: center;
+   justify-content: center;
+-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+ }
+ 
+ // Mobile responsive
+@@ -322,7 +323,8 @@ a {
+   }
+ 
+   .page-header {
+-    padding: calc(16px + env(safe-area-inset-top, 0px)) 12px 16px 52px !important;
++    min-height: $mobile-topbar-min-height;
++    padding: $mobile-topbar-padding !important;
+   }
+ 
+   .input-sm,
+diff --git a/packages/client/src/styles/variables.scss b/packages/client/src/styles/variables.scss
+index 07a7e8ac0..ae4a3d6c6 100644
+--- a/packages/client/src/styles/variables.scss
++++ b/packages/client/src/styles/variables.scss
+@@ -213,6 +213,15 @@ $font-code: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+ $sidebar-width: 240px;
+ $sidebar-collapsed-width: 64px;
+ $header-height: 60px;
++// Mobile top bar (app bar), excluding the status-bar safe area.
++// Every mobile top bar derives from these, so the bar height is a one-line
++// change: $mobile-topbar-content = tallest control in a bar (small button).
++// Symmetric vertical padding + min-height keeps the bar content centered, and
++// the fixed .hamburger-btn is centered on the same axis.
++$mobile-topbar-height: 38px;
++$mobile-topbar-content: 32px;
++$mobile-topbar-min-height: calc(#{$mobile-topbar-height} + env(safe-area-inset-top, 0px));
++$mobile-topbar-padding: calc((#{$mobile-topbar-height} - #{$mobile-topbar-content}) / 2 + env(safe-area-inset-top, 0px)) 12px calc((#{$mobile-topbar-height} - #{$mobile-topbar-content}) / 2) 52px;
+ $breakpoint-mobile: 768px;
+ 
+ // Radius
+diff --git a/packages/client/src/views/hermes/HistoryView.vue b/packages/client/src/views/hermes/HistoryView.vue
+index 10a79d561..ba382d240 100644
+--- a/packages/client/src/views/hermes/HistoryView.vue
++++ b/packages/client/src/views/hermes/HistoryView.vue
+@@ -1338,7 +1338,8 @@ function handleBatchDeleteConfirm() {
+   }
+ 
+   .chat-header {
+-    padding: 16px 12px 16px 52px;
++    min-height: $mobile-topbar-min-height;
++    padding: $mobile-topbar-padding;
+   }
+ 
+   .history-sidebar-toggle {
+diff --git a/packages/client/src/views/hermes/KanbanView.vue b/packages/client/src/views/hermes/KanbanView.vue
+index eb3046efe..cf6a167ae 100644
+--- a/packages/client/src/views/hermes/KanbanView.vue
++++ b/packages/client/src/views/hermes/KanbanView.vue
+@@ -710,7 +710,11 @@ async function handleDispatch() {
+ 
+ @media (max-width: $breakpoint-mobile) {
+   .page-header {
+-    padding: 16px 12px 16px 52px;
++    // Two-row (title + actions stacked) bar: it grows past the mobile top-bar
++    // height, so only the top padding keeps its 22px title row centered on the
++    // fixed .hamburger-btn. Derived from $mobile-topbar-height so a height
++    // change keeps the first row aligned.
++    padding: calc((#{$mobile-topbar-height} - 22px) / 2 + env(safe-area-inset-top, 0px)) 12px calc((#{$mobile-topbar-height} - 22px) / 2) 52px !important;
+     position: sticky;
+     top: 0;
+     z-index: 20;
+diff --git a/packages/client/src/views/hermes/ModelsView.vue b/packages/client/src/views/hermes/ModelsView.vue
+index c7f484c03..9d6d9ee10 100644
+--- a/packages/client/src/views/hermes/ModelsView.vue
++++ b/packages/client/src/views/hermes/ModelsView.vue
+@@ -229,6 +229,13 @@ async function handleRefreshModelCache() {
+   gap: 8px;
+ }
+ 
++// The fixed mobile .hamburger-btn opens this page's sidebar (no duplicate ▦).
++@media (max-width: $breakpoint-mobile) {
++  .models-sidebar-toggle {
++    display: none;
++  }
++}
++
+ .model-cache-overlay {
+   position: fixed;
+   inset: 0;
+diff --git a/packages/client/src/views/hermes/TerminalView.vue b/packages/client/src/views/hermes/TerminalView.vue
+index cd30d7ac1..015bf33ac 100644
+--- a/packages/client/src/views/hermes/TerminalView.vue
++++ b/packages/client/src/views/hermes/TerminalView.vue
+@@ -1053,7 +1053,8 @@ onUnmounted(() => {
+   }
+ 
+   .terminal-header {
+-    padding: 16px 12px 16px 52px;
++    min-height: $mobile-topbar-min-height;
++    padding: $mobile-topbar-padding;
+   }
+ 
+   .terminal-container {
+diff --git a/packages/client/src/views/hermes/WorkflowView.vue b/packages/client/src/views/hermes/WorkflowView.vue
+index 322e8d558..4217ebb56 100644
+--- a/packages/client/src/views/hermes/WorkflowView.vue
++++ b/packages/client/src/views/hermes/WorkflowView.vue
+@@ -5368,7 +5368,11 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+     flex-wrap: nowrap;
+     align-items: center;
+     gap: 8px;
+-    padding: 16px 12px !important;
++    padding: $mobile-topbar-padding !important;
++  }
++
++  .header-sidebar-toggle {
++    display: none;
+   }
+ 
+   .header-actions {
+-- 
+2.53.0
+

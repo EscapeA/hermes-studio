@@ -1,0 +1,54 @@
+From 5b6757099261ea7b3cb91f88ed4c404207986abb Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 22:37:51 +0800
+Subject: [PATCH 5/5] fix(pwa): bump SW to v3, make precache tolerant so
+ activation never blocks
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- CACHE_VERSION v2→v3: forces browsers to pick up the new cache-first
+  brand-asset logic even if the v2 update wasn't detected/activated
+- install uses Promise.allSettled for precache: one failing URL no longer
+  aborts the whole install (which previously left the old SW running,
+  so logo kept hitting the network via SWR)
+---
+ packages/client/public/sw.js | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/packages/client/public/sw.js b/packages/client/public/sw.js
+index bede7c61..9195bbb5 100644
+--- a/packages/client/public/sw.js
++++ b/packages/client/public/sw.js
+@@ -1,8 +1,9 @@
+ // Hermes Studio Service Worker
+ // Caching strategy: Cache-First for hashed assets, Network-First for navigation, Stale-While-Revalidate for public assets
+-// v2: + session list API SWR cache (fast second-open of sidebar/conversations)
++// v3: + brand assets Cache-First (logo never hits network after first install);
++//     v2 added session list API SWR cache; v3 fixes precache robustness + version bump.
+ 
+-const CACHE_VERSION = 'v2';
++const CACHE_VERSION = 'v3';
+ const STATIC_CACHE = `hermes-static-${CACHE_VERSION}`;
+ const API_CACHE = `hermes-api-${CACHE_VERSION}`;
+ 
+@@ -65,12 +66,13 @@ function isCacheFirstAsset(url) {
+   return CACHE_FIRST_PATHS.includes(url.pathname);
+ }
+ 
+-// --- Install: precache essential resources ---
++// --- Install: precache essential resources (tolerant: one failure doesn't block activation) ---
+ self.addEventListener('install', (event) => {
+   event.waitUntil(
+-    caches.open(STATIC_CACHE).then(cache => cache.addAll(PRECACHE_URLS))
++    caches.open(STATIC_CACHE)
++      .then(cache => Promise.allSettled(PRECACHE_URLS.map(url => cache.add(url))))
++      .then(() => self.skipWaiting())
+   );
+-  self.skipWaiting();
+ });
+ 
+ // --- Activate: clean up old caches (keep current static + api caches) ---
+-- 
+2.53.0
+

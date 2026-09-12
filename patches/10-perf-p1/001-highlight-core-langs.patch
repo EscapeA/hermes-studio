@@ -1,0 +1,117 @@
+From 0d4d42f11d2680c8025370585b8cc09530d91bed Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 08:34:42 +0800
+Subject: [PATCH 1/4] perf(chat): use highlight.js core + register ~19
+ languages on demand
+
+Importing the full 'highlight.js' package pulled ~190 languages (~970KB)
+into the chat bundle. Switch to highlight.js/lib/core and register only
+the languages actually used by rendered code blocks (bash, c, cpp, css,
+diff, dockerfile, go, ini, java, javascript, json, markdown, php, python,
+rust, shell, sql, typescript, xml, yaml). Chunk drops to ~99KB (-90%).
+Update the highlight-helper test mocks to the per-submodule import paths.
+---
+ .../src/components/hermes/chat/highlight.ts   | 47 ++++++++++++++++++-
+ tests/client/highlight-helper.test.ts         | 26 +++++++++-
+ 2 files changed, 71 insertions(+), 2 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/highlight.ts b/packages/client/src/components/hermes/chat/highlight.ts
+index 268f8889..30e458a8 100644
+--- a/packages/client/src/components/hermes/chat/highlight.ts
++++ b/packages/client/src/components/hermes/chat/highlight.ts
+@@ -1,6 +1,51 @@
+-import hljs from 'highlight.js'
++import hljs from 'highlight.js/lib/core'
+ import { copyToClipboard } from '@/utils/clipboard'
+ 
++// Register only the languages actually used in rendered code blocks.
++// Importing the full 'highlight.js' package pulls in ~190 languages (~970KB);
++// core + these ~16 languages is ~240KB minified.
++import bash from 'highlight.js/lib/languages/bash'
++import c from 'highlight.js/lib/languages/c'
++import cpp from 'highlight.js/lib/languages/cpp'
++import css from 'highlight.js/lib/languages/css'
++import diff from 'highlight.js/lib/languages/diff'
++import dockerfile from 'highlight.js/lib/languages/dockerfile'
++import go from 'highlight.js/lib/languages/go'
++import ini from 'highlight.js/lib/languages/ini'
++import java from 'highlight.js/lib/languages/java'
++import javascript from 'highlight.js/lib/languages/javascript'
++import json from 'highlight.js/lib/languages/json'
++import markdown from 'highlight.js/lib/languages/markdown'
++import php from 'highlight.js/lib/languages/php'
++import python from 'highlight.js/lib/languages/python'
++import rust from 'highlight.js/lib/languages/rust'
++import shell from 'highlight.js/lib/languages/shell'
++import sql from 'highlight.js/lib/languages/sql'
++import typescript from 'highlight.js/lib/languages/typescript'
++import xml from 'highlight.js/lib/languages/xml'
++import yaml from 'highlight.js/lib/languages/yaml'
++
++hljs.registerLanguage('bash', bash)
++hljs.registerLanguage('c', c)
++hljs.registerLanguage('cpp', cpp)
++hljs.registerLanguage('css', css)
++hljs.registerLanguage('diff', diff)
++hljs.registerLanguage('dockerfile', dockerfile)
++hljs.registerLanguage('go', go)
++hljs.registerLanguage('ini', ini)
++hljs.registerLanguage('java', java)
++hljs.registerLanguage('javascript', javascript)
++hljs.registerLanguage('json', json)
++hljs.registerLanguage('markdown', markdown)
++hljs.registerLanguage('php', php)
++hljs.registerLanguage('python', python)
++hljs.registerLanguage('rust', rust)
++hljs.registerLanguage('shell', shell)
++hljs.registerLanguage('sql', sql)
++hljs.registerLanguage('typescript', typescript)
++hljs.registerLanguage('xml', xml)
++hljs.registerLanguage('yaml', yaml)
++
+ const LANGUAGE_ALIASES: Record<string, string> = {
+   shellscript: 'bash',
+   sh: 'bash',
+diff --git a/tests/client/highlight-helper.test.ts b/tests/client/highlight-helper.test.ts
+index b8aca7bc..c0222ba6 100644
+--- a/tests/client/highlight-helper.test.ts
++++ b/tests/client/highlight-helper.test.ts
+@@ -11,10 +11,34 @@ const highlightJsMock = vi.hoisted(() => ({
+ 
+ const copyToClipboardMock = vi.hoisted(() => vi.fn<(text: string) => Promise<boolean>>(async () => true))
+ 
+-vi.mock('highlight.js', () => ({
++// highlight.ts now imports from 'highlight.js/lib/core' and per-language
++// submodules instead of the full 'highlight.js' package, so the mocks must
++// target those exact paths.
++vi.mock('highlight.js/lib/core', () => ({
+   default: highlightJsMock,
+ }))
+ 
++vi.mock('highlight.js/lib/languages/bash', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/c', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/cpp', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/css', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/diff', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/dockerfile', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/go', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/ini', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/java', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/javascript', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/json', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/markdown', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/php', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/python', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/rust', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/shell', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/sql', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/typescript', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/xml', () => ({ default: {} }))
++vi.mock('highlight.js/lib/languages/yaml', () => ({ default: {} }))
++
+ vi.mock('@/utils/clipboard', () => ({
+   copyToClipboard: copyToClipboardMock,
+ }))
+-- 
+2.53.0
+

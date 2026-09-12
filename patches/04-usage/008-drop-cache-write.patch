@@ -1,0 +1,193 @@
+From 3712f34f1b2bf42f97d022695f8e9a4cfd7d5d84 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Fri, 14 Aug 2026 19:03:18 +0800
+Subject: [PATCH 3/3] feat(chat): drop cache-write from composer token display
+
+Cache write is almost always 0 in practice; keep it in the backend
+scope=total API response but stop showing it in the input composer
+total and detail popover. Total = input + output + cache_read;
+detail = input/output/cache read/reasoning (4 lines).
+---
+ packages/client/src/components/hermes/chat/ChatInput.vue | 5 +----
+ packages/client/src/i18n/locales/de.ts                   | 2 +-
+ packages/client/src/i18n/locales/en.ts                   | 2 +-
+ packages/client/src/i18n/locales/es.ts                   | 2 +-
+ packages/client/src/i18n/locales/fr.ts                   | 2 +-
+ packages/client/src/i18n/locales/ja.ts                   | 2 +-
+ packages/client/src/i18n/locales/ko.ts                   | 2 +-
+ packages/client/src/i18n/locales/pt.ts                   | 2 +-
+ packages/client/src/i18n/locales/ru.ts                   | 2 +-
+ packages/client/src/i18n/locales/zh-TW.ts                | 2 +-
+ packages/client/src/i18n/locales/zh.ts                   | 2 +-
+ 11 files changed, 11 insertions(+), 14 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index 216c6be3..3bb3d0ac 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -816,7 +816,6 @@ const sessionUsageTotal = ref<{
+   input: number
+   output: number
+   cacheRead: number
+-  cacheWrite: number
+   reasoning: number
+   apiCalls: number
+ } | null>(null)
+@@ -839,7 +838,6 @@ async function refreshSessionUsageTotal() {
+     input: Number(data.inputTokens) || 0,
+     output: Number(data.outputTokens) || 0,
+     cacheRead: Number(data.cacheReadTokens) || 0,
+-    cacheWrite: Number(data.cacheWriteTokens) || 0,
+     reasoning: Number(data.reasoningTokens) || 0,
+     apiCalls: Number(data.apiCalls) || 0,
+   }
+@@ -847,7 +845,7 @@ async function refreshSessionUsageTotal() {
+ const sessionTotalTokens = computed(() => {
+   const u = sessionUsageTotal.value
+   if (!u) return 0
+-  return u.input + u.output + u.cacheRead + u.cacheWrite
++  return u.input + u.output + u.cacheRead
+ })
+ const showSessionUsage = computed(() => {
+   const u = sessionUsageTotal.value
+@@ -865,7 +863,6 @@ const sessionUsageDetailText = computed(() => {
+     input: formatTokens(u.input),
+     output: formatTokens(u.output),
+     cacheRead: formatTokens(u.cacheRead),
+-    cacheWrite: formatTokens(u.cacheWrite),
+     reasoning: formatTokens(u.reasoning),
+   })
+ })
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index ab9441eb..ead10d3c 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -600,7 +600,7 @@ export default {
+   chat: {
+     contextRemaining: 'übrig',
+     sessionTokensUsed: 'Verwendet',
+-    sessionTokensDetail: 'Eingabe {input}\nAusgabe {output}\nCache lesen {cacheRead}\nCache schreiben {cacheWrite}\nReasoning {reasoning}',
++    sessionTokensDetail: 'Eingabe {input}\nAusgabe {output}\nCache lesen {cacheRead}\nReasoning {reasoning}',
+     contextClickToEdit: 'Klicken zum Bearbeiten der Kontextlänge',
+     contextEditTitle: 'Kontextlänge bearbeiten',
+     contextEditDesc: 'Kontextlängenlimit für aktuelles Modell festlegen (in Tokens)',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index cda78b99..c9be0205 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -634,7 +634,7 @@ export default {
+   chat: {
+     contextRemaining: 'remaining',
+     sessionTokensUsed: 'Used',
+-    sessionTokensDetail: 'Input {input}\nOutput {output}\nCache read {cacheRead}\nCache write {cacheWrite}\nReasoning {reasoning}',
++    sessionTokensDetail: 'Input {input}\nOutput {output}\nCache read {cacheRead}\nReasoning {reasoning}',
+     contextClickToEdit: 'Click to edit context length',
+     contextEditTitle: 'Edit Context Length',
+     contextEditDesc: 'Set context length limit for current model (in tokens)',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 14e79e8d..3ca6ce06 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -600,7 +600,7 @@ export default {
+   chat: {
+     contextRemaining: 'restante',
+     sessionTokensUsed: 'Usado',
+-    sessionTokensDetail: 'Entrada {input}\nSalida {output}\nLectura de caché {cacheRead}\nEscritura de caché {cacheWrite}\nRazonamiento {reasoning}',
++    sessionTokensDetail: 'Entrada {input}\nSalida {output}\nLectura de caché {cacheRead}\nRazonamiento {reasoning}',
+     contextClickToEdit: 'Haz clic para editar la longitud del contexto',
+     contextEditTitle: 'Editar longitud del contexto',
+     contextEditDesc: 'Establecer el límite de longitud del contexto para el modelo actual (en tokens)',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 674bb639..7e262a0e 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -600,7 +600,7 @@ export default {
+   chat: {
+     contextRemaining: 'restant',
+     sessionTokensUsed: 'Utilisé',
+-    sessionTokensDetail: 'Entrée {input}\nSortie {output}\nLecture cache {cacheRead}\nÉcriture cache {cacheWrite}\nRaisonnement {reasoning}',
++    sessionTokensDetail: 'Entrée {input}\nSortie {output}\nLecture cache {cacheRead}\nRaisonnement {reasoning}',
+     contextClickToEdit: 'Cliquez pour modifier la longueur du contexte',
+     contextEditTitle: 'Modifier la longueur du contexte',
+     contextEditDesc: 'Définir la limite de longueur du contexte pour le modèle actuel (en tokens)',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 743e9ad7..a7d0a962 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -600,7 +600,7 @@ export default {
+   chat: {
+     contextRemaining: '残り',
+     sessionTokensUsed: '使用済み',
+-    sessionTokensDetail: '入力 {input}\n出力 {output}\nキャッシュ読込 {cacheRead}\nキャッシュ書込 {cacheWrite}\n推論 {reasoning}',
++    sessionTokensDetail: '入力 {input}\n出力 {output}\nキャッシュ読込 {cacheRead}\n推論 {reasoning}',
+     contextClickToEdit: 'クリックしてコンテキスト長を編集',
+     contextEditTitle: 'コンテキスト長を編集',
+     contextEditDesc: '現在のモデルのコンテキスト長制限を設定（トークン数）',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index ecf0d295..702bff15 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -600,7 +600,7 @@ export default {
+   chat: {
+     contextRemaining: '남음',
+     sessionTokensUsed: '사용됨',
+-    sessionTokensDetail: '입력 {input}\n출력 {output}\n캐시 읽기 {cacheRead}\n캐시 쓰기 {cacheWrite}\n추론 {reasoning}',
++    sessionTokensDetail: '입력 {input}\n출력 {output}\n캐시 읽기 {cacheRead}\n추론 {reasoning}',
+     contextClickToEdit: '클릭하여 컨텍스트 길이 편집',
+     contextEditTitle: '컨텍스트 길이 편집',
+     contextEditDesc: '현재 모델의 컨텍스트 길이 제한 설정 (토큰 수)',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index d58b41fb..0a3e2917 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -600,7 +600,7 @@ export default {
+   chat: {
+     contextRemaining: 'restante',
+     sessionTokensUsed: 'Usado',
+-    sessionTokensDetail: 'Entrada {input}\nSaída {output}\nLeitura de cache {cacheRead}\nEscrita de cache {cacheWrite}\nRaciocínio {reasoning}',
++    sessionTokensDetail: 'Entrada {input}\nSaída {output}\nLeitura de cache {cacheRead}\nRaciocínio {reasoning}',
+     contextClickToEdit: 'Clique para editar o tamanho do contexto',
+     contextEditTitle: 'Editar tamanho do contexto',
+     contextEditDesc: 'Definir o limite de tamanho do contexto para o modelo atual (em tokens)',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 22780fc3..6aa49956 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -515,7 +515,7 @@ export default {
+   chat: {
+     contextRemaining: 'Осталось',
+     sessionTokensUsed: 'Использовано',
+-    sessionTokensDetail: 'Ввод {input}\nВывод {output}\nЧтение кэша {cacheRead}\nЗапись кэша {cacheWrite}\nРассуждения {reasoning}',
++    sessionTokensDetail: 'Ввод {input}\nВывод {output}\nЧтение кэша {cacheRead}\nРассуждения {reasoning}',
+     contextClickToEdit: 'Нажмите, чтобы изменить размер контекста',
+     contextEditTitle: 'Изменить размер контекста',
+     contextEditDesc: 'Установите лимит размера контекста для текущей модели (в токенах)',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index a1a2643d..aae10761 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -614,7 +614,7 @@ export default {
+   chat: {
+     contextRemaining: '剩餘',
+     sessionTokensUsed: '已用',
+-    sessionTokensDetail: '輸入 {input}\n輸出 {output}\n快取讀取 {cacheRead}\n快取寫入 {cacheWrite}\n推理 {reasoning}',
++    sessionTokensDetail: '輸入 {input}\n輸出 {output}\n快取讀取 {cacheRead}\n推理 {reasoning}',
+     contextClickToEdit: '點擊編輯上下文長度',
+     contextEditTitle: '編輯上下文長度',
+     contextEditDesc: '設定目前模型的上下文長度限制（token 數量）',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 5b21e504..6b01285d 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -634,7 +634,7 @@ export default {
+   chat: {
+     contextRemaining: '剩余',
+     sessionTokensUsed: '已用',
+-    sessionTokensDetail: '输入 {input}\n输出 {output}\n缓存读 {cacheRead}\n缓存写 {cacheWrite}\n推理 {reasoning}',
++    sessionTokensDetail: '输入 {input}\n输出 {output}\n缓存读 {cacheRead}\n推理 {reasoning}',
+     contextClickToEdit: '点击编辑上下文长度',
+     contextEditTitle: '编辑上下文长度',
+     contextEditDesc: '设置当前模型的上下文长度限制（token 数量）',
+-- 
+2.53.0
+

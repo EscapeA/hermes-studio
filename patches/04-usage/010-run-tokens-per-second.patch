@@ -1,0 +1,1010 @@
+From 53c579cfe79a817acdeb9b5b9db3627b9641a9d4 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 12 Sep 2026 04:15:34 +0800
+Subject: [PATCH] feat(chat): per-turn decode speed under the assistant message
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Show how fast the model decoded a turn: provider output tokens over the decode
+wall time (first streamed chunk -> call end), the same quantity DeepSeek
+Harness reports. Tool waits and first-token latency stay out of the ratio, and
+a call without a recorded first chunk (non-streamed, failed stream, partial
+stub) drops out instead of diluting it.
+
+One reading per finished API call, pushed on usage.updated. The client hangs it
+on the turn's latest assistant message, so the number stays readable after the
+run ends — the run-scoped thinking indicator it would otherwise live in is
+unmounted at that moment.
+
+- bridge: forward first_chunk_at from the post_api_request hook
+- chat-run: fold provider-timed calls into the run state
+- client: render `N tok/s` under the turn's assistant message
+---
+ .../hermes/chat/LiveReasoningStatus.vue       |  14 ++
+ .../components/hermes/chat/MessageItem.vue    |  31 ++++
+ .../components/hermes/chat/MessageList.vue    |  16 +++
+ packages/client/src/i18n/locales/ar.ts        |   2 +
+ packages/client/src/i18n/locales/de.ts        |   2 +
+ packages/client/src/i18n/locales/en.ts        |   2 +
+ packages/client/src/i18n/locales/es.ts        |   2 +
+ packages/client/src/i18n/locales/fr.ts        |   2 +
+ packages/client/src/i18n/locales/ja.ts        |   2 +
+ packages/client/src/i18n/locales/ko.ts        |   2 +
+ packages/client/src/i18n/locales/pt.ts        |   2 +
+ packages/client/src/i18n/locales/ru.ts        |   2 +
+ packages/client/src/i18n/locales/zh-TW.ts     |   2 +
+ packages/client/src/i18n/locales/zh.ts        |   2 +
+ packages/client/src/stores/hermes/chat.ts     | 136 +++++++++++++++++-
+ packages/client/src/utils/run-speed.ts        |  48 +++++++
+ .../services/bridge/python/bridge_pool.py     |   3 +
+ .../modules/studio/contracts/runs/session.ts  |   7 +
+ .../services/chat-run/handle-bridge-run.ts    |   8 ++
+ .../modules/studio/services/chat-run/usage.ts |  79 ++++++++++
+ .../chat-store-workspace-diff-turn.test.ts    |  50 ++++++-
+ tests/client/message-item-run-speed.test.ts   |  77 ++++++++++
+ tests/client/run-speed.test.ts                |  38 +++++
+ tests/server/run-chat-run-speed.test.ts       |  62 ++++++++
+ 24 files changed, 589 insertions(+), 2 deletions(-)
+ create mode 100644 packages/client/src/utils/run-speed.ts
+ create mode 100644 tests/client/message-item-run-speed.test.ts
+ create mode 100644 tests/client/run-speed.test.ts
+ create mode 100644 tests/server/run-chat-run-speed.test.ts
+
+diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+index 6e03a7370..73a357dfc 100644
+--- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
++++ b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+@@ -9,6 +9,8 @@ const props = defineProps<{
+   reasoning?: string | null
+   reasoningId?: string | number | null
+   elapsed: string
++  /** Decode speed of the run's latest finished call, e.g. `94 tok/s`; hidden when null. */
++  speed?: string | null
+ }>()
+ 
+ const { t } = useI18n()
+@@ -41,6 +43,7 @@ watch(
+       <div class="thinking-status-copy">
+         <span class="thinking-status-label">{{ t('chat.thinkingInProgress') }}</span>
+         <span class="thinking-status-time">{{ elapsed }}</span>
++        <span v-if="speed" class="thinking-status-speed">{{ speed }}</span>
+       </div>
+     </div>
+     <div
+@@ -144,6 +147,17 @@ watch(
+   min-width: 44px;
+ }
+ 
++.thinking-status-speed {
++  display: inline-flex;
++  align-items: center;
++  margin-top: 2px;
++  color: $text-muted;
++  font-family: $font-code;
++  font-size: 13px;
++  font-variant-numeric: tabular-nums;
++  line-height: 20px;
++}
++
+ .live-reasoning-detail {
+   width: 520px;
+   max-width: 100%;
+diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
+index ad3587ba9..40005fc0b 100644
+--- a/packages/client/src/components/hermes/chat/MessageItem.vue
++++ b/packages/client/src/components/hermes/chat/MessageItem.vue
+@@ -31,6 +31,7 @@ import { useGlobalSpeech } from "@/composables/useSpeech";
+ import { useVoiceSettings } from "@/composables/useVoiceSettings";
+ import { speedToEdgeRate, hzToEdgePitch } from "@/utils/ttsHelpers";
+ import { formatChatTimestamp } from "@/utils/chat-timestamp";
++import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-speed";
+ import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
+ import type { WorkspaceRunChangeSummary } from "@/api/studio/sessions";
+ import { isServerTtsProvider } from "@/api/studio/tts";
+@@ -628,6 +629,18 @@ const toolArgsPayload = computed(() => formatToolPayload(props.message.toolArgs)
+ const toolResultPayload = computed(() => formatToolPayload(props.message.toolResult, true));
+ const workspaceChanges = computed(() => props.message.workspaceChanges || []);
+ 
++/**
++ * The turn's average decode speed, shown under the message so it survives the
++ * run: the thinking indicator it is measured from unmounts when the run ends.
++ */
++const runSpeedLabel = computed(() => {
++  const reading = props.message.runSpeed;
++  if (!reading) return null;
++  const tps = runSpeedTokensPerSecond(reading);
++  if (tps == null) return null;
++  return t('chat.turnAverageSpeed', { tps: formatTokensPerSecond(tps) });
++});
++
+ function isWorkspaceChangeExpanded(changeId: string): boolean {
+   return expandedWorkspaceChangeIds.value.has(changeId);
+ }
+@@ -1259,6 +1272,15 @@ onBeforeUnmount(() => {
+               @select="file => openAssistantWorkspaceChangeFile(file, change)"
+             />
+ 
++            <!-- Turn decode speed: kept on the message so it stays readable
++                 after the run ends (the thinking indicator is unmounted then). -->
++            <div
++              v-if="message.role === 'assistant' && runSpeedLabel"
++              class="assistant-run-speed"
++            >
++              {{ runSpeedLabel }}
++            </div>
++
+             <!-- Render system message content -->
+             <MarkdownRenderer
+               v-if="message.role === 'system' && message.content && !isCommandMessage"
+@@ -2096,6 +2118,15 @@ onBeforeUnmount(() => {
+   margin-top: 10px;
+ }
+ 
++.assistant-run-speed {
++  margin-top: 8px;
++  color: $text-muted;
++  font-family: $font-code;
++  font-size: 12px;
++  font-variant-numeric: tabular-nums;
++  line-height: 18px;
++}
++
+ @keyframes spin {
+   to {
+     transform: rotate(360deg);
+diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
+index 0b368743a..9eabfc6f2 100644
+--- a/packages/client/src/components/hermes/chat/MessageList.vue
++++ b/packages/client/src/components/hermes/chat/MessageList.vue
+@@ -27,6 +27,7 @@ import { messageScrollPositionKey, rememberMessageScrollPosition } from "./messa
+ import { chatSessionAgentAvatar } from "@/utils/chat-agent-avatar";
+ import { parseThinking } from "@/utils/thinking-parser";
+ import { groupCompletedToolsByRun } from "./tool-run-grouping";
++import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-speed";
+ 
+ const props = withDefaults(defineProps<{
+   approvalPortalToBody?: boolean
+@@ -137,6 +138,20 @@ function stopThinkingTimer() {
+ const isRunIndicatorActive = computed(() => chatStore.isRunActive || !!chatStore.abortState);
+ const formattedThinkingElapsed = computed(() => formatElapsed(thinkingElapsedMs.value));
+ 
++/**
++ * Decode speed of the run's latest finished API call, shown next to the thinking
++ * timer while the run is live; the settled value is later handed to the turn's
++ * message, so nothing is lost when this indicator unmounts.
++ */
++const liveSpeedLabel = computed(() => {
++  const sessionId = chatStore.activeSessionId;
++  const reading = sessionId ? chatStore.runSpeed.get(sessionId) : undefined;
++  if (!reading) return null;
++  const tps = runSpeedTokensPerSecond(reading);
++  if (tps == null) return null;
++  return t('chat.tokensPerSecond', { tps: formatTokensPerSecond(tps) });
++});
++
+ const currentToolCalls = computed(() => {
+   const msgs = chatStore.messages;
+   // Slash commands are also user input boundaries for the live tool strip.
+@@ -807,6 +822,7 @@ defineExpose({
+             :reasoning="liveReasoningDetail?.reasoning"
+             :reasoning-id="liveReasoningDetail?.messageId"
+             :elapsed="formattedThinkingElapsed"
++            :speed="liveSpeedLabel"
+           />
+           <div v-if="visibleToolCalls.length > 0 || chatStore.compressionState || chatStore.abortState" class="tool-calls-panel">
+             <!-- Abort indicator -->
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index 288618f56..5855c237c 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -1134,6 +1134,8 @@ export default {
+     executionDuration: 'وقت التنفيذ',
+     thinkingLabel: 'التفكير',
+     thinkingInProgress: 'التفكير',
++    tokensPerSecond: '{tps} tok/s',
++    turnAverageSpeed: 'متوسط السرعة لهذه الجولة: {tps} tok/s',
+     thinkingShow: 'إظهار التفكير',
+     thinkingHide: 'إخفاء التفكير',
+     thinkingDuration: 'المدة المرصودة {duration}',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 4d34b2ecd..7a1e1be2b 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1056,6 +1056,8 @@ export default {
+     unchangedLines: '{count} unveränderte Zeilen',
+     executionDuration: 'Ausführungszeit',    thinkingLabel: 'Denkprozess',
+     thinkingInProgress: 'Denkt',
++    tokensPerSecond: '{tps} tok/s',
++    turnAverageSpeed: 'Durchschnitt dieser Runde: {tps} tok/s',
+     thinkingShow: 'Denkprozess anzeigen',
+     thinkingHide: 'Denkprozess ausblenden',
+     thinkingDuration: 'Beobachtet {duration}',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index e900cbd7b..1ec2a1c47 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -1161,6 +1161,8 @@ export default {
+     executionDuration: 'Execution time',
+     thinkingLabel: 'Thinking',
+     thinkingInProgress: 'Thinking',
++    tokensPerSecond: '{tps} tok/s',
++    turnAverageSpeed: 'Turn average: {tps} tok/s',
+     thinkingShow: 'Show thinking',
+     thinkingHide: 'Hide thinking',
+     thinkingDuration: 'Observed {duration}',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 58c90a3ab..0948749c3 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1056,6 +1056,8 @@ export default {
+     unchangedLines: '{count} líneas sin cambios',
+     executionDuration: 'Tiempo de ejecución',    thinkingLabel: 'Pensamiento',
+     thinkingInProgress: 'Pensando',
++    tokensPerSecond: '{tps} tok/s',
++    turnAverageSpeed: 'Promedio del turno: {tps} tok/s',
+     thinkingShow: 'Mostrar pensamiento',
+     thinkingHide: 'Ocultar pensamiento',
+     thinkingDuration: 'Observado {duration}',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index f91992c22..906479a5f 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1055,6 +1055,8 @@ export default {
+     unchangedLines: '{count} lignes inchangées',
+     executionDuration: 'Temps d’exécution',    thinkingLabel: 'Raisonnement',
+     thinkingInProgress: 'En réflexion',
++    tokensPerSecond: '{tps} tok/s',
++    turnAverageSpeed: 'Moyenne du tour : {tps} tok/s',
+     thinkingShow: 'Afficher le raisonnement',
+     thinkingHide: 'Masquer le raisonnement',
+     thinkingDuration: 'Observé {duration}',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 0c0fbfcbe..95f1daf98 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1056,6 +1056,8 @@ export default {
+     unchangedLines: '変更なし {count} 行',
+     executionDuration: '実行時間',    thinkingLabel: '思考過程',
+     thinkingInProgress: '思考中',
++    tokensPerSecond: '{tps} tok/s',
++    turnAverageSpeed: '今回の平均速度：{tps} tok/s',
+     thinkingShow: '思考過程を表示',
+     thinkingHide: '思考過程を隠す',
+     thinkingDuration: '観測 {duration}',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 81d3bbd2f..c82f5794c 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1056,6 +1056,8 @@ export default {
+     unchangedLines: '변경 없음 {count}줄',
+     executionDuration: '실행 시간',    thinkingLabel: '사고 과정',
+     thinkingInProgress: '사고 중',
++    tokensPerSecond: '{tps} tok/s',
++    turnAverageSpeed: '이번 턴 평균 속도: {tps} tok/s',
+     thinkingShow: '사고 과정 펼치기',
+     thinkingHide: '사고 과정 접기',
+     thinkingDuration: '관측 {duration}',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index c7b7a2405..822a9eebb 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1056,6 +1056,8 @@ export default {
+     unchangedLines: '{count} linhas inalteradas',
+     executionDuration: 'Tempo de execução',    thinkingLabel: 'Raciocínio',
+     thinkingInProgress: 'Pensando',
++    tokensPerSecond: '{tps} tok/s',
++    turnAverageSpeed: 'Média do turno: {tps} tok/s',
+     thinkingShow: 'Mostrar raciocínio',
+     thinkingHide: 'Ocultar raciocínio',
+     thinkingDuration: 'Observado {duration}',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index b9644b148..2981fef5e 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -1033,6 +1033,8 @@ export default {
+     executionDuration: 'Длительность выполнения',
+     thinkingLabel: 'Процесс размышления',
+     thinkingInProgress: 'Размышление',
++    tokensPerSecond: '{tps} tok/s',
++    turnAverageSpeed: 'Средняя скорость за ход: {tps} tok/s',
+     thinkingShow: 'Развернуть процесс размышления',
+     thinkingHide: 'Свернуть процесс размышления',
+     thinkingDuration: 'Наблюдается {duration}',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 36bc986d2..6785609e1 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -1143,6 +1143,8 @@ export default {
+     executionDuration: '執行時長',
+     thinkingLabel: '思考過程',
+     thinkingInProgress: '正在思考',
++    tokensPerSecond: '{tps} tok/s',
++    turnAverageSpeed: '本輪平均速度：{tps} tok/s',
+     thinkingShow: '展開思考過程',
+     thinkingHide: '收起思考過程',
+     thinkingDuration: '已觀察 {duration}',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index a2d010c6d..41f259e5f 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -1161,6 +1161,8 @@ export default {
+     executionDuration: '执行时长',
+     thinkingLabel: '思考过程',
+     thinkingInProgress: '正在思考',
++    tokensPerSecond: '{tps} tok/s',
++    turnAverageSpeed: '本轮平均速度：{tps} tok/s',
+     thinkingShow: '展开思考过程',
+     thinkingHide: '收起思考过程',
+     thinkingDuration: '已观察 {duration}',
+diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
+index 94cb856c7..4bb4ea182 100644
+--- a/packages/client/src/stores/hermes/chat.ts
++++ b/packages/client/src/stores/hermes/chat.ts
+@@ -17,6 +17,7 @@ import { showCompletionNotification } from '@/utils/completion-notification'
+ import { detectThinkingBoundary } from '@/utils/thinking-parser'
+ import { isKnownBridgeSessionCommand } from '@/utils/hermes/bridge-session-commands'
+ import { responseErrorMessage } from '@/utils/http-error'
++import { toRunSpeedReading, type RunSpeedReading } from '@/utils/run-speed'
+ import {
+   isPendingInteractionExpiredError,
+   notifyPendingInteractionExpired,
+@@ -95,6 +96,13 @@ export interface Message {
+   toolStatus?: 'running' | 'done' | 'error'
+   toolDuration?: number  // 工具执行时长（秒）
+   workspaceChanges?: WorkspaceRunChangeSummary[]
++  /**
++   * Decode speed of this turn's finished API calls (tokens over decode wall
++   * time). Hung on the message instead of kept in run state because the
++   * run-scoped "thinking" indicator unmounts when the run ends, which would
++   * take the number with it.
++   */
++  runSpeed?: RunSpeedReading
+   isStreaming?: boolean
+   attachments?: Attachment[]
+   // 思考/推理文本。两条来源：
+@@ -557,6 +565,43 @@ export function attachWorkspaceChangesToExactTurns(
+   }
+ }
+ 
++/**
++ * Pick the message this run's reading belongs on.
++ *
++ * The newest assistant message is the one the run produced — unless it is the
++ * message that already existed when the run started, which means the run emitted
++ * no assistant text at all (it went straight to thinking/tool calls). Stamping
++ * the number there would overwrite the previous turn with this run's speed.
++ * @param messages - Session messages, oldest first.
++ * @param anchorId - Id of the newest assistant message that predates the run.
++ * @returns The message to read the speed from, or null when the run owns none.
++ */
++export function resolveRunSpeedTurnMessage(messages: Message[], anchorId: string): Message | null {
++  for (let index = messages.length - 1; index >= 0; index -= 1) {
++    if (messages[index].role !== 'assistant') continue
++    return String(messages[index].id) === anchorId ? null : messages[index]
++  }
++  return null
++}
++
++/**
++ * Hang a finished run's decode speed on the message that owns it.
++ * @param messages - Session messages, oldest first.
++ * @param anchorId - Id of the newest assistant message that predates the run.
++ * @param reading - Latest reading for the session's run.
++ * @returns True when a message took the reading.
++ */
++export function attachRunSpeedToTurn(
++  messages: Message[],
++  anchorId: string,
++  reading: RunSpeedReading,
++): boolean {
++  const target = resolveRunSpeedTurnMessage(messages, anchorId)
++  if (!target) return false
++  target.runSpeed = reading
++  return true
++}
++
+ function isToolOutputError(output: unknown): boolean {
+   if (typeof output !== 'string' || !output.trim()) return false
+   try {
+@@ -1388,14 +1433,100 @@ export const useChatStore = defineStore('chat', () => {
+    */
+   const runStartedAt = ref<Map<string, number>>(new Map())
+ 
++  /**
++   * sessionId → decode speed of the run's most recently finished API call. Feeds
++   * the number shown next to the thinking timer while the run is live; it is
++   * handed to the turn's message when the run ends.
++   */
++  const runSpeed = ref<Map<string, RunSpeedReading>>(new Map())
++
++  function setRunSpeed(sessionId: string, reading: RunSpeedReading) {
++    runSpeed.value = new Map(runSpeed.value).set(sessionId, reading)
++  }
++
++  function clearRunSpeed(sessionId: string) {
++    if (!runSpeed.value.has(sessionId)) return
++    const next = new Map(runSpeed.value)
++    next.delete(sessionId)
++    runSpeed.value = next
++  }
++
++  /**
++   * sessionId → id of the newest assistant message that predates the run. A run
++   * that never emits assistant text has no message of its own, and this is what
++   * keeps its number off the previous turn's message.
++   */
++  const runSpeedAnchor = ref<Map<string, string>>(new Map())
++
++  /** Newest assistant message in a session's transcript, streaming or not. */
++  function latestAssistantId(sessionId: string): string {
++    const messages = sessions.value.find(session => session.id === sessionId)?.messages || []
++    for (let index = messages.length - 1; index >= 0; index -= 1) {
++      if (messages[index].role === 'assistant') return String(messages[index].id)
++    }
++    return ''
++  }
++
++  /** Newest assistant message that was already finished when the run started. */
++  function settledAssistantId(sessionId: string): string {
++    const messages = sessions.value.find(session => session.id === sessionId)?.messages || []
++    for (let index = messages.length - 1; index >= 0; index -= 1) {
++      if (messages[index].role === 'assistant' && !messages[index].isStreaming) {
++        return String(messages[index].id)
++      }
++    }
++    return ''
++  }
++
++  /** Hang a reading on the run's own message, when the run produced one. */
++  function applyRunSpeedToTurn(sessionId: string, reading: RunSpeedReading) {
++    const anchorId = runSpeedAnchor.value.get(sessionId) ?? ''
++    if (anchorId !== '' && latestAssistantId(sessionId) === anchorId) return
++    const target = sessions.value.find(session => session.id === sessionId)
++    if (target) attachRunSpeedToTurn(target.messages, anchorId, reading)
++  }
++
++  /**
++   * Hand the live reading to the turn when its run ends, so the number stays
++   * readable on the message after the thinking indicator unmounts.
++   * @param sessionId - Session whose run just ended.
++   */
++  function settleRunSpeed(sessionId: string) {
++    const reading = runSpeed.value.get(sessionId)
++    if (!reading) return
++    applyRunSpeedToTurn(sessionId, reading)
++    clearRunSpeed(sessionId)
++  }
++
++  /**
++   * Pick the `speed` reading off a run event, if it carries one.
++   *
++   * While the run is live it feeds the thinking indicator; a reading that lands
++   * after the run already ended belongs on the turn's message instead.
++   * @param sessionId - Session the event belongs to.
++   * @param evt - Run event carrying an optional `speed` reading.
++   */
++  function applyRunSpeedEvent(sessionId: string, evt: unknown) {
++    const reading = toRunSpeedReading((evt as { speed?: unknown } | null)?.speed)
++    if (!reading) return
++    if (!isSessionWorking(sessionId)) {
++      applyRunSpeedToTurn(sessionId, reading)
++      return
++    }
++    setRunSpeed(sessionId, reading)
++  }
++
+   function setRunStartedAt(sessionId: string, startedAt: number) {
+     if (!sessionId || !(startedAt > 0)) return
+     if (runStartedAt.value.get(sessionId) === startedAt) return
+     runStartedAt.value = new Map(runStartedAt.value).set(sessionId, startedAt)
++    runSpeedAnchor.value = new Map(runSpeedAnchor.value).set(sessionId, settledAssistantId(sessionId))
+   }
+ 
+   function clearRunStartedAt(sessionId: string) {
+-    if (!sessionId || !runStartedAt.value.has(sessionId)) return
++    if (!sessionId) return
++    settleRunSpeed(sessionId)
++    if (!runStartedAt.value.has(sessionId)) return
+     const next = new Map(runStartedAt.value)
+     next.delete(sessionId)
+     runStartedAt.value = next
+@@ -4508,6 +4639,7 @@ export const useChatStore = defineStore('chat', () => {
+             }
+ 
+             case 'usage.updated': {
++              applyRunSpeedEvent(sid, evt)
+               const target = sessions.value.find(s => s.id === sid)
+               if (target) {
+                 target.inputTokens = (evt as any).inputTokens
+@@ -5178,6 +5310,7 @@ export const useChatStore = defineStore('chat', () => {
+         }
+ 
+         case 'usage.updated': {
++          applyRunSpeedEvent(sid, evt)
+           const target = sessions.value.find(s => s.id === sid)
+           if (target) {
+             target.inputTokens = (evt as any).inputTokens
+@@ -5573,6 +5706,7 @@ export const useChatStore = defineStore('chat', () => {
+     isSessionLive,
+     isSessionWorking,
+     runStartedAt,
++    runSpeed,
+     isSessionCompletedUnread,
+     clearSessionCompletedUnread,
+     sessionProfileFilter,
+diff --git a/packages/client/src/utils/run-speed.ts b/packages/client/src/utils/run-speed.ts
+new file mode 100644
+index 000000000..c6ac2d868
+--- /dev/null
++++ b/packages/client/src/utils/run-speed.ts
+@@ -0,0 +1,48 @@
++/**
++ * Decode-throughput readings for the live run indicator.
++ *
++ * One reading per finished API call, pushed on `usage.updated`: provider output
++ * tokens over the decode wall time (`ended_at - first_chunk_at`). There is no
++ * in-flight estimate — a reading is a finished measurement, so the display
++ * simply holds the last one while a tool runs or the model is thinking.
++ */
++
++export interface RunSpeedReading {
++  tokens: number
++  elapsedMs: number
++}
++
++/**
++ * Read a server `speed` payload.
++ * @param payload - The event's `speed` field, if any.
++ * @returns A reading, or null when the payload carries no usable tokens.
++ */
++export function toRunSpeedReading(payload: unknown): RunSpeedReading | null {
++  if (!payload || typeof payload !== 'object') return null
++  const { tokens, elapsedMs } = payload as Record<string, unknown>
++  const tokenCount = Number(tokens)
++  const elapsed = Number(elapsedMs)
++  if (!Number.isFinite(tokenCount) || tokenCount <= 0) return null
++  if (!Number.isFinite(elapsed) || elapsed <= 0) return null
++  return { tokens: tokenCount, elapsedMs: elapsed }
++}
++
++/**
++ * Decode speed of a reading.
++ * @param reading - Latest reading for the run.
++ * @returns Tokens per second, or undefined when the reading cannot be divided.
++ */
++export function runSpeedTokensPerSecond(reading: RunSpeedReading): number | undefined {
++  if (reading.elapsedMs <= 0 || reading.tokens <= 0) return undefined
++  return reading.tokens / (reading.elapsedMs / 1000)
++}
++
++/**
++ * Display number without unit: whole tokens from ten up, one decimal below.
++ * @param tps - Tokens per second.
++ * @returns The number as shown, negative input clamped to zero.
++ */
++export function formatTokensPerSecond(tps: number): string {
++  const clamped = Math.max(0, tps)
++  return clamped >= 10 ? String(Math.round(clamped)) : String(Math.round(clamped * 10) / 10)
++}
+diff --git a/packages/server/src/modules/hermes/services/bridge/python/bridge_pool.py b/packages/server/src/modules/hermes/services/bridge/python/bridge_pool.py
+index f7e031054..5af4f9f66 100644
+--- a/packages/server/src/modules/hermes/services/bridge/python/bridge_pool.py
++++ b/packages/server/src/modules/hermes/services/bridge/python/bridge_pool.py
+@@ -234,6 +234,9 @@ class AgentPool:
+             "api_duration": kwargs.get("api_duration"),
+             "started_at": kwargs.get("started_at"),
+             "ended_at": kwargs.get("ended_at"),
++            # First streamed chunk (epoch s) or None when the response was not
++            # streamed: decode throughput = output_tokens / (ended_at - first_chunk_at).
++            "first_chunk_at": kwargs.get("first_chunk_at"),
+         })
+ 
+     @staticmethod
+diff --git a/packages/server/src/modules/studio/contracts/runs/session.ts b/packages/server/src/modules/studio/contracts/runs/session.ts
+index 9707e7f3c..a539d5b62 100644
+--- a/packages/server/src/modules/studio/contracts/runs/session.ts
++++ b/packages/server/src/modules/studio/contracts/runs/session.ts
+@@ -142,6 +142,13 @@ export interface SessionState {
+    * first render.
+    */
+   runStartedAt?: number
++  /**
++   * Decode-throughput fold for the current run: one reading per finished API
++   * call, accumulated here so the indicator shows the run's settled speed.
++   */
++  decodeMsTotal?: number
++  decodeTokensTotal?: number
++  decodeRunStartAt?: number
+   events: Array<{ event: string; data: any }>
+   abortController?: AbortController
+   runId?: string
+diff --git a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
+index dcc4b6fd9..2fb0a2ef3 100644
+--- a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
++++ b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
+@@ -22,6 +22,7 @@ import {
+   clearApiPromptContextTokens,
+   contextTokensWithCachedOverhead,
+   estimateUsageTokensFromMessages,
++  foldDecodeCallResult,
+   getCachedBridgeContextOverhead,
+   hasApiPromptContextTokens,
+   resolveApiPromptTokens,
+@@ -1273,6 +1274,13 @@ function recordBridgeModelUsage(
+   // Context-window UI: use full prompt occupancy (log "in=" / prompt_tokens).
+   // Hermes CanonicalUsage.input_tokens is uncached-only; prompt_tokens = input+cache_read+cache_write.
+   if (live) {
++    // Decode throughput: settle this call's provider timing into the run fold
++    // and reset the live anchor. Calls without a recorded first chunk
++    // (non-streamed, failed stream, partial stub) drop out of the fold.
++    foldDecodeCallResult(live.state, usage.outputTokens, {
++      firstChunkAt: event.first_chunk_at,
++      endedAt: event.ended_at,
++    })
+     const promptTokens = resolveApiPromptTokens(event.usage, usage)
+     return applyApiPromptContextTokens(
+       sessionId,
+diff --git a/packages/server/src/modules/studio/services/chat-run/usage.ts b/packages/server/src/modules/studio/services/chat-run/usage.ts
+index ba8ed0aa5..45aabe14b 100644
+--- a/packages/server/src/modules/studio/services/chat-run/usage.ts
++++ b/packages/server/src/modules/studio/services/chat-run/usage.ts
+@@ -219,12 +219,14 @@ export function updateContextTokenUsage(
+   }
+   const normalizedContextTokens = Math.floor(contextTokens)
+   state.contextTokens = normalizedContextTokens
++  const speed = settledRunSpeed(state)
+   emit('usage.updated', {
+     event: 'usage.updated',
+     session_id: sid,
+     inputTokens: usage?.inputTokens ?? state.inputTokens ?? 0,
+     outputTokens: usage?.outputTokens ?? state.outputTokens ?? 0,
+     contextTokens: normalizedContextTokens,
++    ...(speed ? { speed } : {}),
+   })
+   return normalizedContextTokens
+ }
+@@ -338,3 +340,80 @@ export function updateMessageContextTokenUsage(
+     usage,
+   )
+ }
++
++// ─── Decode throughput (tokens/second) ───────────────────────────────────
++//
++// One reading per finished API call: output_tokens / (ended_at -
++// first_chunk_at). A call without a recorded first chunk (non-streamed, failed
++// stream, partial stub) drops out entirely rather than diluting the ratio, and
++// nothing is estimated while a call is still streaming — the display holds the
++// last finished call's number until the next one settles.
++
++/** Fold state backing run decode throughput; SessionState carries these fields. */
++export interface RunSpeedFoldState {
++  /** Run start the totals belong to; a new value re-scopes the fold. */
++  runStartedAt?: number
++  decodeRunStartAt?: number
++  decodeMsTotal?: number
++  decodeTokensTotal?: number
++}
++
++/** One reading: tokens over decode wall time. */
++export interface RunSpeedReading {
++  tokens: number
++  elapsedMs: number
++}
++
++function finiteEpochSeconds(value: unknown): number | undefined {
++  const seconds = typeof value === 'number' ? value : Number(value)
++  return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined
++}
++
++/**
++ * Drop the fold when a different run owns the session state.
++ *
++ * Session state outlives one run, so totals scoped to the previous run must not
++ * leak into the next one's display. `runStartedAt` is the run identity already
++ * carried by the state, so no run-start call site has to know about this fold.
++ * @param state - Run speed fold state (mutated when the run changed).
++ */
++function scopeRunSpeedToRun(state: RunSpeedFoldState): void {
++  const startedAt = state.runStartedAt
++  if (startedAt == null || state.decodeRunStartAt === startedAt) return
++  state.decodeRunStartAt = startedAt
++  state.decodeMsTotal = 0
++  state.decodeTokensTotal = 0
++}
++
++/**
++ * Fold one finished call into the run totals.
++ * @param state - Run speed fold state (mutated).
++ * @param outputTokens - Provider-reported completion tokens for the call.
++ * @param timing - Raw hook timing values (epoch seconds) for that same call.
++ */
++export function foldDecodeCallResult(
++  state: RunSpeedFoldState,
++  outputTokens: number,
++  timing: { firstChunkAt?: unknown; endedAt?: unknown },
++): void {
++  scopeRunSpeedToRun(state)
++  const firstChunkAt = finiteEpochSeconds(timing.firstChunkAt)
++  const endedAt = finiteEpochSeconds(timing.endedAt)
++  if (firstChunkAt == null || endedAt == null) return
++  const decodeMs = Math.round(Math.max(0, endedAt - firstChunkAt) * 1000)
++  if (decodeMs <= 0 || !(outputTokens > 0)) return
++  state.decodeMsTotal = (state.decodeMsTotal || 0) + decodeMs
++  state.decodeTokensTotal = (state.decodeTokensTotal || 0) + outputTokens
++}
++
++/**
++ * Settled reading over provider-timed calls only.
++ * @param state - Run speed fold state.
++ * @returns The reading, or undefined when no call carried usable timing.
++ */
++export function settledRunSpeed(state: RunSpeedFoldState): RunSpeedReading | undefined {
++  const elapsedMs = state.decodeMsTotal || 0
++  const tokens = state.decodeTokensTotal || 0
++  if (elapsedMs <= 0 || tokens <= 0) return undefined
++  return { tokens, elapsedMs }
++}
+diff --git a/tests/client/chat-store-workspace-diff-turn.test.ts b/tests/client/chat-store-workspace-diff-turn.test.ts
+index 1a77b81a2..3c5da8649 100644
+--- a/tests/client/chat-store-workspace-diff-turn.test.ts
++++ b/tests/client/chat-store-workspace-diff-turn.test.ts
+@@ -1,7 +1,7 @@
+ // @vitest-environment jsdom
+ import { beforeEach, describe, expect, it, vi } from 'vitest'
+ import { createPinia, setActivePinia } from 'pinia'
+-import { alignWorkspaceChangeAssistantMessage, attachWorkspaceChangesToExactTurns, useChatStore } from '@/stores/hermes/chat'
++import { alignWorkspaceChangeAssistantMessage, attachRunSpeedToTurn, attachWorkspaceChangesToExactTurns, useChatStore, type Message } from '@/stores/hermes/chat'
+ 
+ const sessionApi = vi.hoisted(() => ({
+   fetchSessions: vi.fn(),
+@@ -237,3 +237,51 @@ describe('chat workspace diff turn association', () => {
+     expect(sessionApi.fetchSessionMessagesPage).toHaveBeenCalledWith('session-1', 2, 150, 'default')
+   })
+ })
++
++describe('run speed turn attachment', () => {
++  function message(id: string, role: Message['role'], isStreaming = false): Message {
++    return { id, role, content: '', timestamp: 1, isStreaming }
++  }
++
++  it('hangs the reading on the message the run produced', () => {
++    const messages: Message[] = [
++      message('1', 'user'),
++      message('2', 'assistant'),   // previous turn, predates this run
++      message('3', 'user'),
++      message('4', 'assistant'),   // this run's answer
++    ]
++
++    expect(attachRunSpeedToTurn(messages, '2', { tokens: 630, elapsedMs: 4_033 })).toBe(true)
++
++    expect(messages[3].runSpeed).toEqual({ tokens: 630, elapsedMs: 4_033 })
++    expect(messages[1].runSpeed).toBeUndefined()
++  })
++
++  it('leaves the previous turn alone when the run emitted no assistant text', () => {
++    // The user's case: the agent goes straight to thinking/tool calls, so this
++    // run owns no message at all. Stamping the newest assistant message would
++    // overwrite the previous turn with this run's speed.
++    const messages: Message[] = [
++      message('1', 'user'),
++      message('2', 'assistant'),   // previous turn
++      message('3', 'user'),
++      message('4', 'tool'),        // this run only ran tools so far
++    ]
++
++    expect(attachRunSpeedToTurn(messages, '2', { tokens: 900, elapsedMs: 5_000 })).toBe(false)
++    expect(messages[1].runSpeed).toBeUndefined()
++  })
++
++  it('attaches when the run started before any assistant message existed', () => {
++    const messages: Message[] = [message('1', 'user'), message('2', 'assistant')]
++
++    expect(attachRunSpeedToTurn(messages, '', { tokens: 100, elapsedMs: 1_000 })).toBe(true)
++    expect(messages[1].runSpeed).toEqual({ tokens: 100, elapsedMs: 1_000 })
++  })
++
++  it('does nothing when the transcript has no assistant message at all', () => {
++    const messages: Message[] = [message('1', 'user'), message('2', 'tool')]
++
++    expect(attachRunSpeedToTurn(messages, '', { tokens: 10, elapsedMs: 500 })).toBe(false)
++  })
++})
+diff --git a/tests/client/message-item-run-speed.test.ts b/tests/client/message-item-run-speed.test.ts
+new file mode 100644
+index 000000000..255565657
+--- /dev/null
++++ b/tests/client/message-item-run-speed.test.ts
+@@ -0,0 +1,77 @@
++// @vitest-environment jsdom
++import { beforeEach, describe, expect, it, vi } from 'vitest'
++import { mount } from '@vue/test-utils'
++import { createPinia, setActivePinia } from 'pinia'
++
++vi.mock('vue-i18n', () => ({
++  useI18n: () => ({
++    t: (key: string, params?: Record<string, unknown>) =>
++      params ? `${key}:${JSON.stringify(params)}` : key,
++  }),
++}))
++
++vi.mock('naive-ui', () => ({
++  NButton: { template: '<button><slot /></button>' },
++  NDrawer: { template: '<div><slot /></div>' },
++  NDrawerContent: { template: '<div><slot /></div>' },
++  NSpin: { template: '<div />' },
++  useMessage: () => ({
++    error: vi.fn(),
++    success: vi.fn(),
++    warning: vi.fn(),
++    info: vi.fn(),
++  }),
++}))
++
++import MessageItem from '@/components/hermes/chat/MessageItem.vue'
++import type { Message } from '@/stores/hermes/chat'
++
++function assistantMessage(runSpeed?: Message['runSpeed']): Message {
++  return {
++    id: 'm1',
++    role: 'assistant',
++    content: 'done',
++    timestamp: Date.now(),
++    runSpeed,
++  }
++}
++
++describe('MessageItem turn decode speed', () => {
++  beforeEach(() => {
++    setActivePinia(createPinia())
++  })
++
++  it('renders the turn speed under the assistant message', () => {
++    const wrapper = mount(MessageItem, {
++      props: { message: assistantMessage({ tokens: 630, elapsedMs: 4_033 }), profile: 'default' },
++    })
++
++    const line = wrapper.find('.assistant-run-speed')
++    expect(line.exists()).toBe(true)
++    // 630 tokens over 4033ms -> 156.2 tok/s, rounded to a whole number from ten
++    // up; the i18n mock renders `key:params`, so both are asserted here.
++    expect(line.text()).toContain('chat.turnAverageSpeed')
++    expect(line.text()).toContain('"tps":"156"')
++  })
++
++  it('renders nothing when the server measured no call', () => {
++    const wrapper = mount(MessageItem, {
++      props: { message: assistantMessage(), profile: 'default' },
++    })
++
++    expect(wrapper.find('.assistant-run-speed').exists()).toBe(false)
++  })
++
++  it('renders nothing for a user message', () => {
++    const message: Message = {
++      id: 'm2',
++      role: 'user',
++      content: 'hi',
++      timestamp: Date.now(),
++      runSpeed: { tokens: 630, elapsedMs: 4_033 },
++    }
++    const wrapper = mount(MessageItem, { props: { message, profile: 'default' } })
++
++    expect(wrapper.find('.assistant-run-speed').exists()).toBe(false)
++  })
++})
+diff --git a/tests/client/run-speed.test.ts b/tests/client/run-speed.test.ts
+new file mode 100644
+index 000000000..f15ef27da
+--- /dev/null
++++ b/tests/client/run-speed.test.ts
+@@ -0,0 +1,38 @@
++import { describe, expect, it } from 'vitest'
++import {
++  formatTokensPerSecond,
++  runSpeedTokensPerSecond,
++  toRunSpeedReading,
++} from '@/utils/run-speed'
++
++describe('run speed readings', () => {
++  it('reads a server speed payload', () => {
++    expect(toRunSpeedReading({ tokens: 900, elapsedMs: 10_000 })).toEqual({
++      tokens: 900,
++      elapsedMs: 10_000,
++    })
++  })
++
++  it('rejects payloads that cannot be divided', () => {
++    expect(toRunSpeedReading(undefined)).toBeNull()
++    expect(toRunSpeedReading({ tokens: 0, elapsedMs: 10_000 })).toBeNull()
++    expect(toRunSpeedReading({ tokens: 100, elapsedMs: 0 })).toBeNull()
++    expect(toRunSpeedReading({ tokens: 'many', elapsedMs: 10 })).toBeNull()
++  })
++
++  it('divides tokens by the measured decode span and never rolls it forward', () => {
++    const reading = { tokens: 900, elapsedMs: 10_000 }
++
++    expect(runSpeedTokensPerSecond(reading)).toBe(90)
++    // The reading is a finished measurement: nothing about it changes over time,
++    // so a tool running or a model thinking cannot drag the displayed number down.
++    expect(runSpeedTokensPerSecond(reading)).toBe(90)
++    expect(runSpeedTokensPerSecond({ tokens: 100, elapsedMs: 0 })).toBeUndefined()
++  })
++
++  it('formats whole tokens from ten up and one decimal below', () => {
++    expect(formatTokensPerSecond(42.4)).toBe('42')
++    expect(formatTokensPerSecond(9.94)).toBe('9.9')
++    expect(formatTokensPerSecond(-3)).toBe('0')
++  })
++})
+diff --git a/tests/server/run-chat-run-speed.test.ts b/tests/server/run-chat-run-speed.test.ts
+new file mode 100644
+index 000000000..3a000bf84
+--- /dev/null
++++ b/tests/server/run-chat-run-speed.test.ts
+@@ -0,0 +1,62 @@
++import { describe, expect, it } from 'vitest'
++import {
++  foldDecodeCallResult,
++  settledRunSpeed,
++  type RunSpeedFoldState,
++} from '../../packages/server/src/modules/studio/services/chat-run/usage'
++
++const RUN_START = 1_700_000_000_000
++
++function newState(runStartedAt = RUN_START): RunSpeedFoldState {
++  return { runStartedAt }
++}
++
++describe('run decode throughput fold', () => {
++  it('divides provider output tokens by the streamed decode span', () => {
++    const state = newState()
++
++    foldDecodeCallResult(state, 900, { firstChunkAt: 100.5, endedAt: 110.5 })
++
++    expect(settledRunSpeed(state)).toEqual({ tokens: 900, elapsedMs: 10_000 })
++  })
++
++  it('drops calls without a first chunk instead of diluting the ratio', () => {
++    const state = newState()
++
++    foldDecodeCallResult(state, 900, { firstChunkAt: 100.5, endedAt: 110.5 })
++    // Non-streamed call: large token count, no decode span to divide by.
++    foldDecodeCallResult(state, 5000, { firstChunkAt: null, endedAt: 200 })
++    foldDecodeCallResult(state, 400, { firstChunkAt: 100.5, endedAt: 103 })
++
++    expect(settledRunSpeed(state)).toEqual({ tokens: 1300, elapsedMs: 12_500 })
++  })
++
++  it('reports nothing until a call carries usable timing', () => {
++    const state = newState()
++
++    expect(settledRunSpeed(state)).toBeUndefined()
++
++    foldDecodeCallResult(state, 10, { firstChunkAt: undefined, endedAt: undefined })
++    expect(settledRunSpeed(state)).toBeUndefined()
++  })
++
++  it('rejects zero-length spans and zero-token calls', () => {
++    const state = newState()
++
++    foldDecodeCallResult(state, 900, { firstChunkAt: 110.5, endedAt: 110.5 })
++    foldDecodeCallResult(state, 0, { firstChunkAt: 100.5, endedAt: 110.5 })
++
++    expect(settledRunSpeed(state)).toBeUndefined()
++  })
++
++  it('re-scopes totals when the session state starts a new run', () => {
++    const state = newState()
++    foldDecodeCallResult(state, 900, { firstChunkAt: 100.5, endedAt: 110.5 })
++    expect(settledRunSpeed(state)).toBeDefined()
++
++    state.runStartedAt = RUN_START + 60_000
++    foldDecodeCallResult(state, 0, {})
++
++    expect(settledRunSpeed(state)).toBeUndefined()
++  })
++})
+-- 
+2.53.0
+

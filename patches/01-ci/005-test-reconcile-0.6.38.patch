@@ -1,0 +1,43 @@
+From c31833b96bedffe7e79b3996a3d82c49cb0db020 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Wed, 5 Aug 2026 01:58:11 +0800
+Subject: [PATCH] fix: reconcile client tests after 0.6.38 sync
+
+- add missing ja/ko workflow.actions.backToEdit translations
+- convert physical inline CSS to logical properties (RTL test)
+- remove obsolete .workflow-evidence-resize-handle rule
+- mock ConnectionSettings in models-voice-tabs test
+---
+ packages/client/src/i18n/locales/ja.ts | 2 +-
+ packages/client/src/i18n/locales/ko.ts | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 3d09bbb2..742cff8b 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -2453,7 +2453,7 @@ export default {
+     canvasAriaLabel: 'ワークフローキャンバス',
+     workspace: { title: 'ワークスペースを選択', select: 'ワークスペースを選択', clear: 'ワークスペースをクリア' },
+     actions: {
+-      newWorkflow: '新しいワークフロー', addNode: 'ノードを追加', createWorkflowFirst: '先にワークフローを作成してください', reset: 'リセット',
++      newWorkflow: '新しいワークフロー', addNode: 'ノードを追加', createWorkflowFirst: '先にワークフローを作成してください', reset: 'リセット', backToEdit: '編集に戻る',
+       startExecution: '実行を開始', executionPending: 'ワークフロー実行はまだ接続されていません', executionStarted: 'ワークフローの実行を開始しました', executionCompleted: 'ワークフローの実行が完了しました', executionFailed: 'ワークフローの実行に失敗しました',
+       rerunDownstreamKeepNode: 'このノードを保持して下流を再実行', rerunDownstreamClearNode: 'このノードをクリアして下流を再実行', rerunDownstreamStarted: '下流の再実行を開始しました', rerunFromNodeStarted: 'このノードから再実行を開始しました', rerunFailed: 'ワークフローの再実行に失敗しました',
+       deleteNode: 'ノードを削除', deleteEdge: '接続を削除', editEdge: '接続を編集', undo: '元に戻す',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index bcc9b50f..ba1a0afd 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -2453,7 +2453,7 @@ export default {
+     canvasAriaLabel: '워크플로 캔버스',
+     workspace: { title: '작업 공간 선택', select: '작업 공간 선택', clear: '작업 공간 지우기' },
+     actions: {
+-      newWorkflow: '새 워크플로', addNode: '노드 추가', createWorkflowFirst: '먼저 워크플로를 만들어 주세요', reset: '초기화',
++      newWorkflow: '새 워크플로', addNode: '노드 추가', createWorkflowFirst: '먼저 워크플로를 만들어 주세요', reset: '초기화', backToEdit: '편집으로 돌아가기',
+       startExecution: '실행 시작', executionPending: '워크플로 실행이 아직 연결되지 않았습니다', executionStarted: '워크플로 실행을 시작했습니다', executionCompleted: '워크플로 실행이 완료되었습니다', executionFailed: '워크플로 실행에 실패했습니다',
+       rerunDownstreamKeepNode: '이 노드를 유지하고 하위 노드 실행', rerunDownstreamClearNode: '이 노드를 지우고 하위 노드 실행', rerunDownstreamStarted: '하위 노드 재실행을 시작했습니다', rerunFromNodeStarted: '이 노드부터 재실행을 시작했습니다', rerunFailed: '워크플로 재실행에 실패했습니다',
+       deleteNode: '노드 삭제', deleteEdge: '연결 삭제', editEdge: '연결 편집', undo: '실행 취소',
+-- 
+2.53.0
+

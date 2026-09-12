@@ -1,0 +1,32 @@
+From e3b4e99fa6fda7dd9b341582d2e71945da7d0f73 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Thu, 6 Aug 2026 13:14:23 +0800
+Subject: [PATCH] fix(client): unclip model label descenders in composer
+
+tiny NButton + overflow:hidden on .input-model-label cut the bottom of
+letters like "g" in grok-*. Give the label slightly more line-height and
+1px bottom padding; align middle instead of top.
+---
+ packages/client/src/components/hermes/chat/ChatInput.vue | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index 3423d2af..b86fdf63 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -1596,8 +1596,11 @@ function isImage(type: string): boolean {
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+-  vertical-align: top;
++  vertical-align: middle;
+   white-space: nowrap;
++  // tiny NButton height clips descenders (e.g. "g" in grok-*) without a hair more room
++  line-height: 1.25;
++  padding-bottom: 1px;
+ }
+ 
+ .reasoning-effort-button {
+-- 
+2.53.0
+

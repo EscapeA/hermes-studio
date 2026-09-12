@@ -1,0 +1,31 @@
+From 6cd255dd9c311073c756028890ee15a0d1090516 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sat, 4 Jul 2026 11:56:09 +0800
+Subject: [PATCH] feat: disable model select filter on mobile to prevent
+ keyboard popup
+
+The filterable NSelect in the new-chat drawer triggers the virtual
+keyboard on mobile when tapping the model dropdown. With Octopus
+aggregating models into a short list, the search box is unnecessary on
+mobile and hurts the interaction. Bind :filterable to !isMobile so the
+filter stays available on desktop while mobile gets a simple dropdown.
+---
+ packages/client/src/components/hermes/chat/ChatPanel.vue | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
+index d6e92a28..0703cef5 100644
+--- a/packages/client/src/components/hermes/chat/ChatPanel.vue
++++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
+@@ -2471,7 +2471,7 @@ async function handleSessionModelCustomSubmit() {
+               v-model:value="newChatModel"
+               :options="newChatModelOptions"
+               :disabled="newChatLoading || !newChatProvider"
+-              filterable
++              :filterable="!isMobile"
+             />
+           </label>
+           <label v-if="isNewChatCodingAgent && effectiveNewChatAgentMode === 'scoped'" class="new-chat-field">
+-- 
+2.53.0
+
