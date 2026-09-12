@@ -333,6 +333,10 @@ const virtualListPadding = computed(() => {
   if (queuedMessages.value.length > 0 && hasFloatingPrompt.value) return "20px 20px 380px";
   if (queuedMessages.value.length > 0) return "20px 20px 260px";
   if (hasFloatingPrompt.value) return clarifyCompact.value ? "20px 20px 80px" : "20px 20px 260px";
+  // The run indicator sits directly above the composer, so the default 20px
+  // trailing padding reads as a large empty gap while only the status row is
+  // visible. Keep it tight for the duration of the run.
+  if (isRunIndicatorActive.value) return "20px 20px 10px";
   return "20px";
 });
 
@@ -1745,11 +1749,16 @@ defineExpose({
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  // Tight run block: no vertical padding, 4px between the status row and the
+  // reasoning detail / tool strip, and a negative top margin that eats 6px of
+  // the preceding message row's 16px gap. Keep total trailing space in sync
+  // with the run-state list padding in virtualListPadding (bottom 10px).
+  gap: 4px;
+  margin-top: -6px;
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  padding: 4px;
+  padding: 0 4px;
   box-sizing: border-box;
 }
 
