@@ -83,7 +83,7 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -95,7 +95,7 @@ watch(
   gap: calc(10px * var(--spacing-scale, 1));
   width: 100%;
   min-width: 0;
-  min-height: 40px;
+  min-height: 32px;
 }
 
 .thinking-avatar {
