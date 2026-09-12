@@ -1692,7 +1692,7 @@ function openAttachmentPreview(attachment: Attachment) {
 .chat-input-area {
   position: relative;
   z-index: 80;
-  padding: 8px 20px 14px;
+  padding: 6px 20px 14px;
   border-top: 0;
   background-color: $bg-main-surface;
   flex-shrink: 0;
@@ -2091,7 +2091,7 @@ function openAttachmentPreview(attachment: Attachment) {
 @media (max-width: 768px) {
   .chat-input-area {
     --voice-overlay-mobile-bottom-offset: 146px;
-    padding: 8px 12px 12px;
+    padding: 6px 12px 12px;
   }
 
   .input-top-bar {
