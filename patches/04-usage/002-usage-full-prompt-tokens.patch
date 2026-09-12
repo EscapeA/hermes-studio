@@ -1,23 +1,23 @@
-From 13753a071ff166b4fb335fa260cf5dc5e9f9ecdd Mon Sep 17 00:00:00 2001
+From 3d712cd7a84e4a1dfd0afdd9c4ed5490480a4c13 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:22:13 +0800
-Subject: [PATCH 2/3] fix(chat): use full prompt_tokens (in=) not uncached
- input for context UI
+Subject: [PATCH] fix(chat): use full prompt_tokens (in=) not uncached input
+ for context UI
 
 Hermes CanonicalUsage.input_tokens is uncached-only. Context occupancy must
 use prompt_tokens (= input + cache_read + cache_write), matching agent log in=.
 ---
- .../hermes/run-chat/handle-bridge-run.ts      |  7 ++-
- .../src/services/hermes/run-chat/usage.ts     | 46 +++++++++++++++++++
+ .../services/chat-run/handle-bridge-run.ts    |  7 ++-
+ .../modules/studio/services/chat-run/usage.ts | 46 +++++++++++++++++++
  .../run-chat-api-prompt-context.test.ts       | 26 +++++++++++
  .../run-chat-bridge-final-context.test.ts     | 23 ++++++++++
  4 files changed, 100 insertions(+), 2 deletions(-)
 
-diff --git a/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts b/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
-index 00df0d6a..fcfd5046 100644
---- a/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
-+++ b/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
-@@ -19,6 +19,7 @@ import {
+diff --git a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
+index 38b7397c8..49e4d1c66 100644
+--- a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
++++ b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
+@@ -24,6 +24,7 @@ import {
    estimateUsageTokensFromMessages,
    getCachedBridgeContextOverhead,
    hasApiPromptContextTokens,
@@ -25,7 +25,7 @@ index 00df0d6a..fcfd5046 100644
    updateMessageContextTokenUsage,
  } from './usage'
  import {
-@@ -1146,13 +1147,15 @@ function recordBridgeModelUsage(
+@@ -1260,13 +1261,15 @@ function recordBridgeModelUsage(
      isEstimated: false,
    })
  
@@ -43,11 +43,11 @@ index 00df0d6a..fcfd5046 100644
        {
          inputTokens: live.state.inputTokens ?? 0,
          outputTokens: live.state.outputTokens ?? 0,
-diff --git a/packages/server/src/services/hermes/run-chat/usage.ts b/packages/server/src/services/hermes/run-chat/usage.ts
-index 2e370c00..082ccfbc 100644
---- a/packages/server/src/services/hermes/run-chat/usage.ts
-+++ b/packages/server/src/services/hermes/run-chat/usage.ts
-@@ -229,6 +229,52 @@ export function updateContextTokenUsage(
+diff --git a/packages/server/src/modules/studio/services/chat-run/usage.ts b/packages/server/src/modules/studio/services/chat-run/usage.ts
+index 4444df90a..d8a538c8f 100644
+--- a/packages/server/src/modules/studio/services/chat-run/usage.ts
++++ b/packages/server/src/modules/studio/services/chat-run/usage.ts
+@@ -231,6 +231,52 @@ export function updateContextTokenUsage(
    return normalizedContextTokens
  }
  
@@ -101,7 +101,7 @@ index 2e370c00..082ccfbc 100644
    sid: string,
    state: SessionState,
 diff --git a/tests/server/run-chat-api-prompt-context.test.ts b/tests/server/run-chat-api-prompt-context.test.ts
-index 090a9257..0d74cce3 100644
+index 090a92578..0d74cce31 100644
 --- a/tests/server/run-chat-api-prompt-context.test.ts
 +++ b/tests/server/run-chat-api-prompt-context.test.ts
 @@ -3,6 +3,7 @@ import {
@@ -145,7 +145,7 @@ index 090a9257..0d74cce3 100644
      const state = makeState({ bridgeContext: { fixedContextTokens: 100 } })
      const emit = vi.fn()
 diff --git a/tests/server/run-chat-bridge-final-context.test.ts b/tests/server/run-chat-bridge-final-context.test.ts
-index 5b875278..3edd335c 100644
+index d0cf594b0..8ca4f2734 100644
 --- a/tests/server/run-chat-bridge-final-context.test.ts
 +++ b/tests/server/run-chat-bridge-final-context.test.ts
 @@ -57,6 +57,17 @@ const hasApiPromptContextTokensMock = vi.fn((state: any) => (
@@ -166,14 +166,14 @@ index 5b875278..3edd335c 100644
  const flushBridgePendingToDbMock = vi.fn()
  const ensureOpenBridgeAssistantMessageMock = vi.fn()
  const syncBridgeReasoningToMessageMock = vi.fn()
-@@ -110,6 +121,7 @@ vi.mock('../../packages/server/src/services/hermes/run-chat/usage', () => ({
+@@ -110,6 +121,7 @@ vi.mock('../../packages/server/src/modules/studio/services/chat-run/usage', () =
    applyApiPromptContextTokens: applyApiPromptContextTokensMock,
    clearApiPromptContextTokens: clearApiPromptContextTokensMock,
    hasApiPromptContextTokens: hasApiPromptContextTokensMock,
 +  resolveApiPromptTokens: resolveApiPromptTokensMock,
  }))
  
- vi.mock('../../packages/server/src/services/hermes/run-chat/bridge-message', () => ({
+ vi.mock('../../packages/server/src/modules/studio/services/chat-run/bridge-message', () => ({
 @@ -234,6 +246,17 @@ describe('bridge run final context usage', () => {
        && Number.isFinite(state.apiPromptTokens)
        && state.apiPromptTokens >= 0

@@ -1,21 +1,21 @@
-From ada773e384361a87936ec769ac35b8276eb8f2a0 Mon Sep 17 00:00:00 2001
+From f60c271c4182d53f15fea7da44711a3ad6d82b4f Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:32:59 +0800
-Subject: [PATCH 3/3] fix(chat): keep bridge resume polling after model.usage
- apply failures
+Subject: [PATCH] fix(chat): keep bridge resume polling after model.usage apply
+ failures
 
 Wrap resume snapshot model.usage handling so usage/context UI updates cannot
 abort cursor advancement. Update resume test mocks for the new usage helpers.
 ---
- .../hermes/run-chat/handle-bridge-run.ts      | 17 ++++++--
+ .../services/chat-run/handle-bridge-run.ts    | 17 ++++++--
  tests/server/run-chat-bridge-resume.test.ts   | 40 +++++++++++++++++++
  2 files changed, 53 insertions(+), 4 deletions(-)
 
-diff --git a/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts b/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
-index fcfd5046..eaa89b0e 100644
---- a/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
-+++ b/packages/server/src/services/hermes/run-chat/handle-bridge-run.ts
-@@ -897,10 +897,19 @@ export async function resumeBridgeRun(
+diff --git a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
+index 49e4d1c66..dcc4b6fd9 100644
+--- a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
++++ b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
+@@ -1011,10 +1011,19 @@ export async function resumeBridgeRun(
        if (!event || typeof event !== 'object' || Array.isArray(event)) continue
        const bridgeEvent = event as Record<string, unknown>
        if (bridgeEvent.event === 'model.usage') {
@@ -40,10 +40,10 @@ index fcfd5046..eaa89b0e 100644
      }
      const output = typeof snapshot.output === 'string' ? snapshot.output : deltas.join('')
 diff --git a/tests/server/run-chat-bridge-resume.test.ts b/tests/server/run-chat-bridge-resume.test.ts
-index aeec4f46..4443a720 100644
+index 2d66b06c2..130b999e7 100644
 --- a/tests/server/run-chat-bridge-resume.test.ts
 +++ b/tests/server/run-chat-bridge-resume.test.ts
-@@ -55,9 +55,49 @@ vi.mock('../../packages/server/src/services/hermes/run-chat/usage', () => ({
+@@ -55,9 +55,49 @@ vi.mock('../../packages/server/src/modules/studio/services/chat-run/usage', () =
    estimateUsageTokensFromMessages: estimateUsageTokensFromMessagesMock,
    getCachedBridgeContextOverhead: vi.fn(() => undefined),
    updateMessageContextTokenUsage: vi.fn((_sid, state, _emit, tokens) => {

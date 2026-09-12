@@ -1,4 +1,4 @@
-From 1613634fe3343be187ad95cfc867d60cddc8c30f Mon Sep 17 00:00:00 2001
+From 8d4d3b727a72db08f325d93eff569406168b0b3c Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 6 Sep 2026 09:25:42 +0800
 Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
@@ -21,16 +21,16 @@ Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
  13 files changed, 67 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/models/ProviderFormModal.vue b/packages/client/src/components/hermes/models/ProviderFormModal.vue
-index 8a44b9edf..0bf710d83 100644
+index 0b322c52e..70b7adf70 100644
 --- a/packages/client/src/components/hermes/models/ProviderFormModal.vue
 +++ b/packages/client/src/components/hermes/models/ProviderFormModal.vue
-@@ -128,13 +128,6 @@ const canFetchProviderCatalog = computed(() =>
+@@ -129,13 +129,6 @@ const canFetchProviderCatalog = computed(() =>
    )),
  )
  
 -const FUN_LINK_MAP: Record<string, string> = {
--  'fun-codex': 'https://apikey.fun/register?aff=LIBAPI',
--  'fun-claude': 'https://apikey.fun/register?aff=LIBAPI',
+-  'fun-codex': 'https://apikey.fan/register?aff=LIBAPI',
+-  'fun-claude': 'https://apikey.fan/register?aff=LIBAPI',
 -}
 -
 -const funProviderLink = computed(() => selectedPreset.value ? FUN_LINK_MAP[selectedPreset.value] || '' : '')
@@ -38,7 +38,7 @@ index 8a44b9edf..0bf710d83 100644
  async function switchToApiKeyFunPreset(providerKey: ApiKeyFunPresetProvider, preferredModel: string) {
    const apiKey = formData.value.api_key
    const contextLength = formData.value.context_length
-@@ -500,12 +493,6 @@ function handleClose() {
+@@ -502,12 +495,6 @@ function handleClose() {
            :placeholder="t('models.chooseProvider')"
            filterable
          />
@@ -51,7 +51,7 @@ index 8a44b9edf..0bf710d83 100644
        </NFormItem>
  
        <NFormItem v-if="providerType === 'custom'" :label="t('models.name')">
-@@ -630,29 +617,6 @@ function handleClose() {
+@@ -636,29 +623,6 @@ function handleClose() {
  </template>
  
  <style scoped lang="scss">
@@ -82,7 +82,7 @@ index 8a44b9edf..0bf710d83 100644
    display: flex;
    justify-content: flex-end;
 diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
-index 40a521b90..ecc95606a 100644
+index 77b9d4b3a..ecc95606a 100644
 --- a/packages/client/src/components/layout/PageSidebarNav.vue
 +++ b/packages/client/src/components/layout/PageSidebarNav.vue
 @@ -58,11 +58,6 @@ function openWorkflow() {
@@ -92,7 +92,7 @@ index 40a521b90..ecc95606a 100644
 -
 -function openApiRelay() {
 -  if (typeof window === 'undefined') return
--  window.open('https://apikey.fun/register?aff=LIBAPI', '_blank', 'noopener,noreferrer')
+-  window.open('https://apikey.fan/register?aff=LIBAPI', '_blank', 'noopener,noreferrer')
 -}
  </script>
  
@@ -120,10 +120,10 @@ index 40a521b90..ecc95606a 100644
      <div class="conversation-switch conversation-switch--four" role="tablist" aria-label="Conversation type">
        <NTooltip trigger="hover" placement="top">
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 24b0dfbfd..f8ede3f6f 100644
+index 6541d5f65..9dec574fb 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -326,7 +326,6 @@ export default {
+@@ -360,7 +360,6 @@ export default {
      chat: 'محادثة',
      backToChat: 'رجوع',
      search: 'بحث',
@@ -132,10 +132,10 @@ index 24b0dfbfd..f8ede3f6f 100644
      jobs: 'المهام المجدولة',
      kanban: 'كانبان',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 53d6508e5..91e2b2b3f 100644
+index 7212a922f..244dc9500 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -339,7 +339,6 @@ export default {
+@@ -373,7 +373,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Zuruck',
      search: 'Suche',
@@ -144,10 +144,10 @@ index 53d6508e5..91e2b2b3f 100644
      jobs: 'Geplante Aufgaben',
      models: 'Modelle',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 9d4d9808d..cce381052 100644
+index 3b628f9be..75d8fb767 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -327,7 +327,6 @@ export default {
+@@ -361,7 +361,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Back',
      search: 'Search',
@@ -156,10 +156,10 @@ index 9d4d9808d..cce381052 100644
      jobs: 'Jobs',
      kanban: 'Kanban',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 2a749975d..5c5ff1060 100644
+index f97f7c20a..1ad75eecf 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -339,7 +339,6 @@ export default {
+@@ -373,7 +373,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Volver',
      search: 'Buscar',
@@ -168,10 +168,10 @@ index 2a749975d..5c5ff1060 100644
      jobs: 'Tareas programadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 47fd313af..b4d05b676 100644
+index adb576928..c0b578d92 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -338,7 +338,6 @@ export default {
+@@ -372,7 +372,6 @@ export default {
      chat: 'Discussion',
      backToChat: 'Retour',
      search: 'Rechercher',
@@ -180,10 +180,10 @@ index 47fd313af..b4d05b676 100644
      jobs: 'Taches planifiees',
      models: 'Modeles',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 241785947..bc5d5337f 100644
+index 3e2267a49..5de1053a7 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -339,7 +339,6 @@ export default {
+@@ -373,7 +373,6 @@ export default {
      chat: 'チャット',
      backToChat: '戻る',
      search: '検索',
@@ -192,10 +192,10 @@ index 241785947..bc5d5337f 100644
      jobs: 'ジョブ',
      models: 'モデル',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 8f149c9dc..f237f712b 100644
+index d921dbb2a..ab6bc4178 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -339,7 +339,6 @@ export default {
+@@ -373,7 +373,6 @@ export default {
      chat: '채팅',
      backToChat: '뒤로',
      search: '검색',
@@ -204,10 +204,10 @@ index 8f149c9dc..f237f712b 100644
      jobs: '예약 작업',
      models: '모델',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index ababe3ae2..d5135b577 100644
+index 410df560c..343fe9798 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -339,7 +339,6 @@ export default {
+@@ -373,7 +373,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Voltar',
      search: 'Pesquisar',
@@ -216,10 +216,10 @@ index ababe3ae2..d5135b577 100644
      jobs: 'Tarefas agendadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index a98e64e0b..ea27bd93b 100644
+index 20c16bef3..240ed6a07 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -253,7 +253,6 @@ export default {
+@@ -287,7 +287,6 @@ export default {
      chat: 'Чат',
      backToChat: 'Назад',
      search: 'Поиск',
@@ -228,10 +228,10 @@ index a98e64e0b..ea27bd93b 100644
      jobs: 'Задачи',
      kanban: 'Канбан',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 5725861ab..03f693fd7 100644
+index 15cd19468..513c36246 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -327,7 +327,6 @@ export default {
+@@ -361,7 +361,6 @@ export default {
      chat: '對話',
      backToChat: '返回',
      search: '搜尋',
@@ -240,10 +240,10 @@ index 5725861ab..03f693fd7 100644
      jobs: '任務',
      kanban: '看板',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index ce619c720..c22e30e6f 100644
+index 33b149bec..00022e68c 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -327,7 +327,6 @@ export default {
+@@ -361,7 +361,6 @@ export default {
      chat: '对话',
      backToChat: '返回',
      search: '搜索',

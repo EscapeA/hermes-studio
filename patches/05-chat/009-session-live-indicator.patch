@@ -1,8 +1,8 @@
-From eab621ff5c85c9e33ff7732749302263f3ccffc9 Mon Sep 17 00:00:00 2001
+From 82878312bbb7dd99507c3f3739d5c1cfbc4f31bb Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 23:21:16 +0800
-Subject: [PATCH 4/4] fix(chat): keep session live indicator when identity row
- is hidden
+Subject: [PATCH] fix(chat): keep session live indicator when identity row is
+ hidden
 
 The working/live status was rendered only as a streaming class on the
 agent avatar row. Hiding display.show_session_identity therefore also
@@ -24,10 +24,10 @@ the identity row so working sessions stay visible either way.
  12 files changed, 90 insertions(+)
 
 diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
-index 0cec37aa..c1b44b67 100644
+index 265356178..b47c9818b 100644
 --- a/packages/client/src/components/hermes/chat/SessionListItem.vue
 +++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
-@@ -136,6 +136,12 @@ onUnmounted(() => {
+@@ -134,6 +134,12 @@ onUnmounted(() => {
              </svg>
            </span>
            <span v-if="completedUnread" class="session-item-unread-dot" aria-hidden="true" />
@@ -40,7 +40,7 @@ index 0cec37aa..c1b44b67 100644
            <span class="session-item-title" dir="auto">
              {{ session.title }}
            </span>
-@@ -305,6 +311,40 @@ onUnmounted(() => {
+@@ -310,6 +316,40 @@ onUnmounted(() => {
    box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.12);
  }
  
@@ -82,23 +82,23 @@ index 0cec37aa..c1b44b67 100644
    flex: 0 0 auto;
    margin-top: 1px;
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 52f311a1..d7509477 100644
+index 100edf8fc..93f712baf 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -756,6 +756,7 @@ export default {
-     clarifySubmit: 'Antworten',
-     clarifyDismiss: 'Schließen',
+@@ -1022,6 +1022,7 @@ export default {
+     interactionCountdown: '{time} verbleibend',
+     interactionCountdownElapsed: '00:00 · Serverbestätigung ausstehend',
      deleteSession: 'Diese Sitzung loschen?',
 +    sessionLive: 'Sitzung arbeitet',
      toggleBatchMode: 'Batch-Auswahl',
      selectAll: 'Alle auswählen',
      confirmBatchDelete: '{count} ausgewählte Sitzungen löschen?',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 5934b553..b7f0f824 100644
+index 57ce70805..f66415511 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -831,6 +831,7 @@ export default {
-     clarifyDismiss: 'Dismiss',
+@@ -1100,6 +1100,7 @@ export default {
+     interactionCountdownElapsed: '00:00 · Awaiting server confirmation',
      newCliChat: 'New CLI',
      deleteSession: 'Delete this session?',
 +    sessionLive: 'Session is working',
@@ -106,71 +106,71 @@ index 5934b553..b7f0f824 100644
      toggleBatchMode: 'Batch selection',
      selectAll: 'Select all',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index c0085e9a..0360114d 100644
+index bc10957ab..62d100108 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -756,6 +756,7 @@ export default {
-     clarifySubmit: 'Responder',
-     clarifyDismiss: 'Descartar',
+@@ -1022,6 +1022,7 @@ export default {
+     interactionCountdown: 'Quedan {time}',
+     interactionCountdownElapsed: '00:00 · Esperando confirmación del servidor',
      deleteSession: 'Eliminar esta sesion?',
 +    sessionLive: 'Sesion en curso',
      toggleBatchMode: 'Selección por lotes',
      selectAll: 'Seleccionar todo',
      confirmBatchDelete: '¿Eliminar {count} sesiones seleccionadas?',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 140fcc94..d51b76a1 100644
+index 866ad95c4..e03ecba2d 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -756,6 +756,7 @@ export default {
-     clarifySubmit: 'Répondre',
-     clarifyDismiss: 'Ignorer',
+@@ -1021,6 +1021,7 @@ export default {
+     interactionCountdown: '{time} restante',
+     interactionCountdownElapsed: '00:00 · Confirmation du serveur en attente',
      deleteSession: 'Supprimer cette session ?',
 +    sessionLive: 'Session en cours',
      toggleBatchMode: 'Sélection par lot',
      selectAll: 'Tout sélectionner',
      confirmBatchDelete: 'Supprimer {count} sessions sélectionnées?',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 243e0369..ad3ed4ca 100644
+index a5ed42757..dbbd59154 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -756,6 +756,7 @@ export default {
-     clarifySubmit: '返信',
-     clarifyDismiss: '閉じる',
+@@ -1022,6 +1022,7 @@ export default {
+     interactionCountdown: '残り {time}',
+     interactionCountdownElapsed: '00:00 · サーバー確認待ち',
      deleteSession: 'このセッションを削除しますか？',
 +    sessionLive: 'セッション実行中',
      toggleBatchMode: '一括選択',
      selectAll: 'すべて選択',
      confirmBatchDelete: '{count}件のセッションを削除しますか？',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 8bcc09b5..0ef8ce32 100644
+index 845b2dafb..6d83480f9 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -756,6 +756,7 @@ export default {
-     clarifySubmit: '답장',
-     clarifyDismiss: '무시',
+@@ -1022,6 +1022,7 @@ export default {
+     interactionCountdown: '{time} 남음',
+     interactionCountdownElapsed: '00:00 · 서버 확인 대기 중',
      deleteSession: '이 세션을 삭제하시겠습니까?',
 +    sessionLive: '세션 작업 중',
      toggleBatchMode: '일괄 선택',
      selectAll: '모두 선택',
      confirmBatchDelete: '선택한 {count}개의 세션을 삭제하시겠습니까?',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 307bd66d..0a2a17e4 100644
+index 9a5ad3fb3..4bb396958 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -756,6 +756,7 @@ export default {
-     clarifySubmit: 'Responder',
-     clarifyDismiss: 'Descartar',
+@@ -1022,6 +1022,7 @@ export default {
+     interactionCountdown: '{time} restante',
+     interactionCountdownElapsed: '00:00 · Aguardando confirmação do servidor',
      deleteSession: 'Excluir esta sessão?',
 +    sessionLive: 'Sessão em execução',
      toggleBatchMode: 'Seleção em lote',
      selectAll: 'Selecionar tudo',
      confirmBatchDelete: 'Excluir {count} sessões selecionadas?',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index c002f0ac..c2a4a51f 100644
+index 5dc8e262f..f88b57a5b 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -694,6 +694,7 @@ export default {
-     approvalDeny: 'Отказать',
+@@ -978,6 +978,7 @@ export default {
+     interactionCountdownElapsed: '00:00 · Ожидание подтверждения сервера',
      newCliChat: 'Новый CLI',
      deleteSession: 'Удалить этот сеанс?',
 +    sessionLive: 'Сессия выполняется',
@@ -178,23 +178,23 @@ index c002f0ac..c2a4a51f 100644
      toggleBatchMode: 'Пакетный выбор',
      selectAll: 'Выбрать всё',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index a9665650..668be238 100644
+index ea9e673c4..b697332b2 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -808,6 +808,7 @@ export default {
-     clarifySubmit: '回覆',
-     clarifyDismiss: '忽略',
+@@ -1090,6 +1090,7 @@ export default {
+     interactionCountdown: '剩餘 {time}',
+     interactionCountdownElapsed: '00:00 · 等待伺服器確認',
      deleteSession: '確定刪除此工作階段？',
 +    sessionLive: '會話進行中',
      sessionDeleted: '工作階段已刪除',
      toggleBatchMode: '批次選取',
      selectAll: '全選',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 85bbbeb3..9a0849af 100644
+index 63ec4049c..ddb5357c0 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -831,6 +831,7 @@ export default {
-     clarifyDismiss: '忽略',
+@@ -1100,6 +1100,7 @@ export default {
+     interactionCountdownElapsed: '00:00 · 等待服务端确认',
      newCliChat: '新建 CLI',
      deleteSession: '确定删除此会话？',
 +    sessionLive: '会话进行中',
@@ -202,10 +202,10 @@ index 85bbbeb3..9a0849af 100644
      toggleBatchMode: '批量选择',
      selectAll: '全选',
 diff --git a/tests/client/session-list-item.test.ts b/tests/client/session-list-item.test.ts
-index f4650c4e..07894411 100644
+index 37d8d65ef..8c7172592 100644
 --- a/tests/client/session-list-item.test.ts
 +++ b/tests/client/session-list-item.test.ts
-@@ -353,4 +353,44 @@ describe('SessionListItem', () => {
+@@ -354,4 +354,44 @@ describe('SessionListItem', () => {
      expect(wrapper.get('.session-item-agent-logo').attributes('src')).toBe('/coding-agents/hermes.png')
      expect(wrapper.find('.session-item-profile').exists()).toBe(true)
    })

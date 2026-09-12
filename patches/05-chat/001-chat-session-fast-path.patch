@@ -1,4 +1,4 @@
-From b67820f28cd98d20bbaea52226b71e40a8617eab Mon Sep 17 00:00:00 2001
+From bcb8c97f9d0f60eb2e66f6b76d0e5ea196ae88c5 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 22:01:07 +0800
 Subject: [PATCH] =?UTF-8?q?feat(chat):=20fast-first=20session=20open=20?=
@@ -23,10 +23,10 @@ Content-Transfer-Encoding: 8bit
  1 file changed, 39 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index b54dc4a6..dc0121d0 100644
+index a28b91b87..4048a6397 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -20,6 +20,11 @@ export type ContentBlock = ContentBlockImport
+@@ -30,6 +30,11 @@ export type ContentBlock = ContentBlockImport
  
  export const LIVE_CHAT_MESSAGE_PAGE_SIZE = 150
  export const LIVE_CHAT_MAX_LOADED_MESSAGES = 300
@@ -36,9 +36,9 @@ index b54dc4a6..dc0121d0 100644
 +// background. Kept small so the first paint is nearly instant.
 +export const SESSION_FAST_FIRST_PAGE_SIZE = 50
  const LEGACY_WORKSPACE_RUN_CHANGE_MESSAGE_PREFIX = 'workspace-run-change:'
- type ChatAgentId = 'hermes' | 'claude' | 'codex' | 'pi' | 'ekko-agent'
+ type ChatAgentId = 'hermes' | 'claude' | 'codex' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'ekko-agent'
  
-@@ -1933,8 +1938,15 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2155,8 +2160,15 @@ export const useChatStore = defineStore('chat', () => {
      let backgroundPendingOnResume = 0
  
      try {
@@ -55,7 +55,7 @@ index b54dc4a6..dc0121d0 100644
          const timeout = setTimeout(() => reject(new Error('resume timeout')), 15_000)
          resumeSession(sessionId, (data) => {
            clearTimeout(timeout)
-@@ -1996,6 +2008,7 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2219,6 +2231,7 @@ export const useChatStore = defineStore('chat', () => {
              target.messageTotal = data.messageTotal ?? target.messageCount ?? target.loadedMessageCount
              target.messageCount = target.messageTotal
              target.hasMoreBefore = data.hasMoreBefore ?? target.loadedMessageCount < target.messageTotal
@@ -63,7 +63,7 @@ index b54dc4a6..dc0121d0 100644
            }
            if (!target.title) {
              const firstUser = target.messages.find(m => m.role === 'user')
-@@ -2086,6 +2099,31 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2309,6 +2322,31 @@ export const useChatStore = defineStore('chat', () => {
            resolve()
          }, activeSession.value?.profile, runtimeTransport())
        })

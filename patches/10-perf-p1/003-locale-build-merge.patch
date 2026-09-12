@@ -1,8 +1,7 @@
-From 3d7caa2ca1b3bf95f7b97574a211a10331462266 Mon Sep 17 00:00:00 2001
+From 886fc347d19795a6413700e42e2d544837c2ac4e Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
-Subject: [PATCH 3/4] perf(i18n): merge en fallback at build time, one locale
- chunk
+Subject: [PATCH] perf(i18n): merge en fallback at build time, one locale chunk
 
 The i18n loader always fetched English plus the target locale at runtime
 so missing keys could fall back - every non-English page loaded two chunks
@@ -19,7 +18,7 @@ wire for zh users).
  create mode 100644 packages/client/src/i18n/locales.d.ts
 
 diff --git a/packages/client/src/i18n/index.ts b/packages/client/src/i18n/index.ts
-index bf52f6cd..233b98af 100644
+index bf52f6cd4..233b98af1 100644
 --- a/packages/client/src/i18n/index.ts
 +++ b/packages/client/src/i18n/index.ts
 @@ -1,5 +1,5 @@
@@ -70,7 +69,7 @@ index bf52f6cd..233b98af 100644
    if (sequence !== localeSwitchSequence) return
 diff --git a/packages/client/src/i18n/locales.d.ts b/packages/client/src/i18n/locales.d.ts
 new file mode 100644
-index 00000000..d3d42d66
+index 000000000..d3d42d66d
 --- /dev/null
 +++ b/packages/client/src/i18n/locales.d.ts
 @@ -0,0 +1,8 @@
@@ -83,7 +82,7 @@ index 00000000..d3d42d66
 +  export default messages
 +}
 diff --git a/packages/client/src/i18n/messages.ts b/packages/client/src/i18n/messages.ts
-index 0abd2e93..e16613e3 100644
+index 0abd2e93b..e16613e36 100644
 --- a/packages/client/src/i18n/messages.ts
 +++ b/packages/client/src/i18n/messages.ts
 @@ -24,17 +24,17 @@ export function mergeMessagesWithFallback(
@@ -116,7 +115,7 @@ index 0abd2e93..e16613e3 100644
  
  const localeMessagePromises = new Map<SupportedLocale, Promise<LocaleMessages>>()
 diff --git a/vite.config.ts b/vite.config.ts
-index ed458efd..3359070b 100644
+index c9308a5b8..7e589a935 100644
 --- a/vite.config.ts
 +++ b/vite.config.ts
 @@ -1,7 +1,9 @@
@@ -130,7 +129,7 @@ index ed458efd..3359070b 100644
  import pkg from './package.json'
  
  const FRONTEND_PORT = Number(process.env.HERMES_WEB_UI_FRONTEND_PORT || 8649)
-@@ -30,9 +32,68 @@ function createProxyConfig(): ProxyOptions {
+@@ -30,11 +32,70 @@ function createProxyConfig(): ProxyOptions {
    }
  }
  
@@ -195,6 +194,8 @@ index ed458efd..3359070b 100644
 +
  export default defineConfig({
    root: 'packages/client',
+   // Concurrent test/dev servers must not replace each other's optimized Vue runtime.
+   cacheDir: resolve(__dirname, process.env.HERMES_WEB_UI_VITE_CACHE_DIR || 'node_modules/.vite/client'),
 -  plugins: [vue()],
 +  plugins: [vue(), createLocaleMergePlugin()],
    define: {

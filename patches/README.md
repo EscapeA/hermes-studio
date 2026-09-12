@@ -71,6 +71,13 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 11-socket-stall/002（客户端 chat.ts：上游 runtimeGeneration 守卫 + 我方心跳都保留）。
 预演与验证记录：`/home/aries/hermes_workspace/hermes-studio-0.7.19-upgrade/`（构建全绿、相关单测 95/95、归档语义 3 条真实 SQLite 集成测试通过）。
 
+**0.7.20 重放（2026-09-12，上游 v0.7.20 = 6e9e68717）**：82/82 全部落位（无空提交），**13 个补丁已回写**（2 处真冲突 + 11 处上下文漂移）：
+- 硬冲突 **09-cleanup/002**（上游把推广域名改成 `apikey.fan`，我方整块删除 → 新 pre-image = `.fan` 版，语义仍是「推广一律去掉」）、
+  硬冲突 **10-perf-p1/003**（`vite.config.ts`：上游新增 `cacheDir` 行与我方 `plugins` 行重叠 → **两侧都保留**，`plugins: [vue(), createLocaleMergePlugin()]`）。
+- 上下文漂移（3-way 回落、`+/-` 行未变，回写为消除下次冲突）：02-pwa/011、03-connection/001、04-usage/001、04-usage/002、04-usage/003、04-usage/010、05-chat/001、05-chat/002、05-chat/003、05-chat/009、08-server/001。
+- 本次上游特征：`bin/` 与 0.7.19 **逐字节一致**（无 0.7.19 那次 MCP 改名陷阱）、依赖仅新增运行时 `yaml`（已 bundle 进 `dist/server/index.js`）、新增一次性启动任务会把各 profile 的 `apikey.fun` 迁到 `apikey.fan`（本机无匹配 ⇒ 空转）、DSH 集成（未使用即无副作用）。
+- 预演与验证记录：`/home/aries/hermes_workspace/hermes-studio-0.7.20-upgrade/`（构建 5/5 全绿、相关单测 96/96、上游新增用例 20/20、归档语义 3 条真实 SQLite 集成测试通过、官方 tarball 热替缺口 0 个功能文件）。
+
 ## 升级 SOP（上游新版本）
 
 ```bash

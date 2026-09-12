@@ -1,4 +1,4 @@
-From c1dd13d6ee72636667e24ebd9d205011c4eee4ef Mon Sep 17 00:00:00 2001
+From dc62b12f124801dae7f8633a18962f9fb8e5c47e Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Wed, 12 Aug 2026 21:27:08 +0800
 Subject: [PATCH] fix(server): add immutable cache header for coding-agents
@@ -7,13 +7,13 @@ Subject: [PATCH] fix(server): add immutable cache header for coding-agents
 Group-chat agent avatars (/coding-agents/*.png) had no Cache-Control,
 forcing mobile clients to re-download every avatar on each visit.
 ---
- packages/server/src/middleware/static-cache.ts | 3 +++
+ packages/server/src/modules/studio/middleware/static-cache.ts | 3 +++
  1 file changed, 3 insertions(+)
 
-diff --git a/packages/server/src/middleware/static-cache.ts b/packages/server/src/middleware/static-cache.ts
-index a36dd8bc..4c9ae8fa 100644
---- a/packages/server/src/middleware/static-cache.ts
-+++ b/packages/server/src/middleware/static-cache.ts
+diff --git a/packages/server/src/modules/studio/middleware/static-cache.ts b/packages/server/src/modules/studio/middleware/static-cache.ts
+index a36dd8bcb..4c9ae8fa1 100644
+--- a/packages/server/src/modules/studio/middleware/static-cache.ts
++++ b/packages/server/src/modules/studio/middleware/static-cache.ts
 @@ -5,5 +5,8 @@ export function getStaticCacheControl(relativePath: string): string | null {
    const normalizedPath = relativePath.replaceAll('\\', '/').replace(/^\.\//, '')
    if (normalizedPath === 'index.html') return SPA_ENTRY_CACHE_CONTROL

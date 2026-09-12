@@ -1,4 +1,4 @@
-From a6d2a2174817ecb5f085311f40732998bf56151b Mon Sep 17 00:00:00 2001
+From 843f667f054a803f3aa1ddd48d1b2f39e8f16d10 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 3 Sep 2026 02:39:38 +0800
 Subject: [PATCH] fix(theme): sync CSS color-scheme + poll system dark in
@@ -15,10 +15,10 @@ change event fires) to catch system dark/light transitions in WebView.
  1 file changed, 30 insertions(+)
 
 diff --git a/packages/client/src/composables/useTheme.ts b/packages/client/src/composables/useTheme.ts
-index 8b6ec36f..979f6efc 100644
+index 8a635337c..d824af938 100644
 --- a/packages/client/src/composables/useTheme.ts
 +++ b/packages/client/src/composables/useTheme.ts
-@@ -143,6 +143,11 @@ function applyClasses() {
+@@ -161,6 +161,11 @@ function applyClasses() {
    isComic.value = style.value === 'comic'
    document.documentElement.classList.toggle('dark', dark)
    document.documentElement.classList.toggle('comic', isComic.value)
@@ -28,9 +28,9 @@ index 8b6ec36f..979f6efc 100644
 +  // images/icons) or refuses to follow the system theme at all.
 +  document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
    applyCustomization()
+   applyThemeColorMeta()
  }
- 
-@@ -256,9 +261,34 @@ function resetCustomization(): Promise<void> {
+@@ -275,9 +280,34 @@ function resetCustomization(): Promise<void> {
  applyClasses()
  void loadBackground()
  
