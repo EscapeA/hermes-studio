@@ -229,6 +229,13 @@ async function handleRefreshModelCache() {
   gap: 8px;
 }
 
+// The fixed mobile .hamburger-btn opens this page's sidebar (no duplicate ▦).
+@media (max-width: $breakpoint-mobile) {
+  .models-sidebar-toggle {
+    display: none;
+  }
+}
+
 .model-cache-overlay {
   position: fixed;
   inset: 0;

@@ -1338,7 +1338,8 @@ function handleBatchDeleteConfirm() {
   }
 
   .chat-header {
-    padding: 16px 12px 16px 52px;
+    min-height: $mobile-topbar-min-height;
+    padding: $mobile-topbar-padding;
   }
 
   .history-sidebar-toggle {
