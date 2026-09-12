@@ -294,21 +294,22 @@ a {
 }
 
 // Hamburger button (mobile only)
+// Centered on the mobile top bar ($mobile-topbar-height) it sits on.
 .hamburger-btn {
   display: none;
   position: fixed;
-  top: calc(10px + env(safe-area-inset-top, 0px));
+  top: calc((#{$mobile-topbar-height} - 36px) / 2 + env(safe-area-inset-top, 0px));
   left: 12px;
   z-index: 99;
   width: 36px;
   height: 36px;
+  padding: 0;
   border: none;
-  background: $bg-card;
-  border-radius: $radius-sm;
+  background: transparent;
+  color: $text-primary;
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 // Mobile responsive
@@ -322,7 +323,8 @@ a {
   }
 
   .page-header {
-    padding: calc(16px + env(safe-area-inset-top, 0px)) 12px 16px 52px !important;
+    min-height: $mobile-topbar-min-height;
+    padding: $mobile-topbar-padding !important;
   }
 
   .input-sm,

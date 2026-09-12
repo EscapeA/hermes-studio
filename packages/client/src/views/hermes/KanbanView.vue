@@ -710,7 +710,11 @@ async function handleDispatch() {
 
 @media (max-width: $breakpoint-mobile) {
   .page-header {
-    padding: 16px 12px 16px 52px;
+    // Two-row (title + actions stacked) bar: it grows past the mobile top-bar
+    // height, so only the top padding keeps its 22px title row centered on the
+    // fixed .hamburger-btn. Derived from $mobile-topbar-height so a height
+    // change keeps the first row aligned.
+    padding: calc((#{$mobile-topbar-height} - 22px) / 2 + env(safe-area-inset-top, 0px)) 12px calc((#{$mobile-topbar-height} - 22px) / 2) 52px !important;
     position: sticky;
     top: 0;
     z-index: 20;

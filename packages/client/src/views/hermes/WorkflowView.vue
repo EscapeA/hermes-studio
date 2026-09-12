@@ -5374,7 +5374,11 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
     flex-wrap: nowrap;
     align-items: center;
     gap: 8px;
-    padding: 16px 12px !important;
+    padding: $mobile-topbar-padding !important;
+  }
+
+  .header-sidebar-toggle {
+    display: none;
   }
 
   .header-actions {

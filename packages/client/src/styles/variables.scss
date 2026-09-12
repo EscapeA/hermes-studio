@@ -213,6 +213,15 @@ $font-code: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 $sidebar-width: 240px;
 $sidebar-collapsed-width: 64px;
 $header-height: 60px;
+// Mobile top bar (app bar), excluding the status-bar safe area.
+// Every mobile top bar derives from these, so the bar height is a one-line
+// change: $mobile-topbar-content = tallest control in a bar (small button).
+// Symmetric vertical padding + min-height keeps the bar content centered, and
+// the fixed .hamburger-btn is centered on the same axis.
+$mobile-topbar-height: 38px;
+$mobile-topbar-content: 32px;
+$mobile-topbar-min-height: calc(#{$mobile-topbar-height} + env(safe-area-inset-top, 0px));
+$mobile-topbar-padding: calc((#{$mobile-topbar-height} - #{$mobile-topbar-content}) / 2 + env(safe-area-inset-top, 0px)) 12px calc((#{$mobile-topbar-height} - #{$mobile-topbar-content}) / 2) 52px;
 $breakpoint-mobile: 768px;
 
 // Radius
