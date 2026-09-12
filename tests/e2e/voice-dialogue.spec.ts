@@ -115,7 +115,11 @@ async function installMockVoiceCapture(page: Page) {
   })
 }
 
-test('records, transcribes, stages editable text, then sends through the real chat UI', async ({ page }) => {
+// Skipped in this fork: patch 05-chat/022 removes the composer's voice button
+// (VoiceDialogueControls) from ChatInput, so there is no in-composer record
+// toggle left to drive. The component itself is still unit-tested in
+// tests/client/voice-dialogue-controls.test.ts.
+test.skip('records, transcribes, stages editable text, then sends through the real chat UI', async ({ page }) => {
   await installMockVoiceCapture(page)
   await page.addInitScript(() => {
     window.localStorage.setItem('hermes-stt-settings-v1', JSON.stringify({
