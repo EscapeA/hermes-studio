@@ -3791,7 +3791,8 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
 
 @media (max-width: $breakpoint-mobile) {
   .chat-header {
-    padding: calc(16px + env(safe-area-inset-top, 0px)) 12px 16px 52px;
+    min-height: $mobile-topbar-min-height;
+    padding: $mobile-topbar-padding;
   }
 
   .header-sidebar-toggle {
