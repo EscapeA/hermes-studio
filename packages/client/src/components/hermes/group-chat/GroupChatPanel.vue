@@ -5287,7 +5287,8 @@ export default defineComponent({ components: { CreateRoomForm } })
     }
 
     .chat-header {
-        padding: 16px 12px 16px 52px;
+        min-height: $mobile-topbar-min-height;
+        padding: $mobile-topbar-padding;
     }
 
     .group-summary-inline-status {
