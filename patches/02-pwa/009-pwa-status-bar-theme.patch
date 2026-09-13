@@ -1,0 +1,93 @@
+From 15492df5cc10a966f66234f3c49e6417bfe991fb Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 15:30:38 +0800
+Subject: [PATCH] =?UTF-8?q?fix(pwa):=20status=20bar=20follows=20in-app=20t?=
+ =?UTF-8?q?heme=20=E2=80=94=20light=20theme=5Fcolor=20in=20manifest,=20dyn?=
+ =?UTF-8?q?amic=20theme-color=20meta?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Upstream manifest/index.html already use light #f7f7f4, but our PWA patch
+rewrote manifest with dark #1a1a1a theme_color/background_color, so the
+installed standalone PWA kept a black status bar even in light mode.
+
+- manifest.webmanifest: theme_color/background_color #1a1a1a -> #f7f7f4
+- sw.js: bump CACHE_VERSION v4 -> v5 (manifest is precached by SW)
+- useTheme.ts: dynamically update <meta name=theme-color> in applyClasses()
+  (light #f7f7f4 / dark #1a1a1a), so browser chrome + Android status bar
+  follow the in-app brightness setting incl. standalone mode (Chromium)
+---
+ packages/client/public/manifest.webmanifest |  4 ++--
+ packages/client/public/sw.js                |  2 +-
+ packages/client/src/composables/useTheme.ts | 19 +++++++++++++++++++
+ 3 files changed, 22 insertions(+), 3 deletions(-)
+
+diff --git a/packages/client/public/manifest.webmanifest b/packages/client/public/manifest.webmanifest
+index c8c84479..337d7926 100644
+--- a/packages/client/public/manifest.webmanifest
++++ b/packages/client/public/manifest.webmanifest
+@@ -9,8 +9,8 @@
+   "orientation": "portrait-primary",
+   "display_override": ["standalone", "minimal-ui"],
+   "launch_handler": { "client_mode": "focus-existing" },
+-  "theme_color": "#1a1a1a",
+-  "background_color": "#1a1a1a",
++  "theme_color": "#f7f7f4",
++  "background_color": "#f7f7f4",
+   "icons": [
+     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+diff --git a/packages/client/public/sw.js b/packages/client/public/sw.js
+index 56356afe..bb01df69 100644
+--- a/packages/client/public/sw.js
++++ b/packages/client/public/sw.js
+@@ -4,7 +4,7 @@
+ //     v3 added brand assets Cache-First (logo never hits network after first install);
+ //     v2 added session list API SWR cache; v3 fixes precache robustness + version bump.
+ 
+-const CACHE_VERSION = 'v4';
++const CACHE_VERSION = 'v5';
+ const STATIC_CACHE = `hermes-static-${CACHE_VERSION}`;
+ const API_CACHE = `hermes-api-${CACHE_VERSION}`;
+ 
+diff --git a/packages/client/src/composables/useTheme.ts b/packages/client/src/composables/useTheme.ts
+index 28012d5f..a0239b4c 100644
+--- a/packages/client/src/composables/useTheme.ts
++++ b/packages/client/src/composables/useTheme.ts
+@@ -20,6 +20,24 @@ import {
+ export type BrightnessMode = 'light' | 'dark' | 'system'
+ export type ThemeStyle = 'ink' | 'comic'
+ 
++// Status bar / browser chrome theme color — mirrors manifest.theme_color so
++// standalone PWA chrome follows the in-app brightness setting.
++const THEME_COLOR_LIGHT = '#f7f7f4'
++const THEME_COLOR_DARK = '#1a1a1a'
++
++function applyThemeColorMeta() {
++  const color = isDark.value ? THEME_COLOR_DARK : THEME_COLOR_LIGHT
++  let meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]:not([media])')
++  if (!meta) {
++    meta = document.createElement('meta')
++    meta.name = 'theme-color'
++    // Prepend so it is the first matching meta and wins over the static
++    // prefers-color-scheme variants in index.html.
++    document.head.prepend(meta)
++  }
++  meta.content = color
++}
++
+ const BRIGHTNESS_KEY = 'hermes_brightness'
+ const STYLE_KEY = 'hermes_style'
+ const AUTH_TOKEN_KEY = 'hermes_api_key'
+@@ -144,6 +162,7 @@ function applyClasses() {
+   document.documentElement.classList.toggle('dark', dark)
+   document.documentElement.classList.toggle('comic', isComic.value)
+   applyCustomization()
++  applyThemeColorMeta()
+ }
+ 
+ function persistThemeCache() {
+-- 
+2.53.0
+

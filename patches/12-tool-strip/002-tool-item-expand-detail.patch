@@ -1,0 +1,237 @@
+From 59682d17a4410cb2efb07af119a7bbc7b08baddb Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 5 Sep 2026 20:14:05 +0800
+Subject: [PATCH] feat(chat): expandable detail for live running tool items
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Tool-call items in the live strip were single-line with overflow hidden
+and only subagent entries were clickable. Now any tool with arguments or
+a preview can be expanded in place to review the full formatted toolArgs
+while the tool is still running (not only after completion in the
+transcript).
+
+- per-item expanded state (expandedToolCallIds)
+- chevron indicator; rotated when expanded
+- expanded item wraps to multiple lines (flex-wrap, height auto) and
+  shows a '参数' section with pre-formatted JSON (pre-wrap, break-all,
+  max-height 200px with scroll)
+- subagent entries keep opening the subagent stream on click
+---
+ .../components/hermes/chat/MessageList.vue    | 143 +++++++++++++++++-
+ 1 file changed, 137 insertions(+), 6 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
+index 3dc5b07a..5c0193eb 100644
+--- a/packages/client/src/components/hermes/chat/MessageList.vue
++++ b/packages/client/src/components/hermes/chat/MessageList.vue
+@@ -71,9 +71,50 @@ function isSubagentToolCall(message: Message): boolean {
+   return subagentIdFromToolCall(message.toolCallId) !== null
+ }
+ 
++// Per-tool expandable detail inside the live tool strip: lets the user review
++// the full arguments/preview of a tool that is still running, not only after
++// it has finished in the transcript.
++const expandedToolCallIds = ref<Set<string>>(new Set());
++
++function isToolCallExpanded(toolId: string): boolean {
++  return expandedToolCallIds.value.has(toolId);
++}
++
++function toggleToolCallDetail(message: Message) {
++  const next = new Set(expandedToolCallIds.value);
++  if (next.has(message.id)) {
++    next.delete(message.id);
++  } else {
++    next.add(message.id);
++  }
++  expandedToolCallIds.value = next;
++}
++
++function toolArgsDetailText(message: Message): string {
++  const raw = message.toolArgs;
++  if (raw === undefined || raw === null || raw === "") {
++    return message.toolPreview || "";
++  }
++  if (typeof raw === "string") return raw;
++  try {
++    const serialized = JSON.stringify(raw, null, 2);
++    if (serialized !== undefined) return serialized;
++  } catch {
++    // Fall through to String(raw).
++  }
++  return String(raw);
++}
++
++function toolCanExpandDetail(message: Message): boolean {
++  return !isSubagentToolCall(message) && !!(message.toolArgs || message.toolPreview);
++}
++
+ function handleToolCallClick(message: Message) {
+-  if (!isSubagentToolCall(message)) return
+-  openSubagentStream(chatStore.activeSessionId, message.toolCallId)
++  if (isSubagentToolCall(message)) {
++    openSubagentStream(chatStore.activeSessionId, message.toolCallId);
++    return;
++  }
++  if (toolCanExpandDetail(message)) toggleToolCallDetail(message);
+ }
+ 
+ function formatElapsed(ms: number): string {
+@@ -877,15 +918,33 @@ defineExpose({
+               v-for="tc in visibleToolCalls"
+               :key="tc.id"
+               class="tool-call-item"
+-              :class="{ 'subagent-entry': isSubagentToolCall(tc) }"
+-              :role="isSubagentToolCall(tc) ? 'button' : undefined"
+-              :tabindex="isSubagentToolCall(tc) ? 0 : undefined"
++              :class="{
++                'subagent-entry': isSubagentToolCall(tc),
++                expandable: toolCanExpandDetail(tc),
++                expanded: isToolCallExpanded(tc.id),
++              }"
++              :role="isSubagentToolCall(tc) || toolCanExpandDetail(tc) ? 'button' : undefined"
++              :tabindex="isSubagentToolCall(tc) || toolCanExpandDetail(tc) ? 0 : undefined"
+               :title="isSubagentToolCall(tc) ? t('subagent.open') : undefined"
+               @click="handleToolCallClick(tc)"
+               @keydown.enter.prevent="handleToolCallClick(tc)"
+               @keydown.space.prevent="handleToolCallClick(tc)"
+             >
+               <svg
++                v-if="toolCanExpandDetail(tc)"
++                width="10"
++                height="10"
++                viewBox="0 0 24 24"
++                fill="none"
++                stroke="currentColor"
++                stroke-width="2"
++                class="tool-call-chevron"
++                :class="{ rotated: isToolCallExpanded(tc.id) }"
++              >
++                <polyline points="9 18 15 12 9 6" />
++              </svg>
++              <svg
++                v-else
+                 width="12"
+                 height="12"
+                 viewBox="0 0 24 24"
+@@ -900,7 +959,7 @@ defineExpose({
+               </svg>
+               <span class="tool-call-name">{{ tc.toolName }}</span>
+               <span
+-                v-if="tc.toolPreview"
++                v-if="tc.toolPreview && !isToolCallExpanded(tc.id)"
+                 class="tool-call-preview"
+                 :title="tc.toolPreview"
+               >{{ toolPreviewText(tc.toolPreview) }}</span>
+@@ -950,6 +1009,15 @@ defineExpose({
+                   fill="none"
+                 />
+               </svg>
++              <div
++                v-if="toolCanExpandDetail(tc) && isToolCallExpanded(tc.id)"
++                class="tool-call-detail"
++              >
++                <div class="tool-call-detail-inner">
++                  <div class="tool-call-detail-label">{{ $t('chat.arguments') }}</div>
++                  <pre class="tool-call-detail-args">{{ toolArgsDetailText(tc) }}</pre>
++                </div>
++              </div>
+             </div>
+             <div
+               v-if="visibleToolCalls.length === 0"
+@@ -1933,6 +2001,16 @@ defineExpose({
+   background: rgba(0, 0, 0, 0.03);
+   border-radius: $radius-sm;
+ 
++  &.expandable {
++    cursor: pointer;
++
++    &:hover,
++    &:focus-visible {
++      outline: none;
++      background: rgba(var(--accent-primary-rgb), 0.09);
++    }
++  }
++
+   &.subagent-entry {
+     cursor: pointer;
+ 
+@@ -1947,6 +2025,20 @@ defineExpose({
+     background: rgba(255, 255, 255, 0.06);
+   }
+ 
++  &.expanded {
++    align-items: flex-start;
++    height: auto;
++    min-height: 26px;
++    max-height: none;
++    overflow: visible;
++    flex-wrap: wrap;
++    background: rgba(var(--accent-primary-rgb), 0.055);
++
++    .dark & {
++      background: rgba(var(--accent-primary-rgb), 0.08);
++    }
++  }
++
+   &.compression-item {
+     color: $text-muted;
+     font-size: 10px;
+@@ -1960,6 +2052,16 @@ defineExpose({
+     }
+   }
+ 
++  .tool-call-chevron {
++    flex-shrink: 0;
++    color: $text-muted;
++    transition: transform 0.15s ease;
++
++    &.rotated {
++      transform: rotate(90deg);
++    }
++  }
++
+   .tool-call-icon {
+     flex-shrink: 0;
+     color: $text-muted;
+@@ -1985,6 +2087,35 @@ defineExpose({
+     max-width: none;
+     color: $text-muted;
+   }
++
++  .tool-call-detail {
++    flex: 1 1 100%;
++    min-width: 0;
++    margin-block-start: 2px;
++    padding-block-start: 6px;
++    border-top: 1px solid rgba(var(--text-primary-rgb), 0.08);
++  }
++
++  .tool-call-detail-label {
++    font-size: 10px;
++    font-weight: 600;
++    color: $text-muted;
++    margin-block-end: 4px;
++  }
++
++  .tool-call-detail-args {
++    margin: 0;
++    padding: 0;
++    font-family: $font-code;
++    font-size: 10.5px;
++    line-height: 1.5;
++    color: $text-secondary;
++    white-space: pre-wrap;
++    word-break: break-all;
++    max-height: 200px;
++    overflow-y: auto;
++    scrollbar-width: thin;
++  }
+ }
+ 
+ .tool-call-spinner {
+-- 
+2.53.0
+
