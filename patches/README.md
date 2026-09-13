@@ -78,6 +78,11 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - 本次上游特征：`bin/` 与 0.7.19 **逐字节一致**（无 0.7.19 那次 MCP 改名陷阱）、依赖仅新增运行时 `yaml`（已 bundle 进 `dist/server/index.js`）、新增一次性启动任务会把各 profile 的 `apikey.fun` 迁到 `apikey.fan`（本机无匹配 ⇒ 空转）、DSH 集成（未使用即无副作用）。
 - 预演与验证记录：`/home/aries/hermes_workspace/hermes-studio-0.7.20-upgrade/`（构建 5/5 全绿、相关单测 96/96、上游新增用例 20/20、归档语义 3 条真实 SQLite 集成测试通过、官方 tarball 热替缺口 0 个功能文件）。
 
+**0.7.21 重放（2026-09-13，上游 v0.7.21 = 8d964022d）**：82/82 全部落位，**零冲突、零空提交、零回写**（唯一 1 次三路回落 = 10-perf-p1/003，产出与存储补丁逐行一致 ⇒ 无需回写；逐补丁审 82/82 IDENTICAL）。
+- 本次上游仅 2 提交（21 文件 / +166 −14）：Windows 下 DSH 配置运行时启动修复（#3026，改 `dsh/host.ts` + `management.ts`）+ 版本号与 changelog 提升（#3027）；12 个 locale 各 +2 条 `new_0_7_21_*`。
+- `bin/`、`dist/ekko-skills`、`dist/skills` 与官方 tarball **逐字节一致**；本机不使用 DSH ⇒ 唯一可见变化 = changelog 两行。
+- 验证记录：`/home/aries/hermes_workspace/hermes-studio-0.7.21-upgrade/`（`UPGRADE-ASSESSMENT.md` + `evidence-stage1/`：verify-am 树零差异、构建 rc=0、相关单测 121/121、全量 47 failed/624 passed（上一版 51/619）、CI `34727445348` build+deploy 双绿）。
+
 ## 升级 SOP（上游新版本）
 
 ```bash
