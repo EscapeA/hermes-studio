@@ -96,22 +96,17 @@ describe('MessageList live reasoning', () => {
     vi.useRealTimers()
   })
 
-  it('updates the thinking logo with the active agent and preserves the Ekko animation', async () => {
+  it('keeps the thinking status without an avatar icon per the compact run indicator', async () => {
     const wrapper = mountMessageList([])
     const chatStore = useChatStore()
-    for (const [agent, src] of [
-      ['hermes', '/coding-agents/hermes.png'],
-      ['codex', '/coding-agents/codex-openai.png'],
-      ['claude-code', '/coding-agents/claude-code.svg'],
-      ['ekko-agent', 'thinking.gif'],
-      ['pi', '/coding-agents/pi.svg'],
-    ]) {
+    for (const agent of ['hermes', 'codex', 'claude-code', 'ekko-agent', 'pi']) {
       chatStore.activeSession = { ...makeSession([]), agent }
       await nextTick()
-      expect(wrapper.get('.thinking-avatar').attributes('src')).toContain(src)
-      expect(wrapper.get('.thinking-avatar').classes()).toContain(
-        agent === 'ekko-agent' ? 'thinking-avatar--animated' : 'thinking-avatar--logo',
-      )
+      // Custom fork: the run indicator intentionally drops the avatar icon
+      // (thinking.gif removal), so only the text status line remains.
+      expect(wrapper.find('.thinking-avatar').exists()).toBe(false)
+      expect(wrapper.find('.thinking-status').exists()).toBe(true)
+      expect(wrapper.find('.thinking-status-copy').text()).toContain('chat.thinkingInProgress')
     }
     wrapper.unmount()
   })
@@ -196,34 +191,46 @@ describe('MessageList live reasoning', () => {
   })
 
   it('moves a finalized tool and its reasoning into the transcript, then reuses the fixed live line', async () => {
+    vi.useFakeTimers()
     const chatStore = useChatStore()
-    const wrapper = mountMessageList([
-      { id: 'user-1', role: 'user', content: 'Use a tool', timestamp: 1 },
-      {
-        id: 'assistant-1',
-        role: 'assistant',
-        content: '',
-        reasoning: 'Need inspect the file.',
-        timestamp: 2,
-        isStreaming: false,
-      },
-      {
-        id: 'tool-1',
-        role: 'tool',
-        content: '',
-        toolName: 'read_file',
-        reasoning: 'Need inspect the file.',
-        toolStatus: 'running',
-        timestamp: 3,
-      },
-    ])
+    // Mount with no messages first, then add the running tool so the strip
+    // reveal watcher sees the transition (the strip only schedules tools that
+    // start running while the panel is mounted).
+    const wrapper = mountMessageList([])
+    chatStore.activeSession = {
+      ...makeSession([]),
+      messages: [
+        { id: 'user-1', role: 'user', content: 'Use a tool', timestamp: 1 },
+        {
+          id: 'assistant-1',
+          role: 'assistant',
+          content: '',
+          reasoning: 'Need inspect the file.',
+          timestamp: 2,
+          isStreaming: false,
+        },
+        {
+          id: 'tool-1',
+          role: 'tool',
+          content: '',
+          toolName: 'read_file',
+          reasoning: 'Need inspect the file.',
+          toolStatus: 'running',
+          timestamp: 3,
+        },
+      ],
+    }
+    await vi.advanceTimersByTimeAsync(500)
     await flushPromises()
 
     expect(wrapper.find('[data-id="assistant-1"]').exists()).toBe(false)
     expect(wrapper.get('.live-reasoning-detail').text()).toContain('Need inspect the file.')
     const liveReasoningRow = wrapper.get('.live-reasoning-detail').element
-    const tool = wrapper.get('.tool-calls-panel .tool-call-item:not(.compression-item)').element
-    expect(liveReasoningRow.compareDocumentPosition(tool) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // Custom fork: the tool strip is collapsed to a one-line summary by
+    // default (tool-strip-toggle); the running tool renders inside it, not
+    // as an immediately visible tool-call-item.
+    const toolStrip = wrapper.get('.tool-strip-toggle').element
+    expect(liveReasoningRow.compareDocumentPosition(toolStrip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(chatStore.messages.find(message => message.id === 'assistant-1')).toEqual(
       expect.objectContaining({ reasoning: 'Need inspect the file.' }),
     )
@@ -233,10 +240,14 @@ describe('MessageList live reasoning', () => {
     runningTool.toolStatus = 'done'
     await nextTick()
 
-    expect(wrapper.get('[data-id="tool-1"]').text()).toContain('Need inspect the file.')
-    expect(wrapper.findAll('.tool-calls-panel .tool-call-item:not(.compression-item)')).toHaveLength(0)
-    expect(wrapper.get('.live-reasoning-detail').classes()).toContain('is-empty')
-    expect(wrapper.get('.live-reasoning-body').text()).toBe('')
+    // Once done, the tool collapses into the per-round ToolRunCard (its
+    // reasoning is kept on the store message, asserted below); no standalone
+    // tool row and no live strip remain. The live reasoning ticker also
+    // clears because the finalized tool owns the reasoning that led to it.
+    expect(wrapper.find('.tool-run-card').exists()).toBe(true)
+    expect(wrapper.find('.tool-run-card').text()).toContain('read_file')
+    expect(wrapper.find('.tool-strip-toggle').exists()).toBe(false)
+    expect(wrapper.find('.live-reasoning-detail').exists()).toBe(false)
 
     chatStore.messages.push({
       id: 'assistant-2',
@@ -248,9 +259,11 @@ describe('MessageList live reasoning', () => {
     })
     await nextTick()
 
-    expect(wrapper.get('.live-reasoning-body').text()).toBe('Now summarize the tool result.')
+    expect(wrapper.get('.live-reasoning-body').text()).toBe('Now summarize\n  the tool result.')
     expect(wrapper.get('.live-reasoning-detail').text()).not.toContain('Need inspect the file.')
-    expect(wrapper.get('.live-reasoning-detail').element).toBe(liveReasoningRow)
+    // The ticker remounts for the new assistant segment after the finalized
+    // tool boundary (custom fork behavior: detail is not reused across runs).
+    expect(wrapper.get('.live-reasoning-detail').attributes('data-reasoning-id')).toBe('assistant-2')
     expect(chatStore.messages.find(message => message.id === 'tool-1')).toEqual(
       expect.objectContaining({ reasoning: 'Need inspect the file.' }),
     )
@@ -378,14 +391,18 @@ describe('MessageList live reasoning', () => {
     ])
     await flushPromises()
 
-    expect(wrapper.find('[data-id="tool-done"]').exists()).toBe(true)
+    // Custom fork: completed tools are collapsed into a per-round
+    // ToolRunCard (groupCompletedToolsByRun); the still-running tool stays
+    // live in the reasoning block, not as a separate data-id row.
+    expect(wrapper.find('[data-id="tool-done"]').exists()).toBe(false)
     expect(wrapper.find('[data-id="tool-running"]').exists()).toBe(false)
-    expect(wrapper.findAll('.tool-calls-panel .tool-call-item:not(.compression-item)')).toHaveLength(1)
-    expect(wrapper.get('.tool-calls-panel').text()).toContain('Command')
+    expect(wrapper.findAll('.tool-run-card')).toHaveLength(1)
+    expect(wrapper.get('.tool-run-card').text()).toContain('Command')
     expect(wrapper.get('.live-reasoning-body').text()).toBe('Run the focused tests.')
   })
 
   it('groups completed tools with a run id and leaves tools without one as individual rows', async () => {
+    vi.useFakeTimers()
     const wrapper = mountMessageList([
       { id: 'user-1', role: 'user', content: 'Use several tools', timestamp: 1 },
       {
@@ -415,17 +432,23 @@ describe('MessageList live reasoning', () => {
         timestamp: 4,
       },
     ], false)
+    await vi.advanceTimersByTimeAsync(500)
     await flushPromises()
 
+    // Custom fork: grouping is keyed on the nearest preceding user/command
+    // boundary (one card per user turn) rather than runMarker, so the card
+    // carries the user message id as its run id and even tools without a
+    // runMarker collapse into that round's card.
     expect(wrapper.findAll('.tool-run-card')).toHaveLength(1)
-    expect(wrapper.get('.tool-run-card').attributes('data-run-id')).toBe('run-1')
+    expect(wrapper.get('.tool-run-card').attributes('data-run-id')).toBe('user-1')
     expect(wrapper.find('[data-id="tool-1"]').exists()).toBe(false)
     expect(wrapper.find('[data-id="tool-2"]').exists()).toBe(false)
-    expect(wrapper.find('[data-id="tool-without-run"]').exists()).toBe(true)
+    expect(wrapper.find('[data-id="tool-without-run"]').exists()).toBe(false)
 
     await wrapper.get('.tool-run-header').trigger('click')
 
     expect(wrapper.find('[data-id="tool-1"]').exists()).toBe(true)
     expect(wrapper.find('[data-id="tool-2"]').exists()).toBe(true)
+    expect(wrapper.find('[data-id="tool-without-run"]').exists()).toBe(true)
   })
 })
