@@ -1,0 +1,52 @@
+From 503ffa49b8d33ee9d74753b16b58bd0009870ff3 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 13:59:22 +0800
+Subject: [PATCH] fix(webview): stop WebView inverting img in dark mode via
+ color-scheme: only light
+
+web-to-app shell uses DARK_STRATEGY_PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING,
+which algorithmically inverts <img> (PNG avatars/logo) into a negative image
+in dark mode. Declare imgs (and the avatar container holding inline SVG) as
+color-scheme: only light so WebView's user-agent darkening skips them, while
+the rest of the page keeps following the system theme.
+---
+ .../src/components/hermes/profiles/ProfileAvatar.vue      | 3 +++
+ packages/client/src/styles/global.scss                    | 8 ++++++++
+ 2 files changed, 11 insertions(+)
+
+diff --git a/packages/client/src/components/hermes/profiles/ProfileAvatar.vue b/packages/client/src/components/hermes/profiles/ProfileAvatar.vue
+index 5a07b681..d1a23418 100644
+--- a/packages/client/src/components/hermes/profiles/ProfileAvatar.vue
++++ b/packages/client/src/components/hermes/profiles/ProfileAvatar.vue
+@@ -40,6 +40,9 @@ const style = computed(() => ({
+   border-radius: 50%;
+   overflow: hidden;
+   background: var(--bg-secondary);
++  /* Declare as still-light so WebView FORCE_DARK won't algorithmically
++     darken (invert) the avatar image/inline SVG in the shell APK. */
++  color-scheme: only light;
+ }
+ 
+ .profile-avatar-image,
+diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
+index 1a71541c..bac95403 100644
+--- a/packages/client/src/styles/global.scss
++++ b/packages/client/src/styles/global.scss
+@@ -64,6 +64,14 @@ textarea {
+   font-family: inherit;
+ }
+ 
++/* WebView (web-to-app) 壳在 FORCE_DARK 下会对 <img> 做 user-agent 算法反色，
++   导致 PNG 头像/logo 变成负片。img 是内容图片（非跟随主题的 UI 图元），
++   用 per-element opt-out 声明为仅浅色，阻止 WebView 对图片反色，
++   不影响页面其他部分跟随系统深浅。 */
++img {
++  color-scheme: only light;
++}
++
+ :root {
+   --vh: 1vh;
+ }
+-- 
+2.53.0
+

@@ -1,0 +1,42 @@
+From e191e9709f0ebf39b3a77f6bb864c5a008de3b3f Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 07:23:01 +0800
+Subject: [PATCH] fix(theme): set color-scheme in first-paint inline script
+ (match octopus)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+octopus/next-themes declares html.style.colorScheme in a synchronous
+head script so Android WebView's FORCE_DARK knows the page supports dark
+mode at first paint. hermes-studio only set it later (Vue runtime), so
+WebView made its dark-theme decision before the declaration — it fell
+back to UA algorithmic darkening (inverting images/icons) or refused to
+follow the system theme. Declare colorScheme in the same first-paint
+script for parity.
+---
+ packages/client/index.html | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/packages/client/index.html b/packages/client/index.html
+index a15afdc2..884010fe 100644
+--- a/packages/client/index.html
++++ b/packages/client/index.html
+@@ -123,6 +123,14 @@
+           document.documentElement.classList.add('comic');
+         }
+ 
++        // Declare CSS color-scheme synchronously (mirrors octopus/next-themes'
++        // enableColorScheme). Android WebView's FORCE_DARK reads HTML's
++        // color-scheme at first paint to decide whether the page supports a
++        // dark theme — without it, it falls back to UA algorithmic darkening
++        // (inverts images/icons) or fails to follow the system theme. Waiting
++        // until Vue mounts is too late for the initial paint decision.
++        document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
++
+         const desktop = window.hermesDesktop;
+         if (desktop?.isDesktop) {
+           document.documentElement.classList.add('hermes-desktop-shell');
+-- 
+2.53.0
+

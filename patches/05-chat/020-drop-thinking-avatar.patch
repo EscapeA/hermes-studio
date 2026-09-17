@@ -1,0 +1,117 @@
+From 18137da92b934df3faeb9c71b54b47f184741420 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 12 Sep 2026 04:42:33 +0800
+Subject: [PATCH] feat(chat): drop thinking gif icon from run indicator
+
+Remove the animated thinking.gif avatar left of the run-state label so the
+live reasoning row is text-only; update the unit/e2e assertions that read
+.thinking-avatar. The asset itself stays in the tree (unimported => no
+longer bundled) to keep the patch stack free of binary hunks.
+---
+ .../hermes/chat/LiveReasoningStatus.vue       | 19 -------------------
+ tests/client/subagent-stream-panel.test.ts    |  3 ++-
+ tests/e2e/chat-streaming.spec.ts              |  9 +--------
+ 3 files changed, 3 insertions(+), 28 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+index 73a357dfc..e1a9573e3 100644
+--- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
++++ b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+@@ -1,7 +1,6 @@
+ <script setup lang="ts">
+ import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
+ import { useI18n } from 'vue-i18n'
+-import thinkingImage from '@/assets/thinking.gif'
+ 
+ const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
+ 
+@@ -34,12 +33,6 @@ watch(
+ <template>
+   <div class="live-reasoning-status">
+     <div class="thinking-status">
+-      <img
+-        :src="thinkingImage"
+-        alt=""
+-        aria-hidden="true"
+-        class="thinking-avatar"
+-      >
+       <div class="thinking-status-copy">
+         <span class="thinking-status-label">{{ t('chat.thinkingInProgress') }}</span>
+         <span class="thinking-status-time">{{ elapsed }}</span>
+@@ -85,18 +78,6 @@ watch(
+   min-height: 40px;
+ }
+ 
+-.thinking-avatar {
+-  width: 40px;
+-  height: 40px;
+-  border-radius: $radius-md;
+-  object-fit: cover;
+-  flex-shrink: 0;
+-
+-  .dark & {
+-    filter: brightness(1.18) contrast(1.08) saturate(1.08);
+-  }
+-}
+-
+ .thinking-status-copy {
+   display: flex;
+   align-items: center;
+diff --git a/tests/client/subagent-stream-panel.test.ts b/tests/client/subagent-stream-panel.test.ts
+index 1adeaa015..26da76306 100644
+--- a/tests/client/subagent-stream-panel.test.ts
++++ b/tests/client/subagent-stream-panel.test.ts
+@@ -131,7 +131,8 @@ describe('SubagentStreamPanel', () => {
+       },
+     })
+ 
+-    expect(wrapper.find('.subagent-run-indicator .thinking-avatar').exists()).toBe(true)
++    expect(wrapper.find('.subagent-run-indicator .thinking-status-label').exists()).toBe(true)
++    expect(wrapper.find('.subagent-run-indicator .thinking-avatar').exists()).toBe(false)
+     expect(wrapper.get('.subagent-run-indicator .live-reasoning-detail').text()).toContain('Summarize the result.')
+     expect(wrapper.get('.subagent-run-indicator .live-reasoning-detail').text()).not.toContain('Inspect the worker.')
+     expect(wrapper.get('.subagent-live-tool').text()).toContain('read_file')
+diff --git a/tests/e2e/chat-streaming.spec.ts b/tests/e2e/chat-streaming.spec.ts
+index 998aee6db..1978312a8 100644
+--- a/tests/e2e/chat-streaming.spec.ts
++++ b/tests/e2e/chat-streaming.spec.ts
+@@ -31,18 +31,13 @@ async function waitForRun(page: Page, index = 0) {
+ }
+ 
+ function readLiveReasoningStyles(status: Element) {
+-  const avatar = status.querySelector<HTMLElement>('.thinking-avatar')!
+   const label = status.querySelector<HTMLElement>('.thinking-status-label')!
+   const statusStyle = getComputedStyle(status)
+-  const avatarStyle = getComputedStyle(avatar)
+   const labelStyle = getComputedStyle(label)
+   return {
+     statusBackground: statusStyle.backgroundImage,
+     statusShadow: statusStyle.boxShadow,
+     statusPadding: statusStyle.padding,
+-    avatarWidth: avatarStyle.width,
+-    avatarHeight: avatarStyle.height,
+-    avatarRadius: avatarStyle.borderRadius,
+     labelFontSize: labelStyle.fontSize,
+     labelFontWeight: labelStyle.fontWeight,
+     labelAnimation: labelStyle.animationName,
+@@ -311,7 +306,7 @@ test('shows one real subagent card and opens its live chat stream in the resizab
+   const panel = page.locator('.subagent-stream-panel')
+   await expect(panel).toBeVisible()
+   await expect(panel).toContainText('Research the latest technology news')
+-  await expect(panel.locator('.subagent-run-indicator .thinking-avatar')).toBeVisible()
++  await expect(panel.locator('.subagent-run-indicator .thinking-status-label')).toBeVisible()
+   await expect(panel.locator('.subagent-run-indicator .live-reasoning-detail')).toContainText('Inspecting sources before searching.')
+   await expect(panel.locator('.subagent-live-tool')).toContainText('search_web')
+   await expect(panel.getByText('Waiting for live output...')).toHaveCount(0)
+@@ -327,8 +322,6 @@ test('shows one real subagent card and opens its live chat stream in the resizab
+     statusBackground: 'none',
+     statusShadow: 'none',
+     statusPadding: '0px',
+-    avatarWidth: '40px',
+-    avatarHeight: '40px',
+   })
+   expect(subagentThinkingStyles.labelAnimation).not.toBe('none')
+   const reasoningDetailStyle = await panel.locator('.live-reasoning-detail').evaluate((detail) => {
+-- 
+2.53.0
+
