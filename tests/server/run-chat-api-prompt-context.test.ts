@@ -5,8 +5,8 @@ import {
   hasApiPromptContextTokens,
   resolveApiPromptTokens,
   updateMessageContextTokenUsage,
-} from '../../packages/server/src/services/hermes/run-chat/usage'
-import type { SessionState } from '../../packages/server/src/services/hermes/run-chat/types'
+} from '../../packages/server/src/modules/studio/services/chat-run/usage'
+import type { SessionState } from '../../packages/server/src/modules/studio/services/chat-run/types'
 
 function makeState(partial: Partial<SessionState> = {}): SessionState {
   return {
