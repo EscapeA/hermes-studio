@@ -1539,7 +1539,7 @@ describe('bridge run final context usage', () => {
       }),
     } as any
 
-    const { handleBridgeRun } = await import('../../packages/server/src/services/hermes/run-chat/handle-bridge-run')
+    const { handleBridgeRun } = await import('../../packages/server/src/modules/studio/services/chat-run/handle-bridge-run')
     await handleBridgeRun(
       nsp,
       socket,
