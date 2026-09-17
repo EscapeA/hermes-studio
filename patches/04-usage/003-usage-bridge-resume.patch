@@ -1,4 +1,4 @@
-From f60c271c4182d53f15fea7da44711a3ad6d82b4f Mon Sep 17 00:00:00 2001
+From f1154a74e01a786d760fb9e5fbc8460d71edcf07 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:32:59 +0800
 Subject: [PATCH] fix(chat): keep bridge resume polling after model.usage apply
@@ -12,10 +12,10 @@ abort cursor advancement. Update resume test mocks for the new usage helpers.
  2 files changed, 53 insertions(+), 4 deletions(-)
 
 diff --git a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
-index 49e4d1c66..dcc4b6fd9 100644
+index 108ac2e32..1b9eec4bd 100644
 --- a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
 +++ b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
-@@ -1011,10 +1011,19 @@ export async function resumeBridgeRun(
+@@ -1033,10 +1033,19 @@ export async function resumeBridgeRun(
        if (!event || typeof event !== 'object' || Array.isArray(event)) continue
        const bridgeEvent = event as Record<string, unknown>
        if (bridgeEvent.event === 'model.usage') {

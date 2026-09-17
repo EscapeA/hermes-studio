@@ -1,7 +1,7 @@
-From 4cab9ead3a9ef97644d03f5b67ed533b86cf0acf Mon Sep 17 00:00:00 2001
+From 8cbce6bc1ccacfab1b0f9e91ab6f1dc1af9a3231 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 17 Jun 2026 12:46:24 +0800
-Subject: [PATCH 05/11] feat: add connection settings i18n translations
+Subject: [PATCH] feat: add connection settings i18n translations
 
 - Add settings.tabs.connection for English and Chinese
 - Add full connection.* translation keys for both languages
@@ -11,10 +11,10 @@ Subject: [PATCH 05/11] feat: add connection settings i18n translations
  1 file changed, 16 insertions(+)
 
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 41ef3b51..60d244e0 100644
+index 9137f2a53..11d285fb0 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -199,6 +199,22 @@ export default {
+@@ -365,6 +365,22 @@ export default {
      jobs: '任务',
      kanban: '看板',
      workflow: '工作流',

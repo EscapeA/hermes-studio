@@ -1,4 +1,4 @@
-From b14c411d00ddde5e2e2ed8916dae3c59ffa3db9b Mon Sep 17 00:00:00 2001
+From f4f2e6d9fe92412c080407b37632fc6d49156348 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Fri, 19 Jun 2026 08:50:20 +0800
 Subject: [PATCH] fix: upload uses custom backend URL to prevent 405
@@ -10,7 +10,7 @@ instead of bare '/upload', matching the backend connection settings.
  1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 24a9193fe..b2b456f93 100644
+index 06e21978f..6d4f4a3e7 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
 @@ -1,7 +1,7 @@
@@ -22,7 +22,7 @@ index 24a9193fe..b2b456f93 100644
  import { onAuthInvalidated } from '@/api/auth-invalidation'
  import { inferCodingAgentApiMode, normalizeCodingAgentApiMode, type ChatCodingAgentId } from '@/api/coding-agents'
  import { getDownloadUrl } from '@/api/studio/download'
-@@ -600,7 +600,8 @@ async function uploadFiles(attachments: Attachment[]): Promise<{ name: string; p
+@@ -603,7 +603,8 @@ async function uploadFiles(attachments: Attachment[]): Promise<{ name: string; p
    const headers: Record<string, string> = {}
    if (token) headers.Authorization = `Bearer ${token}`
    if (profileName) headers['X-Hermes-Profile'] = profileName

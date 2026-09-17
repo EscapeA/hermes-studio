@@ -1,7 +1,7 @@
-From f19aa1786d135f5698a856b629438af899792abb Mon Sep 17 00:00:00 2001
+From dc63562a95feddf980636c2dbc0c98e2fd3a4725 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 22:10:11 +0800
-Subject: [PATCH 3/4] fix(chat): wrap long session titles in sidebar list
+Subject: [PATCH] fix(chat): wrap long session titles in sidebar list
 
 Allow session list titles to wrap and grow the row height instead of
 single-line ellipsis, keeping time/delete icons top-aligned.
@@ -10,10 +10,10 @@ single-line ellipsis, keeping time/delete icons top-aligned.
  1 file changed, 13 insertions(+), 6 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
-index a3ea44b4..0cec37aa 100644
+index d04fd9fd1..265356178 100644
 --- a/packages/client/src/components/hermes/chat/SessionListItem.vue
 +++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
-@@ -197,7 +197,7 @@ onUnmounted(() => {
+@@ -202,7 +202,7 @@ onUnmounted(() => {
  .session-item {
    position: relative;
    display: flex;
@@ -22,7 +22,7 @@ index a3ea44b4..0cec37aa 100644
    justify-content: space-between;
    width: 100%;
    padding: 8px 10px;
-@@ -261,7 +261,7 @@ onUnmounted(() => {
+@@ -266,7 +266,7 @@ onUnmounted(() => {
  
  .session-item-title-row {
    display: flex;
@@ -31,7 +31,7 @@ index a3ea44b4..0cec37aa 100644
    justify-content: space-between;
    gap: 10px;
    min-width: 0;
-@@ -269,7 +269,7 @@ onUnmounted(() => {
+@@ -274,7 +274,7 @@ onUnmounted(() => {
  
  .session-item-title-main {
    display: flex;
@@ -40,7 +40,7 @@ index a3ea44b4..0cec37aa 100644
    gap: 6px;
    flex: 1 1 auto;
    min-width: 0;
-@@ -280,9 +280,10 @@ onUnmounted(() => {
+@@ -285,9 +285,10 @@ onUnmounted(() => {
    flex: 1 1 auto;
    min-width: 0;
    font-size: 13px;
@@ -54,7 +54,7 @@ index a3ea44b4..0cec37aa 100644
  }
  
  .session-item-pin {
-@@ -290,6 +291,7 @@ onUnmounted(() => {
+@@ -295,6 +296,7 @@ onUnmounted(() => {
    align-items: center;
    justify-content: center;
    flex-shrink: 0;
@@ -62,7 +62,7 @@ index a3ea44b4..0cec37aa 100644
    color: var(--accent-primary);
  }
  
-@@ -297,6 +299,7 @@ onUnmounted(() => {
+@@ -302,6 +304,7 @@ onUnmounted(() => {
    flex: 0 0 auto;
    width: 6px;
    height: 6px;
@@ -70,7 +70,7 @@ index a3ea44b4..0cec37aa 100644
    border-radius: 50%;
    background: var(--accent-primary);
    box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.12);
-@@ -304,8 +307,11 @@ onUnmounted(() => {
+@@ -309,8 +312,11 @@ onUnmounted(() => {
  
  .session-item-time {
    flex: 0 0 auto;
@@ -82,7 +82,7 @@ index a3ea44b4..0cec37aa 100644
  }
  
  .session-item-global-icon {
-@@ -320,6 +326,7 @@ onUnmounted(() => {
+@@ -325,6 +331,7 @@ onUnmounted(() => {
    flex-shrink: 0;
    opacity: 0;
    pointer-events: none;

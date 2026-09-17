@@ -1,4 +1,4 @@
-From 18137da92b934df3faeb9c71b54b47f184741420 Mon Sep 17 00:00:00 2001
+From 66055b06067f29f6316b8496db8d767e2cee3e33 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 04:42:33 +0800
 Subject: [PATCH] feat(chat): drop thinking gif icon from run indicator
@@ -8,37 +8,47 @@ live reasoning row is text-only; update the unit/e2e assertions that read
 .thinking-avatar. The asset itself stays in the tree (unimported => no
 longer bundled) to keep the patch stack free of binary hunks.
 ---
- .../hermes/chat/LiveReasoningStatus.vue       | 19 -------------------
- tests/client/subagent-stream-panel.test.ts    |  3 ++-
- tests/e2e/chat-streaming.spec.ts              |  9 +--------
- 3 files changed, 3 insertions(+), 28 deletions(-)
+ .../hermes/chat/LiveReasoningStatus.vue       | 32 +------------------
+ tests/client/subagent-stream-panel.test.ts    |  3 +-
+ tests/e2e/chat-streaming.spec.ts              |  9 +-----
+ 3 files changed, 4 insertions(+), 40 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
-index 73a357dfc..e1a9573e3 100644
+index a8ea473ca..9209dc0b1 100644
 --- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
 +++ b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
 @@ -1,7 +1,6 @@
  <script setup lang="ts">
- import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
+-import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
++import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
  import { useI18n } from 'vue-i18n'
 -import thinkingImage from '@/assets/thinking.gif'
+ import type { ChatAgentAvatar } from '@/utils/chat-agent-avatar'
  
  const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
+@@ -16,7 +15,6 @@ const props = withDefaults(defineProps<{
+ }>(), {
+   agent: () => ({ label: 'Hermes', src: '/coding-agents/hermes.png' }),
+ })
+-const isEkko = computed(() => props.agent.label === 'Ekko')
  
-@@ -34,12 +33,6 @@ watch(
+ const { t } = useI18n()
+ 
+@@ -39,13 +37,6 @@ watch(
  <template>
    <div class="live-reasoning-status">
      <div class="thinking-status">
 -      <img
--        :src="thinkingImage"
+-        :src="isEkko ? thinkingImage : agent.src"
 -        alt=""
 -        aria-hidden="true"
 -        class="thinking-avatar"
+-        :class="isEkko ? 'thinking-avatar--animated' : 'thinking-avatar--logo'"
 -      >
        <div class="thinking-status-copy">
          <span class="thinking-status-label">{{ t('chat.thinkingInProgress') }}</span>
          <span class="thinking-status-time">{{ elapsed }}</span>
-@@ -85,18 +78,6 @@ watch(
+@@ -91,27 +82,6 @@ watch(
    min-height: 40px;
  }
  
@@ -49,9 +59,18 @@ index 73a357dfc..e1a9573e3 100644
 -  object-fit: cover;
 -  flex-shrink: 0;
 -
--  .dark & {
--    filter: brightness(1.18) contrast(1.08) saturate(1.08);
+-  &--animated {
+-    .dark & {
+-      filter: brightness(1.18) contrast(1.08) saturate(1.08);
+-    }
 -  }
+-}
+-
+-.thinking-avatar--logo {
+-  box-sizing: border-box;
+-  padding: 5px;
+-  object-fit: contain;
+-  background: #fff;
 -}
 -
  .thinking-status-copy {
@@ -72,7 +91,7 @@ index 1adeaa015..26da76306 100644
      expect(wrapper.get('.subagent-run-indicator .live-reasoning-detail').text()).not.toContain('Inspect the worker.')
      expect(wrapper.get('.subagent-live-tool').text()).toContain('read_file')
 diff --git a/tests/e2e/chat-streaming.spec.ts b/tests/e2e/chat-streaming.spec.ts
-index 998aee6db..1978312a8 100644
+index aebbb576f..dc1b5be32 100644
 --- a/tests/e2e/chat-streaming.spec.ts
 +++ b/tests/e2e/chat-streaming.spec.ts
 @@ -31,18 +31,13 @@ async function waitForRun(page: Page, index = 0) {
@@ -94,7 +113,7 @@ index 998aee6db..1978312a8 100644
      labelFontSize: labelStyle.fontSize,
      labelFontWeight: labelStyle.fontWeight,
      labelAnimation: labelStyle.animationName,
-@@ -311,7 +306,7 @@ test('shows one real subagent card and opens its live chat stream in the resizab
+@@ -315,7 +310,7 @@ test('shows one real subagent card and opens its live chat stream in the resizab
    const panel = page.locator('.subagent-stream-panel')
    await expect(panel).toBeVisible()
    await expect(panel).toContainText('Research the latest technology news')
@@ -103,7 +122,7 @@ index 998aee6db..1978312a8 100644
    await expect(panel.locator('.subagent-run-indicator .live-reasoning-detail')).toContainText('Inspecting sources before searching.')
    await expect(panel.locator('.subagent-live-tool')).toContainText('search_web')
    await expect(panel.getByText('Waiting for live output...')).toHaveCount(0)
-@@ -327,8 +322,6 @@ test('shows one real subagent card and opens its live chat stream in the resizab
+@@ -331,8 +326,6 @@ test('shows one real subagent card and opens its live chat stream in the resizab
      statusBackground: 'none',
      statusShadow: 'none',
      statusPadding: '0px',

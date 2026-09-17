@@ -1,8 +1,7 @@
-From 4b4ecc8caf3a60fc119239e40a066a5cfc743c8d Mon Sep 17 00:00:00 2001
+From 8e32a2938d833bc25e14bd9187ac1dd6c805fb70 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
-Subject: [PATCH 4/4] perf(web): drop logo.png CSS-mask request from boot
- shimmer
+Subject: [PATCH] perf(web): drop logo.png CSS-mask request from boot shimmer
 
 The boot-fallback logo rendered the same /logo.png twice on cold load: an
 <img> plus the ::after shimmer whose CSS mask re-fetched the URL. Replace
@@ -13,10 +12,10 @@ one logo.png request on first paint.
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/packages/client/index.html b/packages/client/index.html
-index 6f5afdb4..abfacae9 100644
+index fe2be2df8..a636cfb82 100644
 --- a/packages/client/index.html
 +++ b/packages/client/index.html
-@@ -68,12 +68,11 @@
+@@ -74,12 +74,11 @@
        content: "";
        position: absolute;
        inset: 0;

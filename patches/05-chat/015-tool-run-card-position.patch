@@ -1,4 +1,4 @@
-From 9878d6907f045cec5f552fd828a44f7705fbefcf Mon Sep 17 00:00:00 2001
+From be44f422b63b26f247d609ebe3e1b832af641d3e Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 28 Aug 2026 07:50:09 +0800
 Subject: [PATCH] fix(chat): anchor tool-run card at run end and unclip
@@ -18,10 +18,10 @@ Subject: [PATCH] fix(chat): anchor tool-run card at run end and unclip
  2 files changed, 16 insertions(+), 10 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 13dace02..e0237a7f 100644
+index bdf63350b..5dc49f6d3 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -1736,17 +1736,12 @@ defineExpose({
+@@ -1684,17 +1684,12 @@ defineExpose({
    display: flex;
    flex-direction: column;
    align-items: flex-start;
@@ -40,7 +40,7 @@ index 13dace02..e0237a7f 100644
  
  .tool-calls-panel {
 diff --git a/packages/client/src/components/hermes/chat/tool-run-grouping.ts b/packages/client/src/components/hermes/chat/tool-run-grouping.ts
-index 7c54e339..52b74c2d 100644
+index 7c54e339c..52b74c2d2 100644
 --- a/packages/client/src/components/hermes/chat/tool-run-grouping.ts
 +++ b/packages/client/src/components/hermes/chat/tool-run-grouping.ts
 @@ -2,18 +2,24 @@ import type { Message } from '@/stores/hermes/chat'

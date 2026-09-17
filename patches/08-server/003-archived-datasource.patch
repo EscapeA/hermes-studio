@@ -1,4 +1,4 @@
-From 8b93f7fad6d9d80c9df2a316b9523c53d32e3a2a Mon Sep 17 00:00:00 2001
+From e1a7fc2edb996ffa09d63668a42f2f8b8dbcd6e2 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 6 Sep 2026 16:14:50 +0800
 Subject: [PATCH] =?UTF-8?q?fix(server):=20archived=3D1=20=E6=95=B0?=
@@ -22,10 +22,10 @@ localListSessions 仍 includeArchived:false，SQL 层就排除归档
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/packages/server/src/modules/studio/controllers/sessions.ts b/packages/server/src/modules/studio/controllers/sessions.ts
-index dac0cc231..6423fe8e9 100644
+index 130408707..16434a38c 100644
 --- a/packages/server/src/modules/studio/controllers/sessions.ts
 +++ b/packages/server/src/modules/studio/controllers/sessions.ts
-@@ -503,7 +503,10 @@ export async function list(ctx: any) {
+@@ -505,7 +505,10 @@ export async function list(ctx: any) {
      ...(includedIds !== undefined ? { includeSessionIds: includedIds } : {}),
      sources: source ? undefined : requestedSessionSources(),
      profiles: visibleProfiles,

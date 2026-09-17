@@ -24,8 +24,9 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 11-socket-stall | socket 卡死防护（服务端 backlog 检测断连 + 前端 REST 兜底刷新） | 001-002 |
 | 12-tool-strip | 工具面板防闪烁（500ms 延迟显示）+ 折叠单行（正在调用 N 个工具）+ 运行中工具行展开详情 + toggle 与列表上下堆叠 + 展开详情解除高度限制 | 001-004 |
 | 13-mobile-nav | 移动端顶栏统一 38px（变量派生几何 + ☰ 与内容同轴）+ ☰ 由品牌图改为三条横线图标 + 去掉与 ☰ 重复的四宫格 ▦（Models/Workflow） | 001 |
+| 14-test-adapt | 上游测试套件适配（`tests/client/message-list-live-reasoning.test.ts` 断言 fork 行为：按用户轮折叠的 ToolRunCard、卸载重建的 live ticker） | 001 |
 
-共 **82 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001）。
+共 **83 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001）。
 
 **0.7.19 之后新增（2026-09-12）**：04-usage/010-每轮解码速度（run 态实时 + 单轮结束常驻在消息上）；05-chat/020-去掉 run 态「正在思考」左侧的 thinking.gif 图标（模板/导入/样式三层清理 + 单测与 e2e 断言同步；未导入的 gif 资产保留在源码树，构建产物不再打包）。
 链路：hermes-agent `post_api_request` hook 的 `first_chunk_at` → `bridge_pool.py` 透传 → `chat-run/usage.ts` 折叠（`output_tokens / (ended_at - first_chunk_at)`，仅按**调用**累加，无首 chunk 的调用整体退出）→ 每次调用完成时随 `usage.updated` 的 `speed` 字段下发一次 → 客户端两处显示：① **run 态**：`LiveReasoningStatus`（"正在思考"计时右侧）实时显示 `138 tok/s`；② **单轮结束时**：`clearRunStartedAt` → `settleRunSpeed` 把最后一个读数挂到**本轮最新 assistant 消息**上，`MessageItem` 在消息下方常驻 `本轮平均速度：145 tok/s`（`.assistant-run-speed`），随后清理 run 态读数避免重复显示。
@@ -82,6 +83,17 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - 本次上游仅 2 提交（21 文件 / +166 −14）：Windows 下 DSH 配置运行时启动修复（#3026，改 `dsh/host.ts` + `management.ts`）+ 版本号与 changelog 提升（#3027）；12 个 locale 各 +2 条 `new_0_7_21_*`。
 - `bin/`、`dist/ekko-skills`、`dist/skills` 与官方 tarball **逐字节一致**；本机不使用 DSH ⇒ 唯一可见变化 = changelog 两行。
 - 验证记录：`/home/aries/hermes_workspace/hermes-studio-0.7.21-upgrade/`（`UPGRADE-ASSESSMENT.md` + `evidence-stage1/`：verify-am 树零差异、构建 rc=0、相关单测 121/121、全量 47 failed/624 passed（上一版 51/619）、CI `34727445348` build+deploy 双绿）。
+
+**0.7.22 重放（2026-09-17，上游 v0.7.22 = b036cf244）**：82/82 全部落位（无空提交）+ **新增 1 补丁** `14-test-adapt/001`，3 处真冲突与 3 处历史遗留补齐全部回写：
+- **05-chat/014**（多行思考块撞上游 #3052 agent logo 对 `LiveReasoningStatus.vue` 的重写 → **双侧保留**：我们的 `MarkdownRenderer` 多行渲染 + 贴底滚动 + 上游的 `agent` props/`withDefaults`/`isEkko`，并补上被 take-ours 丢掉后仍需要的 `computed` import）、
+  **05-chat/020**（去 thinking 图标：上游新写的 `isEkko ? thinkingImage : agent.src` 与 `thinking-avatar--logo` 一并删除，最终 run 态无头像图标）、
+  **04-usage/010**（tok/s 补丁撞同一文件 → props 双侧保留 `speed?` 与上游 `agent?`）。
+- **历史遗留补齐**（预演期发现，0.7.1 模块化搬迁时漏改）：`04-usage/001/002` 的单测 import 仍指向 `packages/server/src/services/hermes/run-chat/*`（0.7.22 已不存在）→ 改为 `modules/studio/services/chat-run/*`，`04-usage/001` 里 run-chat-bridge 的动态 import 同步改；`04-usage/010` 给 `run-chat-bridge-final-context.test.ts` 补 `foldDecodeCallResult`/`settledRunSpeed` 两个 mock。
+- **14-test-adapt/001**（新增）：上游 `tests/client/message-list-live-reasoning.test.ts` 断言的是 fork 之前的工具条与思考 ticker（完成的工具独立成行、live detail 元素跨轮复用）→ 适配为 fork 行为（按**用户轮**折叠进 ToolRunCard、ticker 在 tool 边界后卸载重建、strip 500ms 防闪烁需先 mount 空列表再注入消息）。
+- 本次上游 17 提交 / 107 文件 / +3234 −292（terminal 移动端会话走 app relay、standalone task-plan MCP、coding-agents MCP 注入与 PATH 处理、DeepSeek reasoning 回放、grok 多行配置、LiveReasoningStatus agent logo…）。**package.json 仅 version 变化**（无需 npm ci）；
+  ⚠️ 但 **`bin/ekko-studio-mcp.mjs` 有改动 ⇒ 部署不能只热替 dist，必须 `npm i -g hermes-web-ui@0.7.22`**（playbook §6）。
+- 落地方式：预演树（worktree `--detach` 到上游 tip → 全量重放 → 解冲突 → 补齐 → 相关单测 103/103、目标套件 13/13）经 `cherry-pick` **原样**落到 custom（非 patches 路径树逐字节一致），避免二次解冲突引入偏差；补丁回写用 55 个重锚定（其中 49 个仅 `From`/`index`/`@@` 行号位移，6 个语义变更 = 上述 001/002/010/014/020 + 05-chat/004 import 上下文）。
+- 验证记录：`/home/aries/hermes_workspace/hermes-studio-0.7.22-upgrade/`（预演遗留修复 diff、verify-am 结论、构建与单测输出）。
 
 ## 升级 SOP（上游新版本）
 

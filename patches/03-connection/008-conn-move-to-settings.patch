@@ -1,8 +1,7 @@
-From 701113c48622e2db4fd205d1d827a1e691ce8d7a Mon Sep 17 00:00:00 2001
+From 28faf8ce5996e6df5dd10fcc1401cab39cd1bccd Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Fri, 19 Jun 2026 08:56:25 +0800
-Subject: [PATCH 08/11] fix: move i18n connection section from sidebar to
- settings
+Subject: [PATCH] fix: move i18n connection section from sidebar to settings
 
 Component uses t('settings.connection.*') but translations were
 placed under sidebar.connection. Moved to settings.connection
@@ -21,10 +20,10 @@ where the component expects them.
  10 files changed, 169 insertions(+), 96 deletions(-)
 
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index df871e5e..776cc20b 100644
+index 39668f7f6..99ecad564 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -209,22 +209,6 @@ export default {
+@@ -375,22 +375,6 @@ export default {
      apiRelay: 'API-Relay',
      history: 'Verlauf',
      jobs: 'Geplante Aufgaben',
@@ -47,7 +46,7 @@ index df871e5e..776cc20b 100644
      models: 'Modelle',
      profiles: 'Profile',
      plugins: 'Plugins',
-@@ -1648,6 +1632,23 @@ jobTriggered: 'Job ausgelost',
+@@ -1937,6 +1921,23 @@ jobTriggered: 'Job ausgelost',
          inboxClearFailed: 'Lokale Testereignisse konnten nicht gelöscht werden',
        },
      },
@@ -72,10 +71,10 @@ index df871e5e..776cc20b 100644
        streaming: 'Streaming-Antworten',
        streamingHint: 'KI-Antworten in Echtzeit anzeigen',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index e1c9df64..a6e341a6 100644
+index 2556734de..22f202c15 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -2157,6 +2157,22 @@ export default {
+@@ -2434,6 +2434,22 @@ export default {
          inboxClearFailed: 'Failed to clear local test events',
        },
      },
@@ -99,10 +98,10 @@ index e1c9df64..a6e341a6 100644
        apiKey: 'API Key',
        apiKeyPlaceholder: 'Enter API key',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 9282c5fb..590dd05e 100644
+index bd785cd82..9445423d5 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -209,22 +209,6 @@ export default {
+@@ -375,22 +375,6 @@ export default {
      apiRelay: 'API Relay',
      history: 'Historial',
      jobs: 'Tareas programadas',
@@ -125,7 +124,7 @@ index 9282c5fb..590dd05e 100644
      models: 'Modelos',
      profiles: 'Perfiles',
      plugins: 'Plugins',
-@@ -1648,6 +1632,23 @@ jobTriggered: 'Job ejecutado',
+@@ -1937,6 +1921,23 @@ jobTriggered: 'Job ejecutado',
          inboxClearFailed: 'No se pudieron borrar los eventos de prueba locales',
        },
      },
@@ -150,10 +149,10 @@ index 9282c5fb..590dd05e 100644
        streaming: 'Respuestas en streaming',
        streamingHint: 'Mostrar respuestas de la IA en tiempo real',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index df6372f5..2a34a156 100644
+index 8ce92b264..a88840cb2 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -209,22 +209,6 @@ export default {
+@@ -375,22 +375,6 @@ export default {
      apiRelay: 'API Relay',
      history: 'Historique',
      jobs: 'Taches planifiees',
@@ -176,7 +175,7 @@ index df6372f5..2a34a156 100644
      models: 'Modeles',
      profiles: 'Profils',
      plugins: 'Plugins',
-@@ -1648,6 +1632,23 @@ jobTriggered: 'Job declenche',
+@@ -1937,6 +1921,23 @@ jobTriggered: 'Job declenche',
          inboxClearFailed: 'Impossible d’effacer les événements de test locaux',
        },
      },
@@ -201,10 +200,10 @@ index df6372f5..2a34a156 100644
        streaming: 'Reponses en continu',
        streamingHint: 'Afficher les reponses de l\'IA en temps reel',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 3950fc51..66f9ecda 100644
+index 3ecb8767a..68a557775 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -209,22 +209,6 @@ export default {
+@@ -375,22 +375,6 @@ export default {
      apiRelay: 'APIリレー',
      history: '履歴',
      jobs: 'ジョブ',
@@ -227,7 +226,7 @@ index 3950fc51..66f9ecda 100644
      models: 'モデル',
      profiles: 'プロファイル',
      plugins: 'プラグイン',
-@@ -1648,6 +1632,23 @@ export default {
+@@ -1937,6 +1921,23 @@ export default {
          inboxClearFailed: 'ローカルテストイベントを消去できませんでした',
        },
      },
@@ -252,10 +251,10 @@ index 3950fc51..66f9ecda 100644
        streaming: 'ストリームレスポンス',
        streamingHint: 'AI の返信をリアルタイムで表示',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index de3d813f..b8bdd8b0 100644
+index 8a32e6d2b..9f95b1402 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -209,22 +209,6 @@ export default {
+@@ -375,22 +375,6 @@ export default {
      apiRelay: 'API 릴레이',
      history: '기록',
      jobs: '예약 작업',
@@ -278,7 +277,7 @@ index de3d813f..b8bdd8b0 100644
      models: '모델',
      profiles: '프로필',
      plugins: '플러그인',
-@@ -1648,6 +1632,23 @@ export default {
+@@ -1937,6 +1921,23 @@ export default {
          inboxClearFailed: '로컬 테스트 이벤트를 지우지 못했습니다',
        },
      },
@@ -303,10 +302,10 @@ index de3d813f..b8bdd8b0 100644
        streaming: '스트리밍 응답',
        streamingHint: 'AI 응답을 실시간으로 표시',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 9ed6059b..670bb511 100644
+index f84b2f61b..d78528f20 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -209,22 +209,6 @@ export default {
+@@ -375,22 +375,6 @@ export default {
      apiRelay: 'API Relay',
      history: 'Histórico',
      jobs: 'Tarefas agendadas',
@@ -329,7 +328,7 @@ index 9ed6059b..670bb511 100644
      models: 'Modelos',
      profiles: 'Perfis',
      plugins: 'Plugins',
-@@ -1648,6 +1632,23 @@ jobTriggered: 'Job acionado',
+@@ -1937,6 +1921,23 @@ jobTriggered: 'Job acionado',
          inboxClearFailed: 'Não foi possível limpar os eventos de teste locais',
        },
      },
@@ -354,10 +353,10 @@ index 9ed6059b..670bb511 100644
        streaming: 'Respostas em streaming',
        streamingHint: 'Mostrar respostas da IA em tempo real',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 86ff1e36..93bc51d2 100644
+index 813ebfeeb..c9f883943 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1895,6 +1895,23 @@ export default {
+@@ -2192,6 +2192,23 @@ export default {
          inboxClearFailed: 'Не удалось очистить локальные тестовые события',
        },
      },
@@ -382,10 +381,10 @@ index 86ff1e36..93bc51d2 100644
        apiKey: 'API-ключ',
        apiKeyPlaceholder: 'Введите API-ключ',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 74cf1b92..f7f4a83d 100644
+index 2e68385a2..4626af7a3 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -2083,6 +2083,23 @@ export default {
+@@ -2378,6 +2378,23 @@ export default {
          inboxClearFailed: '清空本機測試事件失敗',
        },
      },
@@ -410,10 +409,10 @@ index 74cf1b92..f7f4a83d 100644
        apiKey: 'API Key',
        apiKeyPlaceholder: '輸入 API Key',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index c2052062..f5a85609 100644
+index 3610c8ca5..36c8edfdc 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -2189,6 +2189,23 @@ export default {
+@@ -2472,6 +2472,23 @@ export default {
          inboxClearFailed: '清空本机测试事件失败',
        },
      },

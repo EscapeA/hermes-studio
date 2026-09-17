@@ -1,4 +1,4 @@
-From e5b3b1c8d1a8566aa2b763fa799986811254099c Mon Sep 17 00:00:00 2001
+From 313d5c80d71caa36c04eb3664cdada6b344979b8 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 09:33:59 +0800
 Subject: [PATCH] fix(client): stall watchdog falls back to REST refresh when
@@ -15,10 +15,10 @@ session.
  1 file changed, 27 insertions(+)
 
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 53af10453..94cb856c7 100644
+index 151b9ce93..e2a243e81 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -1366,6 +1366,8 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1415,6 +1415,8 @@ export const useChatStore = defineStore('chat', () => {
        setBackgroundPending(sessionId, evt.background_pending)
      }
    }
@@ -27,7 +27,7 @@ index 53af10453..94cb856c7 100644
    /** sessionIds with a terminal /fork command submitted but not settled yet */
    const pendingForkCommands = ref<Set<string>>(new Set())
    /** Sessions that completed while the user was viewing another session. */
-@@ -4655,6 +4657,8 @@ export const useChatStore = defineStore('chat', () => {
+@@ -4797,6 +4799,8 @@ export const useChatStore = defineStore('chat', () => {
      // Shared event handler — filters by session_id tag
      function handleEvent(evt: RunEvent) {
        if (closed || generation !== runtimeGeneration) return
@@ -36,7 +36,7 @@ index 53af10453..94cb856c7 100644
        // Filter events for this session (server tags all events with session_id)
        if (evt.session_id && evt.session_id !== sid) return
        applyBackgroundPendingEvent(sid, evt)
-@@ -5390,6 +5394,29 @@ export const useChatStore = defineStore('chat', () => {
+@@ -5533,6 +5537,29 @@ export const useChatStore = defineStore('chat', () => {
      }, 12_000)
    }
  

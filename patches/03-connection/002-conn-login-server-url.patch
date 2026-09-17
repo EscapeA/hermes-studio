@@ -1,4 +1,4 @@
-From d651967e80f39a4539a823ebe52bfcbbceba194b Mon Sep 17 00:00:00 2001
+From 8e67316d1b3fe9aeae7a4a2d9089949b6f4792ee Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 17 Jun 2026 12:38:00 +0800
 Subject: [PATCH] feat: add server URL editor to login page
@@ -13,7 +13,7 @@ Subject: [PATCH] feat: add server URL editor to login page
  1 file changed, 148 insertions(+), 3 deletions(-)
 
 diff --git a/packages/client/src/views/LoginView.vue b/packages/client/src/views/LoginView.vue
-index 6a1816ac..fb0d2460 100644
+index 007105f1a..679c714f3 100644
 --- a/packages/client/src/views/LoginView.vue
 +++ b/packages/client/src/views/LoginView.vue
 @@ -2,7 +2,7 @@
@@ -104,7 +104,7 @@ index 6a1816ac..fb0d2460 100644
        <form class="login-form" @submit.prevent="handleLogin">
          <input
            v-model="username"
-@@ -158,12 +209,106 @@ async function handlePasswordLogin() {
+@@ -162,12 +213,106 @@ async function handlePasswordLogin() {
  }
  
  .login-default-hint {
@@ -212,7 +212,7 @@ index 6a1816ac..fb0d2460 100644
  .login-form {
    display: flex;
    flex-direction: column;
-@@ -235,7 +380,7 @@ async function handlePasswordLogin() {
+@@ -239,7 +384,7 @@ async function handlePasswordLogin() {
  
    &:disabled {
      opacity: 0.5;

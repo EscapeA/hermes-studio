@@ -1,4 +1,4 @@
-From e191e9709f0ebf39b3a77f6bb864c5a008de3b3f Mon Sep 17 00:00:00 2001
+From 632cba806788402bae9cbeef210fbf4af0197e3c Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 3 Sep 2026 07:23:01 +0800
 Subject: [PATCH] fix(theme): set color-scheme in first-paint inline script
@@ -19,10 +19,10 @@ script for parity.
  1 file changed, 8 insertions(+)
 
 diff --git a/packages/client/index.html b/packages/client/index.html
-index a15afdc2..884010fe 100644
+index 4d29ccd5f..fe2be2df8 100644
 --- a/packages/client/index.html
 +++ b/packages/client/index.html
-@@ -123,6 +123,14 @@
+@@ -124,6 +124,14 @@
            document.documentElement.classList.add('comic');
          }
  

@@ -1,4 +1,4 @@
-From 068df74760c96592a80f03f008a8e2b40824fdb4 Mon Sep 17 00:00:00 2001
+From 530e12f8e82e568a5308e6289c225dbba71539a7 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 28 Aug 2026 07:24:56 +0800
 Subject: [PATCH] feat(chat): restore multi-line live reasoning block with
@@ -14,23 +14,24 @@ with stick-to-bottom auto scroll while streaming.
  1 file changed, 31 insertions(+), 89 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
-index fde83faa..6e03a737 100644
+index cb44223f8..a8ea473ca 100644
 --- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
 +++ b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
-@@ -1,8 +1,10 @@
+@@ -1,9 +1,11 @@
  <script setup lang="ts">
 -import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-+import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
++import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
  import { useI18n } from 'vue-i18n'
  import thinkingImage from '@/assets/thinking.gif'
+ import type { ChatAgentAvatar } from '@/utils/chat-agent-avatar'
  
 +const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
 +
- const props = defineProps<{
+ const props = withDefaults(defineProps<{
    reasoning?: string | null
    reasoningId?: string | number | null
-@@ -10,57 +12,21 @@ const props = defineProps<{
- }>()
+@@ -17,57 +19,21 @@ const props = withDefaults(defineProps<{
+ const isEkko = computed(() => props.agent.label === 'Ekko')
  
  const { t } = useI18n()
 -const reasoningBody = ref<HTMLElement | null>(null)
@@ -55,12 +56,12 @@ index fde83faa..6e03a737 100644
 -    element.scrollLeft = target
 -    return
 -  }
- 
+-
 -  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
 -    element.scrollLeft = target
 -    return
 -  }
--
+ 
 -  const duration = Math.min(120, Math.max(45, distance * 2.5))
 -  const startedAt = performance.now()
 -  const advance = (now: number) => {
@@ -97,7 +98,7 @@ index fde83faa..6e03a737 100644
  </script>
  
  <template>
-@@ -78,15 +44,18 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -87,15 +53,18 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
        </div>
      </div>
      <div
@@ -118,7 +119,7 @@ index fde83faa..6e03a737 100644
      </div>
    </div>
  </template>
-@@ -98,15 +67,10 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -107,15 +76,10 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
    display: flex;
    flex-direction: column;
    align-items: flex-start;
@@ -134,7 +135,7 @@ index fde83faa..6e03a737 100644
  }
  
  .thinking-status {
-@@ -115,10 +79,7 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -124,10 +88,7 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
    gap: 10px;
    width: 100%;
    min-width: 0;
@@ -145,7 +146,7 @@ index fde83faa..6e03a737 100644
  }
  
  .thinking-avatar {
-@@ -136,14 +97,11 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -154,14 +115,11 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
  .thinking-status-copy {
    display: flex;
    align-items: center;
@@ -161,7 +162,7 @@ index fde83faa..6e03a737 100644
  }
  
  .thinking-status-label {
-@@ -187,28 +145,14 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -216,28 +174,14 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
  }
  
  .live-reasoning-detail {
@@ -191,7 +192,7 @@ index fde83faa..6e03a737 100644
  
    .dark & {
      background: rgba(255, 255, 255, 0.045);
-@@ -218,27 +162,26 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -247,27 +191,26 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
  .live-reasoning-label {
    display: flex;
    align-items: center;
@@ -229,7 +230,7 @@ index fde83faa..6e03a737 100644
    }
  }
  
-@@ -251,5 +194,4 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -280,5 +223,4 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
      background-position: 0% 0;
    }
  }

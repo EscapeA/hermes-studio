@@ -1,4 +1,4 @@
-From 1607aff1a0bc94a2c5b1d6b34888a0c2da19c1f6 Mon Sep 17 00:00:00 2001
+From 9322fea427a7237bf27bbf9fa99a9e8f5b13b653 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 00:08:44 +0800
 Subject: [PATCH] fix(chat): align session and context usage on one composer
@@ -10,10 +10,10 @@ Put both token lines in the same flex row so they share height, size, and percen
  1 file changed, 39 insertions(+), 26 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index e2c31b8a..fe6f6282 100644
+index 88230b61c..3e4f051ac 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -1166,18 +1166,19 @@ function isImage(type: string): boolean {
+@@ -1276,18 +1276,19 @@ function openAttachmentPreview(attachment: Attachment) {
          @mousedown="startResize"
          @dblclick="resetTextareaHeight"
        ></div>
@@ -44,7 +44,7 @@ index e2c31b8a..fe6f6282 100644
          <span class="context-info" :class="{ 'context-warning': usagePercent > 80 }">
            {{ formatTokens(totalTokens) }} /
            <NTooltip trigger="hover" :disabled="isMobileViewport">
-@@ -1854,33 +1855,41 @@ function isImage(type: string): boolean {
+@@ -1972,33 +1973,41 @@ function openAttachmentPreview(attachment: Attachment) {
    color: $text-muted;
  }
  
@@ -99,7 +99,7 @@ index e2c31b8a..fe6f6282 100644
    color: inherit;
    min-width: 0;
    white-space: nowrap;
-@@ -1890,10 +1899,13 @@ function isImage(type: string): boolean {
+@@ -2008,10 +2017,13 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -114,7 +114,7 @@ index e2c31b8a..fe6f6282 100644
    &.context-percent-warn {
      color: #e8a735;
    }
-@@ -1904,7 +1916,8 @@ function isImage(type: string): boolean {
+@@ -2022,7 +2034,8 @@ function openAttachmentPreview(attachment: Attachment) {
  }
  
  .session-tokens-used {

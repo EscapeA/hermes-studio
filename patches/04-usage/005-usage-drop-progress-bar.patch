@@ -1,7 +1,7 @@
-From adc2c386841314f93374112ed43a8a4e05342d24 Mon Sep 17 00:00:00 2001
+From bc7d5b0b5a0a921819fad4beddc27f26ffe86ce8 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 14:27:20 +0800
-Subject: [PATCH 2/2] feat(chat): drop context progress bar, two-decimal usage
+Subject: [PATCH] feat(chat): drop context progress bar, two-decimal usage
  percent
 
 ---
@@ -9,10 +9,10 @@ Subject: [PATCH 2/2] feat(chat): drop context progress bar, two-decimal usage
  1 file changed, 1 insertion(+), 64 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 7dd15838..5b9fcd2a 100644
+index 050039613..1f557705f 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -1100,19 +1100,9 @@ function isImage(type: string): boolean {
+@@ -1221,19 +1221,9 @@ function openAttachmentPreview(attachment: Attachment) {
                'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
                'context-percent-danger': usagePercent > 80,
              }"
@@ -33,7 +33,7 @@ index 7dd15838..5b9fcd2a 100644
        </div>
        <textarea
          ref="textareaRef"
-@@ -1820,34 +1810,6 @@ function isImage(type: string): boolean {
+@@ -1952,34 +1942,6 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -68,7 +68,7 @@ index 7dd15838..5b9fcd2a 100644
  .dark .context-limit-editable {
    color: var(--text-secondary);
  
-@@ -1857,26 +1819,6 @@ function isImage(type: string): boolean {
+@@ -1989,26 +1951,6 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -95,7 +95,7 @@ index 7dd15838..5b9fcd2a 100644
  @media (max-width: 768px) {
    .chat-input-area {
      --voice-overlay-mobile-bottom-offset: 146px;
-@@ -1933,11 +1875,6 @@ function isImage(type: string): boolean {
+@@ -2065,11 +2007,6 @@ function openAttachmentPreview(attachment: Attachment) {
      font-size: 10px;
      line-height: 14px;
    }

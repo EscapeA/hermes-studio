@@ -1,9 +1,9 @@
-From 469010c0e9063b91b3e9efa639c1c8974d09cf7f Mon Sep 17 00:00:00 2001
+From f956d6390836227d14c352e8d27b850161abe5a7 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sat, 20 Jun 2026 00:14:28 +0800
-Subject: [PATCH 11/11] =?UTF-8?q?fix:=20=E7=99=BB=E5=BD=95=E9=A1=B5?=
- =?UTF-8?q?=E6=8F=90=E7=A4=BA=E6=96=87=E6=A1=88=E6=94=B9=E4=B8=BA=E8=B7=A8?=
- =?UTF-8?q?=E5=9F=9F=E8=AF=B7=E6=B1=82=E8=AF=B4=E6=98=8E?=
+Subject: [PATCH] =?UTF-8?q?fix:=20=E7=99=BB=E5=BD=95=E9=A1=B5=E6=8F=90?=
+ =?UTF-8?q?=E7=A4=BA=E6=96=87=E6=A1=88=E6=94=B9=E4=B8=BA=E8=B7=A8=E5=9F=9F?=
+ =?UTF-8?q?=E8=AF=B7=E6=B1=82=E8=AF=B4=E6=98=8E?=
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -13,10 +13,10 @@ Content-Transfer-Encoding: 8bit
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index a986c78b..b84a89f6 100644
+index 8f41ba5e8..2a0252787 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -22,7 +22,7 @@ export default {
+@@ -188,7 +188,7 @@ export default {
      tokenLogin: '令牌登录',
      usernamePlaceholder: '用户名',
      passwordPlaceholder: '密码',

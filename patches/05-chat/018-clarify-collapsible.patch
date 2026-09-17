@@ -1,4 +1,4 @@
-From 5035eb011fc3881de3e6a1d99dbe2118e21fadf0 Mon Sep 17 00:00:00 2001
+From f087381a4a1704c3a2be4e8bf1b954815fb664e1 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 00:21:44 +0800
 Subject: [PATCH] feat(chat): collapsible clarify float panel
@@ -26,10 +26,10 @@ i18n keys in all 11 locales.
  13 files changed, 137 insertions(+), 3 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 76c3ebbf..3dc5b07a 100644
+index 5dc49f6d3..63f4803b7 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -358,14 +358,20 @@ const canInsertQueuedMessages = computed(() => {
+@@ -319,14 +319,20 @@ const canInsertQueuedMessages = computed(() => {
  const visibleApproval = computed(() => chatStore.activePendingApproval);
  const visibleClarify = computed(() => chatStore.activePendingClarify);
  const clarifyResponse = ref("");
@@ -52,7 +52,7 @@ index 76c3ebbf..3dc5b07a 100644
    return "20px";
  });
  
-@@ -1080,7 +1086,42 @@ defineExpose({
+@@ -1011,7 +1017,42 @@ defineExpose({
              </span>
              <span>{{ t("chat.clarifyKicker") }}</span>
              <PendingInteractionCountdown :deadline="visibleClarify.countdownDeadline" />
@@ -95,7 +95,7 @@ index 76c3ebbf..3dc5b07a 100644
            <div class="approval-float-title">{{ t("chat.clarifyTitle") }}</div>
            <div class="approval-float-desc">{{ visibleClarify.question }}</div>
            <div
-@@ -1111,6 +1152,7 @@ defineExpose({
+@@ -1042,6 +1083,7 @@ defineExpose({
                {{ t("chat.clarifySubmit") }}
              </NButton>
            </div>
@@ -103,7 +103,7 @@ index 76c3ebbf..3dc5b07a 100644
          </div>
        </Transition>
        <Transition name="queue-float">
-@@ -1227,6 +1269,26 @@ defineExpose({
+@@ -1158,6 +1200,26 @@ defineExpose({
    text-transform: uppercase;
  }
  
@@ -131,10 +131,10 @@ index 76c3ebbf..3dc5b07a 100644
    width: 18px;
    height: 18px;
 diff --git a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
-index fcfe6d35..f36c0aac 100644
+index a84096630..27230bbd2 100644
 --- a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 +++ b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
-@@ -159,6 +159,7 @@ const localRoomsCollapsed = ref(false)
+@@ -161,6 +161,7 @@ const localRoomsCollapsed = ref(false)
  const remoteRoomsCollapsed = ref(false)
  const isDecidingAgentPairing = ref(false)
  const clarifyResponse = ref('')
@@ -142,7 +142,7 @@ index fcfe6d35..f36c0aac 100644
  const allowGuestAgentsDraft = ref(false)
  const maxGuestAgentsPerMemberDraft = ref(1)
  const allowRemoteWorkspaceAccessDraft = ref(false)
-@@ -658,7 +659,10 @@ const visibleClarify = computed(() =>
+@@ -670,7 +671,10 @@ const visibleClarify = computed(() =>
  )
  watch(
      () => visibleClarify.value?.clarifyId,
@@ -154,7 +154,7 @@ index fcfe6d35..f36c0aac 100644
  )
  const visibleAgentPairing = computed(() =>
      currentRoomCanManage.value ? pendingAgentPairings.value[0] || null : null,
-@@ -2506,7 +2510,22 @@ function handleClarifyKeydown(event: KeyboardEvent) {
+@@ -2549,7 +2553,22 @@ function handleClarifyKeydown(event: KeyboardEvent) {
                                      </span>
                                      <span>{{ t('chat.clarifyKicker') }}</span>
                                      <PendingInteractionCountdown :deadline="visibleClarify.countdownDeadline" />
@@ -177,7 +177,7 @@ index fcfe6d35..f36c0aac 100644
                                  <div class="approval-float-title">
                                      <span v-if="visibleClarify.agentName">@{{ visibleClarify.agentName }} · </span>{{ t('chat.clarifyTitle') }}
                                  </div>
-@@ -2525,6 +2544,7 @@ function handleClarifyKeydown(event: KeyboardEvent) {
+@@ -2568,6 +2587,7 @@ function handleClarifyKeydown(event: KeyboardEvent) {
                                          {{ t('chat.clarifySubmit') }}
                                      </NButton>
                                  </div>
@@ -185,7 +185,7 @@ index fcfe6d35..f36c0aac 100644
                              </div>
                          </Transition>
                      </div>
-@@ -3528,6 +3548,26 @@ export default defineComponent({ components: { CreateRoomForm } })
+@@ -3588,6 +3608,26 @@ export default defineComponent({ components: { CreateRoomForm } })
      text-transform: uppercase;
  }
  
@@ -213,10 +213,10 @@ index fcfe6d35..f36c0aac 100644
      width: 18px;
      height: 18px;
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 2b4dce34..24b0dfbf 100644
+index 451c7e8bc..de37b02d6 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -1031,6 +1031,9 @@ export default {
+@@ -1069,6 +1069,9 @@ export default {
      clarifyPlaceholder: 'اكتب إجابتك...',
      clarifySubmit: 'رد',
      clarifyDismiss: 'تجاهل',
@@ -227,10 +227,10 @@ index 2b4dce34..24b0dfbf 100644
      interactionCountdown: 'متبقٍ {time}',
      interactionCountdownElapsed: '00:00 · في انتظار تأكيد الخادم',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index d22c7a6b..53d6508e 100644
+index 48af06421..4bbd4c94c 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -980,6 +980,9 @@ export default {
+@@ -1018,6 +1018,9 @@ export default {
      clarifyPlaceholder: 'Geben Sie Ihre Antwort ein...',
      clarifySubmit: 'Antworten',
      clarifyDismiss: 'Schließen',
@@ -241,10 +241,10 @@ index d22c7a6b..53d6508e 100644
      interactionCountdown: '{time} verbleibend',
      interactionCountdownElapsed: '00:00 · Serverbestätigung ausstehend',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index e1f8a20b..9d4d9808 100644
+index eec2daa94..69dbe4591 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1057,6 +1057,9 @@ export default {
+@@ -1095,6 +1095,9 @@ export default {
      clarifyPlaceholder: 'Type your answer...',
      clarifySubmit: 'Reply',
      clarifyDismiss: 'Dismiss',
@@ -255,10 +255,10 @@ index e1f8a20b..9d4d9808 100644
      interactionCountdown: '{time} remaining',
      interactionCountdownElapsed: '00:00 · Awaiting server confirmation',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 77d7da21..2a749975 100644
+index 8ee36778f..939ec6b34 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -980,6 +980,9 @@ export default {
+@@ -1018,6 +1018,9 @@ export default {
      clarifyPlaceholder: 'Escriba su respuesta...',
      clarifySubmit: 'Responder',
      clarifyDismiss: 'Descartar',
@@ -269,10 +269,10 @@ index 77d7da21..2a749975 100644
      interactionCountdown: 'Quedan {time}',
      interactionCountdownElapsed: '00:00 · Esperando confirmación del servidor',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 6dcf6cb2..47fd313a 100644
+index a7aa64370..195ab3557 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -979,6 +979,9 @@ export default {
+@@ -1017,6 +1017,9 @@ export default {
      clarifyPlaceholder: 'Tapez votre réponse...',
      clarifySubmit: 'Répondre',
      clarifyDismiss: 'Ignorer',
@@ -283,10 +283,10 @@ index 6dcf6cb2..47fd313a 100644
      interactionCountdown: '{time} restante',
      interactionCountdownElapsed: '00:00 · Confirmation du serveur en attente',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 3ea2a051..24178594 100644
+index 0dabea93d..d73c51270 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -980,6 +980,9 @@ export default {
+@@ -1018,6 +1018,9 @@ export default {
      clarifyPlaceholder: '回答を入力...',
      clarifySubmit: '返信',
      clarifyDismiss: '閉じる',
@@ -297,10 +297,10 @@ index 3ea2a051..24178594 100644
      interactionCountdown: '残り {time}',
      interactionCountdownElapsed: '00:00 · サーバー確認待ち',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index adf232de..8f149c9d 100644
+index 18dc6acf8..8383d86a0 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -980,6 +980,9 @@ export default {
+@@ -1018,6 +1018,9 @@ export default {
      clarifyPlaceholder: '답변 입력...',
      clarifySubmit: '답장',
      clarifyDismiss: '무시',
@@ -311,10 +311,10 @@ index adf232de..8f149c9d 100644
      interactionCountdown: '{time} 남음',
      interactionCountdownElapsed: '00:00 · 서버 확인 대기 중',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 1d6439b5..ababe3ae 100644
+index 17d996fcc..9150e7f9b 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -980,6 +980,9 @@ export default {
+@@ -1018,6 +1018,9 @@ export default {
      clarifyPlaceholder: 'Digite sua resposta...',
      clarifySubmit: 'Responder',
      clarifyDismiss: 'Descartar',
@@ -325,10 +325,10 @@ index 1d6439b5..ababe3ae 100644
      interactionCountdown: '{time} restante',
      interactionCountdownElapsed: '00:00 · Aguardando confirmação do servidor',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 7770c5ec..a98e64e0 100644
+index a56208e14..174cccdd7 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -938,6 +938,8 @@ export default {
+@@ -976,6 +976,8 @@ export default {
      interactionExpired: 'Время ожидания запроса истекло, окно закрыто.',
      interactionCountdown: 'Осталось {time}',
      interactionCountdownElapsed: '00:00 · Ожидание подтверждения сервера',
@@ -338,10 +338,10 @@ index 7770c5ec..a98e64e0 100644
      deleteSession: 'Удалить этот сеанс?',
      sessionLive: 'Сессия выполняется',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index ad1dd7c8..5725861a 100644
+index 7d0394589..469484279 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1048,6 +1048,9 @@ export default {
+@@ -1086,6 +1086,9 @@ export default {
      clarifyPlaceholder: '輸入你的回答...',
      clarifySubmit: '回覆',
      clarifyDismiss: '忽略',
@@ -352,10 +352,10 @@ index ad1dd7c8..5725861a 100644
      interactionCountdown: '剩餘 {time}',
      interactionCountdownElapsed: '00:00 · 等待伺服器確認',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index e071442b..ce619c72 100644
+index 58213081a..b1fbf4715 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1057,6 +1057,9 @@ export default {
+@@ -1095,6 +1095,9 @@ export default {
      clarifyPlaceholder: '输入你的回答...',
      clarifySubmit: '回复',
      clarifyDismiss: '忽略',

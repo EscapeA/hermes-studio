@@ -1,4 +1,4 @@
-From 9192c8ca3c36ab8cc969518adecaf180c41ac8ec Mon Sep 17 00:00:00 2001
+From 1178bd540c495355a5f2131f63e62f4a8dab7499 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 12:52:40 +0800
 Subject: [PATCH] feat(chat): drop the composer voice button
@@ -16,7 +16,7 @@ Subject: [PATCH] feat(chat): drop the composer voice button
  2 files changed, 5 insertions(+), 45 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index cb90d62c8..0a24a07a9 100644
+index b246395b6..014941a07 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -14,11 +14,9 @@ import { computed, ref, nextTick, onMounted, onUnmounted, watch, h } from 'vue'
@@ -31,7 +31,7 @@ index cb90d62c8..0a24a07a9 100644
  import { extractRepresentativeVideoFrames, isVideoFile } from '@/utils/video-frame-extraction'
  import ImagePreviewOverlay from './ImagePreviewOverlay.vue'
  
-@@ -160,34 +158,6 @@ type SlashCommandOption = {
+@@ -149,34 +147,6 @@ type SlashCommandOption = {
    opensBundleCreator?: boolean
  }
  
@@ -66,7 +66,7 @@ index cb90d62c8..0a24a07a9 100644
  function clearMessageReference() {
    const sessionId = chatStore.activeSessionId
    if (sessionId) chatStore.clearMessageReference(sessionId)
-@@ -202,10 +172,6 @@ watch(
+@@ -191,10 +161,6 @@ watch(
    },
  )
  
@@ -77,7 +77,7 @@ index cb90d62c8..0a24a07a9 100644
  const CODING_AGENT_SLASH_COMMANDS = ['context', 'compact', 'usage', 'status']
  
  const bridgeCommands = computed<SlashCommandOption[]>(() =>
-@@ -1472,15 +1438,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1462,15 +1428,6 @@ function openAttachmentPreview(attachment: Attachment) {
  
          </div>
          <div class="input-actions">
@@ -93,7 +93,7 @@ index cb90d62c8..0a24a07a9 100644
            <NButton
              size="medium"
              type="primary"
-@@ -2090,7 +2047,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2080,7 +2037,6 @@ function openAttachmentPreview(attachment: Attachment) {
  
  @media (max-width: 768px) {
    .chat-input-area {

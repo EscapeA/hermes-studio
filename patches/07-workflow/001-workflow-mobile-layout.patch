@@ -1,4 +1,4 @@
-From 9444ddc046dc4a6bb21cc913ecc5a48fee97309e Mon Sep 17 00:00:00 2001
+From 4e809a92585e8f29ae0613017ad626b7feae4bb2 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 18:51:17 +0800
 Subject: [PATCH] feat(workflow): mobile runs panel as bottom sheet with
@@ -17,10 +17,10 @@ back control when viewing a run snapshot.
  6 files changed, 204 insertions(+), 11 deletions(-)
 
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 3d4ab0c9..dc0686f5 100644
+index 69dbe4591..820eb431e 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -949,6 +949,7 @@ export default {
+@@ -1226,6 +1226,7 @@ export default {
        createWorkflowFirst: 'Please create a workflow first',
        reset: 'Reset',
        startExecution: 'Start Execution',
@@ -29,10 +29,10 @@ index 3d4ab0c9..dc0686f5 100644
        executionStarted: 'Workflow execution started',
        executionCompleted: 'Workflow execution completed',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index ff62cdb7..c1a49515 100644
+index 174cccdd7..e66590ec8 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -808,6 +808,7 @@ export default {
+@@ -1099,6 +1099,7 @@ export default {
        createWorkflowFirst: 'Сначала создайте workflow',
        reset: 'Сбросить',
        startExecution: 'Запустить выполнение',
@@ -41,10 +41,10 @@ index ff62cdb7..c1a49515 100644
        executionStarted: 'Выполнение workflow началось',
        executionCompleted: 'Выполнение workflow завершено',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 94b57503..3c2c941e 100644
+index 469484279..a91fbef5a 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -929,6 +929,7 @@ export default {
+@@ -1219,6 +1219,7 @@ export default {
        createWorkflowFirst: '請先建立工作流',
        reset: '重置',
        startExecution: '開始執行',
@@ -53,10 +53,10 @@ index 94b57503..3c2c941e 100644
        executionStarted: '工作流已開始執行',
        executionCompleted: '工作流執行完成',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index af4e2a42..9575b353 100644
+index b1fbf4715..03ea88763 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -949,6 +949,7 @@ export default {
+@@ -1226,6 +1226,7 @@ export default {
        createWorkflowFirst: '请先创建工作流',
        reset: '重置',
        startExecution: '开始执行',
@@ -65,10 +65,10 @@ index af4e2a42..9575b353 100644
        executionStarted: '工作流已开始执行',
        executionCompleted: '工作流执行完成',
 diff --git a/packages/client/src/views/hermes/WorkflowView.vue b/packages/client/src/views/hermes/WorkflowView.vue
-index d2a01309..08e39f3f 100644
+index dea8c45c7..ff545d230 100644
 --- a/packages/client/src/views/hermes/WorkflowView.vue
 +++ b/packages/client/src/views/hermes/WorkflowView.vue
-@@ -347,6 +347,8 @@ const workflowScheduleTimeoutMinutes = ref<number | null>(null)
+@@ -367,6 +367,8 @@ const workflowScheduleTimeoutMinutes = ref<number | null>(null)
  const workflowRunsLoading = ref(false)
  const rerunningWorkflowNodeId = ref<string | null>(null)
  const showWorkflowRunsPanel = ref(true)
@@ -77,7 +77,7 @@ index d2a01309..08e39f3f 100644
  const selectedWorkflowRunId = ref<string | null>(null)
  const workflowRunPage = ref<WorkflowRunPagerPage>('history')
  const workflowEvidenceTab = ref<'actual' | 'other' | 'loops'>('actual')
-@@ -889,7 +891,12 @@ onUnmounted(() => {
+@@ -950,7 +952,12 @@ onUnmounted(() => {
  function handleMobileChange(event: MediaQueryList | MediaQueryListEvent) {
    isMobile.value = event.matches
    showWorkflowSidebar.value = !event.matches
@@ -91,7 +91,7 @@ index d2a01309..08e39f3f 100644
  }
  
  function openPageSidebar() {
-@@ -1987,6 +1994,10 @@ async function selectWorkflowRun(run: WorkflowRunRecord) {
+@@ -2090,6 +2097,10 @@ async function selectWorkflowRun(run: WorkflowRunRecord) {
    nextDeselected.delete(run.id)
    manuallyDeselectedWorkflowRunIds.value = nextDeselected
    selectedWorkflowRunId.value = run.id
@@ -102,7 +102,7 @@ index d2a01309..08e39f3f 100644
    await applyWorkflowRunSnapshot(run)
    await changeWorkflowRunPage('details')
  }
-@@ -2031,11 +2042,51 @@ function closeWorkflowRunContextMenu() {
+@@ -2134,11 +2145,51 @@ function closeWorkflowRunContextMenu() {
  async function toggleWorkflowRunsPanel() {
    const nextVisible = !showWorkflowRunsPanel.value
    showWorkflowRunsPanel.value = nextVisible
@@ -156,7 +156,7 @@ index d2a01309..08e39f3f 100644
  async function handleWorkflowRunContextMenuSelect(key: string | number) {
    const run = workflowRunContextMenuTarget.value
    closeWorkflowRunContextMenu()
-@@ -2089,6 +2140,7 @@ function handleWorkflowRuntimeStatus(status: WorkflowRuntimeStatus) {
+@@ -2192,6 +2243,7 @@ function handleWorkflowRuntimeStatus(status: WorkflowRuntimeStatus) {
        !manuallyDeselectedWorkflowRunIds.value.has(status.runId)
      if (shouldAutoSelect) {
        showWorkflowRunsPanel.value = true
@@ -164,7 +164,7 @@ index d2a01309..08e39f3f 100644
        const wasSelected = selectedWorkflowRunId.value === status.runId
        selectedWorkflowRunId.value = status.runId
        void loadWorkflowRuns(status.workflowId, status.runId, {
-@@ -2568,6 +2620,7 @@ async function executeWorkflowWithBudget(timeoutMs: number | undefined): Promise
+@@ -2682,6 +2734,7 @@ async function executeWorkflowWithBudget(timeoutMs: number | undefined): Promise
    const saved = await saveActiveWorkflow({ quiet: true })
    if (!saved) return false
    showWorkflowRunsPanel.value = true
@@ -172,7 +172,7 @@ index d2a01309..08e39f3f 100644
    manuallyDeselectedWorkflowRunIds.value = new Set()
    autoSelectRunningWorkflowIds.value = new Set([...autoSelectRunningWorkflowIds.value, workflowId])
    executingWorkflow.value = true
-@@ -2601,6 +2654,7 @@ async function rerunWorkflowFromNode(nodeId: string, preserveStartNode: boolean,
+@@ -2715,6 +2768,7 @@ async function rerunWorkflowFromNode(nodeId: string, preserveStartNode: boolean,
    if (!workflowId || !run || rerunningWorkflowNodeId.value) return false
    rerunningWorkflowNodeId.value = nodeId
    showWorkflowRunsPanel.value = true
@@ -180,7 +180,7 @@ index d2a01309..08e39f3f 100644
    autoSelectRunningWorkflowIds.value = new Set([...autoSelectRunningWorkflowIds.value, workflowId])
    closeWorkflowChatPanel()
    try {
-@@ -3233,6 +3287,25 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -3356,6 +3410,25 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
            </div>
          </div>
          <div class="header-actions">
@@ -206,7 +206,7 @@ index d2a01309..08e39f3f 100644
            <NTooltip trigger="hover">
              <template #trigger>
                <NButton
-@@ -3609,14 +3682,32 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -3785,14 +3858,32 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
            @clickoutside="handleContextMenuClickOutside"
          />
        </section>
@@ -239,7 +239,7 @@ index d2a01309..08e39f3f 100644
          <span class="workflow-runs-live-region" aria-live="polite" aria-atomic="true">{{ workflowRunPageAnnouncement }}</span>
          <div
            class="workflow-runs-pages"
-@@ -3692,7 +3783,8 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -3868,7 +3959,8 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
              </div>
              <div ref="workflowRunDetailsScrollRef" class="workflow-runs-page-scroll">
          <section
@@ -249,7 +249,7 @@ index d2a01309..08e39f3f 100644
            class="workflow-evidence"
            :aria-label="t('workflow.evidence.ariaLabel')"
          >
-@@ -4635,6 +4727,14 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -4811,6 +4903,14 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
    .workflow-runs-pages { transition-duration: 0.01ms; }
  }
  
@@ -264,7 +264,7 @@ index d2a01309..08e39f3f 100644
  .workflow-chat-panel {
    position: relative;
    flex: 0 0 auto;
-@@ -5133,23 +5233,61 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -5310,23 +5410,61 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
  
    .workflow-body {
      min-height: 420px;
@@ -333,7 +333,7 @@ index d2a01309..08e39f3f 100644
      }
    }
  
-@@ -5169,5 +5307,13 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -5346,5 +5484,13 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
    .workflow-chat-resize-handle {
      display: none;
    }
@@ -348,10 +348,10 @@ index d2a01309..08e39f3f 100644
  }
  </style>
 diff --git a/tests/e2e/workflow-ui.spec.ts b/tests/e2e/workflow-ui.spec.ts
-index 20a999fb..630db16f 100644
+index 1865c917a..bc691c380 100644
 --- a/tests/e2e/workflow-ui.spec.ts
 +++ b/tests/e2e/workflow-ui.spec.ts
-@@ -1523,3 +1523,46 @@ test('a pending schedule toggle disables that schedule until its request complet
+@@ -1561,3 +1561,46 @@ test('a pending schedule toggle disables that schedule until its request complet
    await expect(api.requests.filter(request => request.method === 'PATCH' && request.pathname.endsWith('/schedules/schedule-a'))).toHaveLength(1)
    await expect(scheduleA.getByText('Disabled', { exact: true })).toBeVisible()
  })

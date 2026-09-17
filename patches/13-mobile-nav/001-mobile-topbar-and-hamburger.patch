@@ -1,4 +1,4 @@
-From 92ec18eaef1bcc9379371ec701c6aa14b6402bc0 Mon Sep 17 00:00:00 2001
+From 8490287b49fdab6e6d3853125c8dd1a39d57a731 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 11:59:49 +0800
 Subject: [PATCH] feat(mobile): compact top bar and single hamburger sidebar
@@ -25,7 +25,7 @@ Subject: [PATCH] feat(mobile): compact top bar and single hamburger sidebar
  10 files changed, 57 insertions(+), 16 deletions(-)
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index ce1dd633b..e8c951b5d 100644
+index 22f8f484d..e07a2f1e8 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
 @@ -298,13 +298,24 @@ usePwa();
@@ -59,10 +59,10 @@ index ce1dd633b..e8c951b5d 100644
                <div
                  v-if="!isLoginPage && showAppSidebar && appStore.sidebarOpen"
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index a8c30d1f1..1781b68f1 100644
+index f0753ef8f..18002adaf 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -4061,7 +4061,8 @@ async function handleSessionModelCustomSubmit() {
+@@ -4077,7 +4077,8 @@ async function handleSessionModelCustomSubmit() {
  
  @media (max-width: $breakpoint-mobile) {
    .chat-header {
@@ -73,10 +73,10 @@ index a8c30d1f1..1781b68f1 100644
  
    .header-sidebar-toggle {
 diff --git a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
-index b17f88a3d..b6c1dc8a1 100644
+index 27230bbd2..b7bd7f1b8 100644
 --- a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 +++ b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
-@@ -5270,7 +5270,8 @@ export default defineComponent({ components: { CreateRoomForm } })
+@@ -5310,7 +5310,8 @@ export default defineComponent({ components: { CreateRoomForm } })
      }
  
      .chat-header {
@@ -148,7 +148,7 @@ index 07a7e8ac0..ae4a3d6c6 100644
  
  // Radius
 diff --git a/packages/client/src/views/hermes/HistoryView.vue b/packages/client/src/views/hermes/HistoryView.vue
-index 10a79d561..ba382d240 100644
+index d24b994cd..8f7dc00f5 100644
 --- a/packages/client/src/views/hermes/HistoryView.vue
 +++ b/packages/client/src/views/hermes/HistoryView.vue
 @@ -1338,7 +1338,8 @@ function handleBatchDeleteConfirm() {
@@ -211,10 +211,10 @@ index cd30d7ac1..015bf33ac 100644
  
    .terminal-container {
 diff --git a/packages/client/src/views/hermes/WorkflowView.vue b/packages/client/src/views/hermes/WorkflowView.vue
-index 322e8d558..4217ebb56 100644
+index ff545d230..dddd8d80e 100644
 --- a/packages/client/src/views/hermes/WorkflowView.vue
 +++ b/packages/client/src/views/hermes/WorkflowView.vue
-@@ -5368,7 +5368,11 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -5374,7 +5374,11 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
      flex-wrap: nowrap;
      align-items: center;
      gap: 8px;
