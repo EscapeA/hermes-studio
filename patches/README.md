@@ -26,7 +26,14 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 13-mobile-nav | 移动端顶栏统一 38px（变量派生几何 + ☰ 与内容同轴）+ ☰ 由品牌图改为三条横线图标 + 去掉与 ☰ 重复的四宫格 ▦（Models/Workflow） | 001 |
 | 14-test-adapt | 上游测试套件适配（`tests/client/message-list-live-reasoning.test.ts` 断言 fork 行为：按用户轮折叠的 ToolRunCard、卸载重建的 live ticker） | 001 |
 
-共 **83 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001）。
+共 **83 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**）。
+
+**0.7.23 升级（2026-09-19，上游 `551c1104e` = 13 提交 / 152 文件 / +4511 −560）**：
+83 个补丁 `git am --3way` **全部零冲突落位**（0.7.22 是 3 处），补丁文件**逐字节未变**（无需回写）；
+与补丁重叠的上游文件 20 个（13 locale + `controllers/sessions.ts`、`stores/hermes/chat.ts`、
+`ChatPanel.vue`、`HistoryView.vue`、`sockets/chat-run.ts` 等）全部自动合并，`archived=1` 分支与上游新增
+pinned 过滤共存。⚠️ 上游把 npm 包改名 `ekko-studio`（保留 `hermes-web-ui` 双发包）并把 MCP 服务
+`ekko-studio-plan` 改名为 `ekko-studio-interaction`（autoinject 负责迁移 legacy 名）。
 
 **0.7.19 之后新增（2026-09-12）**：04-usage/010-每轮解码速度（run 态实时 + 单轮结束常驻在消息上）；05-chat/020-去掉 run 态「正在思考」左侧的 thinking.gif 图标（模板/导入/样式三层清理 + 单测与 e2e 断言同步；未导入的 gif 资产保留在源码树，构建产物不再打包）。
 链路：hermes-agent `post_api_request` hook 的 `first_chunk_at` → `bridge_pool.py` 透传 → `chat-run/usage.ts` 折叠（`output_tokens / (ended_at - first_chunk_at)`，仅按**调用**累加，无首 chunk 的调用整体退出）→ 每次调用完成时随 `usage.updated` 的 `speed` 字段下发一次 → 客户端两处显示：① **run 态**：`LiveReasoningStatus`（"正在思考"计时右侧）实时显示 `138 tok/s`；② **单轮结束时**：`clearRunStartedAt` → `settleRunSpeed` 把最后一个读数挂到**本轮最新 assistant 消息**上，`MessageItem` 在消息下方常驻 `本轮平均速度：145 tok/s`（`.assistant-run-speed`），随后清理 run 态读数避免重复显示。
