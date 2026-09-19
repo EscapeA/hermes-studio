@@ -25,8 +25,9 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 12-tool-strip | 工具面板防闪烁（500ms 延迟显示）+ 折叠单行（正在调用 N 个工具）+ 运行中工具行展开详情 + toggle 与列表上下堆叠 + 展开详情解除高度限制 | 001-004 |
 | 13-mobile-nav | 移动端顶栏统一 38px（变量派生几何 + ☰ 与内容同轴）+ ☰ 由品牌图改为三条横线图标 + 去掉与 ☰ 重复的四宫格 ▦（Models/Workflow） | 001 |
 | 14-test-adapt | 上游测试套件适配（`tests/client/message-list-live-reasoning.test.ts` 断言 fork 行为：按用户轮折叠的 ToolRunCard、卸载重建的 live ticker） | 001 |
+| 15-mobile-models | 模型页移动端布局（辅助模型面板宽表格 → 两行卡片、summary 双列、动作按钮左对齐、页/面板内边距 20→12px，断点改用 `$breakpoint-mobile`） | 001 |
 
-共 **83 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**）。
+共 **84 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**）。
 
 **0.7.23 升级（2026-09-19，上游 `551c1104e` = 13 提交 / 152 文件 / +4511 −560）**：
 83 个补丁 `git am --3way` **全部零冲突落位**（0.7.22 是 3 处），补丁文件**逐字节未变**（无需回写）；
@@ -53,6 +54,17 @@ pinned 过滤共存。⚠️ 上游把 npm 包改名 `ekko-studio`（保留 `her
   隐藏后移动端将无法打开终端会话。
 - 实测（本机 Playwright + 系统 Chrome，390×844）：聊天/历史/终端/群聊顶栏 = 38px、内容中心 18.5~19、☰ 中心 19；`.page-header` 类因 1px 下边框为 39；看板两行 191px、首行中心 19.2。
   验证配方与三个环境坑见 skill `hermes-webui-development → references/mobile-topbar-geometry.md`。
+
+**15-mobile-models/001-模型页移动端布局（2026-09-20 正式入补丁串）**：
+- `AuxiliaryModelsPanel.vue`：断点由写死的 `760px` 改为共享变量 `$breakpoint-mobile`；
+  `delegation-actions` 左对齐 + `width:auto`（原「整行宽 + 右对齐两个按钮」在 390px 上是空洞）；
+  `delegation-summary` 改 `repeat(auto-fit, minmax(150px, 1fr))`，每个 cell 自带顶部分隔线（换行成单列仍有分隔）；
+  720px 固定宽表格 `.auxiliary-table` → `min-width:0` + `overflow-x:visible` + 隐藏 `.auxiliary-row-head`，
+  `.auxiliary-row` 用 `grid-template-areas` 排成 `name actions / config timeout` 两行卡片。
+- `ModelsView.vue`：`.models-content` 移动端 padding 20 → 12px（**必须放在基础规则之后**，两者特异性相同）。
+- 该改动 2026-09-14 完成并热替本机供用户实测，因未提交而在 0.7.22 / 0.7.23 两次升级里被反复 stash / 取回；
+  本次正式入补丁串（当时的工作树 WIP 与 `stash@{0}` 逐字节相同，stash 已清理）。
+- 范式与 390×844 实测记录见 skill `hermes-webui-development → references/mobile-settings-panel-tables.md`。
 
 **05-chat/021-run 态指示器与输入区间距收紧（2026-09-12，用户验收）**：把「正在思考」块与输入框之间 32px 的空白收到 16px，并收紧行内上下与工具卡片间距。
 - `.streaming-indicator`：`padding: 4px` → `0 4px`；`gap: 8px` → `4px`（正在思考行 ↔ 思考详情/工具条）；新增 `margin-top: -6px`（吃掉上一条消息 `.virtual-row` 16px 行距中的 6px）。
