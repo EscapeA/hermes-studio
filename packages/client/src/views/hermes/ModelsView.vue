@@ -302,6 +302,15 @@ async function handleRefreshModelCache() {
   padding: 20px;
 }
 
+// 20px of side padding costs 40px of usable width on a 390px screen; the panels
+// inside are already inset, so 12px still reads as a margin. Must stay after the
+// base rule: both selectors have the same specificity.
+@media (max-width: $breakpoint-mobile) {
+  .models-content {
+    padding: 12px;
+  }
+}
+
 .models-profile-select {
   width: 160px;
 }
