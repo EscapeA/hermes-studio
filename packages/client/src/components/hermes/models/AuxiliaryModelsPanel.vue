@@ -817,23 +817,95 @@ watch(() => delegationForm.value.provider, (provider) => {
   gap: 8px;
 }
 
-@media (max-width: 760px) {
+@media (max-width: $breakpoint-mobile) {
+  .auxiliary-header {
+    gap: 10px;
+    padding: 12px 14px 10px;
+
+    p {
+      line-height: 1.4;
+    }
+  }
+
+  .delegation-section {
+    margin: 12px;
+  }
+
   .delegation-header {
     flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px 10px;
   }
 
+  // A full-width row with two right-aligned buttons reads as a hole on a 390px
+  // screen; keep the actions next to the copy they act on.
   .delegation-actions {
-    justify-content: flex-end;
-    width: 100%;
+    justify-content: flex-start;
+    width: auto;
   }
 
+  // Two summary cells instead of a stacked 126px block. Each cell carries its
+  // own top rule so a wrap to one column still shows a separator.
   .delegation-summary {
-    grid-template-columns: 1fr;
+    border-top: 0;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 
-  .summary-item + .summary-item {
+  .summary-item {
+    padding: 9px 14px 10px;
     border-top: 1px solid $border-light;
-    border-inline-start: 0;
+  }
+
+  .auxiliary-tasks-header {
+    padding: 12px 14px 8px;
+
+    p {
+      line-height: 1.4;
+    }
+  }
+
+  // The 720px table forced a horizontal swipe with the actions off screen and a
+  // wide empty cell next to short values like "Auto". Cards use the real width.
+  .auxiliary-table {
+    min-width: 0;
+  }
+
+  .auxiliary-table-scroll {
+    overflow-x: visible;
+  }
+
+  .auxiliary-row-head {
+    display: none;
+  }
+
+  .auxiliary-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'name actions'
+      'config timeout';
+    gap: 3px 10px;
+    padding: 8px 14px 9px;
+  }
+
+  .task-name {
+    grid-area: name;
+  }
+
+  .task-config {
+    grid-area: config;
+  }
+
+  .task-timeout {
+    grid-area: timeout;
+    text-align: right;
+  }
+
+  .task-actions {
+    grid-area: actions;
+  }
+
+  .fallback-section {
+    padding: 12px 14px;
   }
 
   .auxiliary-form,
