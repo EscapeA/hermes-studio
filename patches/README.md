@@ -66,6 +66,16 @@ pinned 过滤共存。⚠️ 上游把 npm 包改名 `ekko-studio`（保留 `her
   本次正式入补丁串（当时的工作树 WIP 与 `stash@{0}` 逐字节相同，stash 已清理）。
 - 范式与 390×844 实测记录见 skill `hermes-webui-development → references/mobile-settings-panel-tables.md`。
 
+**已知偏差（2026-09-21 记录，决定不修）：clarify 折叠态与 approval 共存时的列表留白**：
+- 位置：`packages/client/src/components/hermes/chat/MessageList.vue` 的 `clarifyCompact` / `virtualListPadding`（05-chat/018 引入）。
+- 现象：同一会话中 clarify 已被折叠（`clarifyCollapsed=true`）时又出现 approval → clarify 面板被 `!visibleApproval` 隐藏、真正显示的是 approval 面板，
+  但 `clarifyCompact` 仍为 true → 列表底部只留 80px（上游该分支固定 260px）→ approval 浮层盖住最后几条消息。
+- 复现（实测 jsdom 探针，已删除）：仅 clarify → padding `20px 20px 260px`；点折叠 → `80px`；再注入同会话 approval → 仍 `80px`。
+  该场景不是臆想：上游自带 client 测试 `tests/client/message-list-scroll-position.test.ts`（"has no close control and keeps explicit approval and reply actions usable"）本身就构造了 approval+clarify 同时 pending。
+- 不修原因（用户 2026-09-21 定）：需「折叠态 + 两个 pending 同时存在」才触发，只造成视觉重叠、无功能或数据损失。
+- 若日后要修，一行即可：`const clarifyCompact = computed(() => !visibleApproval.value && !!visibleClarify.value && clarifyCollapsed.value)`。
+- 升级注意：05-chat/018 的 `ru.ts` hunk 是旧上下文，plain `git apply` 会在 `ru.ts:976` 失败，必须走既定流程 `git am --3way`；3-way 结果已核对（两个 i18n key 落在 `interactionCountdownElapsed` 之后，位置合理）。
+
 **05-chat/021-run 态指示器与输入区间距收紧（2026-09-12，用户验收）**：把「正在思考」块与输入框之间 32px 的空白收到 16px，并收紧行内上下与工具卡片间距。
 - `.streaming-indicator`：`padding: 4px` → `0 4px`；`gap: 8px` → `4px`（正在思考行 ↔ 思考详情/工具条）；新增 `margin-top: -6px`（吃掉上一条消息 `.virtual-row` 16px 行距中的 6px）。
 - `LiveReasoningStatus.vue`：`.thinking-status` `min-height: 40px` → `32px`（行内上下留白 9 → 5px）；`.live-reasoning-status` `gap: 8px` → `4px`。
