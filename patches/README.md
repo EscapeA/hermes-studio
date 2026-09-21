@@ -80,6 +80,7 @@ pinned 过滤共存。⚠️ 上游把 npm 包改名 `ekko-studio`（保留 `her
 - `utils/agent-manager-entry.ts`（新）：localStorage 键 `hermes_agent_manager_entry`（纯本地偏好，无服务端改动）；`resolveAgentManagerEntryRoute` 映射目标路由。
 - `PageSidebarNav.vue`：`openAgentManager` 读偏好 → 有目标直接跳（Ekko→`ekko.settings`、Hermes→`hermes.configSettings`、编程工具→`codingAgent.config{agentId,section:'settings'}`），未设置时维持 Agent 列表。
 - i18n ×11 新增 `settings.display.agentManagerEntry*` 三键；测试：util 单测 3 例 + display-settings 1 例 + locale parity 1 例。
+- 交付：本机 dist/client 热替（未重启）；push `6acb78d3d`（feature）+ `2d9ce63d5`（补丁登记），CI Build 绿；**2026-09-21 用户实测确认通过**。
 
 **已知偏差（2026-09-21 记录，决定不修）：clarify 折叠态与 approval 共存时的列表留白**：
 - 位置：`packages/client/src/components/hermes/chat/MessageList.vue` 的 `clarifyCompact` / `virtualListPadding`（05-chat/018 引入）。
