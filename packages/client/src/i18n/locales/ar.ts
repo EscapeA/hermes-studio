@@ -2471,6 +2471,9 @@ export default {
       linkOpenTargetHint: 'اختر مكان فتح الروابط من الرسائل ومعاينات Markdown.',
       linkOpenTargetHermesStudio: 'Ekko Studio',
       linkOpenTargetDefaultBrowser: 'المتصفح الافتراضي',
+      agentManagerEntry: 'مدخل «إدارة الوكلاء» في الشريط الجانبي',
+      agentManagerEntryHint: 'عند النقر على «إدارة الوكلاء» في الشريط الجانبي يتم فتح إعدادات الوكيل المحدد مباشرة؛ وبدون تحديد تُفتح قائمة الوكلاء.',
+      agentManagerEntryDefault: 'الافتراضي (قائمة الوكلاء)',
     },
     agent: {
       maxTurns: 'الحد الأقصى للدورات',
