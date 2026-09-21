@@ -1,0 +1,151 @@
+From 1d0df34b310e3ee5f03d6849977d840c567531aa Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 20 Sep 2026 07:39:48 +0800
+Subject: [PATCH] feat(mobile): card layout for auxiliary models panel on
+ narrow screens
+
+On a 390px screen the Models page kept a 720px-wide table plus a full-width
+action row: horizontal swipe with the actions off screen, and a wide empty
+cell next to short values like "Auto".
+
+Under $breakpoint-mobile the auxiliary table now renders as two-line cards
+(grid-template-areas: name/actions + config/timeout), the summary cells wrap
+two-up, the delegation actions sit next to the copy they act on, and the page
+/ panel padding drops from 20px to 12px.
+
+Also replaces the hardcoded 760px media query with the shared
+$breakpoint-mobile variable.
+---
+ .../hermes/models/AuxiliaryModelsPanel.vue    | 84 +++++++++++++++++--
+ .../client/src/views/hermes/ModelsView.vue    |  9 ++
+ 2 files changed, 87 insertions(+), 6 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/models/AuxiliaryModelsPanel.vue b/packages/client/src/components/hermes/models/AuxiliaryModelsPanel.vue
+index 9f0360afa..6e59aa190 100644
+--- a/packages/client/src/components/hermes/models/AuxiliaryModelsPanel.vue
++++ b/packages/client/src/components/hermes/models/AuxiliaryModelsPanel.vue
+@@ -817,23 +817,95 @@ watch(() => delegationForm.value.provider, (provider) => {
+   gap: 8px;
+ }
+ 
+-@media (max-width: 760px) {
++@media (max-width: $breakpoint-mobile) {
++  .auxiliary-header {
++    gap: 10px;
++    padding: 12px 14px 10px;
++
++    p {
++      line-height: 1.4;
++    }
++  }
++
++  .delegation-section {
++    margin: 12px;
++  }
++
+   .delegation-header {
+     flex-direction: column;
++    gap: 8px;
++    padding: 12px 14px 10px;
+   }
+ 
++  // A full-width row with two right-aligned buttons reads as a hole on a 390px
++  // screen; keep the actions next to the copy they act on.
+   .delegation-actions {
+-    justify-content: flex-end;
+-    width: 100%;
++    justify-content: flex-start;
++    width: auto;
+   }
+ 
++  // Two summary cells instead of a stacked 126px block. Each cell carries its
++  // own top rule so a wrap to one column still shows a separator.
+   .delegation-summary {
+-    grid-template-columns: 1fr;
++    border-top: 0;
++    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+   }
+ 
+-  .summary-item + .summary-item {
++  .summary-item {
++    padding: 9px 14px 10px;
+     border-top: 1px solid $border-light;
+-    border-inline-start: 0;
++  }
++
++  .auxiliary-tasks-header {
++    padding: 12px 14px 8px;
++
++    p {
++      line-height: 1.4;
++    }
++  }
++
++  // The 720px table forced a horizontal swipe with the actions off screen and a
++  // wide empty cell next to short values like "Auto". Cards use the real width.
++  .auxiliary-table {
++    min-width: 0;
++  }
++
++  .auxiliary-table-scroll {
++    overflow-x: visible;
++  }
++
++  .auxiliary-row-head {
++    display: none;
++  }
++
++  .auxiliary-row {
++    grid-template-columns: minmax(0, 1fr) auto;
++    grid-template-areas:
++      'name actions'
++      'config timeout';
++    gap: 3px 10px;
++    padding: 8px 14px 9px;
++  }
++
++  .task-name {
++    grid-area: name;
++  }
++
++  .task-config {
++    grid-area: config;
++  }
++
++  .task-timeout {
++    grid-area: timeout;
++    text-align: right;
++  }
++
++  .task-actions {
++    grid-area: actions;
++  }
++
++  .fallback-section {
++    padding: 12px 14px;
+   }
+ 
+   .auxiliary-form,
+diff --git a/packages/client/src/views/hermes/ModelsView.vue b/packages/client/src/views/hermes/ModelsView.vue
+index 9d6d9ee10..554625e5e 100644
+--- a/packages/client/src/views/hermes/ModelsView.vue
++++ b/packages/client/src/views/hermes/ModelsView.vue
+@@ -253,6 +253,15 @@ async function handleRefreshModelCache() {
+   padding: 20px;
+ }
+ 
++// 20px of side padding costs 40px of usable width on a 390px screen; the panels
++// inside are already inset, so 12px still reads as a margin. Must stay after the
++// base rule: both selectors have the same specificity.
++@media (max-width: $breakpoint-mobile) {
++  .models-content {
++    padding: 12px;
++  }
++}
++
+ .header-actions {
+   display: flex;
+   align-items: center;
+-- 
+2.53.0
+
