@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { isStoredSuperAdmin } from '@/api/client'
 import { useSessionSearch } from '@/composables/useSessionSearch'
+import { getAgentManagerEntry, resolveAgentManagerEntryRoute } from '@/utils/agent-manager-entry'
 import DesktopUpdateDownloadTab from './DesktopUpdateDownloadTab.vue'
 import { useNavigationRail } from '@/composables/useNavigationRail'
 
@@ -39,7 +40,9 @@ function openHistory() {
 
 function openAgentManager() {
   if (props.active === 'agents') return
-  void router.push({ name: 'hermes.agentManager' })
+  void router.push(
+    resolveAgentManagerEntryRoute(getAgentManagerEntry()) ?? { name: 'hermes.agentManager' },
+  )
 }
 
 function openModels() {
