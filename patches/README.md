@@ -25,8 +25,9 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 13-mobile-nav | 移动端顶栏统一 38px（变量派生几何 + ☰ 与内容同轴）+ ☰ 由品牌图改为三条横线图标 + 去掉与 ☰ 重复的四宫格 ▦（Models/Workflow） | 001 |
 | 14-test-adapt | 上游测试套件适配（`tests/client/message-list-live-reasoning.test.ts` 断言 fork 行为：按用户轮折叠的 ToolRunCard、卸载重建的 live ticker） | 001 |
 | 15-mobile-models | 模型页移动端布局（辅助模型面板宽表格 → 两行卡片、summary 双列、动作按钮左对齐、页/面板内边距 20→12px，断点改用 `$breakpoint-mobile`） | 001 |
+| 16-agent-entry | 侧边栏「Agent 管理」入口可配置直达指定 Agent 设置页（本地 localStorage 偏好；默认保持 Agent 列表） | 001 |
 
-共 **72 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**）。
+共 **73 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**）。
 
 **0.7.23 升级（2026-09-19，上游 `551c1104e` = 13 提交 / 152 文件 / +4511 −560）**：
 83 个补丁 `git am --3way` **全部零冲突落位**（0.7.22 是 3 处），补丁文件**逐字节未变**（无需回写）；
@@ -73,6 +74,12 @@ pinned 过滤共存。⚠️ 上游把 npm 包改名 `ekko-studio`（保留 `her
 - 该改动 2026-09-14 完成并热替本机供用户实测，因未提交而在 0.7.22 / 0.7.23 两次升级里被反复 stash / 取回；
   本次正式入补丁串（当时的工作树 WIP 与 `stash@{0}` 逐字节相同，stash 已清理）。
 - 范式与 390×844 实测记录见 skill `hermes-webui-development → references/mobile-settings-panel-tables.md`。
+
+**16-agent-entry/001-侧边栏「Agent 管理」入口可配置（2026-09-21）**：
+- 设置 → 显示 tab 新增「侧边栏「Agent 管理」入口」下拉：默认（Agent 列表）/ Ekko / Hermes / Claude / Codex / Pi / Grok / OpenCode / DSH。
+- `utils/agent-manager-entry.ts`（新）：localStorage 键 `hermes_agent_manager_entry`（纯本地偏好，无服务端改动）；`resolveAgentManagerEntryRoute` 映射目标路由。
+- `PageSidebarNav.vue`：`openAgentManager` 读偏好 → 有目标直接跳（Ekko→`ekko.settings`、Hermes→`hermes.configSettings`、编程工具→`codingAgent.config{agentId,section:'settings'}`），未设置时维持 Agent 列表。
+- i18n ×11 新增 `settings.display.agentManagerEntry*` 三键；测试：util 单测 3 例 + display-settings 1 例 + locale parity 1 例。
 
 **已知偏差（2026-09-21 记录，决定不修）：clarify 折叠态与 approval 共存时的列表留白**：
 - 位置：`packages/client/src/components/hermes/chat/MessageList.vue` 的 `clarifyCompact` / `virtualListPadding`（05-chat/018 引入）。

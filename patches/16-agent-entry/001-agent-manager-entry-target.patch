@@ -1,0 +1,479 @@
+From f245bc00208de09cddf1149d88b2b869f054dd39 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Mon, 21 Sep 2026 23:26:11 +0800
+Subject: [PATCH] feat(settings): configurable Agent Management entry target
+
+Add a Display settings option that opens a chosen agent's settings directly from the sidebar Agent Management entry; the default keeps the agent list. The preference is stored locally (hermes_agent_manager_entry) with i18n for all locales plus unit and locale-parity tests.
+---
+ .../hermes/settings/DisplaySettings.vue       | 30 ++++++++++
+ .../src/components/layout/PageSidebarNav.vue  |  5 +-
+ packages/client/src/i18n/locales/ar.ts        |  3 +
+ packages/client/src/i18n/locales/de.ts        |  3 +
+ packages/client/src/i18n/locales/en.ts        |  3 +
+ packages/client/src/i18n/locales/es.ts        |  3 +
+ packages/client/src/i18n/locales/fr.ts        |  3 +
+ packages/client/src/i18n/locales/ja.ts        |  3 +
+ packages/client/src/i18n/locales/ko.ts        |  3 +
+ packages/client/src/i18n/locales/pt.ts        |  3 +
+ packages/client/src/i18n/locales/ru.ts        |  3 +
+ packages/client/src/i18n/locales/zh-TW.ts     |  3 +
+ packages/client/src/i18n/locales/zh.ts        |  3 +
+ .../client/src/utils/agent-manager-entry.ts   | 57 +++++++++++++++++++
+ .../agent-manager-entry-locales.test.ts       | 50 ++++++++++++++++
+ tests/client/agent-manager-entry.test.ts      | 51 +++++++++++++++++
+ tests/client/display-settings.test.ts         | 23 ++++++++
+ 17 files changed, 248 insertions(+), 1 deletion(-)
+ create mode 100644 packages/client/src/utils/agent-manager-entry.ts
+ create mode 100644 tests/client/agent-manager-entry-locales.test.ts
+ create mode 100644 tests/client/agent-manager-entry.test.ts
+
+diff --git a/packages/client/src/components/hermes/settings/DisplaySettings.vue b/packages/client/src/components/hermes/settings/DisplaySettings.vue
+index 2ac7980b0..a1e76ca65 100644
+--- a/packages/client/src/components/hermes/settings/DisplaySettings.vue
++++ b/packages/client/src/components/hermes/settings/DisplaySettings.vue
+@@ -8,6 +8,7 @@ import { requestCompletionNotificationPermission, showCompletionNotification, sh
+ import { clampChatInputHeight, MAX_CHAT_INPUT_HEIGHT, MIN_CHAT_INPUT_HEIGHT } from '@/utils/chat-input-height'
+ import { isDesktopShell } from '@/utils/desktop-bridge'
+ import { getLinkOpenTarget, setLinkOpenTarget, type LinkOpenTarget } from '@/utils/desktop-browser'
++import { AGENT_MANAGER_ENTRY_TARGETS, getAgentManagerEntry, setAgentManagerEntry } from '@/utils/agent-manager-entry'
+ import SettingRow from './SettingRow.vue'
+ 
+ const settingsStore = useSettingsStore()
+@@ -30,6 +31,21 @@ function handleLinkOpenTargetChange(value: LinkOpenTarget) {
+   }
+ }
+ 
++const agentManagerEntry = ref(getAgentManagerEntry())
++const agentManagerEntryOptions = computed(() => [
++  { label: t('settings.display.agentManagerEntryDefault'), value: '' },
++  ...AGENT_MANAGER_ENTRY_TARGETS.map(target => ({ label: target.name, value: target.id })),
++])
++
++function handleAgentManagerEntryChange(value: string) {
++  try {
++    agentManagerEntry.value = setAgentManagerEntry(value)
++    message.success(t('settings.saved'))
++  } catch {
++    message.error(t('settings.saveFailed'))
++  }
++}
++
+ async function save(values: Record<string, any>) {
+   try {
+     await settingsStore.saveSection('display', values)
+@@ -209,6 +225,16 @@ async function testCompletionNotification() {
+         </NButton>
+       </div>
+     </SettingRow>
++    <SettingRow :label="t('settings.display.agentManagerEntry')" :hint="t('settings.display.agentManagerEntryHint')">
++      <NSelect
++        :value="agentManagerEntry"
++        :options="agentManagerEntryOptions"
++        :aria-label="t('settings.display.agentManagerEntry')"
++        class="agent-manager-entry-select"
++        data-testid="agent-manager-entry-select"
++        @update:value="handleAgentManagerEntryChange"
++      />
++    </SettingRow>
+   </section>
+ </template>
+ 
+@@ -229,6 +255,10 @@ async function testCompletionNotification() {
+   width: 180px;
+ }
+ 
++.agent-manager-entry-select {
++  width: 220px;
++}
++
+ .chat-input-height-controls {
+   display: inline-flex;
+   align-items: center;
+diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
+index 77b9d4b3a..1a523d2db 100644
+--- a/packages/client/src/components/layout/PageSidebarNav.vue
++++ b/packages/client/src/components/layout/PageSidebarNav.vue
+@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
+ import { useRouter } from 'vue-router'
+ import { isStoredSuperAdmin } from '@/api/client'
+ import { useSessionSearch } from '@/composables/useSessionSearch'
++import { getAgentManagerEntry, resolveAgentManagerEntryRoute } from '@/utils/agent-manager-entry'
+ 
+ type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'group' | 'global' | 'workflow'
+ 
+@@ -41,7 +42,9 @@ function openConnections() {
+ 
+ function openAgentManager() {
+   if (props.active === 'agents') return
+-  void router.push({ name: 'hermes.agentManager' })
++  void router.push(
++    resolveAgentManagerEntryRoute(getAgentManagerEntry()) ?? { name: 'hermes.agentManager' },
++  )
+ }
+ 
+ function openModels() {
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index f23584f5d..0940ce009 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -2467,6 +2467,9 @@ export default {
+       linkOpenTargetHint: 'اختر مكان فتح الروابط من الرسائل ومعاينات Markdown.',
+       linkOpenTargetHermesStudio: 'Ekko Studio',
+       linkOpenTargetDefaultBrowser: 'المتصفح الافتراضي',
++      agentManagerEntry: 'مدخل «إدارة الوكلاء» في الشريط الجانبي',
++      agentManagerEntryHint: 'عند النقر على «إدارة الوكلاء» في الشريط الجانبي يتم فتح إعدادات الوكيل المحدد مباشرة؛ وبدون تحديد تُفتح قائمة الوكلاء.',
++      agentManagerEntryDefault: 'الافتراضي (قائمة الوكلاء)',
+     },
+     agent: {
+       maxTurns: 'الحد الأقصى للدورات',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 6da2d85b9..00d70e41a 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1966,6 +1966,9 @@ jobTriggered: 'Job ausgelost',
+       linkOpenTargetHint: 'Wählen Sie, wo Links aus Nachrichten und Markdown-Vorschauen geöffnet werden.',
+       linkOpenTargetHermesStudio: 'Ekko Studio',
+       linkOpenTargetDefaultBrowser: 'Standardbrowser',
++      agentManagerEntry: 'Seitenleisten-Eintrag „Agent-Verwaltung“',
++      agentManagerEntryHint: 'Öffnet beim Klick auf „Agent-Verwaltung“ in der Seitenleiste direkt die Einstellungen des gewählten Agents; ohne Auswahl öffnet sich die Agent-Liste.',
++      agentManagerEntryDefault: 'Standard (Agent-Liste)',
+     },
+     agent: {
+       maxTurns: 'Maximale Runden',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 4768c0744..05c4b5c86 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -2473,6 +2473,9 @@ export default {
+       linkOpenTargetHint: 'Choose where links from messages and Markdown previews open.',
+       linkOpenTargetHermesStudio: 'Ekko Studio',
+       linkOpenTargetDefaultBrowser: 'Default browser',
++      agentManagerEntry: 'Sidebar “Agent Management” entry',
++      agentManagerEntryHint: 'Open the selected agent settings directly when clicking “Agent Management” in the sidebar; without a selection the agent list opens.',
++      agentManagerEntryDefault: 'Default (agent list)',
+     },
+     agent: {
+       maxTurns: 'Max Turns',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 74fa3f2fc..aeae7111a 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1966,6 +1966,9 @@ jobTriggered: 'Job ejecutado',
+       linkOpenTargetHint: 'Elige dónde se abren los enlaces de mensajes y vistas previas de Markdown.',
+       linkOpenTargetHermesStudio: 'Ekko Studio',
+       linkOpenTargetDefaultBrowser: 'Navegador predeterminado',
++      agentManagerEntry: 'Entrada «Gestión de agentes» de la barra lateral',
++      agentManagerEntryHint: 'Al hacer clic en «Gestión de agentes» en la barra lateral, abre directamente los ajustes del agente seleccionado; sin selección, se abre la lista de agentes.',
++      agentManagerEntryDefault: 'Predeterminado (lista de agentes)',
+     },
+     agent: {
+       maxTurns: 'Turnos maximos',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index bd15dbb63..1ac4ececa 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1966,6 +1966,9 @@ jobTriggered: 'Job declenche',
+       linkOpenTargetHint: 'Choisissez où ouvrir les liens des messages et des aperçus Markdown.',
+       linkOpenTargetHermesStudio: 'Ekko Studio',
+       linkOpenTargetDefaultBrowser: 'Navigateur par défaut',
++      agentManagerEntry: 'Entrée « Gestion des agents » de la barre latérale',
++      agentManagerEntryHint: 'Cliquez sur « Gestion des agents » dans la barre latérale pour ouvrir directement les paramètres de l’agent sélectionné ; sans sélection, la liste des agents s’ouvre.',
++      agentManagerEntryDefault: 'Par défaut (liste des agents)',
+     },
+     agent: {
+       maxTurns: 'Tours maximum',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index f17ee4155..a75599fa6 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1966,6 +1966,9 @@ export default {
+       linkOpenTargetHint: 'メッセージと Markdown プレビュー内のリンクを開く場所を選択します。',
+       linkOpenTargetHermesStudio: 'Ekko Studio',
+       linkOpenTargetDefaultBrowser: '既定のブラウザ',
++      agentManagerEntry: 'サイドバー「エージェント管理」の動作',
++      agentManagerEntryHint: 'サイドバーの「エージェント管理」をクリックしたとき、選択したエージェントの設定を直接開きます。未選択の場合はエージェント一覧を開きます。',
++      agentManagerEntryDefault: 'デフォルト（エージェント一覧）',
+     },
+     agent: {
+       maxTurns: '最大ターン数',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index bd0585a6e..27658d15b 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1966,6 +1966,9 @@ export default {
+       linkOpenTargetHint: '메시지와 Markdown 미리보기의 링크를 열 위치를 선택합니다.',
+       linkOpenTargetHermesStudio: 'Ekko Studio',
+       linkOpenTargetDefaultBrowser: '기본 브라우저',
++      agentManagerEntry: '사이드바 “에이전트 관리” 동작',
++      agentManagerEntryHint: '사이드바에서 “에이전트 관리”를 클릭하면 선택한 에이전트의 설정을 바로 엽니다. 선택하지 않으면 에이전트 목록이 열립니다.',
++      agentManagerEntryDefault: '기본(에이전트 목록)',
+     },
+     agent: {
+       maxTurns: '최대 턴 수',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 357224902..853191514 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1966,6 +1966,9 @@ jobTriggered: 'Job acionado',
+       linkOpenTargetHint: 'Escolha onde abrir links de mensagens e prévias de Markdown.',
+       linkOpenTargetHermesStudio: 'Ekko Studio',
+       linkOpenTargetDefaultBrowser: 'Navegador padrão',
++      agentManagerEntry: 'Entrada “Gerenciamento de agentes” da barra lateral',
++      agentManagerEntryHint: 'Ao clicar em “Gerenciamento de agentes” na barra lateral, abre diretamente as configurações do agente selecionado; sem seleção, abre a lista de agentes.',
++      agentManagerEntryDefault: 'Padrão (lista de agentes)',
+     },
+     agent: {
+       maxTurns: 'Máximo de turnos',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 4161a76ee..961039b89 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -2229,6 +2229,9 @@ export default {
+       linkOpenTargetHint: 'Выберите, где открывать ссылки из сообщений и предпросмотров Markdown.',
+       linkOpenTargetHermesStudio: 'Ekko Studio',
+       linkOpenTargetDefaultBrowser: 'Браузер по умолчанию',
++      agentManagerEntry: 'Пункт «Управление агентами» в боковой панели',
++      agentManagerEntryHint: 'При нажатии на «Управление агентами» в боковой панели открываются настройки выбранного агента; без выбора открывается список агентов.',
++      agentManagerEntryDefault: 'По умолчанию (список агентов)',
+     },
+     agent: {
+       maxTurns: 'Максимум ходов',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index e650aeea4..602a0d19f 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -2417,6 +2417,9 @@ export default {
+       linkOpenTargetHint: '選擇訊息與 Markdown 預覽中的網頁連結要在哪裡開啟。',
+       linkOpenTargetHermesStudio: 'Ekko Studio',
+       linkOpenTargetDefaultBrowser: '預設瀏覽器',
++      agentManagerEntry: '側邊欄「Agent 管理」入口',
++      agentManagerEntryHint: '點擊側邊欄「Agent 管理」時直接開啟所選 Agent 的設定頁；未選擇時開啟 Agent 清單。',
++      agentManagerEntryDefault: '預設（Agent 清單）',
+     },
+     agent: {
+       maxTurns: '最大輪次',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 10f9fe2ea..783f8529a 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -2511,6 +2511,9 @@ export default {
+       linkOpenTargetHint: '选择消息和 Markdown 预览中的网页链接在哪里打开。',
+       linkOpenTargetHermesStudio: 'Ekko Studio',
+       linkOpenTargetDefaultBrowser: '默认浏览器',
++      agentManagerEntry: '侧边栏「Agent 管理」入口',
++      agentManagerEntryHint: '点击侧边栏「Agent 管理」时直接打开所选 Agent 的设置页；未选择时打开 Agent 列表。',
++      agentManagerEntryDefault: '默认（Agent 列表）',
+     },
+     agent: {
+       maxTurns: '最大轮次',
+diff --git a/packages/client/src/utils/agent-manager-entry.ts b/packages/client/src/utils/agent-manager-entry.ts
+new file mode 100644
+index 000000000..25fc0f411
+--- /dev/null
++++ b/packages/client/src/utils/agent-manager-entry.ts
+@@ -0,0 +1,57 @@
++import type { RouteLocationRaw } from 'vue-router'
++
++export const AGENT_MANAGER_ENTRY_STORAGE_KEY = 'hermes_agent_manager_entry'
++
++export type AgentManagerEntryId =
++  | 'ekko'
++  | 'hermes'
++  | 'claude-code'
++  | 'codex'
++  | 'pi'
++  | 'grok'
++  | 'opencode'
++  | 'dsh'
++
++export const AGENT_MANAGER_ENTRY_TARGETS: ReadonlyArray<{ id: AgentManagerEntryId; name: string }> = [
++  { id: 'ekko', name: 'Ekko' },
++  { id: 'hermes', name: 'Hermes' },
++  { id: 'claude-code', name: 'Claude' },
++  { id: 'codex', name: 'Codex' },
++  { id: 'pi', name: 'Pi' },
++  { id: 'grok', name: 'Grok' },
++  { id: 'opencode', name: 'OpenCode' },
++  { id: 'dsh', name: 'DeepSeek Harness' },
++]
++
++export function normalizeAgentManagerEntry(value: unknown): AgentManagerEntryId | '' {
++  const candidate = typeof value === 'string' ? value : ''
++  return AGENT_MANAGER_ENTRY_TARGETS.some(target => target.id === candidate)
++    ? (candidate as AgentManagerEntryId)
++    : ''
++}
++
++export function getAgentManagerEntry(): AgentManagerEntryId | '' {
++  if (typeof window === 'undefined') return ''
++  try {
++    return normalizeAgentManagerEntry(window.localStorage.getItem(AGENT_MANAGER_ENTRY_STORAGE_KEY))
++  } catch {
++    return ''
++  }
++}
++
++export function setAgentManagerEntry(value: unknown): AgentManagerEntryId | '' {
++  const normalized = normalizeAgentManagerEntry(value)
++  if (typeof window !== 'undefined') {
++    if (normalized) window.localStorage.setItem(AGENT_MANAGER_ENTRY_STORAGE_KEY, normalized)
++    else window.localStorage.removeItem(AGENT_MANAGER_ENTRY_STORAGE_KEY)
++  }
++  return normalized
++}
++
++export function resolveAgentManagerEntryRoute(value: unknown): RouteLocationRaw | null {
++  const id = normalizeAgentManagerEntry(value)
++  if (!id) return null
++  if (id === 'ekko') return { name: 'ekko.settings' }
++  if (id === 'hermes') return { name: 'hermes.configSettings' }
++  return { name: 'codingAgent.config', params: { agentId: id, section: 'settings' } }
++}
+diff --git a/tests/client/agent-manager-entry-locales.test.ts b/tests/client/agent-manager-entry-locales.test.ts
+new file mode 100644
+index 000000000..ff15a3ab5
+--- /dev/null
++++ b/tests/client/agent-manager-entry-locales.test.ts
+@@ -0,0 +1,50 @@
++import { describe, expect, it } from 'vitest'
++import ar from '../../packages/client/src/i18n/locales/ar'
++import de from '../../packages/client/src/i18n/locales/de'
++import en from '../../packages/client/src/i18n/locales/en'
++import es from '../../packages/client/src/i18n/locales/es'
++import fr from '../../packages/client/src/i18n/locales/fr'
++import ja from '../../packages/client/src/i18n/locales/ja'
++import ko from '../../packages/client/src/i18n/locales/ko'
++import pt from '../../packages/client/src/i18n/locales/pt'
++import ru from '../../packages/client/src/i18n/locales/ru'
++import zhTW from '../../packages/client/src/i18n/locales/zh-TW'
++import zh from '../../packages/client/src/i18n/locales/zh'
++
++const localeMessages: Record<string, Record<string, unknown>> = {
++  ar,
++  de,
++  en,
++  es,
++  fr,
++  ja,
++  ko,
++  pt,
++  ru,
++  'zh-TW': zhTW,
++  zh,
++}
++
++function getPath(messages: Record<string, unknown>, path: string): unknown {
++  return path.split('.').reduce<unknown>((value, key) => (
++    value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined
++  ), messages)
++}
++
++describe('agent manager entry translations', () => {
++  it('provides the setting label, hint, and default option in every locale', () => {
++    const keys = [
++      'settings.display.agentManagerEntry',
++      'settings.display.agentManagerEntryHint',
++      'settings.display.agentManagerEntryDefault',
++    ]
++
++    for (const [locale, messages] of Object.entries(localeMessages)) {
++      for (const key of keys) {
++        const value = getPath(messages, key)
++        expect(value, `${locale} missing ${key}`).toEqual(expect.any(String))
++        expect(String(value).trim(), `${locale} has an empty ${key}`).not.toBe('')
++      }
++    }
++  })
++})
+diff --git a/tests/client/agent-manager-entry.test.ts b/tests/client/agent-manager-entry.test.ts
+new file mode 100644
+index 000000000..2a86f5730
+--- /dev/null
++++ b/tests/client/agent-manager-entry.test.ts
+@@ -0,0 +1,51 @@
++// @vitest-environment jsdom
++import { beforeEach, describe, expect, it } from 'vitest'
++import {
++  AGENT_MANAGER_ENTRY_STORAGE_KEY,
++  getAgentManagerEntry,
++  normalizeAgentManagerEntry,
++  resolveAgentManagerEntryRoute,
++  setAgentManagerEntry,
++} from '@/utils/agent-manager-entry'
++
++describe('agent manager entry preference', () => {
++  beforeEach(() => {
++    window.localStorage.clear()
++  })
++
++  it('stores and reads a known agent id', () => {
++    expect(getAgentManagerEntry()).toBe('')
++
++    expect(setAgentManagerEntry('hermes')).toBe('hermes')
++    expect(window.localStorage.getItem(AGENT_MANAGER_ENTRY_STORAGE_KEY)).toBe('hermes')
++    expect(getAgentManagerEntry()).toBe('hermes')
++  })
++
++  it('falls back to the default for unknown or cleared values', () => {
++    window.localStorage.setItem(AGENT_MANAGER_ENTRY_STORAGE_KEY, 'unknown-agent')
++    expect(getAgentManagerEntry()).toBe('')
++    expect(normalizeAgentManagerEntry(null)).toBe('')
++
++    expect(setAgentManagerEntry('unknown-agent')).toBe('')
++    expect(window.localStorage.getItem(AGENT_MANAGER_ENTRY_STORAGE_KEY)).toBeNull()
++
++    setAgentManagerEntry('dsh')
++    expect(setAgentManagerEntry('')).toBe('')
++    expect(window.localStorage.getItem(AGENT_MANAGER_ENTRY_STORAGE_KEY)).toBeNull()
++  })
++
++  it('resolves routes for every supported target', () => {
++    expect(resolveAgentManagerEntryRoute('')).toBeNull()
++    expect(resolveAgentManagerEntryRoute('unknown-agent')).toBeNull()
++    expect(resolveAgentManagerEntryRoute('ekko')).toEqual({ name: 'ekko.settings' })
++    expect(resolveAgentManagerEntryRoute('hermes')).toEqual({ name: 'hermes.configSettings' })
++    expect(resolveAgentManagerEntryRoute('claude-code')).toEqual({
++      name: 'codingAgent.config',
++      params: { agentId: 'claude-code', section: 'settings' },
++    })
++    expect(resolveAgentManagerEntryRoute('dsh')).toEqual({
++      name: 'codingAgent.config',
++      params: { agentId: 'dsh', section: 'settings' },
++    })
++  })
++})
+diff --git a/tests/client/display-settings.test.ts b/tests/client/display-settings.test.ts
+index b206928f0..09cfd8292 100644
+--- a/tests/client/display-settings.test.ts
++++ b/tests/client/display-settings.test.ts
+@@ -302,4 +302,27 @@ describe('DisplaySettings', () => {
+ 
+     expect(mockSettingsStore.saveSection).toHaveBeenCalledWith('display', { chat_input_height: null })
+   })
++
++  it('persists the sidebar Agent Management entry target locally', async () => {
++    const wrapper = mount(DisplaySettings, {
++      global: {
++        stubs: {
++          SettingRow: {
++            props: ['label', 'hint'],
++            template: '<div class="setting-row"><div class="setting-row-label">{{ label }}</div><div class="setting-row-hint">{{ hint }}</div><slot /></div>',
++          },
++          NSwitch: true,
++        },
++      },
++    })
++
++    expect(wrapper.text()).toContain('settings.display.agentManagerEntry')
++    const select = wrapper.get('[data-testid="agent-manager-entry-select"]')
++    expect((select.element as HTMLSelectElement).value).toBe('')
++
++    await select.setValue('hermes')
++
++    expect(window.localStorage.getItem('hermes_agent_manager_entry')).toBe('hermes')
++    expect(messageMock.success).toHaveBeenCalledWith('settings.saved')
++  })
+ })
+-- 
+2.53.0
+
