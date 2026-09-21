@@ -303,4 +303,27 @@ describe('DisplaySettings', () => {
 
     expect(mockSettingsStore.saveSection).toHaveBeenCalledWith('display', { chat_input_height: null })
   })
+
+  it('persists the sidebar Agent Management entry target locally', async () => {
+    const wrapper = mount(DisplaySettings, {
+      global: {
+        stubs: {
+          SettingRow: {
+            props: ['label', 'hint'],
+            template: '<div class="setting-row"><div class="setting-row-label">{{ label }}</div><div class="setting-row-hint">{{ hint }}</div><slot /></div>',
+          },
+          NSwitch: true,
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain('settings.display.agentManagerEntry')
+    const select = wrapper.get('[data-testid="agent-manager-entry-select"]')
+    expect((select.element as HTMLSelectElement).value).toBe('')
+
+    await select.setValue('hermes')
+
+    expect(window.localStorage.getItem('hermes_agent_manager_entry')).toBe('hermes')
+    expect(messageMock.success).toHaveBeenCalledWith('settings.saved')
+  })
 })

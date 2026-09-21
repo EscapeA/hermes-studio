@@ -8,6 +8,7 @@ import { requestCompletionNotificationPermission, showCompletionNotification, sh
 import { clampChatInputHeight, MAX_CHAT_INPUT_HEIGHT, MIN_CHAT_INPUT_HEIGHT } from '@/utils/chat-input-height'
 import { isDesktopShell } from '@/utils/desktop-bridge'
 import { getLinkOpenTarget, setLinkOpenTarget, type LinkOpenTarget } from '@/utils/desktop-browser'
+import { AGENT_MANAGER_ENTRY_TARGETS, getAgentManagerEntry, setAgentManagerEntry } from '@/utils/agent-manager-entry'
 import SettingRow from './SettingRow.vue'
 
 const settingsStore = useSettingsStore()
@@ -24,6 +25,21 @@ const linkOpenTargetOptions = computed(() => [
 function handleLinkOpenTargetChange(value: LinkOpenTarget) {
   try {
     linkOpenTarget.value = setLinkOpenTarget(value)
+    message.success(t('settings.saved'))
+  } catch {
+    message.error(t('settings.saveFailed'))
+  }
+}
+
+const agentManagerEntry = ref(getAgentManagerEntry())
+const agentManagerEntryOptions = computed(() => [
+  { label: t('settings.display.agentManagerEntryDefault'), value: '' },
+  ...AGENT_MANAGER_ENTRY_TARGETS.map(target => ({ label: target.name, value: target.id })),
+])
+
+function handleAgentManagerEntryChange(value: string) {
+  try {
+    agentManagerEntry.value = setAgentManagerEntry(value)
     message.success(t('settings.saved'))
   } catch {
     message.error(t('settings.saveFailed'))
@@ -215,6 +231,16 @@ async function testCompletionNotification() {
         </NButton>
       </div>
     </SettingRow>
+    <SettingRow :label="t('settings.display.agentManagerEntry')" :hint="t('settings.display.agentManagerEntryHint')">
+      <NSelect
+        :value="agentManagerEntry"
+        :options="agentManagerEntryOptions"
+        :aria-label="t('settings.display.agentManagerEntry')"
+        class="agent-manager-entry-select"
+        data-testid="agent-manager-entry-select"
+        @update:value="handleAgentManagerEntryChange"
+      />
+    </SettingRow>
   </section>
 </template>
 
@@ -233,6 +259,10 @@ async function testCompletionNotification() {
 
 .link-open-target-select {
   width: 180px;
+}
+
+.agent-manager-entry-select {
+  width: 220px;
 }
 
 .chat-input-height-controls {
