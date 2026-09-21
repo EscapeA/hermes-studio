@@ -26,7 +26,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 14-test-adapt | 上游测试套件适配（`tests/client/message-list-live-reasoning.test.ts` 断言 fork 行为：按用户轮折叠的 ToolRunCard、卸载重建的 live ticker） | 001 |
 | 15-mobile-models | 模型页移动端布局（辅助模型面板宽表格 → 两行卡片、summary 双列、动作按钮左对齐、页/面板内边距 20→12px，断点改用 `$breakpoint-mobile`） | 001 |
 
-共 **72 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001**）。
+共 **72 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**）。
 
 **0.7.23 升级（2026-09-19，上游 `551c1104e` = 13 提交 / 152 文件 / +4511 −560）**：
 83 个补丁 `git am --3way` **全部零冲突落位**（0.7.22 是 3 处），补丁文件**逐字节未变**（无需回写）；
@@ -34,6 +34,14 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 `ChatPanel.vue`、`HistoryView.vue`、`sockets/chat-run.ts` 等）全部自动合并，`archived=1` 分支与上游新增
 pinned 过滤共存。⚠️ 上游把 npm 包改名 `ekko-studio`（保留 `hermes-web-ui` 双发包）并把 MCP 服务
 `ekko-studio-plan` 改名为 `ekko-studio-interaction`（autoinject 负责迁移 legacy 名）。
+
+**03-connection 组移除（2026-09-21，用户决定）**：
+- 背景：本机迁入家庭网络后 tailnet 直连（同源访问本机 tailscale serve / tailscale IP），不再使用「静态前端（CF Pages）+ 自定义后端 URL」的前后端分离部署 ⇒ 移除全部「连接」自定义。
+- 移除：03-connection 全组 11 补丁（ConnectionSettings.vue、登录页服务器编辑器、auth.ts base URL、upload 405 修复、i18n ×10 语言、AppSidebar 登出选择性清理）+ 连带失效的 09-cleanup/001（其清理对象 `51ccc514` 残留标记由本组 008 引入，组移除后不再存在）。
+- 重放：`git am --3way` **72/72 零冲突落位**、无补丁需回写；净差异 30 文件 +16 −2848。
+- 保留上游机制：`hermes_server_url` / `getBaseUrlValue` 为上游自带（20 文件在用），不受影响；已存在的 localStorage 自定义 URL 仍被上游逻辑读取（本机同源使用下为空）。
+- 行为变化（恢复上游）：登出 `localStorage.clear()`（不再保留主题/locale/连接配置）；上传恢复相对路径 `/api/studio/uploads`；登录页恢复上游样式（无服务器编辑器）。
+- 验证：vue-tsc 0 错 + vite build 成功；相关单测对照旧 tip 无回归（旧 30 failed/318 passed → 新 29 failed/319 passed；唯一差异 = models-voice-tabs 旧 tip 因 ConnectionSettings 渲染撞不完整 naive-ui mock 失败 1 例、移除后转绿；其余 29 例为 chat-store 套件既有失败）。
 
 **0.7.19 之后新增（2026-09-12）**：04-usage/010-每轮解码速度（run 态实时 + 单轮结束常驻在消息上）；05-chat/020-去掉 run 态「正在思考」左侧的 thinking.gif 图标（模板/导入/样式三层清理 + 单测与 e2e 断言同步；未导入的 gif 资产保留在源码树，构建产物不再打包）。
 链路：hermes-agent `post_api_request` hook 的 `first_chunk_at` → `bridge_pool.py` 透传 → `chat-run/usage.ts` 折叠（`output_tokens / (ended_at - first_chunk_at)`，仅按**调用**累加，无首 chunk 的调用整体退出）→ 每次调用完成时随 `usage.updated` 的 `speed` 字段下发一次 → 客户端两处显示：① **run 态**：`LiveReasoningStatus`（"正在思考"计时右侧）实时显示 `138 tok/s`；② **单轮结束时**：`clearRunStartedAt` → `settleRunSpeed` 把最后一个读数挂到**本轮最新 assistant 消息**上，`MessageItem` 在消息下方常驻 `本轮平均速度：145 tok/s`（`.assistant-run-speed`），随后清理 run 态读数避免重复显示。
