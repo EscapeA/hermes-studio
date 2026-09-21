@@ -1978,6 +1978,9 @@ export default {
       linkOpenTargetHint: 'メッセージと Markdown プレビュー内のリンクを開く場所を選択します。',
       linkOpenTargetHermesStudio: 'Ekko Studio',
       linkOpenTargetDefaultBrowser: '既定のブラウザ',
+      agentManagerEntry: 'サイドバー「エージェント管理」の動作',
+      agentManagerEntryHint: 'サイドバーの「エージェント管理」をクリックしたとき、選択したエージェントの設定を直接開きます。未選択の場合はエージェント一覧を開きます。',
+      agentManagerEntryDefault: 'デフォルト（エージェント一覧）',
     },
     agent: {
       maxTurns: '最大ターン数',

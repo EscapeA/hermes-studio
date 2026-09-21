@@ -2241,6 +2241,9 @@ export default {
       linkOpenTargetHint: 'Выберите, где открывать ссылки из сообщений и предпросмотров Markdown.',
       linkOpenTargetHermesStudio: 'Ekko Studio',
       linkOpenTargetDefaultBrowser: 'Браузер по умолчанию',
+      agentManagerEntry: 'Пункт «Управление агентами» в боковой панели',
+      agentManagerEntryHint: 'При нажатии на «Управление агентами» в боковой панели открываются настройки выбранного агента; без выбора открывается список агентов.',
+      agentManagerEntryDefault: 'По умолчанию (список агентов)',
     },
     agent: {
       maxTurns: 'Максимум ходов',

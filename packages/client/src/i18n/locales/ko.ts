@@ -1978,6 +1978,9 @@ export default {
       linkOpenTargetHint: '메시지와 Markdown 미리보기의 링크를 열 위치를 선택합니다.',
       linkOpenTargetHermesStudio: 'Ekko Studio',
       linkOpenTargetDefaultBrowser: '기본 브라우저',
+      agentManagerEntry: '사이드바 “에이전트 관리” 동작',
+      agentManagerEntryHint: '사이드바에서 “에이전트 관리”를 클릭하면 선택한 에이전트의 설정을 바로 엽니다. 선택하지 않으면 에이전트 목록이 열립니다.',
+      agentManagerEntryDefault: '기본(에이전트 목록)',
     },
     agent: {
       maxTurns: '최대 턴 수',

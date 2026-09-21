@@ -2528,6 +2528,9 @@ export default {
       linkOpenTargetHint: '选择消息和 Markdown 预览中的网页链接在哪里打开。',
       linkOpenTargetHermesStudio: 'Ekko Studio',
       linkOpenTargetDefaultBrowser: '默认浏览器',
+      agentManagerEntry: '侧边栏「Agent 管理」入口',
+      agentManagerEntryHint: '点击侧边栏「Agent 管理」时直接打开所选 Agent 的设置页；未选择时打开 Agent 列表。',
+      agentManagerEntryDefault: '默认（Agent 列表）',
     },
     agent: {
       maxTurns: '最大轮次',

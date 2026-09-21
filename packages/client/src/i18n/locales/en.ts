@@ -2490,6 +2490,9 @@ export default {
       linkOpenTargetHint: 'Choose where links from messages and Markdown previews open.',
       linkOpenTargetHermesStudio: 'Ekko Studio',
       linkOpenTargetDefaultBrowser: 'Default browser',
+      agentManagerEntry: 'Sidebar “Agent Management” entry',
+      agentManagerEntryHint: 'Open the selected agent settings directly when clicking “Agent Management” in the sidebar; without a selection the agent list opens.',
+      agentManagerEntryDefault: 'Default (agent list)',
     },
     agent: {
       maxTurns: 'Max Turns',
