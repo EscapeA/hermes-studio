@@ -1,0 +1,71 @@
+From b9037c929f82e4ad539c7488c66e7e737c48d759 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 08:54:55 +0800
+Subject: [PATCH] feat(chat): hide uncategorized group when no categories are
+ defined
+
+---
+ .../hermes/chat/session-category-groups.ts    | 22 +++++++++++--------
+ tests/client/session-category-groups.test.ts  | 13 +++++++++++
+ 2 files changed, 26 insertions(+), 9 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/session-category-groups.ts b/packages/client/src/components/hermes/chat/session-category-groups.ts
+index 08bd05a8..be6c043b 100644
+--- a/packages/client/src/components/hermes/chat/session-category-groups.ts
++++ b/packages/client/src/components/hermes/chat/session-category-groups.ts
+@@ -36,15 +36,19 @@ export function buildVisibleSessionCategoryGroups<T extends SessionCategoryAssig
+       sessions: sessions.filter((session) => session.categoryId === category.id),
+     }))
+     .filter((group) => group.sessions.length > 0);
+-  const uncategorized = sessions.filter(
+-    (session) => session.categoryId == null || !knownCategoryIds.has(session.categoryId),
+-  );
+-  if (uncategorized.length > 0) {
+-    groups.push({
+-      key: "category-none",
+-      label: uncategorizedLabel,
+-      sessions: uncategorized,
+-    });
++  // 用户未创建任何分类时，不渲染「未分类」分组：
++  // 侧边栏已由「最近 + 置顶」覆盖，避免与「最近」重复展示同一批会话。
++  if (categories.length > 0) {
++    const uncategorized = sessions.filter(
++      (session) => session.categoryId == null || !knownCategoryIds.has(session.categoryId),
++    );
++    if (uncategorized.length > 0) {
++      groups.push({
++        key: "category-none",
++        label: uncategorizedLabel,
++        sessions: uncategorized,
++      });
++    }
+   }
+   return groups;
+ }
+diff --git a/tests/client/session-category-groups.test.ts b/tests/client/session-category-groups.test.ts
+index 3f0aac92..ccdd7323 100644
+--- a/tests/client/session-category-groups.test.ts
++++ b/tests/client/session-category-groups.test.ts
+@@ -34,6 +34,19 @@ describe('session category groups', () => {
+     )).toEqual([])
+   })
+ 
++  it('hides the uncategorized group when there are no user-defined categories', () => {
++    const groups = buildVisibleSessionCategoryGroups(
++      [],
++      [
++        { id: 'session-1', categoryId: null },
++        { id: 'session-2', categoryId: 999 },
++      ],
++      'Uncategorized',
++    )
++
++    expect(groups).toEqual([])
++  })
++
+   it('shows sessions with deleted or unknown categories as uncategorized', () => {
+     const groups = buildVisibleSessionCategoryGroups(
+       [{ id: 1, name: 'Work' }],
+-- 
+2.53.0
+
