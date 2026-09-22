@@ -18,7 +18,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 06-mobile-input | 移动端输入（Enter 换行、模型下拉不弹键盘） | 001-002 |
 | 07-workflow | Workflow 移动端布局 + i18n | 001-002 |
 | 08-server | server 静态缓存头 + GET /sessions archived=1 恢复 | 001-002 |
-| 09-cleanup | 移除 apikey.fun 推广（侧边栏 apiRelay 按钮、FUN_LINK_MAP 提示、apiRelay locale 键） | 002 |
+| 09-cleanup | 清理（移除 apikey.fun 推广：侧边栏 apiRelay 按钮、FUN_LINK_MAP 提示、apiRelay locale 键；移除页面侧边栏「设备互联」入口） | 002-003 |
 | 10-perf-p1 | P1 性能（highlight core、comic 字体 woff2、locale 构建期合并、logo 单请求） | 001-004 |
 | 11-socket-stall | socket 卡死防护（服务端 backlog 检测断连 + 前端 REST 兜底刷新） | 001-002 |
 | 12-tool-strip | 工具面板防闪烁（500ms 延迟显示）+ 折叠单行（正在调用 N 个工具）+ 运行中工具行展开详情 + toggle 与列表上下堆叠 + 展开详情解除高度限制 | 001-004 |
@@ -27,7 +27,13 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 15-mobile-models | 模型页移动端布局（辅助模型面板宽表格 → 两行卡片、summary 双列、动作按钮左对齐、页/面板内边距 20→12px，断点改用 `$breakpoint-mobile`） | 001 |
 | 16-agent-entry | 侧边栏「Agent 管理」入口可配置直达指定 Agent 设置页（本地 localStorage 偏好；默认保持 Agent 列表） | 001 |
 
-共 **73 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**）。
+共 **74 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**）。
+
+**2026-09-23 新增 `09-cleanup/003-remove-connections-sidebar-entry`（用户要求，仅前端）**：
+删除页面侧边栏（chat / 历史 / 群聊 / workflow 共用的 `PageSidebarNav.vue`）的「设备互联」tab 及随之失去引用的 `openConnections()`；
+**路由 `hermes.connections`、`ChatView` 的 `connections` section、`ConnectionsPanel` 全部保留**（页面仍可经 URL 直达，符合「只裁剪入口、保留页面代码」惯例）。
+验证：`vite build` 通过；新产物 `PageSidebarNav-*.js` 中 `sidebar.connections` 与 tab 图标 path 命中 **0**（旧部署产物各 1）；本机 `dist/client` 已热替。
+上游测试 `tests/client/agent-manager-routing.test.ts` 用 `indexOf` 比较先后顺序，删除后 `-1` 不破坏 `>` 断言 ⇒ 无需改测试。
 
 **0.7.24 升级（2026-09-22，上游 `4805c44b1` = 29 提交 / 194 文件 / +8522 −949）**：
 73 个补丁 `git am --3way` 全部落位（无空提交），**2 处位置冲突已解并回写**（0.7.23 为零冲突）：
