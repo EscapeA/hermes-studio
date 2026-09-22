@@ -1,4 +1,4 @@
-From 207ba0b1c4a791e8a141d081f7c229ad1b445c67 Mon Sep 17 00:00:00 2001
+From af5a74e9bc494c82f93a140fb5bc1670ef55af92 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 7 Jul 2026 10:47:15 +0800
 Subject: [PATCH] test: add getBaseUrlValue mock to all @/api/client test mocks
@@ -22,9 +22,9 @@ connection-settings feature introduced getBaseUrlValue export;
  tests/client/group-message-list-scroll.test.ts          | 1 +
  tests/client/kanban-task-drawer.test.ts                 | 1 +
  tests/client/login-view.test.ts                         | 1 +
- tests/client/models-store.test.ts                       | 3 ++-
+ tests/client/models-store.test.ts                       | 2 +-
  tests/client/router-login-redirect.test.ts              | 1 +
- 18 files changed, 20 insertions(+), 2 deletions(-)
+ 18 files changed, 19 insertions(+), 2 deletions(-)
 
 diff --git a/tests/client/app-store.test.ts b/tests/client/app-store.test.ts
 index c1807eec2..861010b6c 100644
@@ -161,7 +161,7 @@ index 334d0d32e..70f32b9de 100644
  }))
  
 diff --git a/tests/client/group-chat-store-baseline.test.ts b/tests/client/group-chat-store-baseline.test.ts
-index fb9bcd1fa..34993cae8 100644
+index 4e1ce3a76..96f0959bd 100644
 --- a/tests/client/group-chat-store-baseline.test.ts
 +++ b/tests/client/group-chat-store-baseline.test.ts
 @@ -63,6 +63,7 @@ const groupChatApiMock = vi.hoisted(() => {
@@ -173,7 +173,7 @@ index fb9bcd1fa..34993cae8 100644
    getBaseUrlValue: vi.fn(() => ''),
    getActiveProfileName: vi.fn(() => 'research'),
 diff --git a/tests/client/group-chat-store-streaming.test.ts b/tests/client/group-chat-store-streaming.test.ts
-index 403d57f25..98b81adb4 100644
+index f807f4ba0..6fb8c7503 100644
 --- a/tests/client/group-chat-store-streaming.test.ts
 +++ b/tests/client/group-chat-store-streaming.test.ts
 @@ -42,6 +42,7 @@ const groupChatApiMock = vi.hoisted(() => {
@@ -221,16 +221,15 @@ index 823f6fef6..96d299207 100644
    clearApiKey: mockClearApiKey,
    hasApiKey: mockHasApiKey,
 diff --git a/tests/client/models-store.test.ts b/tests/client/models-store.test.ts
-index f1ef3300d..c5fe10bab 100644
+index 9fc0281bc..bb424b1ee 100644
 --- a/tests/client/models-store.test.ts
 +++ b/tests/client/models-store.test.ts
-@@ -14,7 +14,8 @@ const mockSystemApi = vi.hoisted(() => ({
+@@ -14,7 +14,7 @@ const mockSystemApi = vi.hoisted(() => ({
  }))
  
  vi.mock('@/api/hermes/system', () => mockSystemApi)
--vi.mock('@/api/client', () => ({ hasApiKey: () => true }))
-+vi.mock('@/api/client', () => ({
-+  getBaseUrlValue: vi.fn(() => ''), hasApiKey: () => true }))
+-vi.mock('@/api/client', () => ({ hasApiKey: () => true, getModelsPageProfile: () => null }))
++vi.mock('@/api/client', () => ({ getBaseUrlValue: vi.fn(() => ''), hasApiKey: () => true, getModelsPageProfile: () => null }))
  
  import { useAppStore } from '@/stores/hermes/app'
  import { useModelsStore } from '@/stores/hermes/models'

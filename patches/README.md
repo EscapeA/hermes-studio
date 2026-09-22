@@ -27,7 +27,18 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 15-mobile-models | 模型页移动端布局（辅助模型面板宽表格 → 两行卡片、summary 双列、动作按钮左对齐、页/面板内边距 20→12px，断点改用 `$breakpoint-mobile`） | 001 |
 | 16-agent-entry | 侧边栏「Agent 管理」入口可配置直达指定 Agent 设置页（本地 localStorage 偏好；默认保持 Agent 列表） | 001 |
 
-共 **73 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**）。
+共 **73 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**）。
+
+**0.7.24 升级（2026-09-22，上游 `4805c44b1` = 29 提交 / 194 文件 / +8522 −949）**：
+73 个补丁 `git am --3way` 全部落位（无空提交），**2 处位置冲突已解并回写**（0.7.23 为零冲突）：
+- `01-ci/004-test-client-mocks`：上游给 `tests/client/models-store.test.ts` 的 `@/api/client` mock 加了 `getModelsPageProfile`，与我方同一行插入 `getBaseUrlValue` 重叠 → **取并集**（单行含三个成员）。
+- `15-mobile-models/001-models-page-mobile-layout`：上游在 `.models-content` 与 `.header-actions` 之间插入新的 `.models-profile-select`（模型页 profile 选择器），与我方插入的移动端 `.models-content{padding:12px}` 媒体查询同位 → **两侧都保留**（媒体查询在前，维持注释里「必须紧跟基础规则」的约束）。
+- 其余补丁（含 05-chat/016-022、12-tool-strip、13-mobile-nav、16-agent-entry）全部自动合并，无上下文漂移回写。
+依赖与 `bin/` 无变化（`package.json` 仅 version + repository URL）⇒ 热替脚本覆盖范围不变，但仍建议 `npm i -g hermes-web-ui@0.7.24` 对齐安装包元数据。
+API 面：新增 13 条路径（`session-shares` 会话分享、`push/live-activities` 注册、`share-voice`、`share-context-length`、`share-models/workspaces`），**零删除**；hstudio-mobile 无需适配。
+回归判定（双树 JSON 对比，95 个「补丁涉及 + 上游新增」测试文件）：新树 1596 用例 / 13 失败 vs 0.7.23 基线树 1392 用例 / 12 失败，**`新−旧` = 0 条真回归**；
+唯一新增失败 `sessions-controller > returns shared session agent and workspace metadata without account secrets`（`no such table: task_plans`，批量执行时的测试库干扰，单跑该文件 81/81 全绿）在**纯净上游 0.7.24 树同样复现** ⇒ 上游/环境问题，非 fork 引入。
+预演树（worktree `--detach` 到上游 tip）与落地 custom 逐字节一致（`git diff custom <预演 tip>` 排除 `patches/`、`docs/openapi.json` 为空）。
 
 **0.7.23 升级（2026-09-19，上游 `551c1104e` = 13 提交 / 152 文件 / +4511 −560）**：
 83 个补丁 `git am --3way` **全部零冲突落位**（0.7.22 是 3 处），补丁文件**逐字节未变**（无需回写）；

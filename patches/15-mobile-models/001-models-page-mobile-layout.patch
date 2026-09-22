@@ -1,4 +1,4 @@
-From 1d0df34b310e3ee5f03d6849977d840c567531aa Mon Sep 17 00:00:00 2001
+From 4d5735ecb1b0f14c4519272a3f4219fcb5e76bcd Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 20 Sep 2026 07:39:48 +0800
 Subject: [PATCH] feat(mobile): card layout for auxiliary models panel on
@@ -127,10 +127,10 @@ index 9f0360afa..6e59aa190 100644
  
    .auxiliary-form,
 diff --git a/packages/client/src/views/hermes/ModelsView.vue b/packages/client/src/views/hermes/ModelsView.vue
-index 9d6d9ee10..554625e5e 100644
+index 79840a7ed..d4a42d0a2 100644
 --- a/packages/client/src/views/hermes/ModelsView.vue
 +++ b/packages/client/src/views/hermes/ModelsView.vue
-@@ -253,6 +253,15 @@ async function handleRefreshModelCache() {
+@@ -302,6 +302,15 @@ async function handleRefreshModelCache() {
    padding: 20px;
  }
  
@@ -143,9 +143,9 @@ index 9d6d9ee10..554625e5e 100644
 +  }
 +}
 +
- .header-actions {
-   display: flex;
-   align-items: center;
+ .models-profile-select {
+   width: 160px;
+ }
 -- 
 2.53.0
 
