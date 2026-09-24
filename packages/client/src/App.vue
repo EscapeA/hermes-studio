@@ -166,7 +166,6 @@ const usesPageSidebar = computed(() =>
     "hermes.historySession",
     "hermes.globalAgent",
     "hermes.globalAgentSession",
-    "hermes.workflow",
   ].includes(route.name as string),
 );
 const usesHermesConfigSidebar = computed(
@@ -620,16 +619,11 @@ useKeyboard();
     :deep(.header-title),
     :deep(h1),
     :deep(.header-session-title),
-    :deep(.header-workflow-title),
     :deep(.room-title-text) {
       font-size: calc(var(--font-size-base, 14px) * 13 / 14);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-
-    :deep(.header-workflow-title) {
-      margin-inline-start: 0;
     }
 
     :deep(.header-left) {
@@ -690,8 +684,7 @@ useKeyboard();
 
   .app-main--card,
   :deep(.chat-panel > .chat-main),
-  :deep(.history-panel > .page-loading-content > .chat-main),
-  :deep(.workflow-view > .page-loading-content > .workflow-main) {
+  :deep(.history-panel > .page-loading-content > .chat-main) {
     margin: 0;
     border: none;
     border-radius: 0;
@@ -733,7 +726,6 @@ useKeyboard();
 
   :deep(.chat-panel),
   :deep(.history-panel),
-  :deep(.workflow-view),
   :deep(.petdex-view) {
     background-color: transparent;
   }
@@ -751,15 +743,13 @@ useKeyboard();
   :deep(.ekko-config-sidebar),
   :deep(.coding-agent-config-sidebar),
   :deep(.chat-panel > .session-list),
-  :deep(.history-panel > .page-loading-content > .session-list),
-  :deep(.workflow-view > .page-loading-content > .workflow-sidebar) {
+  :deep(.history-panel > .page-loading-content > .session-list) {
     background-color: var(--theme-sidebar-bg, var(--glass-sidebar-bg));
     -webkit-backdrop-filter: var(--theme-sidebar-filter, blur(12px) saturate(110%));
     backdrop-filter: var(--theme-sidebar-filter, blur(12px) saturate(110%));
   }
 
   :deep(.history-panel > .page-loading-content > .chat-main),
-  :deep(.workflow-view > .page-loading-content > .workflow-main),
   :deep(.connections-panel),
   :deep(.agent-manager-panel),
   :deep(.models-view) {
@@ -842,15 +832,13 @@ useKeyboard();
   &:not(.app-shell--navigation-rail) {
     .app-main--card,
     :deep(.chat-panel > .chat-main),
-    :deep(.history-panel > .page-loading-content > .chat-main),
-    :deep(.workflow-view > .page-loading-content > .workflow-main) {
+    :deep(.history-panel > .page-loading-content > .chat-main) {
       margin-top: 50px;
     }
   }
 
   :deep(.chat-panel > .session-list > .page-sidebar-top),
-  :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top),
-  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top) {
+  :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top) {
     -webkit-app-region: drag;
 
     button,
@@ -896,8 +884,7 @@ useKeyboard();
   }
 
   :deep(.chat-panel > .session-list > .page-sidebar-top),
-  :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top),
-  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top) {
+  :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top) {
     padding-top: calc(44px * var(--spacing-scale, 1));
   }
 }
