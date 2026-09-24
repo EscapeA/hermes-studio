@@ -139,6 +139,7 @@ onUnmounted(() => {
         <span class="session-item-time">{{ formatTimestampMs(session.createdAt) }}</span>
       </span>
 
+      <span class="session-item-agent-row">
         <span v-if="props.showProfile" class="session-item-profile">
           <span class="session-item-profile-name">{{ profileName }}</span>
         </span>
