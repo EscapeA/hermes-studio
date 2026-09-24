@@ -22,12 +22,12 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 10-perf-p1 | P1 性能（highlight core、comic 字体 woff2、locale 构建期合并、logo 单请求） | 001-004 |
 | 11-socket-stall | socket 卡死防护（服务端 backlog 检测断连 + 前端 REST 兜底刷新） | 001-002 |
 | 12-tool-strip | 工具面板防闪烁（500ms 延迟显示）+ 折叠单行（正在调用 N 个工具）+ 运行中工具行展开详情 + toggle 与列表上下堆叠 + 展开详情解除高度限制 | 001-004 |
-| 13-mobile-nav | 移动端顶栏统一 38px（变量派生几何 + ☰ 与内容同轴）+ ☰ 由品牌图改为三条横线图标 + 去掉与 ☰ 重复的四宫格 ▦（Models/Workflow） | 001 |
+| 13-mobile-nav | 移动端顶栏统一 38px（变量派生几何 + ☰ 与内容同轴）+ ☰ 由品牌图改为三条横线图标 + 去掉与 ☰ 重复的四宫格 ▦（Models/Workflow）+ 页面侧边栏抽屉打开时隐藏全局 ☰ | 001-002 |
 | 14-test-adapt | 上游测试套件适配（`tests/client/message-list-live-reasoning.test.ts` 断言 fork 行为：按用户轮折叠的 ToolRunCard、卸载重建的 live ticker） | 001 |
 | 15-mobile-models | 模型页移动端布局（辅助模型面板宽表格 → 两行卡片、summary 双列、动作按钮左对齐、页/面板内边距 20→12px，断点改用 `$breakpoint-mobile`） | 001 |
 | 16-agent-entry | 侧边栏「Agent 管理」入口可配置直达指定 Agent 设置页（本地 localStorage 偏好；默认保持 Agent 列表） | 001 |
 
-共 **74 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**）。
+共 **75 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**；**2026-09-24 新增 13-mobile-nav/002-页面侧边栏抽屉打开时隐藏全局 ☰，共 75 个补丁**）。
 
 **2026-09-23 新增 `09-cleanup/003-remove-connections-sidebar-entry`（用户要求，仅前端）**：
 删除页面侧边栏（chat / 历史 / 群聊 / workflow 共用的 `PageSidebarNav.vue`）的「设备互联」tab 及随之失去引用的 `openConnections()`；
