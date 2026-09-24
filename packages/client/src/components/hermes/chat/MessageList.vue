@@ -25,7 +25,7 @@ import { useProfilesStore } from "@/stores/hermes/profiles";
 import { useToolTraceVisibility } from "@/composables/useToolTraceVisibility";
 import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
 import { messageScrollPositionKey, rememberMessageScrollPosition } from "./message-scroll-position";
-import { chatSessionAgentAvatar } from "@/utils/chat-agent-avatar";
+import { chatSessionAgentLabel } from "@/utils/chat-agent-label";
 import { parseThinking } from "@/utils/thinking-parser";
 import { groupCompletedToolsByRun } from "./tool-run-grouping";
 import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-speed";
@@ -285,7 +285,7 @@ const liveReasoningDetail = computed<{
   return null;
 });
 
-const assistantAgent = computed(() => chatSessionAgentAvatar(chatStore.activeSession));
+const assistantAgent = computed(() => chatSessionAgentLabel(chatStore.activeSession));
 const activeSessionProfileName = computed(() => (
   chatStore.activeSession?.profile || profilesStore.activeProfileName || "default"
 ));
@@ -295,13 +295,10 @@ const activeSessionProfile = computed(() => (
 const userProfileName = computed(() => (
   activeSessionProfile.value?.alias?.trim() || activeSessionProfileName.value
 ));
-const userProfileAvatar = computed(() => activeSessionProfile.value?.avatar || null);
 
 const emptyState = computed(() => {
   const agent = assistantAgent.value;
   return {
-    logo: agent.src,
-    alt: agent.label,
     text: agent.label === "Hermes"
       ? t("chat.emptyState")
       : t("chat.emptyStateAgent", { agent: agent.label }),
@@ -768,7 +765,6 @@ defineExpose({
     >
       <template #empty>
         <div class="empty-state">
-          <img :src="emptyState.logo" :alt="emptyState.alt" class="empty-logo" />
           <p>{{ emptyState.text }}</p>
         </div>
       </template>
@@ -815,7 +811,6 @@ defineExpose({
           :message="msg"
           :assistant-agent="assistantAgent"
           :user-profile-name="userProfileName"
-          :user-profile-avatar="userProfileAvatar"
           :highlight="chatStore.focusMessageId === msg.id"
           :show-fork-action="canForkActiveSession && msg.id === lastForkActionMessageId"
         />

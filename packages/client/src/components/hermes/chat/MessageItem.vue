@@ -15,9 +15,7 @@ import { useChatStore } from "@/stores/hermes/chat";
 import { useFilesStore } from "@/stores/hermes/files";
 import { useToolPanelStore } from "@/stores/hermes/tool-panel";
 import { useSettingsStore } from "@/stores/hermes/settings";
-import { useProfilesStore } from "@/stores/hermes/profiles";
-import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";
-import { chatSessionAgentAvatar, type ChatAgentAvatar } from "@/utils/chat-agent-avatar";
+import { chatSessionAgentLabel, type ChatAgentLabel } from "@/utils/chat-agent-label";
 import TaskPlanCard from './TaskPlanCard.vue';
 import ToolChangeCard from "./ToolChangeCard.vue";
 import {
@@ -35,7 +33,7 @@ import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-spee
 import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
 import type { WorkspaceRunChangeSummary } from "@/api/studio/sessions";
 import { isServerTtsProvider } from "@/api/studio/tts";
-import type { ProfileAvatar as ProfileAvatarData } from "@/api/hermes/profiles";
+
 import ImagePreviewOverlay from "./ImagePreviewOverlay.vue";
 
 const MarkdownRenderer = defineAsyncComponent(async () => (await import("./MarkdownRenderer.vue")).default);
@@ -53,12 +51,10 @@ const props = withDefaults(defineProps<{
   highlight?: boolean
   headingIdPrefix?: string
   showForkAction?: boolean
-  assistantAgent?: ChatAgentAvatar
+  assistantAgent?: ChatAgentLabel
   userProfileName?: string
-  userProfileAvatar?: ProfileAvatarData | null
 }>(), {
   userProfileName: "default",
-  userProfileAvatar: null,
 });
 const { t } = useI18n();
 const toast = useMessage();
@@ -229,21 +225,10 @@ const chatStore = useChatStore();
 const filesStore = useFilesStore();
 const toolPanelStore = useToolPanelStore();
 const settingsStore = useSettingsStore();
-const profilesStore = useProfilesStore();
 const speech = useGlobalSpeech();
 const voiceSettings = useVoiceSettings();
-const assistantProfileName = computed(() => chatStore.activeSession?.profile || profilesStore.activeProfileName || "default");
-const assistantProfileAvatar = computed(() => profilesStore.profiles.find(profile => profile.name === assistantProfileName.value)?.avatar);
-const isCodingAgentSession = computed(() => {
-  const session = chatStore.activeSession;
-  if (!session) return false;
-  const runtime = String(session.codingAgentId || session.agent || "").trim().toLowerCase();
-  return session.source === "coding_agent" || session.source === "global_agent"
-    || runtime === "ekko-agent" || runtime === "ekko" || runtime === "claude"
-    || runtime === "claude-code" || runtime === "codex" || runtime === "pi";
-});
 const showChatIdentity = computed(() => settingsStore.display.show_session_identity !== false);
-const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
+const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentLabel(chatStore.activeSession));
 
 // Copy entire bubble content
 const copyableContent = computed(() => {
@@ -1039,37 +1024,11 @@ onBeforeUnmount(() => {
     </template>
     <template v-else>
       <div class="msg-body">
-        <ProfileAvatar
-          v-if="showChatIdentity && message.role === 'assistant' && !isCodingAgentSession"
-          class="msg-avatar"
-          :name="assistantProfileName"
-          :avatar="assistantProfileAvatar"
-          :size="40"
-        />
-        <img
-          v-else-if="showChatIdentity && message.role === 'assistant'"
-          class="msg-avatar"
-          :src="assistantAgent.src"
-          :alt="assistantAgent.label"
-          draggable="false"
-        >
         <div class="msg-content" :class="message.role">
           <div v-if="showChatIdentity && message.role === 'user'" class="message-author user-message-author">
             <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
-            <ProfileAvatar
-              class="user-profile-avatar"
-              :name="userProfileName"
-              :avatar="userProfileAvatar"
-              :size="22"
-            />
           </div>
           <div v-if="showChatIdentity && message.role === 'assistant'" class="message-author assistant-message-author">
-            <img
-              class="msg-avatar"
-              :src="assistantAgent.src"
-              :alt="assistantAgent.label"
-              draggable="false"
-            >
             <span class="message-author-name" dir="auto">{{ assistantAgent.label }}</span>
           </div>
           <div
@@ -1414,16 +1373,6 @@ onBeforeUnmount(() => {
       z-index: 1;
     }
 
-    .msg-avatar {
-      width: 22px;
-      height: 22px;
-      flex-shrink: 0;
-      box-sizing: border-box;
-      border: 1px solid #fff;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
     .message-bubble {
       background-color: $msg-assistant-bg;
       border-radius: 10px;
@@ -1511,11 +1460,6 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.user-profile-avatar {
-  box-sizing: border-box;
-  border: 1px solid #fff;
 }
 
 .message-bubble {

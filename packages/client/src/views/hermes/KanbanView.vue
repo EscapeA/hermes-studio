@@ -14,7 +14,6 @@ import { DEFAULT_KANBAN_BOARD, useKanbanStore } from '@/stores/hermes/kanban'
 import { useProfilesStore } from '@/stores/hermes/profiles'
 import { withDefaultAssignee } from '@/utils/hermes/kanban-assignees'
 import type { KanbanTask, KanbanTaskStatus } from '@/api/hermes/kanban'
-import type { ProfileAvatar } from '@/api/hermes/profiles'
 
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
@@ -133,10 +132,6 @@ const kanbanCanvasNodes = computed<Node<KanbanCanvasNodeData>[]>(() => {
 const kanbanCanvasKey = computed(() => `${kanbanStore.selectedBoard}:${kanbanStore.filterStatus || 'all'}`)
 
 const visibleAssignees = computed(() => withDefaultAssignee(kanbanStore.assignees, kanbanStore.stats?.by_assignee || {}))
-
-const profileAvatarByName = computed<Record<string, ProfileAvatar | null>>(() => {
-  return Object.fromEntries(profilesStore.profiles.map(profile => [profile.name, profile.avatar || null]))
-})
 
 const statusFilterOptions = computed(() => [
   { label: t('kanban.allStatuses'), value: '' },
@@ -409,7 +404,6 @@ async function handleDispatch() {
                   v-for="task in data.tasks"
                   :key="task.id"
                   :task="task"
-                  :assignee-avatar="task.assignee ? profileAvatarByName[task.assignee] || null : null"
                   @click="handleTaskClick(task.id)"
                 />
                 <div v-if="data.tasks.length === 0" class="column-empty">

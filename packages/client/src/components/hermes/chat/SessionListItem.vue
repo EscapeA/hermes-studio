@@ -4,11 +4,8 @@ import { NPopconfirm, NCheckbox, NTooltip } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import type { Session } from '@/stores/hermes/chat'
 import { useAppStore } from '@/stores/hermes/app'
-import { useProfilesStore } from '@/stores/hermes/profiles'
 import { useSettingsStore } from '@/stores/hermes/settings'
-import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
 import { formatTimestampMs } from '@/shared/session-display'
-import { chatSessionAgentAvatar } from '@/utils/chat-agent-avatar'
 import { resolveSessionNavigation } from './session-list-item-navigation'
 
 const props = withDefaults(defineProps<{
@@ -38,11 +35,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
-const profilesStore = useProfilesStore()
 const settingsStore = useSettingsStore()
 const showSessionIdentity = computed(() => settingsStore.display.show_session_identity !== false)
 const profileName = computed(() => props.session.profile || 'default')
-const profileAvatar = computed(() => profilesStore.profiles.find(profile => profile.name === profileName.value)?.avatar)
 const profileHasModels = computed(() => {
   const profileModels = appStore.profileModelGroups.find(profile => profile.profile === profileName.value)
   return !!profileModels?.groups?.some(group => group.models.length > 0)
@@ -51,7 +46,6 @@ const profileModelsMissing = computed(() =>
   appStore.profileModelGroups.length > 0 && !profileHasModels.value,
 )
 const isGlobalAgentSession = computed(() => props.session.source === 'global_agent')
-const sessionAgentLogo = computed(() => chatSessionAgentAvatar(props.session))
 
 let longPressTimer: ReturnType<typeof setTimeout> | null = null
 const longPressTriggered = ref(false)
@@ -155,15 +149,7 @@ onUnmounted(() => {
         <span class="session-item-time">{{ formatTimestampMs(session.createdAt) }}</span>
       </span>
       <span v-if="showSessionIdentity" class="session-item-agent-row">
-        <span class="session-item-agent-logo-wrap" :class="{ streaming }">
-          <img
-            class="session-item-agent-logo"
-            :src="sessionAgentLogo.src"
-            :alt="sessionAgentLogo.label"
-          >
-        </span>
         <span v-if="props.showProfile" class="session-item-profile">
-          <ProfileAvatar class="session-item-profile-avatar" :name="profileName" :avatar="profileAvatar" :size="16" />
           <span class="session-item-profile-name">{{ profileName }}</span>
         </span>
         <span
@@ -401,10 +387,6 @@ onUnmounted(() => {
   min-width: 0;
 }
 
-.session-item-profile-avatar {
-  background: var(--bg-secondary);
-}
-
 .session-item-profile-name {
   min-width: 0;
   overflow: hidden;
@@ -453,83 +435,4 @@ onUnmounted(() => {
   padding: 3px 0;
 }
 
-.session-item-agent-logo-wrap {
-  position: relative;
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-}
-
-.session-item-agent-logo-wrap.streaming::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  box-sizing: border-box;
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 2px #ff6b6b,
-    0 0 10px rgba(255, 107, 107, 0.4),
-    0 0 20px rgba(255, 107, 107, 0.2);
-  animation: rainbow-glow 4s linear infinite;
-}
-
-.session-item-agent-logo {
-  position: relative;
-  z-index: 1;
-  width: 18px;
-  height: 18px;
-  box-sizing: border-box;
-  border: 1px solid #fff;
-  border-radius: inherit;
-  object-fit: cover;
-}
-
-@keyframes rainbow-glow {
-  0% {
-    box-shadow:
-      0 0 0 2px #ff6b6b,
-      0 0 10px rgba(255, 107, 107, 0.4),
-      0 0 20px rgba(255, 107, 107, 0.2);
-  }
-  16.66% {
-    box-shadow:
-      0 0 0 2px #feca57,
-      0 0 10px rgba(254, 202, 87, 0.4),
-      0 0 20px rgba(254, 202, 87, 0.2);
-  }
-  33.33% {
-    box-shadow:
-      0 0 0 2px #48dbfb,
-      0 0 10px rgba(72, 219, 251, 0.4),
-      0 0 20px rgba(72, 219, 251, 0.2);
-  }
-  50% {
-    box-shadow:
-      0 0 0 2px #ff9ff3,
-      0 0 10px rgba(255, 159, 243, 0.4),
-      0 0 20px rgba(255, 159, 243, 0.2);
-  }
-  66.66% {
-    box-shadow:
-      0 0 0 2px #54a0ff,
-      0 0 10px rgba(84, 160, 255, 0.4),
-      0 0 20px rgba(84, 160, 255, 0.2);
-  }
-  83.33% {
-    box-shadow:
-      0 0 0 2px #5f27cd,
-      0 0 10px rgba(95, 39, 205, 0.4),
-      0 0 20px rgba(95, 39, 205, 0.2);
-  }
-  100% {
-    box-shadow:
-      0 0 0 2px #ff6b6b,
-      0 0 10px rgba(255, 107, 107, 0.4),
-      0 0 20px rgba(255, 107, 107, 0.2);
-  }
-}
 </style>
