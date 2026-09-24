@@ -7,7 +7,7 @@ import { isStoredSuperAdmin } from '@/api/client'
 import { useSessionSearch } from '@/composables/useSessionSearch'
 import { getAgentManagerEntry, resolveAgentManagerEntryRoute } from '@/utils/agent-manager-entry'
 
-type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'group' | 'global' | 'workflow'
+type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'global' | 'workflow'
 
 const props = defineProps<{
   active: ActiveSection
@@ -45,11 +45,6 @@ function openAgentManager() {
 function openModels() {
   if (props.active === 'models') return
   void router.push({ name: 'hermes.models' })
-}
-
-function openGroupChat() {
-  if (props.active === 'group') return
-  void router.push({ name: 'hermes.groupChat' })
 }
 
 function openWorkflow() {
@@ -142,7 +137,7 @@ function openWorkflow() {
         <span>{{ t('sidebar.models') }}</span>
       </button>
     </div>
-    <div class="conversation-switch conversation-switch--four" role="tablist" aria-label="Conversation type">
+    <div class="conversation-switch conversation-switch--three" role="tablist" aria-label="Conversation type">
       <NTooltip trigger="hover" placement="top">
         <template #trigger>
           <button
@@ -160,27 +155,6 @@ function openWorkflow() {
           </button>
         </template>
         {{ t('sidebar.singleChat') }}
-      </NTooltip>
-      <NTooltip trigger="hover" placement="top">
-        <template #trigger>
-          <button
-            class="conversation-switch-tab"
-            :class="{ active: active === 'group' }"
-            type="button"
-            role="tab"
-            :aria-label="t('sidebar.groupChat')"
-            :aria-selected="active === 'group'"
-            @click="openGroupChat"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </button>
-        </template>
-        {{ t('sidebar.groupChat') }}
       </NTooltip>
       <NTooltip trigger="hover" placement="top">
         <template #trigger>
@@ -290,8 +264,8 @@ function openWorkflow() {
   background: rgba(var(--accent-primary-rgb), 0.05);
 }
 
-.conversation-switch--four {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.conversation-switch--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .conversation-switch-tab {
@@ -325,7 +299,7 @@ function openWorkflow() {
   }
 }
 
-:global(.dark .conversation-switch--four .conversation-switch-tab.active) {
+:global(.dark .conversation-switch--three .conversation-switch-tab.active) {
   background: $bg-card-hover;
   color: $accent-primary;
   box-shadow:

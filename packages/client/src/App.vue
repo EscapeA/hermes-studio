@@ -104,7 +104,6 @@ watchServerTtsSettingsHydration({
 const isStandaloneChatPage = computed(
   () => route.meta?.standaloneChat === true,
 );
-const isInviteOnlyPage = computed(() => route.meta?.inviteOnly === true);
 const usesPageSidebar = computed(() =>
   [
     "hermes.chat",
@@ -116,8 +115,6 @@ const usesPageSidebar = computed(() =>
     "hermes.historySession",
     "hermes.globalAgent",
     "hermes.globalAgentSession",
-    "hermes.groupChat",
-    "hermes.groupChatRoom",
     "hermes.workflow",
   ].includes(route.name as string),
 );
@@ -201,9 +198,9 @@ function handleMobileMenuClick() {
 }
 
 watch(
-  [isLoginPage, isInviteOnlyPage],
-  ([loginPage, inviteOnlyPage]) => {
-    if (loginPage || inviteOnlyPage) {
+  isLoginPage,
+  (loginPage) => {
+    if (loginPage) {
       appStore.stopHealthPolling();
       return;
     }
@@ -216,9 +213,7 @@ watch(
 );
 
 onMounted(() => {
-  if (!isInviteOnlyPage.value) {
-    void syncThemeFromServer().catch(() => undefined);
-  }
+  void syncThemeFromServer().catch(() => undefined);
   const bridge = desktopBridge();
   if (
     !bridge?.isDesktop ||
@@ -362,7 +357,7 @@ usePwa();
             v-if="!isLoginPage && !isDesktopPetRoute && !isStandaloneChatPage && isStoredSuperAdmin()"
           />
           <StudioAnnouncementPrompt
-            v-if="!isLoginPage && !isInviteOnlyPage && !isDesktopPetRoute && !isStandaloneChatPage"
+            v-if="!isLoginPage && !isDesktopPetRoute && !isStandaloneChatPage"
           />
         </NNotificationProvider>
       </NDialogProvider>
@@ -467,7 +462,6 @@ usePwa();
 
   :deep(.chat-panel),
   :deep(.history-panel),
-  :deep(.group-chat-panel),
   :deep(.workflow-view),
   :deep(.petdex-view) {
     background-color: transparent;
@@ -479,7 +473,6 @@ usePwa();
   :deep(.coding-agent-config-sidebar),
   :deep(.chat-panel > .session-list),
   :deep(.history-panel > .session-list),
-  :deep(.group-chat-panel > .room-sidebar),
   :deep(.workflow-view > .workflow-sidebar) {
     background-color: rgba(var(--bg-sidebar-surface-rgb), 0.72);
     -webkit-backdrop-filter: blur(8px) saturate(110%);
@@ -493,16 +486,14 @@ usePwa();
     backdrop-filter: blur(8px) saturate(110%);
   }
 
-  :deep(.chat-panel > .chat-main),
-  :deep(.group-chat-panel > .chat-main) {
+  :deep(.chat-panel > .chat-main) {
     background-color: transparent;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 
   :deep(.desktop-titlebar),
-  :deep(.chat-panel > .chat-main > .chat-header),
-  :deep(.group-chat-panel > .chat-main > .chat-header) {
+  :deep(.chat-panel > .chat-main > .chat-header) {
     background-color: rgba(var(--bg-main-surface-rgb), 0.72);
     -webkit-backdrop-filter: blur(8px) saturate(110%);
     backdrop-filter: blur(8px) saturate(110%);
@@ -513,15 +504,13 @@ usePwa();
     background-color: transparent;
   }
 
-  :deep(.chat-main-content),
-  :deep(.group-chat-surface) {
+  :deep(.chat-main-content) {
     background-color: rgba(var(--bg-main-surface-rgb), 0.42);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 
-  :deep(.virtual-message-list),
-  :deep(.group-message-shell) {
+  :deep(.virtual-message-list) {
     background-color: transparent;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -575,15 +564,13 @@ usePwa();
   .app-main--card,
   :deep(.chat-panel > .chat-main),
   :deep(.history-panel > .chat-main),
-  :deep(.workflow-view > .workflow-main),
-  :deep(.group-chat-panel > .chat-main) {
+  :deep(.workflow-view > .workflow-main) {
     margin-top: 50px;
   }
 
   :deep(.chat-panel > .session-list > .page-sidebar-top),
   :deep(.history-panel > .session-list > .page-sidebar-top),
-  :deep(.workflow-view > .workflow-sidebar > .page-sidebar-top),
-  :deep(.group-chat-panel > .room-sidebar > .sidebar-header) {
+  :deep(.workflow-view > .workflow-sidebar > .page-sidebar-top) {
     -webkit-app-region: drag;
 
     button,
@@ -606,8 +593,7 @@ usePwa();
    .app-layout > :deep(.coding-agent-config-sidebar),
   :deep(.chat-panel > .session-list),
   :deep(.history-panel > .session-list),
-  :deep(.workflow-view > .workflow-sidebar),
-  :deep(.group-chat-panel > .room-sidebar) {
+  :deep(.workflow-view > .workflow-sidebar) {
     position: relative;
 
     &::before {
@@ -631,8 +617,7 @@ usePwa();
 
   :deep(.chat-panel > .session-list > .page-sidebar-top),
   :deep(.history-panel > .session-list > .page-sidebar-top),
-  :deep(.workflow-view > .workflow-sidebar > .page-sidebar-top),
-  :deep(.group-chat-panel > .room-sidebar > .sidebar-header) {
+  :deep(.workflow-view > .workflow-sidebar > .page-sidebar-top) {
     padding-top: 32px;
   }
 }
