@@ -38,7 +38,7 @@ const mockStartEventStream = vi.hoisted(() => vi.fn())
 const mockStopEventStream = vi.hoisted(() => vi.fn())
 const mockFetchProfiles = vi.hoisted(() => vi.fn())
 const profilesState = vi.hoisted(() => ({
-  profiles: [] as Array<{ name: string; avatar?: Record<string, any> | null }>,
+  profiles: [] as Array<{ name: string }>,
 }))
 
 vi.mock('vue-router', () => ({
@@ -81,9 +81,9 @@ vi.mock('@/stores/hermes/profiles', () => ({
 vi.mock('@/components/hermes/kanban/KanbanTaskCard.vue', () => ({
   default: defineComponent({
     name: 'KanbanTaskCard',
-    props: { task: { type: Object, required: true }, assigneeAvatar: { type: Object, required: false } },
+    props: { task: { type: Object, required: true } },
     emits: ['click'],
-    template: '<button class="kanban-task-card-stub" :data-avatar-seed="assigneeAvatar?.seed || null" @click="$emit(\'click\', task.id)">{{ task.title }}</button>',
+    template: '<button class="kanban-task-card-stub" @click="$emit(\'click\', task.id)">{{ task.title }}</button>',
   }),
 }))
 
@@ -300,16 +300,6 @@ describe('KanbanView', () => {
     expect(assigneeSelect.text()).not.toContain('default')
     expect(wrapper.text()).not.toContain('kanban.detail.assignee: alice')
     expect(wrapper.text()).not.toContain('alice · kanban.stats.tasks')
-  })
-
-  it('passes matching profile avatars to task cards', async () => {
-    storeState.tasks = [{ id: 'task-1', title: 'Task one', status: 'todo', created_at: 10, assignee: 'alice' }]
-    profilesState.profiles = [{ name: 'alice', avatar: { type: 'generated', seed: 'alice-seed' } }]
-
-    const wrapper = mount(KanbanView)
-    await flushPromises()
-
-    expect(wrapper.find('.kanban-task-card-stub').attributes('data-avatar-seed')).toBe('alice-seed')
   })
 
   it('keeps task cards clickable and task lists independently scrollable inside the canvas', async () => {
