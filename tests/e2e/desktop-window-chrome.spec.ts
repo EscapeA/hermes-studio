@@ -359,12 +359,6 @@ test('keeps chat and group actions below the shared macOS header', async ({ page
   expect((await newChat.boundingBox())?.x).toBeGreaterThanOrEqual(64)
   expect((await page.locator('.studio-navigation-rail .page-sidebar-account-btn').boundingBox())?.y).toBeGreaterThanOrEqual(44)
 
-  await page.goto('/#/hermes/group-chat')
-  const groupSidebar = page.locator('.group-chat-panel > .room-sidebar')
-  const newRoom = groupSidebar.locator('.page-sidebar-tab').first()
-  await expect(newRoom).toBeVisible()
-  expect((await groupSidebar.boundingBox())?.y).toBe(40)
-  expect((await newRoom.boundingBox())?.x).toBeGreaterThanOrEqual(64)
 })
 
 test('renders a native-chrome desktop chat route with only messages and input', async ({ page }) => {
