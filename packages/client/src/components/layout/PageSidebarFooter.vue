@@ -4,7 +4,6 @@ import { NPopover } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useAccountStore } from '@/stores/account'
-import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
 import SidebarAccountControls from './SidebarAccountControls.vue'
 import { useNavigationRail } from '@/composables/useNavigationRail'
 
@@ -89,7 +88,6 @@ async function focusMenu() {
           @keydown.up.prevent="focusMenu"
           @keydown.down.prevent="focusMenu"
         >
-          <ProfileAvatar :name="accountStore.username || 'default'" :avatar="accountStore.profileAvatar" :size="30" />
           <span class="account-name">{{ displayName }}</span>
           <svg class="account-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polyline points="6 14 12 8 18 14" />
@@ -106,7 +104,6 @@ async function focusMenu() {
         @keydown.esc.stop.prevent="handleEscape"
       >
         <div class="account-menu-heading">
-          <ProfileAvatar :name="accountStore.username || 'default'" :avatar="accountStore.profileAvatar" :size="34" />
           <div class="account-menu-identity">
             <span class="account-name" :title="displayName">{{ displayName }}</span>
             <span class="account-label">{{ t('settings.tabs.account') }}</span>
