@@ -38,7 +38,7 @@ describe('Agent status availability', () => {
       expect(isAgentStatusAvailable(null, id)).toBe(false)
     },
   )
-  it('normalizes group-chat and workflow Agent aliases', () => {
+  it('normalizes Agent aliases', () => {
     expect(resolveAgentStatusId('ekko')).toBe('ekko-agent')
     expect(resolveAgentStatusId('claude')).toBe('claude-code')
     expect(resolveAgentStatusId('codex')).toBe('codex')

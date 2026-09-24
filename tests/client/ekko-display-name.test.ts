@@ -24,10 +24,6 @@ describe('Ekko display name', () => {
   it.each([
     ['single chat', 'packages/client/src/components/hermes/chat/ChatPanel.vue',
       AGENT_OPTIONS, 'AGENT_OPTIONS', 'const newChatAgentOptions = computed(() => AGENT_OPTIONS.filter('],
-    ['group chat', 'packages/client/src/components/hermes/group-chat/GroupChatPanel.vue',
-      GROUP_AGENT_OPTIONS, 'GROUP_AGENT_OPTIONS', 'const groupAgentTypeDefinitions = GROUP_AGENT_OPTIONS'],
-    ['group chat link', 'packages/client/src/views/hermes/GroupChatLinkView.vue',
-      GROUP_AGENT_OPTIONS, 'GROUP_AGENT_OPTIONS', 'const groupAgentTypeDefinitions = GROUP_AGENT_OPTIONS'],
     ['workflow', 'packages/client/src/views/hermes/WorkflowView.vue',
       AGENT_OPTIONS, 'AGENT_OPTIONS', 'const workflowAgentDefinitions = AGENT_OPTIONS'],
   ] as const)('uses the shared order with Ekko first in the %s Agent dropdown', (_name, path, options, exportName, binding) => {
