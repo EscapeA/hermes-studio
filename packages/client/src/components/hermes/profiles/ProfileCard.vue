@@ -5,7 +5,6 @@ import { NButton, NTag, NSpin, useMessage, useDialog } from 'naive-ui'
 import type { HermesProfile, HermesProfileDetail } from '@/api/hermes/profiles'
 import { useProfilesStore } from '@/stores/hermes/profiles'
 import { useI18n } from 'vue-i18n'
-import ProfileAvatar from './ProfileAvatar.vue'
 
 const props = defineProps<{ profile: HermesProfile }>()
 const emit = defineEmits<{}>()
@@ -112,7 +111,6 @@ function handleEditConfig() {
   <div class="profile-card" :class="{ active: profile.active }">
     <div class="card-header">
       <div class="profile-title">
-        <ProfileAvatar :name="profile.name" :avatar="profile.avatar" :size="28" />
         <h3 class="profile-name">{{ profile.name }}</h3>
       </div>
       <NTag v-if="profile.active" size="tiny" type="primary" :bordered="false">
