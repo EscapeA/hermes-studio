@@ -27,25 +27,19 @@ describe('client style system', () => {
 
   it('keeps chat surfaces aligned while preserving composer elevation in dark mode', () => {
     const chatInput = readClientFile('components/hermes/chat/ChatInput.vue')
-    const groupChatInput = readClientFile('components/hermes/group-chat/GroupChatInput.vue')
     const virtualMessageList = readClientFile('components/hermes/chat/VirtualMessageList.vue')
 
     expect(chatInput).toContain('background-color: $bg-main-surface;')
-    expect(groupChatInput).toContain('background-color: $bg-main-surface;')
     expect(virtualMessageList).toContain('background-color: $bg-main-surface;')
     expect(chatInput.match(/background-color: #333333;/g)).toHaveLength(1)
-    expect(groupChatInput.match(/background-color: #333333;/g)).toHaveLength(1)
   })
 
   it('keeps message metadata and context usage on custom theme text colors', () => {
     const chatInput = readClientFile('components/hermes/chat/ChatInput.vue')
     const messageItem = readClientFile('components/hermes/chat/MessageItem.vue')
-    const groupMessageItem = readClientFile('components/hermes/group-chat/GroupMessageItem.vue')
 
     expect(messageItem).toMatch(/\.message-meta\s*\{[^}]*color: \$text-muted;/s)
-    expect(groupMessageItem).toMatch(/\.message-meta\s*\{[^}]*color: \$text-muted;/s)
     expect(messageItem).not.toContain('color: #999999;')
-    expect(groupMessageItem).not.toContain('color: #999999;')
     expect(chatInput).toMatch(/\.context-usage-row\s*\{[^}]*color: \$text-muted;/s)
     expect(chatInput).not.toContain('color: rgba(255, 255, 255, 0.68);')
     expect(chatInput).toContain('rgba(var(--text-muted-rgb), 0.85)')
@@ -53,14 +47,10 @@ describe('client style system', () => {
 
   it('keeps selected conversation titles on the primary text color', () => {
     const sessionListItem = readClientFile('components/hermes/chat/SessionListItem.vue')
-    const groupChatPanel = readClientFile('components/hermes/group-chat/GroupChatPanel.vue')
     const workflowView = readClientFile('views/hermes/WorkflowView.vue')
 
     expect(sessionListItem).toMatch(
       /\.session-item\.active \.session-item-title\s*\{\s*color: var\(--text-primary\);/,
-    )
-    expect(groupChatPanel).toMatch(
-      /&\.active \.room-name\s*\{\s*color: \$text-primary;/,
     )
     expect(workflowView).toMatch(
       /&\.selected \.workflow-list-name\s*\{\s*color: var\(--text-primary\);/,
@@ -87,11 +77,11 @@ describe('client style system', () => {
     expect(historyMessageList).toContain('animation: history-message-surface-fade-in 1.5s ease both;')
   })
 
-  it('keeps the four-way conversation switch active state visible in dark mode', () => {
+  it('keeps the three-way conversation switch active state visible in dark mode', () => {
     const pageSidebarNav = readClientFile('components/layout/PageSidebarNav.vue')
 
     expect(pageSidebarNav).toContain(
-      ':global(.dark .conversation-switch--four .conversation-switch-tab.active)',
+      ':global(.dark .conversation-switch--three .conversation-switch-tab.active)',
     )
     expect(pageSidebarNav).toContain('background: $bg-card-hover;')
     expect(pageSidebarNav).toContain('inset 0 0 0 1px $border-color')
@@ -125,7 +115,6 @@ describe('client style system', () => {
     const app = readClientFile('App.vue')
     const globalStyles = readClientFile('styles/global.scss')
     const useTheme = readClientFile('composables/useTheme.ts')
-    const groupMessageItem = readClientFile('components/hermes/group-chat/GroupMessageItem.vue')
     const messageItem = readClientFile('components/hermes/chat/MessageItem.vue')
     const customBackgroundStyles = app
       .split('.app-shell--custom-background {')[1]
@@ -137,26 +126,25 @@ describe('client style system', () => {
     expect(customBackgroundStyles).toContain('rgba(var(--bg-sidebar-surface-rgb), 0.72)')
     expect(customBackgroundStyles).toContain('backdrop-filter: blur(8px) saturate(110%)')
     expect(customBackgroundStyles).toContain(':deep(.chat-panel > .chat-main)')
-    expect(customBackgroundStyles).toContain(':deep(.group-chat-panel > .chat-main)')
     expect(customBackgroundStyles).toContain(':deep(.virtual-message-list)')
     expect(customBackgroundStyles).toContain(':deep(.agent-manager-panel)')
     expect(customBackgroundStyles).toMatch(
       /:deep\(\.workflow-view\),[\s\S]*:deep\(\.petdex-view\)\s*\{\s*background-color: transparent;/,
     )
     expect(customBackgroundStyles).toMatch(
-      /:deep\(\.chat-main-content\),[\s\S]*:deep\(\.group-chat-surface\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);[\s\S]*backdrop-filter: none;/,
+      /:deep\(\.chat-main-content\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);[\s\S]*backdrop-filter: none;/,
     )
     expect(customBackgroundStyles).toMatch(
-      /:deep\(\.virtual-message-list\),[\s\S]*:deep\(\.group-message-shell\)\s*\{[\s\S]*background-color: transparent;[\s\S]*backdrop-filter: none;/,
+      /:deep\(\.virtual-message-list\)\s*\{[\s\S]*background-color: transparent;[\s\S]*backdrop-filter: none;/,
     )
     expect(customBackgroundStyles).toMatch(
-      /:deep\(\.chat-panel > \.chat-main\),[\s\S]*background-color: transparent;[\s\S]*backdrop-filter: none;/,
+      /:deep\(\.chat-panel > \.chat-main\)\s*\{[\s\S]*background-color: transparent;[\s\S]*backdrop-filter: none;/,
     )
     expect(customBackgroundStyles).toMatch(
-      /:deep\(\.chat-panel > \.chat-main > \.chat-header\),[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
+      /:deep\(\.chat-panel > \.chat-main > \.chat-header\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
     )
     expect(customBackgroundStyles).toMatch(
-      /:deep\(\.desktop-titlebar\),[\s\S]*:deep\(\.chat-panel > \.chat-main > \.chat-header\),[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
+      /:deep\(\.desktop-titlebar\),[\s\S]*:deep\(\.chat-panel > \.chat-main > \.chat-header\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
     )
     expect(customBackgroundStyles).toMatch(
       /:deep\(\.chat-input-area \.input-wrapper\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
@@ -164,14 +152,11 @@ describe('client style system', () => {
     expect(customBackgroundStyles).toMatch(
       /:deep\(\.browser-settings-page > \.settings-card\)\s*\{\s*background-color: transparent;/,
     )
-    expect(groupMessageItem).toMatch(
-      /:global\(html\.theme-has-custom-background \.group-message:not\(\.embedded\) \.msg-content:not\(\.agent-error\)\),[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.78\);[\s\S]*border: 1px solid rgba\(var\(--text-primary-rgb\), 0\.18\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
-    )
     expect(messageItem).toMatch(
       /:global\(html\.theme-has-custom-background \.message\.user \.message-bubble:not\(\.system\):not\(\.command\):not\(\.agent-error\)\),[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.78\);[\s\S]*border: 1px solid rgba\(var\(--text-primary-rgb\), 0\.18\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
     )
     expect(customBackgroundStyles).toMatch(
-      /:deep\(\.chat-main-content\),[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);/,
+      /:deep\(\.chat-main-content\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);/,
     )
     expect(useTheme).toContain(
       "document.documentElement.classList.toggle('theme-has-custom-background', active)",

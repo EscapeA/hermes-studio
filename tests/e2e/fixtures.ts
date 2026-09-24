@@ -949,16 +949,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions = 
       return
     }
 
-    if (pathname === '/api/studio/group-chat/rooms' && request.method() === 'GET') {
-      await route.fulfill(jsonResponse({ rooms: [] }))
-      return
-    }
-
-    if (pathname === '/api/studio/group-chat-link/v1/connections' && request.method() === 'GET') {
-      await route.fulfill(jsonResponse({ connections: [] }))
-      return
-    }
-
     if (pathname === '/api/cron-history') {
       await route.fulfill(jsonResponse({ runs: [] }))
       return

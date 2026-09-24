@@ -17,12 +17,9 @@ describe('ChatPanel tool drawer resizing support', () => {
     expect(source).toMatch(/\.chat-tool-resize-handle\s*\{[\s\S]*inset-inline-start: -7px;/)
   })
 
-  it('mirrors group-chat and workflow resize seams without changing LTR sizing', () => {
-    const groupSource = readFileSync('packages/client/src/components/hermes/group-chat/GroupChatPanel.vue', 'utf8')
+  it('mirrors workflow resize seams without changing LTR sizing', () => {
     const workflowSource = readFileSync('packages/client/src/views/hermes/WorkflowView.vue', 'utf8')
 
-    expect(groupSource).toContain("deltaSign: document.documentElement.dir === 'rtl' ? 1 : -1")
-    expect(groupSource).toMatch(/\.group-workspace-resize-handle\s*\{[\s\S]*inset-inline-start: -7px;/)
     expect(workflowSource).toContain("deltaSign: document.documentElement.dir === 'rtl' ? -1 : 1")
     expect(workflowSource).toMatch(/\.workflow-chat-resize-handle\s*\{[\s\S]*inset-inline-end: -7px;/)
   })
@@ -57,12 +54,11 @@ describe('ChatPanel tool drawer resizing support', () => {
     expect(source).toMatch(/\.chat-tool-content\s*\{\s*order: 1;[\s\S]*background: \$bg-main-surface;/)
   })
 
-  it('animates the single and group chat tool panels without exposing the native browser mid-transition', () => {
+  it('animates the chat tool panel without exposing the native browser mid-transition', () => {
     const chatSource = readFileSync('packages/client/src/components/hermes/chat/ChatPanel.vue', 'utf8')
-    const groupSource = readFileSync('packages/client/src/components/hermes/group-chat/GroupChatPanel.vue', 'utf8')
     const browserSource = readFileSync('packages/client/src/components/hermes/chat/DesktopBrowserPanel.vue', 'utf8')
 
-    for (const source of [chatSource, groupSource]) {
+    for (const source of [chatSource]) {
       expect(source).toContain('<Transition')
       expect(source).toContain('name="tool-panel"')
       expect(source).toContain('@before-enter="handleToolPanelBeforeEnter"')
@@ -75,11 +71,8 @@ describe('ChatPanel tool drawer resizing support', () => {
     }
 
     expect(chatSource).toContain(':visible="toolPanelTransitionReady"')
-    expect(groupSource).toContain(':visible="toolPanelTransitionReady"')
     expect(chatSource).toMatch(/\.tool-panel-enter-active,[\s\S]*transition:[\s\S]*width 0\.25s/)
-    expect(groupSource).toMatch(/\.tool-panel-enter-active,[\s\S]*transition:[\s\S]*width 0\.25s/)
     expect(chatSource).toMatch(/\.tool-panel-enter-from,[\s\S]*width: 0 !important;[\s\S]*min-width: 0;/)
-    expect(groupSource).toMatch(/\.tool-panel-enter-from,[\s\S]*width: 0 !important;[\s\S]*min-width: 0;/)
     expect(browserSource).toContain('visible?: boolean')
     expect(browserSource).toContain('props.visible && !externalOverlayOpen.value')
   })

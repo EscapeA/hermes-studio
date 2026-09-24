@@ -15,7 +15,7 @@ describe('Agent Manager routing', () => {
     expect(sidebar.indexOf("t('sidebar.models')"))
       .toBeGreaterThan(sidebar.indexOf("t('sidebar.agentManager')"))
     const routeStart = router.indexOf("path: '/studio/agents'")
-    const route = router.slice(routeStart, router.indexOf("path: '/hermes/group-chat'", routeStart))
+    const route = router.slice(routeStart, router.indexOf("path: '/hermes/files'", routeStart))
     expect(route).toContain("path: '/studio/agents'")
     expect(route).toContain("name: 'hermes.agentManager'")
     expect(route).toContain("component: () => import('@/views/hermes/ChatView.vue')")

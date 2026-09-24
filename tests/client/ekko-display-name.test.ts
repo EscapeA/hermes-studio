@@ -23,10 +23,6 @@ describe('Ekko display name', () => {
   it.each([
     ['single chat', 'packages/client/src/components/hermes/chat/ChatPanel.vue',
       '{ label: "Hermes", value: "hermes" }', '{ label: "Ekko", value: "ekko-agent" }', '{ label: "Claude", value: "claude-code" }'],
-    ['group chat', 'packages/client/src/components/hermes/group-chat/GroupChatPanel.vue',
-      "{ label: 'Hermes', value: 'hermes' }", "{ label: 'Ekko', value: 'ekko' }", "{ label: 'Claude', value: 'claude' }"],
-    ['group chat link', 'packages/client/src/views/hermes/GroupChatLinkView.vue',
-      "{ label: 'Hermes', value: 'hermes' }", "{ label: 'Ekko', value: 'ekko' }", "{ label: 'Claude', value: 'claude' }"],
     ['workflow', 'packages/client/src/views/hermes/WorkflowView.vue',
       "{ label: 'Hermes', value: 'hermes' }", "{ label: 'Ekko', value: 'ekko-agent' }", "{ label: 'Claude', value: 'claude-code' }"],
   ])('places Ekko second in the %s Agent dropdown', (_name, path, hermes, ekko, claude) => {

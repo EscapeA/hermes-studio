@@ -212,15 +212,15 @@ describe('API Client', () => {
         status: 409,
         statusText: 'Conflict',
         text: () => Promise.resolve(JSON.stringify({
-          code: 'GROUP_AGENT_PRESET_NAME_CONFLICT',
-          error: 'Agent preset already exists',
+          code: 'WORKFLOW_NAME_CONFLICT',
+          error: 'Workflow name already exists',
         })),
       })
 
-      await expect(request('/api/studio/group-chat/agent-presets')).rejects.toMatchObject({
+      await expect(request('/api/studio/workflows')).rejects.toMatchObject({
         status: 409,
-        code: 'GROUP_AGENT_PRESET_NAME_CONFLICT',
-        message: 'API Error 409: Agent preset already exists',
+        code: 'WORKFLOW_NAME_CONFLICT',
+        message: 'API Error 409: Workflow name already exists',
       })
     })
 

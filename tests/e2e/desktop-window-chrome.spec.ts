@@ -264,13 +264,6 @@ test('keeps chat gutters while placing New below macOS traffic lights', async ({
   await expect(newChat).toBeVisible()
   expect((await chatSidebar.boundingBox())?.y).toBe(10)
   expect((await newChat.boundingBox())?.y).toBeGreaterThanOrEqual(43)
-
-  await page.goto('/#/hermes/group-chat')
-  const groupSidebar = page.locator('.group-chat-panel > .room-sidebar')
-  const newRoom = groupSidebar.locator('.page-sidebar-tab').first()
-  await expect(newRoom).toBeVisible()
-  expect((await groupSidebar.boundingBox())?.y).toBe(10)
-  expect((await newRoom.boundingBox())?.y).toBeGreaterThanOrEqual(43)
 })
 
 test('renders a native-chrome desktop chat route with only messages and input', async ({ page }) => {

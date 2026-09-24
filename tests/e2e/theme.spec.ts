@@ -164,24 +164,6 @@ test('tints transparent app surfaces with the active theme background color', as
     'blur(8px) saturate(1.1)',
   )
 
-  await page.goto('/#/hermes/group-chat')
-  await expect(page.locator('.group-chat-panel')).toHaveCSS(
-    'background-color',
-    'rgba(0, 0, 0, 0)',
-  )
-  await expect(page.locator('.group-chat-panel > .room-sidebar')).toHaveCSS(
-    'background-color',
-    'rgba(26, 26, 26, 0.72)',
-  )
-  await expect(page.locator('.group-chat-panel > .chat-main')).toHaveCSS(
-    'background-color',
-    'rgba(0, 0, 0, 0)',
-  )
-  await expect(page.locator('.group-chat-panel > .chat-main > .chat-header')).toHaveCSS(
-    'background-color',
-    'rgba(26, 26, 26, 0.72)',
-  )
-
   await page.goto('/#/hermes/petdex')
   await expect(page.locator('.petdex-view')).toHaveCSS(
     'background-color',

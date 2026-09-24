@@ -212,54 +212,6 @@ const REASONING_EFFORT_LOCALIZED_KEYS = [
   'chat.reasoningEffort.options.ultra',
 ]
 
-const GROUP_CHAT_AGENT_LINK_LOCALIZED_KEYS = [
-  'groupChat.agentLinkButton',
-  'groupChat.agentOwner',
-  'groupChat.agentLinkTitle',
-  'groupChat.agentLinkDescription',
-  'groupChat.agentLinkTargetUrl',
-  'groupChat.agentLinkTargetRequired',
-  'groupChat.agentLinkInvalidTarget',
-  'groupChat.agentLinkOpenTarget',
-  'groupChat.agentLinkPopupBlocked',
-  'groupChat.agentLinkParentUnavailable',
-  'groupChat.agentLinkParentUnconfirmed',
-  'groupChat.agentLinkIncompleteConfiguration',
-  'groupChat.agentLinkWaitingApproval',
-  'groupChat.agentLinkApproved',
-  'groupChat.agentLinkConnected',
-  'groupChat.agentLinkError',
-  'groupChat.agentLinkRejected',
-  'groupChat.agentLinkExpired',
-  'groupChat.agentLinkPairingCode',
-  'groupChat.agentLinkPairingCodeHint',
-  'groupChat.agentLinkCopyCode',
-  'groupChat.agentLinkAuthorizeTitle',
-  'groupChat.agentLinkAuthorizeDescription',
-  'groupChat.agentLinkRequestConnection',
-  'groupChat.agentLinkOrPairingCode',
-  'groupChat.agentLinkPairingCodePlaceholder',
-  'groupChat.agentLinkConnect',
-  'groupChat.agentLinkSecurityHint',
-  'groupChat.agentLinkLoadFailed',
-  'groupChat.agentLinkConnectFailed',
-  'groupChat.agentLinkInvalidPairingCode',
-  'groupChat.agentLinkClose',
-  'groupChat.agentLinkApprovalMismatch',
-  'groupChat.guestAgentsDisabled',
-  'groupChat.guestAgentSettings',
-  'groupChat.allowGuestAgents',
-  'groupChat.maxGuestAgentsPerMember',
-  'groupChat.ownerApprovalHint',
-  'groupChat.agentPairingRequestTitle',
-  'groupChat.agentPairingRequestDescription',
-  'groupChat.approveAgent',
-  'groupChat.rejectAgent',
-  'groupChat.agentPairingApproved',
-  'groupChat.agentPairingRejected',
-  'groupChat.allAgents',
-]
-
 const PLATFORM_SETTINGS_LOCALE_SPECIFIC_LOCALIZED_KEYS: Record<string, string[]> = {
   de: ['platform.qqAppId', 'platform.qqAppSecret'],
   ja: ['platform.homeserver', 'platform.accountId'],
@@ -423,31 +375,6 @@ describe('i18n locale coverage', () => {
     expect(missing).toEqual([])
   })
 
-  it('fully defines the raw group-chat namespace in every locale', () => {
-    const englishGroupChat = flattenLeafPaths(en.groupChat)
-    const issues = Object.entries(rawMessages).flatMap(([locale, localeMessages]) => {
-      const localizedGroupChat = flattenLeafPaths(localeMessages.groupChat)
-      const missing = [...englishGroupChat.keys()]
-        .filter(key => !localizedGroupChat.has(key))
-        .map(key => `${locale}: missing groupChat.${key}`)
-      const extra = [...localizedGroupChat.keys()]
-        .filter(key => !englishGroupChat.has(key))
-        .map(key => `${locale}: extra groupChat.${key}`)
-      const interpolationMismatches = [...englishGroupChat.entries()].flatMap(([key, englishValue]) => {
-        const localizedValue = localizedGroupChat.get(key)
-        if (typeof localizedValue === 'undefined') return []
-        const expected = interpolationNames(englishValue)
-        const actual = interpolationNames(localizedValue)
-        return expected.join('|') === actual.join('|')
-          ? []
-          : [`${locale}: groupChat.${key} placeholders ${actual.join(',')} != ${expected.join(',')}`]
-      })
-      return [...missing, ...extra, ...interpolationMismatches]
-    })
-
-    expect(issues).toEqual([])
-  })
-
   it('compiles every changelog message in every locale', () => {
     for (const [locale, localeMessages] of Object.entries(rawMessages)) {
       const i18n = createI18n({
@@ -545,20 +472,6 @@ describe('i18n locale coverage', () => {
     )
 
     expect(missing).toEqual([])
-  })
-
-  it('localizes Agent linking and pairing copy in every raw non-English locale', () => {
-    const untranslated = Object.entries(rawMessages).flatMap(([locale, localeMessages]) => {
-      if (locale === 'en') return []
-
-      return GROUP_CHAT_AGENT_LINK_LOCALIZED_KEYS.flatMap((key) => {
-        const localeValue = getPath(localeMessages, key)
-        if (typeof localeValue === 'undefined') return [`${locale}: ${key} missing`]
-        return localeValue === getPath(en, key) ? [`${locale}: ${key}`] : []
-      })
-    })
-
-    expect(untranslated).toEqual([])
   })
 
   it('localizes every Workflow Schedule string in every raw non-English locale instead of copying English', () => {
