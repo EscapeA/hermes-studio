@@ -4,7 +4,6 @@ import { NButton, NInput, useMessage, useNotification, type NotificationReactive
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useChatStore, type PendingApproval, type PendingClarify } from '@/stores/hermes/chat'
-import { useGroupChatStore, type GroupPendingApproval, type GroupPendingClarify } from '@/stores/hermes/group-chat'
 import PendingInteractionCountdown from '@/components/hermes/chat/PendingInteractionCountdown.vue'
 import { useProfilesStore } from '@/stores/hermes/profiles'
 import { useSettingsStore } from '@/stores/hermes/settings'
@@ -17,7 +16,6 @@ import { approveWorkflowNode, type WorkflowRecord } from '@/api/studio/workflows
 import { listWorkflowsSocket, onWorkflowStatusUpdated, subscribeWorkflowStatuses, disconnectWorkflowSocket, type WorkflowRuntimeStatus } from '@/api/studio/workflow-socket'
 
 const chatStore = useChatStore()
-const groupChatStore = useGroupChatStore()
 const profilesStore = useProfilesStore()
 const settingsStore = useSettingsStore()
 const notification = useNotification()
@@ -102,8 +100,6 @@ type ApprovalChoice = PendingApproval['choices'][number]
 type GlobalPendingAction =
   | { key: string; profile: string; kind: 'chat-approval'; title: string; pending: PendingApproval }
   | { key: string; profile: string; kind: 'chat-clarify'; title: string; pending: PendingClarify }
-  | { key: string; profile: string; kind: 'group-approval'; title: string; pending: GroupPendingApproval }
-  | { key: string; profile: string; kind: 'group-clarify'; title: string; pending: GroupPendingClarify }
   | { key: string; profile: string; kind: 'workflow-approval'; title: string; workflowId: string; runId: string; nodeId: string; executionId?: string }
 
 function normalizePendingSourceTitle(title: string): string {
@@ -112,10 +108,6 @@ function normalizePendingSourceTitle(title: string): string {
 
 function sessionTitle(sessionId: string): string {
   return normalizePendingSourceTitle(chatStore.sessions.find(session => session.id === sessionId)?.title || sessionId)
-}
-
-function roomTitle(roomId: string): string {
-  return groupChatStore.rooms.find(room => room.id === roomId)?.name || roomId
 }
 
 function handleVisibleWorkflowApproval(event: Event) {
@@ -134,12 +126,6 @@ function pendingSoundActionKeys(): string[] {
   for (const pending of chatStore.pendingClarifies.values()) {
     keys.push(`chat-clarify:${pending.sessionId}:${pending.clarifyId}`)
   }
-  for (const pending of groupChatStore.pendingApprovals.values()) {
-    keys.push(`group-approval:${pending.roomId}:${pending.approvalId}`)
-  }
-  for (const pending of groupChatStore.pendingClarifies.values()) {
-    keys.push(`group-clarify:${pending.roomId}:${pending.clarifyId}`)
-  }
   for (const status of Object.values(workflowStatuses)) {
     if (!status.runId) continue
     for (const { nodeId, executionId } of status.pendingApprovals || []) {
@@ -155,7 +141,6 @@ function pendingActions(suppressVisibleSources = true): GlobalPendingAction[] {
   const visibleChatSessionId = suppressVisibleSources && ['hermes.chat', 'hermes.session', 'hermes.globalAgent', 'hermes.globalAgentSession'].includes(String(route.name || ''))
     ? chatStore.activeSessionId
     : null
-  const visibleGroupRoomId = suppressVisibleSources && route.name === 'hermes.groupChatRoom' ? groupChatStore.currentRoomId : null
   for (const pending of chatStore.pendingApprovals.values()) {
     if (pending.sessionId === visibleChatSessionId) continue
     actions.push({ key: `chat-approval:${pending.sessionId}:${pending.approvalId}`, profile, kind: 'chat-approval', title: sessionTitle(pending.sessionId), pending })
@@ -163,14 +148,6 @@ function pendingActions(suppressVisibleSources = true): GlobalPendingAction[] {
   for (const pending of chatStore.pendingClarifies.values()) {
     if (pending.sessionId === visibleChatSessionId) continue
     actions.push({ key: `chat-clarify:${pending.sessionId}:${pending.clarifyId}`, profile, kind: 'chat-clarify', title: sessionTitle(pending.sessionId), pending })
-  }
-  for (const pending of groupChatStore.pendingApprovals.values()) {
-    if (pending.roomId === visibleGroupRoomId) continue
-    actions.push({ key: `group-approval:${pending.roomId}:${pending.approvalId}`, profile, kind: 'group-approval', title: roomTitle(pending.roomId), pending })
-  }
-  for (const pending of groupChatStore.pendingClarifies.values()) {
-    if (pending.roomId === visibleGroupRoomId) continue
-    actions.push({ key: `group-clarify:${pending.roomId}:${pending.clarifyId}`, profile, kind: 'group-clarify', title: roomTitle(pending.roomId), pending })
   }
   for (const status of Object.values(workflowStatuses)) {
     if (!status.runId) continue
@@ -192,7 +169,7 @@ function pendingActions(suppressVisibleSources = true): GlobalPendingAction[] {
   return actions
 }
 
-async function copyApprovalCommand(action: Extract<GlobalPendingAction, { kind: 'chat-approval' | 'group-approval' }>) {
+async function copyApprovalCommand(action: Extract<GlobalPendingAction, { kind: 'chat-approval' }>) {
   const copied = await copyToClipboard(action.pending.command)
   if (!copied) {
     message.error(t('chat.copyFailed'))
@@ -201,7 +178,7 @@ async function copyApprovalCommand(action: Extract<GlobalPendingAction, { kind: 
   copiedCommandKey.value = action.key
 }
 
-function approvalCommand(action: Extract<GlobalPendingAction, { kind: 'chat-approval' | 'group-approval' }>) {
+function approvalCommand(action: Extract<GlobalPendingAction, { kind: 'chat-approval' }>) {
   if (!action.pending.command) return null
   return h('div', { class: 'global-approval-command studio-surface' }, [
     h('div', { class: 'global-approval-command-header' }, [
@@ -216,11 +193,11 @@ function approvalCommand(action: Extract<GlobalPendingAction, { kind: 'chat-appr
   ])
 }
 
-function interactionCountdown(action: Extract<GlobalPendingAction, { kind: 'chat-approval' | 'chat-clarify' | 'group-approval' | 'group-clarify' }>) {
+function interactionCountdown(action: Extract<GlobalPendingAction, { kind: 'chat-approval' | 'chat-clarify' }>) {
   return h(PendingInteractionCountdown, { deadline: action.pending.countdownDeadline })
 }
 
-function approvalButtons(action: Extract<GlobalPendingAction, { kind: 'chat-approval' | 'group-approval' }>) {
+function approvalButtons(action: Extract<GlobalPendingAction, { kind: 'chat-approval' }>) {
   const pending = action.pending
   const choices: ApprovalChoice[] = pending.isMemoryWrite ? ['once', 'deny'] : pending.choices
   const labels: Record<ApprovalChoice, string> = {
@@ -238,12 +215,11 @@ function approvalButtons(action: Extract<GlobalPendingAction, { kind: 'chat-appr
   }, { default: () => labels[choice] })))
 }
 
-async function submitApproval(action: Extract<GlobalPendingAction, { kind: 'chat-approval' | 'group-approval' }>, choice: ApprovalChoice) {
+async function submitApproval(action: Extract<GlobalPendingAction, { kind: 'chat-approval' }>, choice: ApprovalChoice) {
   if (submitting[action.key]) return
   submitting[action.key] = true
   try {
-    if (action.kind === 'chat-approval') chatStore.respondApprovalFor(action.pending.sessionId, action.pending.approvalId, choice)
-    else await groupChatStore.respondApprovalFor(action.pending.roomId, action.pending.approvalId, choice)
+    chatStore.respondApprovalFor(action.pending.sessionId, action.pending.approvalId, choice)
   } catch (error) {
     message.error(error instanceof Error ? error.message : String(error))
   } finally {
@@ -251,7 +227,7 @@ async function submitApproval(action: Extract<GlobalPendingAction, { kind: 'chat
   }
 }
 
-function clarifyContent(action: Extract<GlobalPendingAction, { kind: 'chat-clarify' | 'group-clarify' }>) {
+function clarifyContent(action: Extract<GlobalPendingAction, { kind: 'chat-clarify' }>) {
   return h('div', { class: 'global-clarify-content' }, [
     interactionCountdown(action),
     h('div', { class: 'global-clarify-question' }, action.pending.question),
@@ -276,13 +252,12 @@ function clarifyContent(action: Extract<GlobalPendingAction, { kind: 'chat-clari
   ])
 }
 
-async function submitClarify(action: Extract<GlobalPendingAction, { kind: 'chat-clarify' | 'group-clarify' }>) {
+async function submitClarify(action: Extract<GlobalPendingAction, { kind: 'chat-clarify' }>) {
   const response = (clarifyDrafts[action.key] || '').trim()
   if (!response || submitting[action.key]) return
   submitting[action.key] = true
   try {
-    if (action.kind === 'chat-clarify') chatStore.respondToClarifyFor(action.pending.sessionId, action.pending.clarifyId, response)
-    else await groupChatStore.respondClarifyFor(action.pending.roomId, action.pending.clarifyId, response)
+    chatStore.respondToClarifyFor(action.pending.sessionId, action.pending.clarifyId, response)
   } catch (error) {
     message.error(error instanceof Error ? error.message : String(error))
   } finally {
@@ -312,10 +287,6 @@ function openPendingSource(action: GlobalPendingAction) {
     })
     return
   }
-  if (action.kind === 'group-approval' || action.kind === 'group-clarify') {
-    void router.push({ name: 'hermes.groupChatRoom', params: { roomId: action.pending.roomId } })
-    return
-  }
   void router.push({
     name: 'hermes.workflow',
     query: { workflowId: action.workflowId, runId: action.runId, nodeId: action.nodeId, executionId: action.executionId },
@@ -323,7 +294,7 @@ function openPendingSource(action: GlobalPendingAction) {
 }
 
 function systemNotificationCopy(action: GlobalPendingAction): { title: string; body: string } {
-  const clarify = action.kind === 'chat-clarify' || action.kind === 'group-clarify'
+  const clarify = action.kind === 'chat-clarify'
   return {
     title: t(clarify ? 'settings.display.approvalNotificationClarifyTitle' : 'settings.display.approvalNotificationTitle'),
     body: t('settings.display.approvalNotificationBody'),
@@ -338,9 +309,6 @@ function pendingSourceClickUrl(action: GlobalPendingAction): string {
     return session?.source === 'global_agent'
       ? `/hermes/global-agent/session/${sessionId}${profileQuery}`
       : `/hermes/session/${sessionId}${profileQuery}`
-  }
-  if (action.kind === 'group-approval' || action.kind === 'group-clarify') {
-    return `/hermes/group-chat/room/${encodeURIComponent(action.pending.roomId)}${profileQuery}`
   }
   const query = new URLSearchParams({
     profile: action.profile,
@@ -375,7 +343,7 @@ function showPendingInteractionExpired() {
 }
 
 function createGlobalNotification(action: GlobalPendingAction): NotificationReactive {
-  const clarify = action.kind === 'chat-clarify' || action.kind === 'group-clarify'
+  const clarify = action.kind === 'chat-clarify'
   return notification.create({
     title: () => notificationTitle(action, clarify),
     content: clarify
@@ -453,7 +421,6 @@ onMounted(() => {
   window.addEventListener(PENDING_INTERACTION_EXPIRED_EVENT, showPendingInteractionExpired)
   window.addEventListener('hermes:workflow-approval-visible', handleVisibleWorkflowApproval)
   resetWorkflowSubscriptions(profilesStore.activeProfileName)
-  void groupChatStore.connect().catch(() => undefined)
   loadApprovalSoundSetting()
 })
 
@@ -471,7 +438,6 @@ onUnmounted(() => {
   pendingNotificationKeys.clear()
   stopWorkflowStatus?.()
   disconnectWorkflowSocket()
-  groupChatStore.disconnect()
   for (const handle of handles.values()) handle.destroy()
   handles.clear()
 })
