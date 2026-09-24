@@ -1,0 +1,344 @@
+From 4252decddef32a1af0e11796cdc1e38d24ef26b8 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 24 Sep 2026 18:23:53 +0800
+Subject: [PATCH] feat(web): rework the page sidebar into a flat nav with a
+ history toggle
+
+- fold the history entry into the top action group
+  (new chat / search / history / Agent manager / models)
+- turn it into the upstream history toggle: on the history page the entry
+  reads "Sessions" (chat.sessions) with a chat bubble icon and routes back
+  to the active session list, otherwise it reads "History" with the clock
+  icon and routes to hermes.history
+- drop the single-chat/history conversation switch (tab grid), its CSS
+  (including the dark-mode rule), the now-unused NTooltip import and
+  openChat(), plus the sidebar.singleChat key in all 11 locales
+---
+ .../src/components/layout/PageSidebarNav.vue  | 141 ++++++------------
+ packages/client/src/i18n/locales/ar.ts        |   1 -
+ packages/client/src/i18n/locales/de.ts        |   1 -
+ packages/client/src/i18n/locales/en.ts        |   1 -
+ packages/client/src/i18n/locales/es.ts        |   1 -
+ packages/client/src/i18n/locales/fr.ts        |   1 -
+ packages/client/src/i18n/locales/ja.ts        |   1 -
+ packages/client/src/i18n/locales/ko.ts        |   1 -
+ packages/client/src/i18n/locales/pt.ts        |   1 -
+ packages/client/src/i18n/locales/ru.ts        |   1 -
+ packages/client/src/i18n/locales/zh-TW.ts     |   1 -
+ packages/client/src/i18n/locales/zh.ts        |   1 -
+ 12 files changed, 43 insertions(+), 109 deletions(-)
+
+diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
+index e939d1361..9e6a4fef4 100644
+--- a/packages/client/src/components/layout/PageSidebarNav.vue
++++ b/packages/client/src/components/layout/PageSidebarNav.vue
+@@ -1,6 +1,5 @@
+ <script setup lang="ts">
+ import { computed } from 'vue'
+-import { NTooltip } from 'naive-ui'
+ import { useI18n } from 'vue-i18n'
+ import { useRouter } from 'vue-router'
+ import { isStoredSuperAdmin } from '@/api/client'
+@@ -24,14 +23,15 @@ const { openSessionSearch } = useSessionSearch()
+ const canManageAgents = computed(() => isStoredSuperAdmin())
+ 
+ const primaryText = computed(() => props.primaryLabel || t('chat.newChat'))
+-
+-function openChat() {
+-  if (props.active === 'chat') return
+-  void router.push({ name: 'hermes.chat' })
+-}
++const historyButtonLabel = computed(() =>
++  props.active === 'history' ? t('chat.sessions') : t('sidebar.history'),
++)
+ 
+ function openHistory() {
+-  if (props.active === 'history') return
++  if (props.active === 'history') {
++    void router.push({ name: 'hermes.chat' })
++    return
++  }
+   void router.push({ name: 'hermes.history' })
+ }
+ 
+@@ -83,6 +83,42 @@ function openModels() {
+         </svg>
+         <span>{{ t('sidebar.search') }}</span>
+       </button>
++      <button
++        class="page-sidebar-tab"
++        type="button"
++        @click="openHistory"
++      >
++        <svg
++          v-if="active === 'history'"
++          width="15"
++          height="15"
++          viewBox="0 0 24 24"
++          fill="none"
++          stroke="currentColor"
++          stroke-width="1.8"
++          stroke-linecap="round"
++          stroke-linejoin="round"
++          aria-hidden="true"
++        >
++          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
++        </svg>
++        <svg
++          v-else
++          width="15"
++          height="15"
++          viewBox="0 0 24 24"
++          fill="none"
++          stroke="currentColor"
++          stroke-width="1.8"
++          stroke-linecap="round"
++          stroke-linejoin="round"
++          aria-hidden="true"
++        >
++          <circle cx="12" cy="12" r="9" />
++          <path d="M12 7v5l3 2" />
++        </svg>
++        <span>{{ historyButtonLabel }}</span>
++      </button>
+       <button
+         v-if="canManageAgents"
+         class="page-sidebar-tab"
+@@ -132,45 +168,6 @@ function openModels() {
+         <span>{{ t('sidebar.models') }}</span>
+       </button>
+     </div>
+-    <div class="conversation-switch conversation-switch--two" role="tablist" aria-label="Conversation type">
+-      <NTooltip trigger="hover" placement="top">
+-        <template #trigger>
+-          <button
+-            class="conversation-switch-tab"
+-            :class="{ active: active === 'chat' }"
+-            type="button"
+-            role="tab"
+-            :aria-label="t('sidebar.singleChat')"
+-            :aria-selected="active === 'chat'"
+-            @click="openChat"
+-          >
+-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+-              <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+-            </svg>
+-          </button>
+-        </template>
+-        {{ t('sidebar.singleChat') }}
+-      </NTooltip>
+-      <NTooltip trigger="hover" placement="top">
+-        <template #trigger>
+-          <button
+-            class="conversation-switch-tab"
+-            :class="{ active: active === 'history' }"
+-            type="button"
+-            role="tab"
+-            :aria-label="t('sidebar.history')"
+-            :aria-selected="active === 'history'"
+-            @click="openHistory"
+-          >
+-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+-              <circle cx="12" cy="12" r="9" />
+-              <path d="M12 7v5l3 2" />
+-            </svg>
+-          </button>
+-        </template>
+-        {{ t('sidebar.history') }}
+-      </NTooltip>
+-    </div>
+   </div>
+ </template>
+ 
+@@ -227,56 +224,4 @@ function openModels() {
+     color: $text-primary;
+   }
+ }
+-
+-.conversation-switch {
+-  display: grid;
+-  grid-template-columns: repeat(2, minmax(0, 1fr));
+-  gap: 2px;
+-  padding: 2px;
+-  border-radius: $radius-sm;
+-  background: rgba(var(--accent-primary-rgb), 0.05);
+-}
+-
+-.conversation-switch--two {
+-  grid-template-columns: repeat(2, minmax(0, 1fr));
+-}
+-
+-.conversation-switch-tab {
+-  width: 100%;
+-  min-width: 0;
+-  height: 30px;
+-  border: none;
+-  border-radius: 5px;
+-  background: transparent;
+-  color: $text-secondary;
+-  display: inline-flex;
+-  align-items: center;
+-  justify-content: center;
+-  cursor: pointer;
+-  transition:
+-    background-color $transition-fast,
+-    color $transition-fast;
+-
+-  svg {
+-    flex: 0 0 auto;
+-  }
+-
+-  &:hover {
+-    color: $text-primary;
+-  }
+-
+-  &.active {
+-    background: $bg-card;
+-    color: $text-primary;
+-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+-  }
+-}
+-
+-:global(.dark .conversation-switch--two .conversation-switch-tab.active) {
+-  background: $bg-card-hover;
+-  color: $accent-primary;
+-  box-shadow:
+-    inset 0 0 0 1px $border-color,
+-    0 2px 5px rgba(0, 0, 0, 0.22);
+-}
+ </style>
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index 365443ec1..acf39430b 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -380,7 +380,6 @@ export default {
+     gateways: 'البوابات',
+     terminal: 'الطرفية',
+     browser: 'المتصفح',
+-    singleChat: 'محادثة',
+     globalAgent: 'الوكيل العام',
+     files: 'الملفات',
+     devices: 'الأجهزة',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 45135680e..c83b78bb8 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -390,7 +390,6 @@ export default {
+     socialMessages: 'Nachrichten senden',
+     terminal: 'Konsole',
+     browser: 'Browser',
+-    singleChat: 'Chat',
+     globalAgent: 'Global Agent',
+     files: 'Dateien',
+     devices: 'Gerate',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 922f7b45b..029e690f7 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -380,7 +380,6 @@ export default {
+     gateways: 'Gateways',
+     terminal: 'Terminal',
+     browser: 'Browser',
+-    singleChat: 'Chat',
+     globalAgent: 'Global Agent',
+     files: 'Files',
+     devices: 'Devices',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 5880a4845..11b548169 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -390,7 +390,6 @@ export default {
+     socialMessages: 'Enviar mensajes',
+     terminal: 'Terminal',
+     browser: 'Navegador',
+-    singleChat: 'Chat',
+     globalAgent: 'Global Agent',
+     files: 'Archivos',
+     devices: 'Dispositivos',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 5af99ff6d..cfd642753 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -390,7 +390,6 @@ export default {
+     socialMessages: 'Envoyer des messages',
+     terminal: 'Terminal',
+     browser: 'Navigateur',
+-    singleChat: 'Discussion',
+     globalAgent: 'Global Agent',
+     files: 'Fichiers',
+     devices: 'Appareils',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index f61804744..e1cd99396 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -390,7 +390,6 @@ export default {
+     socialMessages: 'メッセージ送信',
+     terminal: 'ターミナル',
+     browser: 'ブラウザー',
+-    singleChat: 'チャット',
+     globalAgent: 'Global Agent',
+     files: 'ファイル',
+     devices: 'デバイス',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 75f922d3a..4959b9a5a 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -390,7 +390,6 @@ export default {
+     socialMessages: '메시지 보내기',
+     terminal: '터미널',
+     browser: '브라우저',
+-    singleChat: '채팅',
+     globalAgent: 'Global Agent',
+     files: '파일',
+     devices: '기기',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 51a12336d..b07224f1b 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -390,7 +390,6 @@ export default {
+     socialMessages: 'Enviar mensagens',
+     terminal: 'Terminal',
+     browser: 'Navegador',
+-    singleChat: 'Chat',
+     globalAgent: 'Global Agent',
+     files: 'Arquivos',
+     devices: 'Dispositivos',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 7206c42d1..c7c2b4c63 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -305,7 +305,6 @@ export default {
+     gateways: 'Шлюзы',
+     terminal: 'Терминал',
+     browser: 'Браузер',
+-    singleChat: 'Чат',
+     globalAgent: 'Global Agent',
+     files: 'Файлы',
+     devices: 'Устройства',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index d41e571a8..d5cd49768 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -380,7 +380,6 @@ export default {
+     gateways: '閘道',
+     terminal: '終端機',
+     browser: '瀏覽器',
+-    singleChat: '單聊',
+     globalAgent: '全局',
+     files: '檔案',
+     devices: '裝置',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 577b02d0b..d37e606c4 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -380,7 +380,6 @@ export default {
+     gateways: '网关',
+     terminal: '终端',
+     browser: '浏览器',
+-    singleChat: '单聊',
+     globalAgent: '全局',
+     files: '文件',
+     devices: '设备',
+-- 
+2.53.0
+

@@ -1,0 +1,83 @@
+From 63229e34cbdbb0cf8994b29ea4e1cb143f50212a Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 24 Sep 2026 18:23:53 +0800
+Subject: [PATCH] test(web): cover the flat page sidebar and history toggle
+
+- rewrite the sidebar ordering assertions for the flat action group
+  (search < history < Agent manager < models, no conversation switch)
+- assert the history entry toggles its label (chat.sessions /
+  sidebar.history) and routes back to hermes.chat from the history page
+- drop the conversation-switch dark-mode assertion from the style system
+  suite
+---
+ .../page-sidebar-nav-history-position.test.ts | 28 ++++++++++++++-----
+ tests/client/style-system.test.ts             | 10 -------
+ 2 files changed, 21 insertions(+), 17 deletions(-)
+
+diff --git a/tests/client/page-sidebar-nav-history-position.test.ts b/tests/client/page-sidebar-nav-history-position.test.ts
+index 4a8c280a9..5b95811c4 100644
+--- a/tests/client/page-sidebar-nav-history-position.test.ts
++++ b/tests/client/page-sidebar-nav-history-position.test.ts
+@@ -10,17 +10,31 @@ const historyViewSource = readFileSync(
+   'utf8',
+ )
+ 
+-describe('page sidebar conversation switch', () => {
+-  it('places history after single chat', () => {
+-    const switchStart = navSource.indexOf('conversation-switch conversation-switch--two')
+-    const switchSource = navSource.slice(switchStart)
++describe('page sidebar navigation', () => {
++  it('places the history entry between search and the Agent manager entry', () => {
++    const tabsStart = navSource.indexOf('class="page-sidebar-tabs"')
++    const tabsSource = navSource.slice(tabsStart)
+ 
+-    expect(switchStart).toBeGreaterThan(-1)
+-    expect(switchSource.indexOf('@click="openChat"')).toBeLessThan(switchSource.indexOf('@click="openHistory"'))
++    expect(tabsStart).toBeGreaterThan(-1)
++    expect(tabsSource.indexOf('@click="openSessionSearch"')).toBeLessThan(tabsSource.indexOf('@click="openHistory"'))
++    expect(tabsSource.indexOf('@click="openHistory"')).toBeLessThan(tabsSource.indexOf('@click="openAgentManager"'))
++    expect(tabsSource.indexOf('@click="openAgentManager"')).toBeLessThan(tabsSource.indexOf('@click="openModels"'))
+     expect(navSource.match(/@click="openHistory"/g)).toHaveLength(1)
++    expect(navSource).not.toContain('conversation-switch')
+   })
+ 
+-  it('shows the conversation switch on the history page', () => {
++  it('toggles the history entry back to the active session list', () => {
++    expect(navSource).toContain("props.active === 'history' ? t('chat.sessions') : t('sidebar.history')")
++
++    const openHistory = navSource.slice(
++      navSource.indexOf('function openHistory()'),
++      navSource.indexOf('function openAgentManager()'),
++    )
++    expect(openHistory).toContain("router.push({ name: 'hermes.chat' })")
++    expect(openHistory).toContain("router.push({ name: 'hermes.history' })")
++  })
++
++  it('renders the page sidebar on the history page', () => {
+     const historyNav = historyViewSource.match(/<PageSidebarNav[\s\S]*?\/>/)?.[0] || ''
+ 
+     expect(historyNav).toContain('active="history"')
+diff --git a/tests/client/style-system.test.ts b/tests/client/style-system.test.ts
+index 79c4ff749..7f8140d28 100644
+--- a/tests/client/style-system.test.ts
++++ b/tests/client/style-system.test.ts
+@@ -73,16 +73,6 @@ describe('client style system', () => {
+     expect(historyMessageList).toContain('animation: history-message-surface-fade-in 1.5s ease both;')
+   })
+ 
+-  it('keeps the two-way conversation switch active state visible in dark mode', () => {
+-    const pageSidebarNav = readClientFile('components/layout/PageSidebarNav.vue')
+-
+-    expect(pageSidebarNav).toContain(
+-      ':global(.dark .conversation-switch--two .conversation-switch-tab.active)',
+-    )
+-    expect(pageSidebarNav).toContain('background: $bg-card-hover;')
+-    expect(pageSidebarNav).toContain('inset 0 0 0 1px $border-color')
+-  })
+-
+   it('keeps the agent manager page aligned with the app main surface', () => {
+     const agentManagerView = readClientFile('views/hermes/AgentManagerView.vue')
+     const chatPanel = readClientFile('components/hermes/chat/ChatPanel.vue')
+-- 
+2.53.0
+
