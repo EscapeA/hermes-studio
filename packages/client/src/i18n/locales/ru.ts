@@ -569,7 +569,6 @@ export default {
     gateways: 'Шлюзы',
     terminal: 'Терминал',
     browser: 'Браузер',
-    singleChat: 'Чат',
     globalAgent: 'Global Agent',
     files: 'Файлы',
     devices: 'Устройства',

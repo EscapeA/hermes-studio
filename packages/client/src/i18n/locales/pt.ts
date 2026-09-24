@@ -654,7 +654,6 @@ export default {
     socialMessages: 'Enviar mensagens',
     terminal: 'Terminal',
     browser: 'Navegador',
-    singleChat: 'Chat',
     globalAgent: 'Global Agent',
     files: 'Arquivos',
     devices: 'Dispositivos',

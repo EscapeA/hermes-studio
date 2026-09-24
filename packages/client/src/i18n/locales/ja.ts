@@ -655,7 +655,6 @@ export default {
     socialMessages: 'メッセージ送信',
     terminal: 'ターミナル',
     browser: 'ブラウザー',
-    singleChat: 'チャット',
     globalAgent: 'Global Agent',
     files: 'ファイル',
     devices: 'デバイス',
