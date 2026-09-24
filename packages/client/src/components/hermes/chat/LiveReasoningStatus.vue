@@ -4,14 +4,12 @@ import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import thinkingImage from '@/assets/thinking.gif'
 import type { ChatAgentAvatar } from '@/utils/chat-agent-avatar'
-
 const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
 
 const props = withDefaults(defineProps<{
   reasoning?: string | null
   reasoningId?: string | number | null
   elapsed: string
-  agent?: ChatAgentAvatar
   deploymentSessionId?: string
   /** Decode speed of the run's latest finished call, e.g. `94 tok/s`; hidden when null. */
   speed?: string | null
@@ -19,7 +17,6 @@ const props = withDefaults(defineProps<{
   agent: () => ({ label: 'Hermes', src: deploymentUrl('/coding-agents/hermes.png') }),
 })
 const isEkko = computed(() => props.agent.label === 'Ekko')
-
 const { t } = useI18n()
 
 const reasoningBodyRef = ref<HTMLElement | null>(null)

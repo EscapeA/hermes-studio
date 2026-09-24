@@ -16,8 +16,7 @@ import { useChatStore } from "@/stores/hermes/chat";
 import { useFilesStore } from "@/stores/hermes/files";
 import { useToolPanelStore } from "@/stores/hermes/tool-panel";
 import { useSettingsStore } from "@/stores/hermes/settings";
-import { chatSessionAgentAvatar, type ChatAgentAvatar } from "@/utils/chat-agent-avatar";
-import TaskPlanCard from './TaskPlanCard.vue';
+import { chatSessionAgentAvatar, type ChatAgentAvatar } from "@/utils/chat-agent-avatar";import TaskPlanCard from './TaskPlanCard.vue';
 import ToolChangeCard from "./ToolChangeCard.vue";
 import {
   copyTextToClipboard,
@@ -34,8 +33,7 @@ import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subag
 import type { WorkspaceRunChangeSummary } from "@/api/studio/sessions";
 import { isServerTtsProvider } from "@/api/studio/tts";
 import type { ProfileAvatar as ProfileAvatarData } from "@/api/hermes/profiles";
-import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";
-import ImagePreviewOverlay from "./ImagePreviewOverlay.vue";
+import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";import ImagePreviewOverlay from "./ImagePreviewOverlay.vue";
 import MarkdownRenderer from "./MarkdownRenderer.vue";
 
 const TOOL_PAYLOAD_DISPLAY_LIMIT = 1000;
@@ -51,12 +49,10 @@ const props = withDefaults(defineProps<{
   highlight?: boolean
   headingIdPrefix?: string
   showForkAction?: boolean
-  assistantAgent?: ChatAgentAvatar
+  assistantAgent?: ChatAgentLabel
   userProfileName?: string
-  userProfileAvatar?: ProfileAvatarData | null
 }>(), {
   userProfileName: "default",
-  userProfileAvatar: null,
 });
 const { t } = useI18n();
 const toast = useMessage();
@@ -239,7 +235,6 @@ const settingsStore = useSettingsStore();
 const speech = useGlobalSpeech();
 const voiceSettings = useVoiceSettings();
 const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
-
 // Copy entire bubble content
 const copyableContent = computed(() => {
   if (props.message.role === 'tool') return null
@@ -1025,12 +1020,6 @@ onBeforeUnmount(() => {
         <div class="msg-content" :class="message.role">
           <div v-if="message.role === 'user'" class="message-author user-message-author">
             <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
-            <ProfileAvatar
-              class="user-profile-avatar"
-              :name="userProfileName"
-              :avatar="userProfileAvatar"
-              :size="22"
-            />
           </div>
           <div v-if="message.role === 'assistant'" class="message-author assistant-message-author">
             <img
@@ -1038,8 +1027,7 @@ onBeforeUnmount(() => {
               :src="assistantAgent.src"
               :alt="assistantAgent.label"
               draggable="false"
-            >
-            <span class="message-author-name" dir="auto">{{ assistantAgent.label }}</span>
+            >            <span class="message-author-name" dir="auto">{{ assistantAgent.label }}</span>
           </div>
           <div
             class="message-bubble"
@@ -1376,16 +1364,6 @@ onBeforeUnmount(() => {
       z-index: 1;
     }
 
-    .msg-avatar {
-      width: 22px;
-      height: 22px;
-      flex-shrink: 0;
-      box-sizing: border-box;
-      border: var(--border-width, 1px) solid #fff;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
     .message-bubble {
       background-color: var(--theme-assistantMessage-bg, $msg-assistant-bg);
       border-radius: var(--radius-component, 10px);
@@ -1473,11 +1451,6 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.user-profile-avatar {
-  box-sizing: border-box;
-  border: var(--border-width, 1px) solid #fff;
 }
 
 .message-bubble {
