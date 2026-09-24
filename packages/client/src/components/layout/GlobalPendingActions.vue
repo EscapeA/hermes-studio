@@ -10,10 +10,7 @@ import { useSettingsStore } from '@/stores/hermes/settings'
 import { copyToClipboard } from '@/utils/clipboard'
 import { playCompletionSound } from '@/utils/completion-sound'
 import { showSystemNotification } from '@/utils/completion-notification'
-import { workflowApprovalKey } from '@/utils/workflow-approval-key'
 import { PENDING_INTERACTION_EXPIRED_EVENT } from '@/utils/pending-interaction'
-import { approveWorkflowNode, type WorkflowRecord } from '@/api/studio/workflows'
-import { listWorkflowsSocket, onWorkflowStatusUpdated, subscribeWorkflowStatuses, disconnectWorkflowSocket, type WorkflowRuntimeStatus } from '@/api/studio/workflow-socket'
 
 const chatStore = useChatStore()
 const profilesStore = useProfilesStore()
@@ -31,11 +28,6 @@ const pendingNotificationKeys = new Set<string>()
 const clarifyDrafts = reactive<Record<string, string>>({})
 const submitting = reactive<Record<string, boolean>>({})
 const copiedCommandKey = ref<string | null>(null)
-const workflows = ref<WorkflowRecord[]>([])
-const workflowStatuses = reactive<Record<string, WorkflowRuntimeStatus>>({})
-const visibleWorkflowApprovalKeys = reactive(new Set<string>())
-let stopWorkflowStatus: (() => void) | null = null
-let workflowSubscriptionGeneration = 0
 let pendingBaselineEstablished = false
 let approvalSoundArmed = false
 let settingsLoadGeneration = 0
@@ -72,35 +64,10 @@ function loadApprovalSoundSetting() {
   })
 }
 
-function resetWorkflowSubscriptions(profile?: string | null) {
-  const generation = ++workflowSubscriptionGeneration
-  stopWorkflowStatus?.()
-  stopWorkflowStatus = onWorkflowStatusUpdated(status => {
-    if (generation === workflowSubscriptionGeneration) workflowStatuses[status.workflowId] = status
-  }, profile)
-  workflows.value = []
-  for (const key of Object.keys(workflowStatuses)) delete workflowStatuses[key]
-  void listWorkflowsSocket(profile).then(records => {
-    if (generation === workflowSubscriptionGeneration) workflows.value = records
-  }).catch(() => undefined)
-  void subscribeWorkflowStatuses(undefined, profile).then(statuses => {
-    if (generation !== workflowSubscriptionGeneration) return
-    for (const status of statuses) {
-      if (status.runId) {
-        for (const { nodeId, executionId } of status.pendingApprovals || []) {
-          announcedKeys.add(workflowApprovalKey(status.workflowId, status.runId, nodeId, executionId))
-        }
-      }
-      workflowStatuses[status.workflowId] = status
-    }
-  }).catch(() => undefined)
-}
-
 type ApprovalChoice = PendingApproval['choices'][number]
 type GlobalPendingAction =
   | { key: string; profile: string; kind: 'chat-approval'; title: string; pending: PendingApproval }
   | { key: string; profile: string; kind: 'chat-clarify'; title: string; pending: PendingClarify }
-  | { key: string; profile: string; kind: 'workflow-approval'; title: string; workflowId: string; runId: string; nodeId: string; executionId?: string }
 
 function normalizePendingSourceTitle(title: string): string {
   return title.replace(/^(?:\s*branch:\s*)+/i, 'branch: ').trim()
@@ -110,14 +77,6 @@ function sessionTitle(sessionId: string): string {
   return normalizePendingSourceTitle(chatStore.sessions.find(session => session.id === sessionId)?.title || sessionId)
 }
 
-function handleVisibleWorkflowApproval(event: Event) {
-  const detail = (event as CustomEvent<{ key?: string; visible?: boolean }>).detail
-  const key = detail?.key
-  if (!key) return
-  if (detail.visible === false) visibleWorkflowApprovalKeys.delete(key)
-  else visibleWorkflowApprovalKeys.add(key)
-}
-
 function pendingSoundActionKeys(): string[] {
   const keys: string[] = []
   for (const pending of chatStore.pendingApprovals.values()) {
@@ -125,12 +84,6 @@ function pendingSoundActionKeys(): string[] {
   }
   for (const pending of chatStore.pendingClarifies.values()) {
     keys.push(`chat-clarify:${pending.sessionId}:${pending.clarifyId}`)
-  }
-  for (const status of Object.values(workflowStatuses)) {
-    if (!status.runId) continue
-    for (const { nodeId, executionId } of status.pendingApprovals || []) {
-      keys.push(workflowApprovalKey(status.workflowId, status.runId, nodeId, executionId))
-    }
   }
   return keys
 }
@@ -148,23 +101,6 @@ function pendingActions(suppressVisibleSources = true): GlobalPendingAction[] {
   for (const pending of chatStore.pendingClarifies.values()) {
     if (pending.sessionId === visibleChatSessionId) continue
     actions.push({ key: `chat-clarify:${pending.sessionId}:${pending.clarifyId}`, profile, kind: 'chat-clarify', title: sessionTitle(pending.sessionId), pending })
-  }
-  for (const status of Object.values(workflowStatuses)) {
-    if (!status.runId) continue
-    for (const { nodeId, executionId } of status.pendingApprovals || []) {
-      const key = workflowApprovalKey(status.workflowId, status.runId, nodeId, executionId)
-      if (visibleWorkflowApprovalKeys.has(key)) continue
-      actions.push({
-        key,
-        profile,
-        kind: 'workflow-approval',
-        title: workflows.value.find(workflow => workflow.id === status.workflowId)?.name || status.workflowId,
-        workflowId: status.workflowId,
-        runId: status.runId,
-        nodeId,
-        executionId,
-      })
-    }
   }
   return actions
 }
@@ -265,31 +201,12 @@ async function submitClarify(action: Extract<GlobalPendingAction, { kind: 'chat-
   }
 }
 
-async function submitWorkflowApproval(action: Extract<GlobalPendingAction, { kind: 'workflow-approval' }>, approved: boolean) {
-  if (submitting[action.key]) return
-  submitting[action.key] = true
-  try {
-    await approveWorkflowNode(action.workflowId, action.runId, action.nodeId, approved, action.executionId)
-  } catch (error) {
-    message.error(error instanceof Error ? error.message : String(error))
-  } finally {
-    submitting[action.key] = false
-  }
-}
-
 function openPendingSource(action: GlobalPendingAction) {
-  if (action.kind === 'chat-approval' || action.kind === 'chat-clarify') {
-    const sessionId = action.pending.sessionId
-    const session = chatStore.sessions.find(item => item.id === sessionId)
-    void router.push({
-      name: session?.source === 'global_agent' ? 'hermes.globalAgentSession' : 'hermes.session',
-      params: { sessionId },
-    })
-    return
-  }
+  const sessionId = action.pending.sessionId
+  const session = chatStore.sessions.find(item => item.id === sessionId)
   void router.push({
-    name: 'hermes.workflow',
-    query: { workflowId: action.workflowId, runId: action.runId, nodeId: action.nodeId, executionId: action.executionId },
+    name: session?.source === 'global_agent' ? 'hermes.globalAgentSession' : 'hermes.session',
+    params: { sessionId },
   })
 }
 
@@ -303,21 +220,11 @@ function systemNotificationCopy(action: GlobalPendingAction): { title: string; b
 
 function pendingSourceClickUrl(action: GlobalPendingAction): string {
   const profileQuery = `?profile=${encodeURIComponent(action.profile)}`
-  if (action.kind === 'chat-approval' || action.kind === 'chat-clarify') {
-    const sessionId = encodeURIComponent(action.pending.sessionId)
-    const session = chatStore.sessions.find(item => item.id === action.pending.sessionId)
-    return session?.source === 'global_agent'
-      ? `/hermes/global-agent/session/${sessionId}${profileQuery}`
-      : `/hermes/session/${sessionId}${profileQuery}`
-  }
-  const query = new URLSearchParams({
-    profile: action.profile,
-    workflowId: action.workflowId,
-    runId: action.runId,
-    nodeId: action.nodeId,
-    ...(action.executionId ? { executionId: action.executionId } : {}),
-  })
-  return `/hermes/workflow?${query.toString()}`
+  const sessionId = encodeURIComponent(action.pending.sessionId)
+  const session = chatStore.sessions.find(item => item.id === action.pending.sessionId)
+  return session?.source === 'global_agent'
+    ? `/hermes/global-agent/session/${sessionId}${profileQuery}`
+    : `/hermes/session/${sessionId}${profileQuery}`
 }
 
 function notifyPendingAction(action: GlobalPendingAction) {
@@ -348,26 +255,19 @@ function createGlobalNotification(action: GlobalPendingAction): NotificationReac
     title: () => notificationTitle(action, clarify),
     content: clarify
       ? () => clarifyContent(action)
-      : action.kind === 'workflow-approval'
-        ? () => h('div', { class: 'global-approval-content' }, t('workflow.status.pending_approval'))
-        : () => h('div', { class: 'global-approval-content' }, [
-            interactionCountdown(action),
-            action.pending.description
-              ? h('div', { class: 'global-approval-description' }, action.pending.description)
-              : null,
-            approvalCommand(action),
-          ]),
+      : () => h('div', { class: 'global-approval-content' }, [
+          interactionCountdown(action),
+          action.pending.description
+            ? h('div', { class: 'global-approval-description' }, action.pending.description)
+            : null,
+          approvalCommand(action),
+        ]),
     action: clarify
       ? () => h(NButton, {
           size: 'small', type: 'primary', disabled: !(clarifyDrafts[action.key] || '').trim(),
           loading: submitting[action.key], onClick: () => void submitClarify(action),
         }, { default: () => t('chat.clarifySubmit') })
-      : action.kind === 'workflow-approval'
-        ? () => h('div', { class: 'global-pending-actions' }, [
-            h(NButton, { size: 'small', type: 'error', secondary: true, loading: submitting[action.key], onClick: () => void submitWorkflowApproval(action, false) }, { default: () => t('chat.approvalDeny') }),
-            h(NButton, { size: 'small', type: 'primary', loading: submitting[action.key], onClick: () => void submitWorkflowApproval(action, true) }, { default: () => t('common.confirm') }),
-          ])
-        : () => approvalButtons(action),
+      : () => approvalButtons(action),
     duration: 0,
     closable: false,
   })
@@ -419,25 +319,18 @@ watch(pendingActions, actions => {
 
 onMounted(() => {
   window.addEventListener(PENDING_INTERACTION_EXPIRED_EVENT, showPendingInteractionExpired)
-  window.addEventListener('hermes:workflow-approval-visible', handleVisibleWorkflowApproval)
-  resetWorkflowSubscriptions(profilesStore.activeProfileName)
   loadApprovalSoundSetting()
 })
 
-watch(() => profilesStore.activeProfileName, profile => {
-  resetWorkflowSubscriptions(profile)
+watch(() => profilesStore.activeProfileName, () => {
   loadApprovalSoundSetting()
 })
 
 onUnmounted(() => {
   window.removeEventListener(PENDING_INTERACTION_EXPIRED_EVENT, showPendingInteractionExpired)
-  window.removeEventListener('hermes:workflow-approval-visible', handleVisibleWorkflowApproval)
-  visibleWorkflowApprovalKeys.clear()
   settingsLoadGeneration++
   pendingSoundKeys.clear()
   pendingNotificationKeys.clear()
-  stopWorkflowStatus?.()
-  disconnectWorkflowSocket()
   for (const handle of handles.values()) handle.destroy()
   handles.clear()
 })

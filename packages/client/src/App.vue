@@ -115,7 +115,6 @@ const usesPageSidebar = computed(() =>
     "hermes.historySession",
     "hermes.globalAgent",
     "hermes.globalAgentSession",
-    "hermes.workflow",
   ].includes(route.name as string),
 );
 const usesHermesConfigSidebar = computed(
@@ -462,7 +461,6 @@ usePwa();
 
   :deep(.chat-panel),
   :deep(.history-panel),
-  :deep(.workflow-view),
   :deep(.petdex-view) {
     background-color: transparent;
   }
@@ -472,15 +470,13 @@ usePwa();
   :deep(.ekko-config-sidebar),
   :deep(.coding-agent-config-sidebar),
   :deep(.chat-panel > .session-list),
-  :deep(.history-panel > .session-list),
-  :deep(.workflow-view > .workflow-sidebar) {
+  :deep(.history-panel > .session-list) {
     background-color: rgba(var(--bg-sidebar-surface-rgb), 0.72);
     -webkit-backdrop-filter: blur(8px) saturate(110%);
     backdrop-filter: blur(8px) saturate(110%);
   }
 
-  :deep(.history-panel > .chat-main),
-  :deep(.workflow-view > .workflow-main) {
+  :deep(.history-panel > .chat-main) {
     background-color: rgba(var(--bg-main-surface-rgb), 0.72);
     -webkit-backdrop-filter: blur(8px) saturate(110%);
     backdrop-filter: blur(8px) saturate(110%);
@@ -563,14 +559,12 @@ usePwa();
 
   .app-main--card,
   :deep(.chat-panel > .chat-main),
-  :deep(.history-panel > .chat-main),
-  :deep(.workflow-view > .workflow-main) {
+  :deep(.history-panel > .chat-main) {
     margin-top: 50px;
   }
 
   :deep(.chat-panel > .session-list > .page-sidebar-top),
-  :deep(.history-panel > .session-list > .page-sidebar-top),
-  :deep(.workflow-view > .workflow-sidebar > .page-sidebar-top) {
+  :deep(.history-panel > .session-list > .page-sidebar-top) {
     -webkit-app-region: drag;
 
     button,
@@ -592,8 +586,7 @@ usePwa();
    .app-layout > :deep(.ekko-config-sidebar),
    .app-layout > :deep(.coding-agent-config-sidebar),
   :deep(.chat-panel > .session-list),
-  :deep(.history-panel > .session-list),
-  :deep(.workflow-view > .workflow-sidebar) {
+  :deep(.history-panel > .session-list) {
     position: relative;
 
     &::before {
@@ -616,8 +609,7 @@ usePwa();
   }
 
   :deep(.chat-panel > .session-list > .page-sidebar-top),
-  :deep(.history-panel > .session-list > .page-sidebar-top),
-  :deep(.workflow-view > .workflow-sidebar > .page-sidebar-top) {
+  :deep(.history-panel > .session-list > .page-sidebar-top) {
     padding-top: 32px;
   }
 }
