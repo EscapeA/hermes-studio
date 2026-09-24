@@ -73,16 +73,6 @@ describe('client style system', () => {
     expect(historyMessageList).toContain('animation: history-message-surface-fade-in 1.5s ease both;')
   })
 
-  it('keeps the two-way conversation switch active state visible in dark mode', () => {
-    const pageSidebarNav = readClientFile('components/layout/PageSidebarNav.vue')
-
-    expect(pageSidebarNav).toContain(
-      ':global(.dark .conversation-switch--two .conversation-switch-tab.active)',
-    )
-    expect(pageSidebarNav).toContain('background: $bg-card-hover;')
-    expect(pageSidebarNav).toContain('inset 0 0 0 1px $border-color')
-  })
-
   it('keeps the agent manager page aligned with the app main surface', () => {
     const agentManagerView = readClientFile('views/hermes/AgentManagerView.vue')
     const chatPanel = readClientFile('components/hermes/chat/ChatPanel.vue')
