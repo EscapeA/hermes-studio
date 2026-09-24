@@ -322,6 +322,15 @@ a {
     display: flex;
   }
 
+  // 页面侧边栏（抽屉）打开时把 ☰ 收起来。
+  // 抽屉本身用 z-index 盖住它（ChatPanel/HistoryView/WorkflowView 的
+  // .session-list 移动端 z-index 1000 > ☰ 的 99），但个别 WebView/合成层
+  // 会把 fixed 的 ☰ 画到抽屉之上，导致它压在「新建对话」上方；
+  // 这里改用状态兜底：抽屉开着就不渲染 ☰（抽屉自带关闭按钮 + 背板点击可关）。
+  .hamburger-btn--hidden {
+    display: none;
+  }
+
   .page-header {
     min-height: $mobile-topbar-min-height;
     padding: $mobile-topbar-padding !important;
