@@ -8,7 +8,7 @@ import { useSessionSearch } from '@/composables/useSessionSearch'
 import { getAgentManagerEntry, resolveAgentManagerEntryRoute } from '@/utils/agent-manager-entry'
 import DesktopUpdateDownloadTab from './DesktopUpdateDownloadTab.vue'
 
-type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'global' | 'workflow'
+type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'global'
 
 const props = defineProps<{
   active: ActiveSection
@@ -46,11 +46,6 @@ function openAgentManager() {
 function openModels() {
   if (props.active === 'models') return
   void router.push({ name: 'hermes.models' })
-}
-
-function openWorkflow() {
-  if (props.active === 'workflow') return
-  void router.push({ name: 'hermes.workflow' })
 }
 </script>
 
@@ -139,7 +134,7 @@ function openWorkflow() {
         <span>{{ t('sidebar.models') }}</span>
       </button>
     </div>
-    <div class="conversation-switch conversation-switch--three" role="tablist" aria-label="Conversation type">
+    <div class="conversation-switch conversation-switch--two" role="tablist" aria-label="Conversation type">
       <NTooltip trigger="hover" placement="top">
         <template #trigger>
           <button
@@ -157,28 +152,6 @@ function openWorkflow() {
           </button>
         </template>
         {{ t('sidebar.singleChat') }}
-      </NTooltip>
-      <NTooltip trigger="hover" placement="top">
-        <template #trigger>
-          <button
-            class="conversation-switch-tab"
-            :class="{ active: active === 'workflow' }"
-            type="button"
-            role="tab"
-            :aria-label="t('sidebar.workflow')"
-            :aria-selected="active === 'workflow'"
-            @click="openWorkflow"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="5" cy="12" r="3" />
-              <circle cx="19" cy="6" r="3" />
-              <circle cx="19" cy="18" r="3" />
-              <path d="M8 12h3a4 4 0 0 0 4-4V6" />
-              <path d="M8 12h3a4 4 0 0 1 4 4v2" />
-            </svg>
-          </button>
-        </template>
-        {{ t('sidebar.workflow') }}
       </NTooltip>
       <NTooltip trigger="hover" placement="top">
         <template #trigger>
@@ -266,8 +239,8 @@ function openWorkflow() {
   background: rgba(var(--accent-primary-rgb), 0.05);
 }
 
-.conversation-switch--three {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.conversation-switch--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .conversation-switch-tab {
@@ -301,7 +274,7 @@ function openWorkflow() {
   }
 }
 
-:global(.dark .conversation-switch--three .conversation-switch-tab.active) {
+:global(.dark .conversation-switch--two .conversation-switch-tab.active) {
   background: $bg-card-hover;
   color: $accent-primary;
   box-shadow:
