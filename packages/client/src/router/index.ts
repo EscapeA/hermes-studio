@@ -67,11 +67,6 @@ const router = createRouter({
       meta: { hermesConfig: true },
     },
     {
-      path: '/hermes/workflow',
-      name: 'hermes.workflow',
-      component: () => import('@/views/hermes/WorkflowView.vue'),
-    },
-    {
       path: '/hermes/models',
       name: 'hermes.models',
       component: () => import('@/views/hermes/ChatView.vue'),
