@@ -192,8 +192,6 @@ const usesPageSidebar = computed(() =>
     "hermes.historySession",
     "hermes.globalAgent",
     "hermes.globalAgentSession",
-    "hermes.groupChat",
-    "hermes.groupChatRoom",
     "hermes.workflow",
   ].includes(route.name as string),
 );
@@ -277,9 +275,9 @@ function handleMobileMenuClick() {
 }
 
 watch(
-  [isLoginPage, isInviteOnlyPage],
-  ([loginPage, inviteOnlyPage]) => {
-    if (loginPage || inviteOnlyPage) {
+  isLoginPage,
+  (loginPage) => {
+    if (loginPage) {
       appStore.stopHealthPolling();
       return;
     }
@@ -294,9 +292,7 @@ watch(
 onMounted(() => {
   window.addEventListener('resize', handleViewportResize);
   wideViewportQuery.addEventListener('change', handleWideViewportChange);
-  if (!isInviteOnlyPage.value) {
-    void syncThemeFromServer().catch(() => undefined);
-  }
+  void syncThemeFromServer().catch(() => undefined);
   const bridge = desktopBridge();
   if (
     !bridge?.isDesktop ||
@@ -461,10 +457,10 @@ useKeyboard();
             v-if="!isLoginPage && !isDesktopPetRoute && !isStandaloneChatPage && isStoredSuperAdmin()"
           />
           <ComputerUsePermissionPrompt
-            v-if="!isLoginPage && !isInviteOnlyPage && !isDesktopPetRoute && desktopBridge()?.computerUsePermissions?.claimReminder"
+            v-if="!isLoginPage && !isDesktopPetRoute && desktopBridge()?.computerUsePermissions?.claimReminder"
           />
           <StudioAnnouncementPrompt
-            v-if="!isLoginPage && !isInviteOnlyPage && !isDesktopPetRoute && !isStandaloneChatPage"
+            v-if="!isLoginPage && !isDesktopPetRoute && !isStandaloneChatPage"
           />
         </NNotificationProvider>
       </NDialogProvider>
@@ -730,8 +726,7 @@ useKeyboard();
   .app-main--card,
   :deep(.chat-panel > .chat-main),
   :deep(.history-panel > .page-loading-content > .chat-main),
-  :deep(.workflow-view > .page-loading-content > .workflow-main),
-  :deep(.group-chat-panel > .chat-main) {
+  :deep(.workflow-view > .page-loading-content > .workflow-main) {
     margin: 0;
     border: none;
     border-radius: 0;
@@ -798,7 +793,6 @@ useKeyboard();
 
   :deep(.chat-panel),
   :deep(.history-panel),
-  :deep(.group-chat-panel),
   :deep(.workflow-view),
   :deep(.petdex-view) {
     background-color: transparent;
@@ -806,8 +800,7 @@ useKeyboard();
 
   .studio-frame-surface,
   :deep(.desktop-titlebar:not(.desktop-titlebar--flush)),
-  :deep(.chat-panel > .chat-main > .chat-header),
-  :deep(.group-chat-panel > .chat-main > .chat-header) {
+  :deep(.chat-panel > .chat-main > .chat-header) {
     background-color: var(--theme-chrome-bg, var(--glass-chrome-bg));
     -webkit-backdrop-filter: var(--theme-chrome-filter, blur(16px) saturate(110%));
     backdrop-filter: var(--theme-chrome-filter, blur(16px) saturate(110%));
@@ -821,8 +814,6 @@ useKeyboard();
   :deep(.chat-panel > .session-list),
   :deep(.person-layout > .person-sidebar),
   :deep(.history-panel > .page-loading-content > .session-list),
-  :deep(.group-chat-panel > .room-sidebar),
-  :deep(.agent-avatar-rail),
   :deep(.workflow-view > .page-loading-content > .workflow-sidebar) {
     background-color: var(--theme-sidebar-bg, var(--glass-sidebar-bg));
     -webkit-backdrop-filter: var(--theme-sidebar-filter, blur(12px) saturate(110%));
@@ -839,8 +830,7 @@ useKeyboard();
     backdrop-filter: var(--theme-content-filter, blur(8px) saturate(110%));
   }
 
-  :deep(.chat-panel > .chat-main),
-  :deep(.group-chat-panel > .chat-main) {
+  :deep(.chat-panel > .chat-main) {
     background-color: transparent;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -851,15 +841,13 @@ useKeyboard();
     background-color: transparent;
   }
 
-  :deep(.chat-main-content),
-  :deep(.group-chat-surface) {
+  :deep(.chat-main-content) {
     background-color: var(--theme-content-bg, rgba(var(--bg-main-surface-rgb), 0.42));
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 
-  :deep(.virtual-message-list),
-  :deep(.group-message-shell) {
+  :deep(.virtual-message-list) {
     background-color: transparent;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -917,8 +905,7 @@ useKeyboard();
     .app-main--card,
     :deep(.chat-panel > .chat-main),
     :deep(.history-panel > .page-loading-content > .chat-main),
-    :deep(.workflow-view > .page-loading-content > .workflow-main),
-    :deep(.group-chat-panel > .chat-main) {
+    :deep(.workflow-view > .page-loading-content > .workflow-main) {
       margin-top: 50px;
     }
   }
@@ -926,8 +913,7 @@ useKeyboard();
   :deep(.chat-panel > .session-list > .page-sidebar-top),
   :deep(.person-layout > .person-sidebar > .page-sidebar-top),
   :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top),
-  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top),
-  :deep(.group-chat-panel > .room-sidebar > .sidebar-header) {
+  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top) {
     -webkit-app-region: drag;
 
     button,
@@ -976,8 +962,7 @@ useKeyboard();
   :deep(.chat-panel > .session-list > .page-sidebar-top),
   :deep(.person-layout > .person-sidebar > .page-sidebar-top),
   :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top),
-  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top),
-  :deep(.group-chat-panel > .room-sidebar > .sidebar-header) {
+  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top) {
     padding-top: calc(44px * var(--spacing-scale, 1));
   }
 }
