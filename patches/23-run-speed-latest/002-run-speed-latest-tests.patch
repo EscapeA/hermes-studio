@@ -1,0 +1,116 @@
+From 89aec8dc4754c814aed53e2aa79f541a04809471 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 27 Sep 2026 11:58:09 +0800
+Subject: [PATCH] test(usage): cover the per-call decode reading
+
+Adds a client suite for the run indicator: both readings render side by side,
+and a run that has only measured the average (or nothing yet) degrades
+gracefully instead of printing an empty span.
+
+Extends the server fold suite with the per-call reading: `latestRunSpeed`
+reports only the most recent call while `settledRunSpeed` keeps folding the
+whole run, a run that takes over the session state forgets the previous call,
+and an untimed call leaves no reading behind.
+---
+ .../live-reasoning-status-speed.test.ts       | 40 +++++++++++++++++++
+ tests/server/run-chat-run-speed.test.ts       | 32 +++++++++++++++
+ 2 files changed, 72 insertions(+)
+ create mode 100644 tests/client/live-reasoning-status-speed.test.ts
+
+diff --git a/tests/client/live-reasoning-status-speed.test.ts b/tests/client/live-reasoning-status-speed.test.ts
+new file mode 100644
+index 000000000..e196edcbe
+--- /dev/null
++++ b/tests/client/live-reasoning-status-speed.test.ts
+@@ -0,0 +1,40 @@
++// @vitest-environment jsdom
++import { describe, expect, it, vi } from 'vitest'
++import { mount } from '@vue/test-utils'
++
++vi.mock('vue-i18n', () => ({
++  useI18n: () => ({
++    t: (key: string, params?: Record<string, unknown>) =>
++      params ? `${key}:${JSON.stringify(params)}` : key,
++  }),
++}))
++
++import LiveReasoningStatus from '@/components/hermes/chat/LiveReasoningStatus.vue'
++
++describe('LiveReasoningStatus decode speed', () => {
++  it('shows the current reading beside the run-wide average', () => {
++    const wrapper = mount(LiveReasoningStatus, {
++      props: {
++        elapsed: '12s',
++        speed: '当前：94 tok/s',
++        averageSpeed: '平均：88 tok/s',
++      },
++    })
++
++    expect(wrapper.findAll('.thinking-status-speed').map(node => node.text())).toEqual([
++      '当前：94 tok/s',
++      '平均：88 tok/s',
++    ])
++  })
++
++  it('shows whichever reading the server has measured so far', () => {
++    const averageOnly = mount(LiveReasoningStatus, {
++      props: { elapsed: '12s', averageSpeed: '平均：88 tok/s' },
++    })
++    expect(averageOnly.findAll('.thinking-status-speed').map(node => node.text())).toEqual(['平均：88 tok/s'])
++
++    // First call of the run still streaming: no reading to show yet.
++    const none = mount(LiveReasoningStatus, { props: { elapsed: '2s' } })
++    expect(none.findAll('.thinking-status-speed')).toHaveLength(0)
++  })
++})
+diff --git a/tests/server/run-chat-run-speed.test.ts b/tests/server/run-chat-run-speed.test.ts
+index 3a000bf84..380d21da8 100644
+--- a/tests/server/run-chat-run-speed.test.ts
++++ b/tests/server/run-chat-run-speed.test.ts
+@@ -1,6 +1,7 @@
+ import { describe, expect, it } from 'vitest'
+ import {
+   foldDecodeCallResult,
++  latestRunSpeed,
+   settledRunSpeed,
+   type RunSpeedFoldState,
+ } from '../../packages/server/src/modules/studio/services/chat-run/usage'
+@@ -59,4 +60,35 @@ describe('run decode throughput fold', () => {
+ 
+     expect(settledRunSpeed(state)).toBeUndefined()
+   })
++
++  it('reports the latest call beside the run-wide totals', () => {
++    const state = newState()
++
++    foldDecodeCallResult(state, 900, { firstChunkAt: 100.5, endedAt: 110.5 })
++    expect(latestRunSpeed(state)).toEqual({ tokens: 900, elapsedMs: 10_000 })
++
++    foldDecodeCallResult(state, 100, { firstChunkAt: 200, endedAt: 201 })
++
++    // "Current" is this one call; "average" keeps folding every call in the run.
++    expect(latestRunSpeed(state)).toEqual({ tokens: 100, elapsedMs: 1_000 })
++    expect(settledRunSpeed(state)).toEqual({ tokens: 1000, elapsedMs: 11_000 })
++  })
++
++  it('forgets the latest call when a new run owns the session state', () => {
++    const state = newState()
++    foldDecodeCallResult(state, 900, { firstChunkAt: 100.5, endedAt: 110.5 })
++
++    state.runStartedAt = RUN_START + 60_000
++    foldDecodeCallResult(state, 0, {})
++
++    expect(latestRunSpeed(state)).toBeUndefined()
++  })
++
++  it('reports no latest call while only untimed calls have finished', () => {
++    const state = newState()
++
++    foldDecodeCallResult(state, 5000, { firstChunkAt: null, endedAt: 200 })
++
++    expect(latestRunSpeed(state)).toBeUndefined()
++  })
+ })
+-- 
+2.53.0
+

@@ -19,18 +19,6 @@ const router = createRouter({
       meta: { public: true },
     },
     {
-      path: '/share/group-chat/:inviteCode?',
-      name: 'share.groupChat',
-      component: () => import('@/views/hermes/SharedGroupChatView.vue'),
-      meta: { public: true, standaloneChat: true, inviteOnly: true },
-    },
-    {
-      path: '/group-chat-link',
-      name: 'groupChat.link',
-      component: () => import('@/views/hermes/GroupChatLinkView.vue'),
-      meta: { standaloneChat: true },
-    },
-    {
       path: '/hermes/chat',
       name: 'hermes.chat',
       component: () => import('@/views/hermes/ChatView.vue'),
@@ -232,30 +220,6 @@ const router = createRouter({
     {
       path: '/hermes/agents',
       redirect: { name: 'hermes.agentManager' },
-    },
-    {
-      path: '/hermes/group-chat',
-      name: 'hermes.groupChat',
-      component: () => import('@/views/hermes/GroupChatView.vue'),
-    },
-    {
-      path: '/hermes/group-chat/room/:roomId',
-      name: 'hermes.groupChatRoom',
-      component: () => import('@/views/hermes/GroupChatView.vue'),
-    },
-    {
-      path: '/hermes/history/group-chat/:roomId',
-      redirect: to => ({
-        name: 'hermes.groupChatRoom',
-        params: { roomId: to.params.roomId },
-      }),
-    },
-    {
-      path: '/hermes/group-chat/history/:roomId',
-      redirect: to => ({
-        name: 'hermes.groupChatRoom',
-        params: { roomId: to.params.roomId },
-      }),
     },
     {
       path: '/hermes/files',

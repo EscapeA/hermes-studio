@@ -1,0 +1,80 @@
+From 33c72fac3e4af591a34555a327a716948bc0569f Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 3 Oct 2026 09:56:19 +0800
+Subject: [PATCH] test(client): adapt 0.7.28 upstream suites to the fork's
+ feature set
+
+---
+ tests/client/device-connections-icon.test.ts | 17 +++++------------
+ tests/client/file-context-menu.test.ts       | 11 +++++------
+ 2 files changed, 10 insertions(+), 18 deletions(-)
+
+diff --git a/tests/client/device-connections-icon.test.ts b/tests/client/device-connections-icon.test.ts
+index ddc9d5655..fee5539f0 100644
+--- a/tests/client/device-connections-icon.test.ts
++++ b/tests/client/device-connections-icon.test.ts
+@@ -1,21 +1,14 @@
+ import { readFileSync } from 'node:fs'
+ import { describe, expect, it } from 'vitest'
+ 
+-// Keep both desktop rail and the compact sidebar on the same device metaphor.
+-const path = 'M3 4h14a1 1 0 0 1 1 1v4M3 4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h9M7 16v4M5 20h7M15 9h6a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V10a1 1 0 0 1 1-1M17 18h2'
++// The fork drops the 设备互联 (hermes.connections) entry from both navigation
++// surfaces, so upstream's "same monitor + phone outline" assertions no longer
++// apply. Keep the readFile smoke coverage, assert the fork's shape instead.
+ describe('Device connections icon', () => {
+-  it('uses the same monitor + phone outline in both navigation surfaces', () => {
++  it('keeps the device connections entry out of both navigation surfaces', () => {
+     for (const file of ['StudioNavigationRail.vue', 'PageSidebarNav.vue']) {
+       const source = readFileSync(`packages/client/src/components/layout/${file}`, 'utf8')
+-      expect(source).toContain(path)
+-
++      expect(source).not.toContain("key: 'connections'")
+     }
+   })
+-  it('keeps the workflow branch icon distinct', () => {
+-    const source = readFileSync('packages/client/src/components/layout/StudioNavigationRail.vue', 'utf8')
+-    const workflow = source.split("key: 'workflow'")[1].split('\n')[0]
+-    const connections = source.split("key: 'connections'")[1].split('\n')[0]
+-    expect(workflow).not.toContain(path)
+-    expect(connections).toContain(path)
+-  })
+ })
+diff --git a/tests/client/file-context-menu.test.ts b/tests/client/file-context-menu.test.ts
+index b8ba54ba4..72d0d965a 100644
+--- a/tests/client/file-context-menu.test.ts
++++ b/tests/client/file-context-menu.test.ts
+@@ -14,9 +14,7 @@ const mockDialog = vi.hoisted(() => ({
+ }))
+ 
+ const downloadSessionMock = vi.hoisted(() => vi.fn())
+-const downloadGroupMock = vi.hoisted(() => vi.fn())
+ vi.mock('@/api/studio/sessions', () => ({ downloadSessionWorkspaceFile: downloadSessionMock }))
+-vi.mock('@/api/studio/group-chat', () => ({ downloadGroupWorkspaceFile: downloadGroupMock }))
+ const downloadFileMock = vi.hoisted(() => vi.fn())
+ const copyToClipboardMock = vi.hoisted(() => vi.fn())
+ 
+@@ -156,15 +154,16 @@ describe('FileContextMenu', () => {
+ 
+     expect(workspaceWrapper.emitted('attach')).toEqual([[entry]])
+   })
+-  it.each(['session', 'group'] as const)('downloads %s workspace files with the authorized scoped API', async scope => {
++  // The fork removes the group-chat frontend, so upstream's `it.each(['session','group'])`
++  // case is narrowed to the session scope it still has code for.
++  it('downloads session workspace files with the authorized scoped API', async () => {
+     const store = useFilesStore()
+-    if (scope === 'group') store.currentWorkspaceRoomId = 'room-1'
+-    else store.currentWorkspaceSessionId = 'session-1'
++    store.currentWorkspaceSessionId = 'session-1'
+     const wrapper = mount(FileContextMenu)
+     const entry = { name: 'page.html', path: 'tools/page.html', isDir: false, size: 10, modTime: '' }
+     await showMenu(wrapper, entry)
+     await wrapper.get('[data-key="download"]').trigger('click'); await flushPromises()
+-    expect(scope === 'group' ? downloadGroupMock : downloadSessionMock).toHaveBeenCalledWith(scope === 'group' ? 'room-1' : 'session-1', entry.path, entry.name)
++    expect(downloadSessionMock).toHaveBeenCalledWith('session-1', entry.path, entry.name)
+     expect(downloadFileMock).not.toHaveBeenCalled()
+   })
+ 
+-- 
+2.53.0
+

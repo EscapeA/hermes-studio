@@ -1,0 +1,44 @@
+From 47b825390b8900d863963ed6752c0453599a0c4b Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Fri, 2 Oct 2026 12:40:05 +0800
+Subject: [PATCH] feat(sidebar): label the new-chat entry and drop the
+ duplicated history row
+
+The new-chat entry was a 32px icon-only button squeezed next to the search field,
+which made it effectively undiscoverable. It is now a full-width labelled row above
+the search row in every layout (the compact overrides that shrank and unlabelled it
+are gone), styled flat like the other entries.
+The nav rail already carries "history", so the panel stops rendering the same entry
+when a rail exists; it stays on the history page, where it is the way back to the
+session list.
+---
+ packages/client/src/components/layout/PageSidebarNav.vue | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
+index 55b9e60a8..1263bd0ef 100644
+--- a/packages/client/src/components/layout/PageSidebarNav.vue
++++ b/packages/client/src/components/layout/PageSidebarNav.vue
+@@ -96,6 +96,7 @@ function openModels() {
+         </div>
+       </div>
+       <button
++        v-if="active === 'history' || !hasNavigationRail"
+         class="page-sidebar-tab"
+         type="button"
+         @click="openHistory"
+@@ -219,10 +220,7 @@ function openModels() {
+ }
+ 
+ .page-sidebar-nav--compact {
+-  .page-sidebar-search-row { flex-wrap: nowrap; }
+-  .page-sidebar-search { order: 0; flex: 1; background: rgba(var(--accent-primary-rgb), 0.05); }
+-  .page-sidebar-primary { order: 1; flex: 0 0 32px; width: 32px; padding: 0; justify-content: center; }
+-  .page-sidebar-primary span { display: none; }
++  .page-sidebar-search { order: 1; flex: 1; background: rgba(var(--accent-primary-rgb), 0.05); }
+ }
+ 
+ .page-sidebar-tab {
+-- 
+2.53.0
+

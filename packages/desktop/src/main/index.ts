@@ -38,7 +38,6 @@ import { cancelRegionScreenshot, captureRegionScreenshot, parseScreenshotRequest
 import { disposeScreenshotOverlays, warmScreenshotEditor } from './screenshot-windows'
 import { ScreenshotShortcutManager, ScreenshotShortcutTargets } from './screenshot-shortcut'
 import { screenshotEnvironment } from './screenshot-platform'
-import { groupChatAgentLinkPopupResponse } from './group-chat-agent-popup'
 import { isTrustedDesktopAppUrl, normalizeExternalHttpUrl } from './window-open-policy'
 import {
   ensureDesktopRuntime,
@@ -594,9 +593,7 @@ async function createWindow(): Promise<void> {
   installSelectionContextMenu(mainWindow)
 
   // External links → system browser
-  mainWindow.webContents.setWindowOpenHandler(({ url, frameName }) => {
-    const agentLinkPopup = groupChatAgentLinkPopupResponse(url, frameName)
-    if (agentLinkPopup) return agentLinkPopup
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (isTrustedDesktopAppUrl(url, serverUrl)) {
       return { action: 'allow' }
     }
@@ -683,9 +680,7 @@ async function openChatWindow(sessionIdInput: unknown, profileInput?: unknown): 
   })
 
   installSelectionContextMenu(chatWindow)
-  chatWindow.webContents.setWindowOpenHandler(({ url: targetUrl, frameName }) => {
-    const agentLinkPopup = groupChatAgentLinkPopupResponse(targetUrl, frameName)
-    if (agentLinkPopup) return agentLinkPopup
+  chatWindow.webContents.setWindowOpenHandler(({ url: targetUrl }) => {
     if (/^(https?:|mailto:)/i.test(targetUrl)) {
       shell.openExternal(targetUrl).catch(() => undefined)
     }
