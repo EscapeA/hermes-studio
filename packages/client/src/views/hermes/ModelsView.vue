@@ -157,7 +157,7 @@ async function handleRefreshModelCache() {
           :options="profileOptions"
           :disabled="profileLoading || modelsStore.refreshingModelCache"
           :loading="profileLoading"
-          :aria-label="t('workflow.profile')"
+          :aria-label="t('profiles.title')"
           size="small"
           filterable
           @update:value="handleProfileUpdate"
