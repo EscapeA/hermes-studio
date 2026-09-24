@@ -1,4 +1,3 @@
-import { chatSessionAgentAvatar } from '@/utils/chat-agent-avatar'
 import { isNativeCodingAgent } from '@/utils/agent-catalog'
 import { historySessionSource, isBuiltinEkkoSession } from '@/utils/hermes/session-agent'
 import { isKnownEkkoSessionCommand } from '@/utils/hermes/bridge-session-commands'
@@ -3711,7 +3710,12 @@ export const useChatStore = defineStore('chat', () => {
     if (codingAgentId === 'opencode') {
       return { icon: '/coding-agents/opencode.png' }
     }
-    if (isNativeCodingAgent(codingAgentId)) return { icon: chatSessionAgentAvatar(session).src }
+    if (codingAgentId === 'qwen') return { icon: '/coding-agents/qwen-logo.svg' }
+    if (codingAgentId === 'kimi') return { icon: '/coding-agents/kimi-logo.png' }
+    if (codingAgentId === 'codebuddy') return { icon: '/coding-agents/codebuddy-logo.svg' }
+    if (codingAgentId === 'qoder') return { icon: '/coding-agents/qoder-logo.svg' }
+    if (codingAgentId === 'copilot') return { icon: '/coding-agents/copilot-logo.svg' }
+    if (codingAgentId === 'zcode') return { icon: '/coding-agents/zcode-logo.png' }
     if (codingAgentId === 'antigravity') return { icon: '/coding-agents/antigravity.png' }
     if (codingAgentId === 'cursor') {
       return { icon: '/coding-agents/cursor-logo.png' }
