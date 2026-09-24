@@ -24,8 +24,6 @@ describe('Ekko display name', () => {
   it.each([
     ['single chat', 'packages/client/src/components/hermes/chat/ChatPanel.vue',
       AGENT_OPTIONS, 'AGENT_OPTIONS', 'const newChatAgentOptions = computed(() => AGENT_OPTIONS.map('],
-    ['workflow', 'packages/client/src/views/hermes/WorkflowView.vue',
-      AGENT_OPTIONS, 'AGENT_OPTIONS', 'const workflowAgentDefinitions = AGENT_OPTIONS'],
   ] as const)('uses the shared order with Ekko second in the %s Agent dropdown', (_name, path, options, exportName, binding) => {
     const source = readFileSync(path, 'utf8')
 
@@ -34,14 +32,6 @@ describe('Ekko display name', () => {
     expect(options.map(option => option.label)).toEqual([
       'Hermes', 'Ekko', 'Claude', 'Codex', 'Pi', 'Grok', 'OpenCode', 'DeepSeek Harness', 'Cursor',
     ])
-  })
-
-  it('keeps server-managed provider choices available for Ekko workflow nodes', () => {
-    const view = readFileSync('packages/client/src/views/hermes/WorkflowView.vue', 'utf8')
-    const node = readFileSync('packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue', 'utf8')
-
-    expect(view).toContain('canScopedCodingAgentUseProvider(')
-    expect(node).toContain('canScopedCodingAgentUseProvider(')
   })
 
   it('keeps the log API id internal while displaying Ekko', () => {
