@@ -366,6 +366,7 @@ usePwa();
                 <button
                   v-if="showMobileMenuButton"
                   class="hamburger-btn"
+                  :class="{ 'hamburger-btn--hidden': !showAppSidebar && appStore.pageSidebarExpanded }"
                   :aria-expanded="mobileNavigationOpen"
                   :aria-label="t('sidebar.expand')"
                   @click="handleMobileMenuClick"
