@@ -100,8 +100,8 @@ describe('LoginView password login', () => {
     expect(mockReplace).toHaveBeenCalledWith('/hermes/chat')
   })
 
-  it('returns to the Agent link page after the first login', async () => {
-    const redirect = '/group-chat-link?cloudOrigin=http%3A%2F%2F47.243.215.84%3A8088&requestId=handoff-id'
+  it('returns to the requested page after the first login', async () => {
+    const redirect = '/hermes/session/session-42?profile=travel'
     mockRoute.query = { redirect }
     mockLoginWithPassword.mockResolvedValue({ token: 'jwt-token', userId: 7, theme: null })
     const wrapper = mount(LoginView)

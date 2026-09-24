@@ -11,16 +11,6 @@ const chatState = reactive({
   respondApprovalFor: vi.fn(),
   respondToClarifyFor: vi.fn(),
 })
-const groupState = reactive({
-  currentRoomId: 'room-a' as string | null,
-  pendingApprovals: new Map<string, any>(),
-  pendingClarifies: new Map<string, any>(),
-  rooms: [] as any[],
-  respondApprovalFor: vi.fn(),
-  respondClarifyFor: vi.fn(),
-  connect: vi.fn(async () => undefined),
-  disconnect: vi.fn(),
-})
 const profileState = reactive({ activeProfileName: 'default' as string | null })
 const settingsState = reactive({ display: { approval_bell: false, notify_on_approval: false }, fetchSettings: vi.fn(async () => true) })
 const routeState = reactive({ name: 'hermes.chat' as string })
@@ -37,7 +27,6 @@ const workflowMock = vi.hoisted(() => ({
 }))
 
 vi.mock('@/stores/hermes/chat', () => ({ useChatStore: () => chatState }))
-vi.mock('@/stores/hermes/group-chat', () => ({ useGroupChatStore: () => groupState }))
 vi.mock('@/stores/hermes/profiles', () => ({ useProfilesStore: () => profileState }))
 vi.mock('@/stores/hermes/settings', () => ({ useSettingsStore: () => settingsState }))
 vi.mock('@/utils/clipboard', () => clipboardMock)
@@ -90,10 +79,6 @@ describe('GlobalPendingActions', () => {
     chatState.pendingClarifies = new Map()
     chatState.sessions = []
     chatState.activeSessionId = 'session-a'
-    groupState.pendingApprovals = new Map()
-    groupState.pendingClarifies = new Map()
-    groupState.rooms = []
-    groupState.currentRoomId = 'room-a'
     profileState.activeProfileName = 'default'
     settingsState.display.approval_bell = false
     settingsState.display.notify_on_approval = false
@@ -103,7 +88,7 @@ describe('GlobalPendingActions', () => {
     workflowMock.statusHandlers.splice(0)
   })
 
-  it('sends privacy-safe system notifications for new direct, group, and workflow pending keys with exact navigation', async () => {
+  it('sends privacy-safe system notifications for new direct and workflow pending keys with exact navigation', async () => {
     settingsState.display.notify_on_approval = true
     const wrapper = mount(GlobalPendingActions)
     await nextTick()
@@ -115,12 +100,6 @@ describe('GlobalPendingActions', () => {
     chatState.pendingClarifies = new Map([['session-c', {
       sessionId: 'session-c', clarifyId: 'clarify-c', question: 'Which secret path?', choices: null,
     }]])
-    groupState.pendingApprovals = new Map([['room-b:approval-b', {
-      roomId: 'room-b', approvalId: 'approval-b', description: 'Deploy /private', command: 'deploy /private', choices: ['once'],
-    }]])
-    groupState.pendingClarifies = new Map([['room-c:clarify-c', {
-      roomId: 'room-c', clarifyId: 'clarify-c', question: 'Share token?', choices: null,
-    }]])
     await nextTick()
 
     workflowMock.statusHandlers[0]?.({
@@ -129,22 +108,18 @@ describe('GlobalPendingActions', () => {
     })
     await nextTick()
 
-    expect(systemNotificationMock.showSystemNotification).toHaveBeenCalledTimes(5)
+    expect(systemNotificationMock.showSystemNotification).toHaveBeenCalledTimes(3)
     for (const [payload] of systemNotificationMock.showSystemNotification.mock.calls) {
       expect(payload.title).toMatch(/^settings\.display\.approvalNotification/)
       expect(payload.body).toMatch(/^settings\.display\.approvalNotification/)
       expect(JSON.stringify(payload)).not.toContain('rm -rf')
       expect(JSON.stringify(payload)).not.toContain('/private')
       expect(JSON.stringify(payload)).not.toContain('Which secret path?')
-      expect(JSON.stringify(payload)).not.toContain('Share token?')
     }
 
     const systemCalls = systemNotificationMock.showSystemNotification.mock.calls as any[][]
     const chatPayload = systemCalls.find(([payload]) => payload.tag.includes('chat-approval'))?.[0]
     expect(chatPayload?.clickUrl).toBe('/hermes/global-agent/session/session-b?profile=default')
-
-    const groupPayload = systemCalls.find(([payload]) => payload.tag.includes('group-approval'))?.[0]
-    expect(groupPayload?.clickUrl).toBe('/hermes/group-chat/room/room-b?profile=default')
 
     const workflowPayload = systemCalls.find(([payload]) => payload.tag.includes('workflow-approval'))?.[0]
     expect(workflowPayload?.clickUrl).toBe('/hermes/workflow?profile=default&workflowId=workflow-b&runId=run-b&nodeId=build&executionId=exec-b')
@@ -293,12 +268,6 @@ describe('GlobalPendingActions', () => {
     chatState.pendingApprovals = new Map(chatState.pendingApprovals)
     await nextTick()
     expect(playCompletionSound).toHaveBeenCalledTimes(1)
-
-    groupState.pendingApprovals = new Map([['room-b:approval-b', {
-      roomId: 'room-b', approvalId: 'approval-b', description: 'Deploy', command: 'deploy', choices: ['once', 'deny'],
-    }]])
-    await nextTick()
-    expect(playCompletionSound).toHaveBeenCalledTimes(2)
     wrapper.unmount()
   })
 
@@ -365,22 +334,6 @@ describe('GlobalPendingActions', () => {
       clickUrl: '/hermes/session/session-a?profile=default',
       tag: expect.stringContaining('chat-approval:session-a:approval-a'),
     }))
-    wrapper.unmount()
-  })
-
-  it('sounds for a new in-context group approval without duplicating its notification', async () => {
-    settingsState.display.approval_bell = true
-    routeState.name = 'hermes.groupChatRoom'
-    const wrapper = mount(GlobalPendingActions)
-    await nextTick()
-
-    groupState.pendingApprovals = new Map([['room-a:approval-a', {
-      roomId: 'room-a', approvalId: 'approval-a', description: 'Deploy', command: 'deploy', choices: ['once'],
-    }]])
-    await nextTick()
-
-    expect(playCompletionSound).toHaveBeenCalledTimes(1)
-    expect(created).toHaveLength(0)
     wrapper.unmount()
   })
 
@@ -508,46 +461,6 @@ describe('GlobalPendingActions', () => {
     mount(GlobalPendingActions)
     window.dispatchEvent(new CustomEvent('hermes:pending-interaction-expired'))
     expect(uiMock.messageWarning).toHaveBeenCalledWith('chat.interactionExpired')
-  })
-
-  it('opens and responds to a clarification from an inactive group room', async () => {
-    groupState.rooms = [{ id: 'room-b', name: 'Room B' }]
-    groupState.pendingClarifies = new Map([['room-b:clarify-b', {
-      roomId: 'room-b', agentName: 'Builder', clarifyId: 'clarify-b',
-      question: 'Which environment?', choices: null, timeoutMs: 300000,
-    }]])
-
-    mount(GlobalPendingActions)
-    await nextTick()
-
-    expect(notificationTitleText(created[0])).toContain('Room B')
-    const title = await render(created[0].options.title)
-    await title.get('button').trigger('click')
-    expect(routerPush).toHaveBeenCalledWith({ name: 'hermes.groupChatRoom', params: { roomId: 'room-b' } })
-    const content = await render(created[0].options.content)
-    await content.get('input').setValue('staging')
-    const action = await render(created[0].options.action)
-    await action.get('button').trigger('click')
-    expect(groupState.respondClarifyFor).toHaveBeenCalledWith('room-b', 'clarify-b', 'staging')
-  })
-
-  it('opens the source room from the title and handles its approval in place', async () => {
-    groupState.rooms = [{ id: 'room-b', name: 'Room B' }]
-    groupState.pendingApprovals = new Map([['approval-b', {
-      roomId: 'room-b', approvalId: 'approval-b', agentName: 'Builder', description: 'Install package', command: 'npm ci', choices: ['once', 'deny'],
-    }]])
-
-    mount(GlobalPendingActions)
-    await nextTick()
-
-    expect(groupState.connect).toHaveBeenCalled()
-    expect(notificationTitleText(created[0])).toContain('Room B')
-    const title = await render(created[0].options.title)
-    await title.get('button').trigger('click')
-    expect(routerPush).toHaveBeenCalledWith({ name: 'hermes.groupChatRoom', params: { roomId: 'room-b' } })
-    const action = await render(created[0].options.action)
-    await action.get('button').trigger('click')
-    expect(groupState.respondApprovalFor).toHaveBeenCalledWith('room-b', 'approval-b', 'once')
   })
 
   it('destroys a global notification when the authoritative pending entry resolves', async () => {
