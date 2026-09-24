@@ -1,0 +1,1039 @@
+From 168002f569f6bfc531b7fc6f7a0dab460dee441e Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 24 Sep 2026 18:56:52 +0800
+Subject: [PATCH] test(web): adapt suites after avatar removal
+
+- delete the auth-avatar, pi-chat-avatar and chat-agent-avatar suites and
+  add a chat-agent-label suite covering the runtime -> name mapping
+- session list: drop the logo/outline assertions and the ProfileAvatar
+  stubs, keep the identity-row and navigation coverage
+- chat: assert the author rows still render names and never render
+  avatars (MessageItem toggle, highlight, scroll-position, live reasoning)
+- kanban: drop the assignee-avatar stubs/assertions from the card and
+  view suites
+- profiles store / profile card: drop the avatar api mocks and tests
+- e2e: drop the /api/auth/avatar fixture and the thinking-avatar
+  assertions
+---
+ tests/client/auth-avatar.test.ts              | 120 ------------
+ tests/client/chat-agent-avatar.test.ts        |  39 ----
+ tests/client/chat-agent-label.test.ts         |  30 +++
+ tests/client/kanban-task-card.test.ts         |  13 +-
+ tests/client/kanban-view.test.ts              |  16 +-
+ tests/client/message-item-highlight.test.ts   |  18 +-
+ .../message-item-identity-toggle.test.ts      |  13 +-
+ .../message-list-scroll-position.test.ts      |  63 ++----
+ tests/client/pi-chat-avatar.test.ts           |  30 ---
+ tests/client/profile-card-config-edit.test.ts |   6 -
+ tests/client/profiles-store.test.ts           |  50 -----
+ tests/client/session-list-item-source.test.ts |   9 -
+ tests/client/session-list-item.test.ts        | 185 +-----------------
+ tests/e2e/chat-streaming.spec.ts              |   4 -
+ tests/e2e/fixtures.ts                         |  14 --
+ 15 files changed, 61 insertions(+), 549 deletions(-)
+ delete mode 100644 tests/client/auth-avatar.test.ts
+ delete mode 100644 tests/client/chat-agent-avatar.test.ts
+ create mode 100644 tests/client/chat-agent-label.test.ts
+ delete mode 100644 tests/client/pi-chat-avatar.test.ts
+
+diff --git a/tests/client/auth-avatar.test.ts b/tests/client/auth-avatar.test.ts
+deleted file mode 100644
+index f2446bfbc..000000000
+--- a/tests/client/auth-avatar.test.ts
++++ /dev/null
+@@ -1,120 +0,0 @@
+-// @vitest-environment jsdom
+-import { beforeEach, describe, expect, it, vi } from 'vitest'
+-
+-const mockFetch = vi.fn()
+-vi.stubGlobal('fetch', mockFetch)
+-
+-vi.mock('@/router', () => ({
+-  default: {
+-    currentRoute: { value: { name: 'hermes.chat' } },
+-    replace: vi.fn(),
+-  },
+-}))
+-
+-import {
+-  fetchMyAvatar,
+-  resetMyAvatar,
+-  updateMyAvatar,
+-} from '../../packages/client/src/api/studio/auth'
+-import { setApiKey } from '../../packages/client/src/api/client'
+-
+-function makeResponse(status: number, body: any, ok = status >= 200 && status < 300) {
+-  return {
+-    ok,
+-    status,
+-    text: () => Promise.resolve(typeof body === 'string' ? body : JSON.stringify(body)),
+-    json: () => Promise.resolve(body),
+-  }
+-}
+-
+-describe('client auth API: avatar endpoints', () => {
+-  beforeEach(() => {
+-    localStorage.clear()
+-    vi.clearAllMocks()
+-    setApiKey('test-token')
+-  })
+-
+-  describe('fetchMyAvatar', () => {
+-    it('returns null when the server responds with an empty avatar string', async () => {
+-      mockFetch.mockResolvedValueOnce(makeResponse(200, { avatar: '' }))
+-
+-      const avatar = await fetchMyAvatar()
+-
+-      expect(avatar).toBeNull()
+-      expect(mockFetch).toHaveBeenCalledOnce()
+-      const [url] = mockFetch.mock.calls[0]
+-      expect(url).toBe('/api/auth/avatar')
+-    })
+-
+-    it('returns null when the server returns an unparseable JSON string', async () => {
+-      mockFetch.mockResolvedValueOnce(makeResponse(200, { avatar: '{not valid json' }))
+-
+-      const avatar = await fetchMyAvatar()
+-
+-      expect(avatar).toBeNull()
+-    })
+-
+-    it('returns null when the parsed avatar has an unknown type', async () => {
+-      mockFetch.mockResolvedValueOnce(
+-        makeResponse(200, { avatar: JSON.stringify({ type: 'emoji', seed: 'x' }) }),
+-      )
+-
+-      const avatar = await fetchMyAvatar()
+-
+-      expect(avatar).toBeNull()
+-    })
+-
+-    it('parses a valid image avatar payload from the server', async () => {
+-      const payload = { type: 'image' as const, dataUrl: 'data:image/png;base64,AAAA' }
+-      mockFetch.mockResolvedValueOnce(makeResponse(200, { avatar: JSON.stringify(payload) }))
+-
+-      const avatar = await fetchMyAvatar()
+-
+-      expect(avatar).toEqual(payload)
+-    })
+-
+-    it('parses a valid default avatar payload from the server', async () => {
+-      const payload = { type: 'default' as const, seed: 'abc' }
+-      mockFetch.mockResolvedValueOnce(makeResponse(200, { avatar: JSON.stringify(payload) }))
+-
+-      const avatar = await fetchMyAvatar()
+-
+-      expect(avatar).toEqual(payload)
+-    })
+-  })
+-
+-  describe('updateMyAvatar', () => {
+-    it('PUTs the avatar as a JSON-string field to /api/auth/avatar', async () => {
+-      mockFetch.mockResolvedValueOnce(makeResponse(200, { success: true, avatar: '' }))
+-      const payload = { type: 'image' as const, dataUrl: 'data:image/png;base64,HI==' }
+-
+-      await updateMyAvatar(payload)
+-
+-      expect(mockFetch).toHaveBeenCalledOnce()
+-      const [url, options] = mockFetch.mock.calls[0]
+-      expect(url).toBe('/api/auth/avatar')
+-      expect(options.method).toBe('PUT')
+-      expect(options.headers['Content-Type']).toBe('application/json')
+-
+-      const body = JSON.parse(options.body)
+-      expect(body.avatar).toBe(JSON.stringify(payload))
+-      // The string must round-trip parse to the same object
+-      expect(JSON.parse(body.avatar)).toEqual(payload)
+-    })
+-  })
+-
+-  describe('resetMyAvatar', () => {
+-    it('PUTs a default avatar object to /api/auth/avatar', async () => {
+-      mockFetch.mockResolvedValueOnce(makeResponse(200, { success: true }))
+-
+-      await resetMyAvatar()
+-
+-      expect(mockFetch).toHaveBeenCalledOnce()
+-      const [url, options] = mockFetch.mock.calls[0]
+-      expect(url).toBe('/api/auth/avatar')
+-      expect(options.method).toBe('PUT')
+-      const body = JSON.parse(options.body)
+-      expect(body).toEqual({ avatar: { type: 'default' } })
+-    })
+-  })
+-})
+diff --git a/tests/client/chat-agent-avatar.test.ts b/tests/client/chat-agent-avatar.test.ts
+deleted file mode 100644
+index dc135ff15..000000000
+--- a/tests/client/chat-agent-avatar.test.ts
++++ /dev/null
+@@ -1,39 +0,0 @@
+-import { describe, expect, it } from 'vitest'
+-import { chatSessionAgentAvatar } from '@/utils/chat-agent-avatar'
+-
+-describe('single chat Agent avatars', () => {
+-  it('shows Ekko before the session loads while preserving legacy Hermes sessions', () => {
+-    for (const session of [null, undefined]) {
+-      expect(chatSessionAgentAvatar(session)).toEqual({
+-        label: 'Ekko',
+-        src: '/coding-agents/ekko-agent.png',
+-      })
+-    }
+-    expect(chatSessionAgentAvatar({ source: 'cli' })).toEqual({
+-      label: 'Hermes',
+-      src: '/coding-agents/hermes.png',
+-    })
+-  })
+-
+-  it.each([
+-    ['Hermes', { agent: 'hermes' }, '/coding-agents/hermes.png'],
+-    ['Ekko', { agent: 'ekko-agent' }, '/coding-agents/ekko-agent.png'],
+-    ['Ekko', { agent: 'ekko_agent' }, '/coding-agents/ekko-agent.png'],
+-    ['Claude', { agent: 'claude' }, '/coding-agents/claude-code.svg'],
+-    ['Claude', { codingAgentId: 'claude-code' }, '/coding-agents/claude-code.svg'],
+-    ['Codex', { codingAgentId: 'codex' }, '/coding-agents/codex-openai.png'],
+-    ['DeepSeek Harness', { codingAgentId: 'dsh' }, '/coding-agents/deepseek.svg'],
+-    ['Pi', { codingAgentId: 'pi' }, '/coding-agents/pi.svg'],
+-    ['Grok', { codingAgentId: 'grok' }, '/coding-agents/grok.svg'],
+-    ['OpenCode', { codingAgentId: 'opencode' }, '/coding-agents/opencode.png'],
+-  ])('maps session identity to the $label avatar', (label, session, src) => {
+-    expect(chatSessionAgentAvatar(session)).toEqual({ label, src })
+-  })
+-
+-  it('keeps legacy Coding Agent sessions without identity on the Claude avatar', () => {
+-    expect(chatSessionAgentAvatar({ source: 'coding_agent' })).toEqual({
+-      label: 'Claude',
+-      src: '/coding-agents/claude-code.svg',
+-    })
+-  })
+-})
+diff --git a/tests/client/chat-agent-label.test.ts b/tests/client/chat-agent-label.test.ts
+new file mode 100644
+index 000000000..c1c5d65ee
+--- /dev/null
++++ b/tests/client/chat-agent-label.test.ts
+@@ -0,0 +1,30 @@
++import { describe, expect, it } from 'vitest'
++import { chatSessionAgentLabel } from '@/utils/chat-agent-label'
++
++describe('single chat Agent labels', () => {
++  it('shows Ekko before the session loads while preserving legacy Hermes sessions', () => {
++    for (const session of [null, undefined]) {
++      expect(chatSessionAgentLabel(session)).toEqual({ label: 'Ekko' })
++    }
++    expect(chatSessionAgentLabel({ source: 'cli' })).toEqual({ label: 'Hermes' })
++  })
++
++  it.each([
++    ['Hermes', { agent: 'hermes' }],
++    ['Ekko', { agent: 'ekko-agent' }],
++    ['Ekko', { agent: 'ekko_agent' }],
++    ['Claude', { agent: 'claude' }],
++    ['Claude', { codingAgentId: 'claude-code' }],
++    ['Codex', { codingAgentId: 'codex' }],
++    ['DeepSeek Harness', { codingAgentId: 'dsh' }],
++    ['Pi', { codingAgentId: 'pi' }],
++    ['Grok', { codingAgentId: 'grok' }],
++    ['OpenCode', { codingAgentId: 'opencode' }],
++  ])('maps session identity to the $label name', (label, session) => {
++    expect(chatSessionAgentLabel(session)).toEqual({ label })
++  })
++
++  it('keeps legacy Coding Agent sessions without identity on the Claude name', () => {
++    expect(chatSessionAgentLabel({ source: 'coding_agent' })).toEqual({ label: 'Claude' })
++  })
++})
+diff --git a/tests/client/kanban-task-card.test.ts b/tests/client/kanban-task-card.test.ts
+index 95f778076..885096bb2 100644
+--- a/tests/client/kanban-task-card.test.ts
++++ b/tests/client/kanban-task-card.test.ts
+@@ -26,13 +26,6 @@ vi.mock('naive-ui', () => ({
+   }),
+ }))
+ 
+-vi.mock('@/components/hermes/profiles/ProfileAvatar.vue', () => ({
+-  default: defineComponent({
+-    name: 'ProfileAvatar',
+-    props: { name: { type: String, required: true }, avatar: { type: Object, required: false }, size: { type: Number, required: false } },
+-    template: '<span class="assignee-profile-avatar-stub" :data-name="name" :data-avatar-type="avatar?.type || null" :data-avatar-seed="avatar?.seed || null"></span>',
+-  }),
+-}))
+ 
+ import KanbanTaskCard from '@/components/hermes/kanban/KanbanTaskCard.vue'
+ 
+@@ -47,7 +40,6 @@ describe('KanbanTaskCard i18n', () => {
+ 
+     const wrapper = mount(KanbanTaskCard, {
+       props: {
+-        assigneeAvatar: { type: 'generated', seed: 'alice-seed' },
+         task: {
+           id: 'task-1',
+           title: 'Ship kanban i18n',
+@@ -75,9 +67,6 @@ describe('KanbanTaskCard i18n', () => {
+     expect(wrapper.text()).not.toContain('Body preview content')
+     expect(wrapper.element.tagName).toBe('BUTTON')
+     expect(wrapper.classes()).toContain('status-todo')
+-    const avatar = wrapper.find('.assignee-profile-avatar-stub')
+-    expect(avatar.attributes('data-name')).toBe('alice')
+-    expect(avatar.attributes('data-avatar-type')).toBe('generated')
+-    expect(avatar.attributes('data-avatar-seed')).toBe('alice-seed')
++    expect(wrapper.get('.assignee-name').text()).toBe('alice')
+   })
+ })
+diff --git a/tests/client/kanban-view.test.ts b/tests/client/kanban-view.test.ts
+index 52667107b..06164f01b 100644
+--- a/tests/client/kanban-view.test.ts
++++ b/tests/client/kanban-view.test.ts
+@@ -38,7 +38,7 @@ const mockStartEventStream = vi.hoisted(() => vi.fn())
+ const mockStopEventStream = vi.hoisted(() => vi.fn())
+ const mockFetchProfiles = vi.hoisted(() => vi.fn())
+ const profilesState = vi.hoisted(() => ({
+-  profiles: [] as Array<{ name: string; avatar?: Record<string, any> | null }>,
++  profiles: [] as Array<{ name: string }>,
+ }))
+ 
+ vi.mock('vue-router', () => ({
+@@ -81,9 +81,9 @@ vi.mock('@/stores/hermes/profiles', () => ({
+ vi.mock('@/components/hermes/kanban/KanbanTaskCard.vue', () => ({
+   default: defineComponent({
+     name: 'KanbanTaskCard',
+-    props: { task: { type: Object, required: true }, assigneeAvatar: { type: Object, required: false } },
++    props: { task: { type: Object, required: true } },
+     emits: ['click'],
+-    template: '<button class="kanban-task-card-stub" :data-avatar-seed="assigneeAvatar?.seed || null" @click="$emit(\'click\', task.id)">{{ task.title }}</button>',
++    template: '<button class="kanban-task-card-stub" @click="$emit(\'click\', task.id)">{{ task.title }}</button>',
+   }),
+ }))
+ 
+@@ -302,16 +302,6 @@ describe('KanbanView', () => {
+     expect(wrapper.text()).not.toContain('alice · kanban.stats.tasks')
+   })
+ 
+-  it('passes matching profile avatars to task cards', async () => {
+-    storeState.tasks = [{ id: 'task-1', title: 'Task one', status: 'todo', created_at: 10, assignee: 'alice' }]
+-    profilesState.profiles = [{ name: 'alice', avatar: { type: 'generated', seed: 'alice-seed' } }]
+-
+-    const wrapper = mount(KanbanView)
+-    await flushPromises()
+-
+-    expect(wrapper.find('.kanban-task-card-stub').attributes('data-avatar-seed')).toBe('alice-seed')
+-  })
+-
+   it('keeps task cards clickable and task lists independently scrollable inside the canvas', async () => {
+     const wrapper = mount(KanbanView)
+     await flushPromises()
+diff --git a/tests/client/message-item-highlight.test.ts b/tests/client/message-item-highlight.test.ts
+index 230455864..b4964046f 100644
+--- a/tests/client/message-item-highlight.test.ts
++++ b/tests/client/message-item-highlight.test.ts
+@@ -62,11 +62,7 @@ describe('MessageItem tool details', () => {
+     })
+   })
+ 
+-  it('renders the profile name and avatar above a user message', () => {
+-    const avatar = {
+-      type: 'image' as const,
+-      dataUrl: 'data:image/png;base64,cHJvZmlsZQ==',
+-    }
++  it('renders the profile name above a user message', () => {
+     const wrapper = mount(MessageItem, {
+       props: {
+         message: {
+@@ -76,16 +72,15 @@ describe('MessageItem tool details', () => {
+           timestamp: Date.now(),
+         } satisfies Message,
+         userProfileName: 'Researcher',
+-        userProfileAvatar: avatar,
+       },
+       global: { stubs: { MarkdownRenderer: true } },
+     })
+ 
+     expect(wrapper.get('.user-message-author .message-author-name').text()).toBe('Researcher')
+-    expect(wrapper.get('.user-profile-avatar .profile-avatar-image').attributes('src')).toBe(avatar.dataUrl)
++    expect(wrapper.find('.user-profile-avatar').exists()).toBe(false)
+   })
+ 
+-  it('renders the agent name and avatar above an assistant message', () => {
++  it('renders the agent name above an assistant message', () => {
+     const wrapper = mount(MessageItem, {
+       props: {
+         message: {
+@@ -94,16 +89,13 @@ describe('MessageItem tool details', () => {
+           content: 'Hello',
+           timestamp: Date.now(),
+         } satisfies Message,
+-        assistantAgent: {
+-          label: 'Ekko',
+-          src: '/coding-agents/ekko-agent.png',
+-        },
++        assistantAgent: { label: 'Ekko' },
+       },
+       global: { stubs: { MarkdownRenderer: true } },
+     })
+ 
+     expect(wrapper.get('.assistant-message-author .message-author-name').text()).toBe('Ekko')
+-    expect(wrapper.get('.assistant-message-author .msg-avatar').attributes('src')).toBe('/coding-agents/ekko-agent.png')
++    expect(wrapper.find('.assistant-message-author .msg-avatar').exists()).toBe(false)
+   })
+ 
+   it('selects a completed user or assistant message as the next-turn reference', async () => {
+diff --git a/tests/client/message-item-identity-toggle.test.ts b/tests/client/message-item-identity-toggle.test.ts
+index 77870d292..1b8655429 100644
+--- a/tests/client/message-item-identity-toggle.test.ts
++++ b/tests/client/message-item-identity-toggle.test.ts
+@@ -34,7 +34,7 @@ function mountMessage(role: 'user' | 'assistant') {
+         content: 'Hello',
+         timestamp: Date.now(),
+       } satisfies Message,
+-      assistantAgent: { label: 'Ekko', src: '/coding-agents/ekko-agent.png' },
++      assistantAgent: { label: 'Ekko' },
+       userProfileName: 'Researcher',
+     },
+     global: { stubs: { MarkdownRenderer: true } },
+@@ -42,28 +42,29 @@ function mountMessage(role: 'user' | 'assistant') {
+ }
+ 
+ describe('MessageItem chat identity toggle', () => {
+-  it('hides author rows and message avatars when show_session_identity is false', () => {
++  it('hides author rows when show_session_identity is false', () => {
+     settingsDisplay.show_session_identity = false
+     setActivePinia(createPinia())
+ 
+     const user = mountMessage('user')
+     expect(user.find('.user-message-author').exists()).toBe(false)
+-    expect(user.find('.user-profile-avatar').exists()).toBe(false)
+ 
+     const assistant = mountMessage('assistant')
+     expect(assistant.find('.assistant-message-author').exists()).toBe(false)
+-    expect(assistant.find('.msg-avatar').exists()).toBe(false)
+   })
+ 
+-  it('shows author rows and message avatars by default', () => {
++  it('shows author rows by default and never renders avatars', () => {
+     settingsDisplay.show_session_identity = undefined
+     setActivePinia(createPinia())
+ 
+     const user = mountMessage('user')
+     expect(user.find('.user-message-author').exists()).toBe(true)
++    expect(user.get('.user-message-author .message-author-name').text()).toBe('Researcher')
++    expect(user.find('.user-profile-avatar').exists()).toBe(false)
+ 
+     const assistant = mountMessage('assistant')
+     expect(assistant.find('.assistant-message-author').exists()).toBe(true)
+-    expect(assistant.find('.msg-avatar').exists()).toBe(true)
++    expect(assistant.get('.assistant-message-author .message-author-name').text()).toBe('Ekko')
++    expect(assistant.find('.msg-avatar').exists()).toBe(false)
+   })
+ })
+diff --git a/tests/client/message-list-scroll-position.test.ts b/tests/client/message-list-scroll-position.test.ts
+index 98936895f..4b94f77d2 100644
+--- a/tests/client/message-list-scroll-position.test.ts
++++ b/tests/client/message-list-scroll-position.test.ts
+@@ -62,7 +62,6 @@ vi.mock('@/components/hermes/chat/MessageItem.vue', () => ({
+       message: { type: Object, required: true },
+       assistantAgent: { type: Object, default: null },
+       userProfileName: { type: String, default: 'default' },
+-      userProfileAvatar: { type: Object, default: null },
+     },
+     template: '<div class="stub-message" :data-id="message.id">{{ message.content }}</div>',
+   }),
+@@ -167,9 +166,8 @@ describe('MessageList session scroll position', () => {
+     const wrapper = mount(MessageList, { global: { stubs: { Transition: false } } })
+     await flushSessionScroll()
+ 
+-    expect(wrapper.get('.empty-logo').attributes('src')).toBe('/coding-agents/ekko-agent.png')
+-    expect(wrapper.get('.empty-logo').attributes('alt')).toBe('Ekko')
+     expect(wrapper.get('.empty-state p').text()).toBe('chat.emptyStateAgent')
++    expect(wrapper.find('.empty-logo').exists()).toBe(false)
+ 
+     chatStore.activeSession = {
+       ...makeSession('pending-session'),
+@@ -179,53 +177,22 @@ describe('MessageList session scroll position', () => {
+       messages: [],
+     }
+     await flushSessionScroll()
+-    expect(wrapper.get('.empty-logo').attributes('src')).toBe('/coding-agents/codex-openai.png')
+-    expect(wrapper.get('.empty-logo').attributes('alt')).toBe('Codex')
++    expect(wrapper.get('.empty-state p').text()).toBe('chat.emptyStateAgent')
++    expect(wrapper.find('.empty-logo').exists()).toBe(false)
+     wrapper.unmount()
+   })
+ 
+-  it.each([
+-    {
+-      runtime: 'Hermes',
+-      session: { source: 'global_agent', agent: 'hermes' },
+-      logo: '/coding-agents/hermes.png',
+-      alt: 'Hermes',
+-    },
+-    {
+-      runtime: 'Ekko',
+-      session: { source: 'global_agent', agent: 'ekko-agent', codingAgentId: 'ekko-agent' },
+-      logo: '/coding-agents/ekko-agent.png',
+-      alt: 'Ekko',
+-    },
+-  ])('renders the $runtime logo for an empty Global Agent session', async ({ session, logo, alt }) => {
+-    const chatStore = useChatStore()
+-    const activeSession = { ...makeSession(`empty-${alt}`), ...session, messages: [] } as Session
+-    chatStore.activeSessionId = activeSession.id
+-    chatStore.activeSession = activeSession
+-
+-    const wrapper = mount(MessageList, {
+-      global: {
+-        stubs: { Transition: false },
+-      },
+-    })
+-    await flushSessionScroll()
+-
+-    const emptyLogo = wrapper.get('.empty-logo')
+-    expect(emptyLogo.attributes('src')).toBe(logo)
+-    expect(emptyLogo.attributes('alt')).toBe(alt)
+-  })
+-
+   it.each([
+     ['Hermes', { agent: 'hermes' }, '/coding-agents/hermes.png'],
+-    ['Ekko', { agent: 'ekko-agent', codingAgentId: 'ekko-agent' }, '/coding-agents/ekko-agent.png'],
+-    ['Claude', { source: 'coding_agent', agent: 'claude', codingAgentId: 'claude-code' }, '/coding-agents/claude-code.svg'],
+-    ['Codex', { source: 'coding_agent', agent: 'codex', codingAgentId: 'codex' }, '/coding-agents/codex-openai.png'],
+-    ['Pi', { source: 'coding_agent', agent: 'pi', codingAgentId: 'pi' }, '/coding-agents/pi.svg'],
+-    ['Grok', { source: 'coding_agent', agent: 'grok', codingAgentId: 'grok' }, '/coding-agents/grok.svg'],
+-    ['OpenCode', { source: 'coding_agent', agent: 'opencode', codingAgentId: 'opencode' }, '/coding-agents/opencode.png'],
+-  ])('passes the $runtime avatar to Assistant message bubbles', async (label, identity, src) => {
++    ['Ekko', { agent: 'ekko-agent', codingAgentId: 'ekko-agent' }],
++    ['Claude', { source: 'coding_agent', agent: 'claude', codingAgentId: 'claude-code' }],
++    ['Codex', { source: 'coding_agent', agent: 'codex', codingAgentId: 'codex' }],
++    ['Pi', { source: 'coding_agent', agent: 'pi', codingAgentId: 'pi' }],
++    ['Grok', { source: 'coding_agent', agent: 'grok', codingAgentId: 'grok' }],
++    ['OpenCode', { source: 'coding_agent', agent: 'opencode', codingAgentId: 'opencode' }],
++  ])('passes the $runtime label to Assistant message bubbles', async (label, identity) => {
+     const chatStore = useChatStore()
+-    const activeSession = { ...makeSession(`avatar-${label}`), ...identity } as Session
++    const activeSession = { ...makeSession(`agent-${label}`), ...identity } as Session
+     activeSession.messages = [{
+       id: `assistant-${label}`,
+       role: 'assistant',
+@@ -240,17 +207,16 @@ describe('MessageList session scroll position', () => {
+     })
+     await flushSessionScroll()
+ 
+-    expect(wrapper.getComponent({ name: 'MessageItem' }).props('assistantAgent')).toEqual({ label, src })
++    expect(wrapper.getComponent({ name: 'MessageItem' }).props('assistantAgent')).toEqual({ label })
+   })
+ 
+-  it('passes the active session profile identity to user message bubbles', async () => {
++  it('passes the active session profile name to user message bubbles', async () => {
+     const chatStore = useChatStore()
+     const profilesStore = useProfilesStore()
+-    const avatar = { type: 'generated' as const, seed: 'research-avatar' }
+     profilesStore.activeProfileName = 'default'
+     profilesStore.profiles = [
+       { name: 'default', active: true, model: '', alias: '' },
+-      { name: 'research', active: false, model: '', alias: 'Researcher', avatar },
++      { name: 'research', active: false, model: '', alias: 'Researcher' },
+     ]
+ 
+     const session = makeSession('profile-identity-session')
+@@ -265,7 +231,6 @@ describe('MessageList session scroll position', () => {
+ 
+     const messageItem = wrapper.getComponent({ name: 'MessageItem' })
+     expect(messageItem.props('userProfileName')).toBe('Researcher')
+-    expect(messageItem.props('userProfileAvatar')).toEqual(avatar)
+   })
+ 
+   it('shows a history link instead of loading more after the live chat message cap', async () => {
+diff --git a/tests/client/pi-chat-avatar.test.ts b/tests/client/pi-chat-avatar.test.ts
+deleted file mode 100644
+index 1fd725812..000000000
+--- a/tests/client/pi-chat-avatar.test.ts
++++ /dev/null
+@@ -1,30 +0,0 @@
+-import { readFileSync } from 'fs'
+-import { describe, expect, it } from 'vitest'
+-
+-describe('Pi chat identity', () => {
+-  it('uses profile avatar for regular sessions and Agent avatar for coding-agent sessions', () => {
+-    const source = readFileSync('packages/client/src/components/hermes/chat/MessageItem.vue', 'utf8')
+-
+-    expect(source).toContain("v-if=\"message.role === 'assistant' && !isCodingAgentSession\"")
+-    // Regular Hermes sessions fall back to the profile avatar (uploaded/generated).
+-    expect(source).toContain('assistantProfileName')
+-    expect(source).toContain('assistantProfileAvatar')
+-    expect(source).toContain('!isCodingAgentSession')
+-    // Coding-agent sessions keep the runtime agent icon.
+-    expect(source).toContain(':src="assistantAgent.src"')
+-    expect(source).toContain(':alt="assistantAgent.label"')
+-    expect(source).toMatch(/\.msg-avatar\s*\{[^}]*object-fit: cover;/s)
+-    expect(source).toMatch(/\.msg-avatar\s*\{[^}]*border: 1px solid #fff;/s)
+-    expect(source).not.toMatch(/\.msg-avatar\s*\{[^}]*padding:/s)
+-    expect(source).not.toMatch(/\.msg-avatar\s*\{[^}]*background:/s)
+-  })
+-
+-  it('uses the Pi logo in empty state and completion notifications', () => {
+-    const avatarHelper = readFileSync('packages/client/src/utils/chat-agent-avatar.ts', 'utf8')
+-    const chatStore = readFileSync('packages/client/src/stores/hermes/chat.ts', 'utf8')
+-
+-    expect(avatarHelper).toContain("pi: { label: 'Pi', src: '/coding-agents/pi.svg' }")
+-    expect(chatStore).toContain("if (codingAgentId === 'pi')")
+-    expect(chatStore).toContain("return { icon: '/coding-agents/pi.svg' }")
+-  })
+-})
+diff --git a/tests/client/profile-card-config-edit.test.ts b/tests/client/profile-card-config-edit.test.ts
+index 7d8f20354..b52dfa1f6 100644
+--- a/tests/client/profile-card-config-edit.test.ts
++++ b/tests/client/profile-card-config-edit.test.ts
+@@ -48,13 +48,11 @@ describe('ProfileCard config edit affordance', () => {
+           active: false,
+           model: 'gpt-5.4',
+           alias: 'reviewer',
+-          avatar: null,
+         },
+       },
+       global: {
+         plugins: [createTestingPinia({ createSpy: vi.fn })],
+         stubs: {
+-          ProfileAvatar: { template: '<span class="profile-avatar-stub" />' },
+         },
+       },
+     })
+@@ -78,7 +76,6 @@ describe('ProfileCard config edit affordance', () => {
+           active: false,
+           model: 'gpt-5.4',
+           alias: 'reviewer',
+-          avatar: null,
+         },
+       },
+       global: {
+@@ -86,7 +83,6 @@ describe('ProfileCard config edit affordance', () => {
+           createSpy: vi.fn,
+           initialState: { profiles: { hermesAvailable: false } },
+         })],
+-        stubs: { ProfileAvatar: { template: '<span />' } },
+       },
+     })
+ 
+@@ -101,7 +97,6 @@ describe('ProfileCard config edit affordance', () => {
+           active: false,
+           model: 'gpt-5.4',
+           alias: 'reviewer',
+-          avatar: null,
+         },
+       },
+       global: {
+@@ -109,7 +104,6 @@ describe('ProfileCard config edit affordance', () => {
+           createSpy: vi.fn,
+           initialState: { profiles: { hermesAvailable: true } },
+         })],
+-        stubs: { ProfileAvatar: { template: '<span />' } },
+       },
+     })
+ 
+diff --git a/tests/client/profiles-store.test.ts b/tests/client/profiles-store.test.ts
+index 7555b0842..9bb22916e 100644
+--- a/tests/client/profiles-store.test.ts
++++ b/tests/client/profiles-store.test.ts
+@@ -11,8 +11,6 @@ const mockProfilesApi = vi.hoisted(() => ({
+   switchProfile: vi.fn(),
+   exportProfile: vi.fn(),
+   importProfile: vi.fn(),
+-  updateProfileAvatar: vi.fn(),
+-  deleteProfileAvatar: vi.fn(),
+ }))
+ 
+ const mockAgentStatusApi = vi.hoisted(() => ({
+@@ -163,54 +161,6 @@ describe('Profiles Store', () => {
+     expect(mockProfilesApi.fetchProfileDetail).not.toHaveBeenCalled()
+   })
+ 
+-  it('updateAvatar updates profile, detail cache, and active profile', async () => {
+-    const savedAvatar = { type: 'image', dataUrl: 'data:image/png;base64,YQ==' }
+-    mockProfilesApi.updateProfileAvatar.mockResolvedValue(savedAvatar)
+-
+-    const store = useProfilesStore()
+-    store.profiles = [
+-      { name: 'default', active: true, model: 'gpt-4', alias: '' },
+-      { name: 'dev', active: false, model: 'gpt-4', alias: '' },
+-    ]
+-    store.activeProfile = store.profiles[0]
+-    store.detailMap.default = { name: 'default', path: '/tmp/default', model: '', provider: '', skills: 0, hasEnv: false, hasSoulMd: false }
+-
+-    const result = await store.updateAvatar('default', { type: 'image', dataUrl: savedAvatar.dataUrl })
+-
+-    expect(result).toEqual(savedAvatar)
+-    expect(mockProfilesApi.updateProfileAvatar).toHaveBeenCalledWith('default', { type: 'image', dataUrl: savedAvatar.dataUrl })
+-    expect(store.profiles[0].avatar).toEqual(savedAvatar)
+-    expect(store.activeProfile?.avatar).toEqual(savedAvatar)
+-    expect(store.detailMap.default.avatar).toEqual(savedAvatar)
+-  })
+-
+-  it('deleteAvatar clears avatar state', async () => {
+-    mockProfilesApi.deleteProfileAvatar.mockResolvedValue(undefined)
+-
+-    const store = useProfilesStore()
+-    store.profiles = [
+-      { name: 'default', active: true, model: 'gpt-4', alias: '', avatar: { type: 'generated', seed: 'old' } },
+-    ]
+-    store.activeProfile = store.profiles[0]
+-    store.detailMap.default = {
+-      name: 'default',
+-      path: '/tmp/default',
+-      model: '',
+-      provider: '',
+-      skills: 0,
+-      hasEnv: false,
+-      hasSoulMd: false,
+-      avatar: { type: 'generated', seed: 'old' },
+-    }
+-
+-    await store.deleteAvatar('default')
+-
+-    expect(mockProfilesApi.deleteProfileAvatar).toHaveBeenCalledWith('default')
+-    expect(store.profiles[0].avatar).toBeNull()
+-    expect(store.activeProfile?.avatar).toBeNull()
+-    expect(store.detailMap.default.avatar).toBeNull()
+-  })
+-
+   it('switchProfile sets switching state', async () => {
+     mockProfilesApi.switchProfile.mockResolvedValue(true)
+     mockProfilesApi.fetchProfiles.mockResolvedValue([])
+diff --git a/tests/client/session-list-item-source.test.ts b/tests/client/session-list-item-source.test.ts
+index 17c4a1c01..503ab24e7 100644
+--- a/tests/client/session-list-item-source.test.ts
++++ b/tests/client/session-list-item-source.test.ts
+@@ -1,16 +1,7 @@
+-import { readFileSync } from 'node:fs'
+ import { describe, expect, it } from 'vitest'
+ import { resolveSessionNavigation } from '@/components/hermes/chat/session-list-item-navigation'
+ 
+ describe('SessionListItem source and navigation', () => {
+-  it('uses a one-pixel white outline without internal avatar padding', () => {
+-    const source = readFileSync('packages/client/src/components/hermes/chat/SessionListItem.vue', 'utf8')
+-
+-    expect(source).toMatch(/\.session-item-agent-logo\s*\{[^}]*border: 1px solid #fff;/s)
+-    expect(source).not.toMatch(/\.session-item-agent-logo\s*\{[^}]*padding:/s)
+-    expect(source).not.toMatch(/\.session-item-agent-logo\s*\{[^}]*background:/s)
+-  })
+-
+   it('preserves native modified navigation unless desktop interception is requested', () => {
+     const ctrlClick = { ctrlKey: true, button: 0 } as MouseEvent
+     const middleClick = {
+diff --git a/tests/client/session-list-item.test.ts b/tests/client/session-list-item.test.ts
+index 8c7172592..64f4cbf5b 100644
+--- a/tests/client/session-list-item.test.ts
++++ b/tests/client/session-list-item.test.ts
+@@ -64,14 +64,6 @@ describe('SessionListItem', () => {
+     settingsDisplay.show_session_identity = true
+   })
+ 
+-  it('uses a one-pixel white outline without internal avatar padding', () => {
+-    const source = readFileSync('packages/client/src/components/hermes/chat/SessionListItem.vue', 'utf8')
+-
+-    expect(source).toMatch(/\.session-item-agent-logo\s*\{[^}]*border: 1px solid #fff;/s)
+-    expect(source).not.toMatch(/\.session-item-agent-logo\s*\{[^}]*padding:/s)
+-    expect(source).not.toMatch(/\.session-item-agent-logo\s*\{[^}]*background:/s)
+-  })
+-
+   it('renders normal mode as a link to the session route', () => {
+     const wrapper = mount(SessionListItem, {
+       props: {
+@@ -81,11 +73,6 @@ describe('SessionListItem', () => {
+         canDelete: true,
+         to: '/session/s1',
+       },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+     })
+ 
+     const link = wrapper.get('a.session-item')
+@@ -104,11 +91,6 @@ describe('SessionListItem', () => {
+         selected: false,
+         to: '/session/s1',
+       },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+     })
+ 
+     expect(wrapper.find('button.session-item').exists()).toBe(true)
+@@ -124,11 +106,6 @@ describe('SessionListItem', () => {
+         canDelete: true,
+         categoryLabel: 'Work - Mobile',
+       },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+     })
+ 
+     const tag = wrapper.get('.session-item-category-tag')
+@@ -149,11 +126,6 @@ describe('SessionListItem', () => {
+         canDelete: true,
+         to: '/session/s1',
+       },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+     })
+ 
+     await wrapper.get('button.session-item-delete').trigger('click')
+@@ -169,11 +141,6 @@ describe('SessionListItem', () => {
+         canDelete: true,
+         to: '/session/s1',
+       },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+     })
+ 
+     const link = wrapper.get('a.session-item')
+@@ -183,135 +150,6 @@ describe('SessionListItem', () => {
+     expect(wrapper.emitted('open-new')).toBeUndefined()
+   })
+ 
+-  it('renders the Hermes logo for Hermes sessions', () => {
+-    const wrapper = mount(SessionListItem, {
+-      props: {
+-        session: { ...session, source: 'cli', agent: 'hermes' },
+-        active: false,
+-        pinned: false,
+-        canDelete: true,
+-      },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+-    })
+-
+-    const logo = wrapper.get('.session-item-agent-logo')
+-    expect(logo.attributes('src')).toBe('/coding-agents/hermes.png')
+-    expect(logo.attributes('alt')).toBe('Hermes')
+-    expect(wrapper.find('.session-item-agent-name').exists()).toBe(false)
+-  })
+-
+-  it('renders the Hermes logo for Hermes Global Agent sessions', () => {
+-    const wrapper = mount(SessionListItem, {
+-      props: {
+-        session: { ...session, source: 'global_agent', agent: 'hermes' },
+-        active: false,
+-        pinned: false,
+-        canDelete: true,
+-      },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+-    })
+-
+-    const logo = wrapper.get('.session-item-agent-logo')
+-    expect(logo.attributes('src')).toBe('/coding-agents/hermes.png')
+-    expect(logo.attributes('alt')).toBe('Hermes')
+-  })
+-
+-  it('renders the Ekko logo for Ekko Global Agent sessions', () => {
+-    const wrapper = mount(SessionListItem, {
+-      props: {
+-        session: {
+-          ...session,
+-          source: 'global_agent',
+-          agent: 'ekko-agent',
+-          codingAgentId: 'ekko-agent',
+-        },
+-        active: false,
+-        pinned: false,
+-        canDelete: true,
+-      },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+-    })
+-
+-    const logo = wrapper.get('.session-item-agent-logo')
+-    expect(logo.attributes('src')).toBe('/coding-agents/ekko-agent.png')
+-    expect(logo.attributes('alt')).toBe('Ekko')
+-  })
+-
+-  it('defaults old sessions without agent metadata to the Hermes logo', () => {
+-    const wrapper = mount(SessionListItem, {
+-      props: {
+-        session: { ...session, source: undefined, agent: undefined, codingAgentId: undefined },
+-        active: false,
+-        pinned: false,
+-        canDelete: true,
+-      },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+-    })
+-
+-    const logo = wrapper.get('.session-item-agent-logo')
+-    expect(logo.attributes('src')).toBe('/coding-agents/hermes.png')
+-    expect(logo.attributes('alt')).toBe('Hermes')
+-    expect(wrapper.find('.session-item-agent-name').exists()).toBe(false)
+-  })
+-
+-  it('renders the Claude logo for Claude coding agent sessions', () => {
+-    const wrapper = mount(SessionListItem, {
+-      props: {
+-        session: { ...session, source: 'coding_agent', agent: 'claude', codingAgentId: 'claude-code' },
+-        active: false,
+-        pinned: false,
+-        canDelete: true,
+-      },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+-    })
+-
+-    const logo = wrapper.get('.session-item-agent-logo')
+-    expect(logo.attributes('src')).toBe('/coding-agents/claude-code.svg')
+-    expect(logo.attributes('alt')).toBe('Claude')
+-    expect(wrapper.find('.session-item-agent-name').exists()).toBe(false)
+-  })
+-
+-  it('renders the Codex logo for Codex coding agent sessions', () => {
+-    const wrapper = mount(SessionListItem, {
+-      props: {
+-        session: { ...session, source: 'coding_agent', agent: 'codex', codingAgentId: 'codex' },
+-        active: false,
+-        pinned: false,
+-        canDelete: true,
+-      },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+-    })
+-
+-    const logo = wrapper.get('.session-item-agent-logo')
+-    expect(logo.attributes('src')).toBe('/coding-agents/codex-openai.png')
+-    expect(logo.attributes('alt')).toBe('Codex')
+-    expect(wrapper.find('.session-item-agent-name').exists()).toBe(false)
+-  })
+-
+   it('hides the agent/profile identity row when show_session_identity is false', () => {
+     settingsDisplay.show_session_identity = false
+     const wrapper = mount(SessionListItem, {
+@@ -321,15 +159,9 @@ describe('SessionListItem', () => {
+         pinned: false,
+         canDelete: true,
+       },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+     })
+ 
+     expect(wrapper.find('.session-item-agent-row').exists()).toBe(false)
+-    expect(wrapper.find('.session-item-agent-logo').exists()).toBe(false)
+     expect(wrapper.find('.session-item-profile').exists()).toBe(false)
+   })
+ 
+@@ -343,16 +175,11 @@ describe('SessionListItem', () => {
+         canDelete: true,
+         showProfile: true,
+       },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+     })
+ 
+     expect(wrapper.find('.session-item-agent-row').exists()).toBe(true)
+-    expect(wrapper.get('.session-item-agent-logo').attributes('src')).toBe('/coding-agents/hermes.png')
+     expect(wrapper.find('.session-item-profile').exists()).toBe(true)
++    expect(wrapper.find('.session-item-agent-logo').exists()).toBe(false)
+   })
+   it('shows an independent live-status indicator when streaming', () => {
+     settingsDisplay.show_session_identity = false
+@@ -364,11 +191,6 @@ describe('SessionListItem', () => {
+         canDelete: true,
+         streaming: true,
+       },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+     })
+ 
+     expect(wrapper.find('.session-item-agent-row').exists()).toBe(false)
+@@ -384,11 +206,6 @@ describe('SessionListItem', () => {
+         canDelete: true,
+         streaming: false,
+       },
+-      global: {
+-        stubs: {
+-          ProfileAvatar: true,
+-        },
+-      },
+     })
+ 
+     expect(wrapper.find('.session-item-live-dot').exists()).toBe(false)
+diff --git a/tests/e2e/chat-streaming.spec.ts b/tests/e2e/chat-streaming.spec.ts
+index dc1b5be32..1978312a8 100644
+--- a/tests/e2e/chat-streaming.spec.ts
++++ b/tests/e2e/chat-streaming.spec.ts
+@@ -107,10 +107,6 @@ test('freezes the current reasoning between the thinking animation and its tool
+   }, run.session_id)
+ 
+   await expect(page.locator('.streaming-indicator .thinking-status')).toBeVisible()
+-  const thinkingAvatar = page.locator('.streaming-indicator .thinking-avatar')
+-  await expect(thinkingAvatar).toHaveAttribute('src', '/coding-agents/hermes.png')
+-  await expect(thinkingAvatar).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+-  await expect(thinkingAvatar).toHaveCSS('object-fit', 'contain')
+ 
+   await page.evaluate((sid) => {
+     const socket = (window as any).__PW_CHAT_SOCKET__.latest
+diff --git a/tests/e2e/fixtures.ts b/tests/e2e/fixtures.ts
+index 357bf60ae..88e0d4bd5 100644
+--- a/tests/e2e/fixtures.ts
++++ b/tests/e2e/fixtures.ts
+@@ -342,25 +342,11 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
+           created_at: 0,
+           updated_at: 0,
+           last_login_at: 0,
+-          avatar: '',
+         },
+       }))
+       return
+     }
+ 
+-    if (pathname === '/api/auth/avatar') {
+-      if (request.method() === 'GET') {
+-        await route.fulfill(jsonResponse({ avatar: '' }))
+-        return
+-      }
+-      if (request.method() === 'PUT') {
+-        await route.fulfill(jsonResponse({ success: true, avatar: '' }))
+-        return
+-      }
+-      await route.fulfill(jsonResponse({ error: 'Method not allowed' }, 405))
+-      return
+-    }
+-
+     if (pathname === '/api/studio/tts/settings' && request.method() === 'GET') {
+       const profile = request.headers()['x-hermes-profile'] === 'research' ? 'research' : 'default'
+       await route.fulfill(jsonResponse({
+-- 
+2.53.0
+
