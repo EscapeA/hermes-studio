@@ -132,12 +132,7 @@ function detailFor(id: string, sessions = historySessions) {
   }
 }
 
-const defaultGroupRooms = [
-    { id: 'room-new', name: 'Newest Group Room', inviteCode: null, canManage: false, lastActiveAt: 1_790_001_000 },
-    { id: 'room-old', name: 'Older Group Room', inviteCode: null, canManage: false, lastActiveAt: 1_790_000_000 },
-]
-
-async function mockHistoryApi(page: Page, sessions = historySessions, groupRooms = defaultGroupRooms) {
+async function mockHistoryApi(page: Page, sessions = historySessions) {
   await page.route('**/*', async (route: Route) => {
     const request = route.request()
     const url = new URL(request.url())
@@ -155,33 +150,6 @@ async function mockHistoryApi(page: Page, sessions = historySessions, groupRooms
     if (pathname === '/api/hermes/runtime-versions/jobs' && request.method() === 'GET') return json({ jobs: [] })
     if (pathname === '/api/hermes/available-models') return json({ default: 'test-model', default_provider: 'test-provider', groups: [TEST_MODEL_GROUP], allProviders: [TEST_MODEL_GROUP], model_aliases: {}, model_visibility: {} })
     if (pathname === '/api/hermes/profiles') return json({ profiles: [{ name: 'default', active: true, model: 'test-model', gateway: 'test' }] })
-    if (pathname === '/api/studio/group-chat/rooms') {
-      const offset = Number(url.searchParams.get('offset') || 0)
-      const limit = Number(url.searchParams.get('limit') || 50)
-      return json({
-        rooms: groupRooms.slice(offset, offset + limit),
-        total: groupRooms.length,
-        offset,
-        limit,
-        hasMore: offset + limit < groupRooms.length,
-      })
-    }
-    const groupRoomMatch = pathname.match(/^\/api\/studio\/group-chat\/rooms\/([^/]+)$/)
-    if (groupRoomMatch) {
-      const roomId = decodeURIComponent(groupRoomMatch[1])
-      const room = groupRooms.find(item => item.id === roomId)
-      if (!room) return json({ error: 'Room not found' }, 404)
-      return json({
-        room,
-        messages: [
-          { id: `${roomId}-message`, roomId, senderId: 'user-1', senderName: 'User', content: `History for ${room.name}`, timestamp: room.lastActiveAt, role: 'user' },
-        ],
-        agents: [],
-        members: [],
-        total: 1,
-        hasMore: false,
-      })
-    }
     if (pathname === '/api/studio/sessions/hermes/groups') {
       const limit = Number(url.searchParams.get('limit') || 20)
       const includedIds = new Set(url.searchParams.getAll('include'))
@@ -291,14 +259,6 @@ test.describe('history session deep links', () => {
     await expect(page.getByText('API Server History Session').first()).toBeVisible()
     await expect(page.getByText('Answer from API Server History Session')).toBeVisible()
     await expect(page.getByText('API Server', { exact: true }).first()).toBeVisible()
-  })
-
-  test('does not expose Group Chat as a History source', async ({ page }) => {
-    await page.goto('/#/hermes/history/session/hist-alpha')
-
-    await expect(page.locator('.session-group-label', { hasText: 'GROUP' })).toHaveCount(0)
-    await expect(page.locator('.group-room-history-item')).toHaveCount(0)
-    await expect(page.getByText('Newest Group Room')).toHaveCount(0)
   })
 
   test('clicking another history session updates URL and reload preserves it', async ({ page }) => {

@@ -24,7 +24,7 @@ function snapshot(): AgentStatusSnapshot {
 }
 
 describe('Agent status availability', () => {
-  it('normalizes group-chat and workflow Agent aliases', () => {
+  it('normalizes Agent aliases', () => {
     expect(resolveAgentStatusId('ekko')).toBe('ekko-agent')
     expect(resolveAgentStatusId('claude')).toBe('claude-code')
     expect(resolveAgentStatusId('codex')).toBe('codex')
