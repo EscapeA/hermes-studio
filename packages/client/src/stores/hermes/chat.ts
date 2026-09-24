@@ -1,12 +1,10 @@
-import { chatSessionAgentAvatar } from '@/utils/chat-agent-avatar'
-import { deleteSessionMessages, type MessageDeletionResult } from '@/api/studio/sessions'
 import { isNativeCodingAgent } from '@/utils/agent-catalog'
 import { historySessionSource, isBuiltinEkkoSession } from '@/utils/hermes/session-agent'
 import { isKnownEkkoSessionCommand } from '@/utils/hermes/bridge-session-commands'
 import { normalizeRunUsage, type RunUsageSummary } from '@/utils/run-usage'
 import { mergeTaskPlanMessages, type TaskPlanSnapshot } from '@/utils/task-plan'
-import { startRunViaSocket, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, onRunUsageUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
-import { archiveSession as archiveSessionApi, deleteSession as deleteSessionApi, fetchSessionMessagesPage, fetchSessions, fetchWorkspaceRunChangeFile, setSessionModel, setSessionPushEnabled as persistSessionPushEnabled, setSessionReasoningEffort as persistSessionReasoningEffort, type HermesMessage, type SessionSummary, type WorkspaceRunChangeFileDetail, type WorkspaceRunChangeSummary } from '@/api/studio/sessions'
+import { startRunViaSocket, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onChatRunConnected, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, onRunUsageUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
+import { archiveSession as archiveSessionApi, deleteSession as deleteSessionApi, deleteSessionMessages, type MessageDeletionResult, fetchSessionMessagesPage, fetchSessions, fetchWorkspaceRunChangeFile, setSessionModel, setSessionPushEnabled as persistSessionPushEnabled, setSessionReasoningEffort as persistSessionReasoningEffort, type HermesMessage, type SessionSummary, type WorkspaceRunChangeFileDetail, type WorkspaceRunChangeSummary } from '@/api/studio/sessions'
 import { getActiveProfileName } from '@/api/client'
 import { onAuthInvalidated } from '@/api/auth-invalidation'
 import { inferCodingAgentApiMode, normalizeCodingAgentApiMode, type ChatCodingAgentId } from '@/api/coding-agents'
@@ -3702,7 +3700,12 @@ export const useChatStore = defineStore('chat', () => {
     if (codingAgentId === 'opencode') {
       return { icon: '/coding-agents/opencode.png' }
     }
-    if (isNativeCodingAgent(codingAgentId)) return { icon: chatSessionAgentAvatar(session).src }
+    if (codingAgentId === 'qwen') return { icon: '/coding-agents/qwen-logo.svg' }
+    if (codingAgentId === 'kimi') return { icon: '/coding-agents/kimi-logo.png' }
+    if (codingAgentId === 'codebuddy') return { icon: '/coding-agents/codebuddy-logo.svg' }
+    if (codingAgentId === 'qoder') return { icon: '/coding-agents/qoder-logo.svg' }
+    if (codingAgentId === 'copilot') return { icon: '/coding-agents/copilot-logo.svg' }
+    if (codingAgentId === 'zcode') return { icon: '/coding-agents/zcode-logo.png' }
     if (codingAgentId === 'antigravity') return { icon: '/coding-agents/antigravity.png' }
     if (codingAgentId === 'cursor') {
       return { icon: '/coding-agents/cursor-logo.png' }
