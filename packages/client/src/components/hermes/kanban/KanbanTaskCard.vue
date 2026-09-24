@@ -2,13 +2,10 @@
 import { computed } from 'vue'
 import { NTooltip } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
 import type { KanbanTask } from '@/api/hermes/kanban'
-import type { ProfileAvatar as ProfileAvatarData } from '@/api/hermes/profiles'
 
 const props = defineProps<{
   task: KanbanTask
-  assigneeAvatar?: ProfileAvatarData | null
 }>()
 
 const emit = defineEmits<{
@@ -57,13 +54,6 @@ const priorityText = computed(() => {
       <NTooltip v-if="task.assignee" trigger="hover">
         <template #trigger>
           <span class="assignee">
-            <ProfileAvatar
-              class="assignee-profile-avatar"
-              :name="task.assignee"
-              :avatar="assigneeAvatar"
-              :size="18"
-              aria-hidden="true"
-            />
             <span class="assignee-name">{{ task.assignee }}</span>
           </span>
         </template>
@@ -211,11 +201,6 @@ const priorityText = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.assignee-profile-avatar {
-  flex: 0 0 auto;
-  box-shadow: 0 0 0 1px $border-light;
 }
 
 .card-time {

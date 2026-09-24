@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ChatAgentAvatar } from '@/utils/chat-agent-avatar'
 
 const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
 
@@ -9,12 +8,9 @@ const props = withDefaults(defineProps<{
   reasoning?: string | null
   reasoningId?: string | number | null
   elapsed: string
-  agent?: ChatAgentAvatar
   /** Decode speed of the run's latest finished call, e.g. `94 tok/s`; hidden when null. */
   speed?: string | null
-}>(), {
-  agent: () => ({ label: 'Hermes', src: '/coding-agents/hermes.png' }),
-})
+}>(), {})
 
 const { t } = useI18n()
 
