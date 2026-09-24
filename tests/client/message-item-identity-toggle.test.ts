@@ -34,7 +34,7 @@ function mountMessage(role: 'user' | 'assistant') {
         content: 'Hello',
         timestamp: Date.now(),
       } satisfies Message,
-      assistantAgent: { label: 'Ekko', src: '/coding-agents/ekko-agent.png' },
+      assistantAgent: { label: 'Ekko' },
       userProfileName: 'Researcher',
     },
     global: { stubs: { MarkdownRenderer: true } },
@@ -42,28 +42,29 @@ function mountMessage(role: 'user' | 'assistant') {
 }
 
 describe('MessageItem chat identity toggle', () => {
-  it('hides author rows and message avatars when show_session_identity is false', () => {
+  it('hides author rows when show_session_identity is false', () => {
     settingsDisplay.show_session_identity = false
     setActivePinia(createPinia())
 
     const user = mountMessage('user')
     expect(user.find('.user-message-author').exists()).toBe(false)
-    expect(user.find('.user-profile-avatar').exists()).toBe(false)
 
     const assistant = mountMessage('assistant')
     expect(assistant.find('.assistant-message-author').exists()).toBe(false)
-    expect(assistant.find('.msg-avatar').exists()).toBe(false)
   })
 
-  it('shows author rows and message avatars by default', () => {
+  it('shows author rows by default and never renders avatars', () => {
     settingsDisplay.show_session_identity = undefined
     setActivePinia(createPinia())
 
     const user = mountMessage('user')
     expect(user.find('.user-message-author').exists()).toBe(true)
+    expect(user.get('.user-message-author .message-author-name').text()).toBe('Researcher')
+    expect(user.find('.user-profile-avatar').exists()).toBe(false)
 
     const assistant = mountMessage('assistant')
     expect(assistant.find('.assistant-message-author').exists()).toBe(true)
-    expect(assistant.find('.msg-avatar').exists()).toBe(true)
+    expect(assistant.get('.assistant-message-author .message-author-name').text()).toBe('Ekko')
+    expect(assistant.find('.msg-avatar').exists()).toBe(false)
   })
 })

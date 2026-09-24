@@ -62,7 +62,6 @@ vi.mock('@/components/hermes/chat/MessageItem.vue', () => ({
       message: { type: Object, required: true },
       assistantAgent: { type: Object, default: null },
       userProfileName: { type: String, default: 'default' },
-      userProfileAvatar: { type: Object, default: null },
     },
     template: '<div class="stub-message" :data-id="message.id">{{ message.content }}</div>',
   }),
@@ -167,9 +166,8 @@ describe('MessageList session scroll position', () => {
     const wrapper = mount(MessageList, { global: { stubs: { Transition: false } } })
     await flushSessionScroll()
 
-    expect(wrapper.get('.empty-logo').attributes('src')).toBe('/coding-agents/ekko-agent.png')
-    expect(wrapper.get('.empty-logo').attributes('alt')).toBe('Ekko')
     expect(wrapper.get('.empty-state p').text()).toBe('chat.emptyStateAgent')
+    expect(wrapper.find('.empty-logo').exists()).toBe(false)
 
     chatStore.activeSession = {
       ...makeSession('pending-session'),
@@ -179,53 +177,22 @@ describe('MessageList session scroll position', () => {
       messages: [],
     }
     await flushSessionScroll()
-    expect(wrapper.get('.empty-logo').attributes('src')).toBe('/coding-agents/codex-openai.png')
-    expect(wrapper.get('.empty-logo').attributes('alt')).toBe('Codex')
+    expect(wrapper.get('.empty-state p').text()).toBe('chat.emptyStateAgent')
+    expect(wrapper.find('.empty-logo').exists()).toBe(false)
     wrapper.unmount()
   })
 
   it.each([
-    {
-      runtime: 'Hermes',
-      session: { source: 'global_agent', agent: 'hermes' },
-      logo: '/coding-agents/hermes.png',
-      alt: 'Hermes',
-    },
-    {
-      runtime: 'Ekko',
-      session: { source: 'global_agent', agent: 'ekko-agent', codingAgentId: 'ekko-agent' },
-      logo: '/coding-agents/ekko-agent.png',
-      alt: 'Ekko',
-    },
-  ])('renders the $runtime logo for an empty Global Agent session', async ({ session, logo, alt }) => {
-    const chatStore = useChatStore()
-    const activeSession = { ...makeSession(`empty-${alt}`), ...session, messages: [] } as Session
-    chatStore.activeSessionId = activeSession.id
-    chatStore.activeSession = activeSession
-
-    const wrapper = mount(MessageList, {
-      global: {
-        stubs: { Transition: false },
-      },
-    })
-    await flushSessionScroll()
-
-    const emptyLogo = wrapper.get('.empty-logo')
-    expect(emptyLogo.attributes('src')).toBe(logo)
-    expect(emptyLogo.attributes('alt')).toBe(alt)
-  })
-
-  it.each([
     ['Hermes', { agent: 'hermes' }, '/coding-agents/hermes.png'],
-    ['Ekko', { agent: 'ekko-agent', codingAgentId: 'ekko-agent' }, '/coding-agents/ekko-agent.png'],
-    ['Claude', { source: 'coding_agent', agent: 'claude', codingAgentId: 'claude-code' }, '/coding-agents/claude-code.svg'],
-    ['Codex', { source: 'coding_agent', agent: 'codex', codingAgentId: 'codex' }, '/coding-agents/codex-openai.png'],
-    ['Pi', { source: 'coding_agent', agent: 'pi', codingAgentId: 'pi' }, '/coding-agents/pi.svg'],
-    ['Grok', { source: 'coding_agent', agent: 'grok', codingAgentId: 'grok' }, '/coding-agents/grok.svg'],
-    ['OpenCode', { source: 'coding_agent', agent: 'opencode', codingAgentId: 'opencode' }, '/coding-agents/opencode.png'],
-  ])('passes the $runtime avatar to Assistant message bubbles', async (label, identity, src) => {
+    ['Ekko', { agent: 'ekko-agent', codingAgentId: 'ekko-agent' }],
+    ['Claude', { source: 'coding_agent', agent: 'claude', codingAgentId: 'claude-code' }],
+    ['Codex', { source: 'coding_agent', agent: 'codex', codingAgentId: 'codex' }],
+    ['Pi', { source: 'coding_agent', agent: 'pi', codingAgentId: 'pi' }],
+    ['Grok', { source: 'coding_agent', agent: 'grok', codingAgentId: 'grok' }],
+    ['OpenCode', { source: 'coding_agent', agent: 'opencode', codingAgentId: 'opencode' }],
+  ])('passes the $runtime label to Assistant message bubbles', async (label, identity) => {
     const chatStore = useChatStore()
-    const activeSession = { ...makeSession(`avatar-${label}`), ...identity } as Session
+    const activeSession = { ...makeSession(`agent-${label}`), ...identity } as Session
     activeSession.messages = [{
       id: `assistant-${label}`,
       role: 'assistant',
@@ -240,17 +207,16 @@ describe('MessageList session scroll position', () => {
     })
     await flushSessionScroll()
 
-    expect(wrapper.getComponent({ name: 'MessageItem' }).props('assistantAgent')).toEqual({ label, src })
+    expect(wrapper.getComponent({ name: 'MessageItem' }).props('assistantAgent')).toEqual({ label })
   })
 
-  it('passes the active session profile identity to user message bubbles', async () => {
+  it('passes the active session profile name to user message bubbles', async () => {
     const chatStore = useChatStore()
     const profilesStore = useProfilesStore()
-    const avatar = { type: 'generated' as const, seed: 'research-avatar' }
     profilesStore.activeProfileName = 'default'
     profilesStore.profiles = [
       { name: 'default', active: true, model: '', alias: '' },
-      { name: 'research', active: false, model: '', alias: 'Researcher', avatar },
+      { name: 'research', active: false, model: '', alias: 'Researcher' },
     ]
 
     const session = makeSession('profile-identity-session')
@@ -265,7 +231,6 @@ describe('MessageList session scroll position', () => {
 
     const messageItem = wrapper.getComponent({ name: 'MessageItem' })
     expect(messageItem.props('userProfileName')).toBe('Researcher')
-    expect(messageItem.props('userProfileAvatar')).toEqual(avatar)
   })
 
   it('shows a history link instead of loading more after the live chat message cap', async () => {

@@ -48,13 +48,11 @@ describe('ProfileCard config edit affordance', () => {
           active: false,
           model: 'gpt-5.4',
           alias: 'reviewer',
-          avatar: null,
         },
       },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          ProfileAvatar: { template: '<span class="profile-avatar-stub" />' },
         },
       },
     })
@@ -78,7 +76,6 @@ describe('ProfileCard config edit affordance', () => {
           active: false,
           model: 'gpt-5.4',
           alias: 'reviewer',
-          avatar: null,
         },
       },
       global: {
@@ -86,7 +83,6 @@ describe('ProfileCard config edit affordance', () => {
           createSpy: vi.fn,
           initialState: { profiles: { hermesAvailable: false } },
         })],
-        stubs: { ProfileAvatar: { template: '<span />' } },
       },
     })
 
@@ -101,7 +97,6 @@ describe('ProfileCard config edit affordance', () => {
           active: false,
           model: 'gpt-5.4',
           alias: 'reviewer',
-          avatar: null,
         },
       },
       global: {
@@ -109,7 +104,6 @@ describe('ProfileCard config edit affordance', () => {
           createSpy: vi.fn,
           initialState: { profiles: { hermesAvailable: true } },
         })],
-        stubs: { ProfileAvatar: { template: '<span />' } },
       },
     })
 

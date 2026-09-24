@@ -62,11 +62,7 @@ describe('MessageItem tool details', () => {
     })
   })
 
-  it('renders the profile name and avatar above a user message', () => {
-    const avatar = {
-      type: 'image' as const,
-      dataUrl: 'data:image/png;base64,cHJvZmlsZQ==',
-    }
+  it('renders the profile name above a user message', () => {
     const wrapper = mount(MessageItem, {
       props: {
         message: {
@@ -76,16 +72,15 @@ describe('MessageItem tool details', () => {
           timestamp: Date.now(),
         } satisfies Message,
         userProfileName: 'Researcher',
-        userProfileAvatar: avatar,
       },
       global: { stubs: { MarkdownRenderer: true } },
     })
 
     expect(wrapper.get('.user-message-author .message-author-name').text()).toBe('Researcher')
-    expect(wrapper.get('.user-profile-avatar .profile-avatar-image').attributes('src')).toBe(avatar.dataUrl)
+    expect(wrapper.find('.user-profile-avatar').exists()).toBe(false)
   })
 
-  it('renders the agent name and avatar above an assistant message', () => {
+  it('renders the agent name above an assistant message', () => {
     const wrapper = mount(MessageItem, {
       props: {
         message: {
@@ -94,16 +89,13 @@ describe('MessageItem tool details', () => {
           content: 'Hello',
           timestamp: Date.now(),
         } satisfies Message,
-        assistantAgent: {
-          label: 'Ekko',
-          src: '/coding-agents/ekko-agent.png',
-        },
+        assistantAgent: { label: 'Ekko' },
       },
       global: { stubs: { MarkdownRenderer: true } },
     })
 
     expect(wrapper.get('.assistant-message-author .message-author-name').text()).toBe('Ekko')
-    expect(wrapper.get('.assistant-message-author .msg-avatar').attributes('src')).toBe('/coding-agents/ekko-agent.png')
+    expect(wrapper.find('.assistant-message-author .msg-avatar').exists()).toBe(false)
   })
 
   it('selects a completed user or assistant message as the next-turn reference', async () => {
