@@ -212,15 +212,15 @@ describe('API Client', () => {
         status: 409,
         statusText: 'Conflict',
         text: () => Promise.resolve(JSON.stringify({
-          code: 'WORKFLOW_NAME_CONFLICT',
-          error: 'Workflow name already exists',
+          code: 'CONVERSATION_NAME_CONFLICT',
+          error: 'Conversation already exists',
         })),
       })
 
-      await expect(request('/api/studio/workflows')).rejects.toMatchObject({
+      await expect(request('/api/studio/conversations')).rejects.toMatchObject({
         status: 409,
-        code: 'WORKFLOW_NAME_CONFLICT',
-        message: 'API Error 409: Workflow name already exists',
+        code: 'CONVERSATION_NAME_CONFLICT',
+        message: 'API Error 409: Conversation already exists',
       })
     })
 
