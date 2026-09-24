@@ -390,7 +390,6 @@ export default {
     socialMessages: '메시지 보내기',
     terminal: '터미널',
     browser: '브라우저',
-    singleChat: '채팅',
     globalAgent: 'Global Agent',
     files: '파일',
     devices: '기기',

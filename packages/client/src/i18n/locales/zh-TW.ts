@@ -380,7 +380,6 @@ export default {
     gateways: '閘道',
     terminal: '終端機',
     browser: '瀏覽器',
-    singleChat: '單聊',
     globalAgent: '全局',
     files: '檔案',
     devices: '裝置',

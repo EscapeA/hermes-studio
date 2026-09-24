@@ -390,7 +390,6 @@ export default {
     socialMessages: 'Envoyer des messages',
     terminal: 'Terminal',
     browser: 'Navigateur',
-    singleChat: 'Discussion',
     globalAgent: 'Global Agent',
     files: 'Fichiers',
     devices: 'Appareils',

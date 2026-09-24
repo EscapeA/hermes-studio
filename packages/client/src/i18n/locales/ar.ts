@@ -380,7 +380,6 @@ export default {
     gateways: 'البوابات',
     terminal: 'الطرفية',
     browser: 'المتصفح',
-    singleChat: 'محادثة',
     globalAgent: 'الوكيل العام',
     files: 'الملفات',
     devices: 'الأجهزة',
