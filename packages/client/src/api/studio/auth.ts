@@ -42,8 +42,6 @@ export interface CurrentUser {
   created_at: number
   updated_at: number
   last_login_at: number | null
-  avatar?: string
-  hasAvatar?: boolean
   requiresCredentialChange?: boolean
 }
 
@@ -71,20 +69,6 @@ export async function fetchMyAvatar(): Promise<UserAvatar | null> {
   }
 }
 
-export async function updateMyAvatar(avatar: UserAvatar): Promise<void> {
-  const payload = JSON.stringify(avatar)
-  await request('/api/auth/avatar', {
-    method: 'PUT',
-    body: JSON.stringify({ avatar: payload }),
-  })
-}
-
-export async function resetMyAvatar(): Promise<void> {
-  await request('/api/auth/avatar', {
-    method: 'PUT',
-    body: JSON.stringify({ avatar: { type: 'default' } }),
-  })
-}
 
 export async function setupPassword(username: string, password: string): Promise<void> {
   return request('/api/auth/setup', {

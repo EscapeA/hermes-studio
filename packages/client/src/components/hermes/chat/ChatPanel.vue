@@ -3112,7 +3112,6 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
                 />
                 <SubagentStreamPanel
                   v-else-if="selectedSubagent"
-                  :agent="chatSessionAgentAvatar(chatStore.activeSession)"
                   :stream="selectedSubagentStream"
                   @close="closeToolPanelOverlay"
                 />
