@@ -10,17 +10,31 @@ const historyViewSource = readFileSync(
   'utf8',
 )
 
-describe('page sidebar conversation switch', () => {
-  it('places history after single chat', () => {
-    const switchStart = navSource.indexOf('conversation-switch conversation-switch--two')
-    const switchSource = navSource.slice(switchStart)
+describe('page sidebar navigation', () => {
+  it('places the history entry between search and the Agent manager entry', () => {
+    const tabsStart = navSource.indexOf('class="page-sidebar-tabs"')
+    const tabsSource = navSource.slice(tabsStart)
 
-    expect(switchStart).toBeGreaterThan(-1)
-    expect(switchSource.indexOf('@click="openChat"')).toBeLessThan(switchSource.indexOf('@click="openHistory"'))
+    expect(tabsStart).toBeGreaterThan(-1)
+    expect(tabsSource.indexOf('@click="openSessionSearch"')).toBeLessThan(tabsSource.indexOf('@click="openHistory"'))
+    expect(tabsSource.indexOf('@click="openHistory"')).toBeLessThan(tabsSource.indexOf('@click="openAgentManager"'))
+    expect(tabsSource.indexOf('@click="openAgentManager"')).toBeLessThan(tabsSource.indexOf('@click="openModels"'))
     expect(navSource.match(/@click="openHistory"/g)).toHaveLength(1)
+    expect(navSource).not.toContain('conversation-switch')
   })
 
-  it('shows the conversation switch on the history page', () => {
+  it('toggles the history entry back to the active session list', () => {
+    expect(navSource).toContain("props.active === 'history' ? t('chat.sessions') : t('sidebar.history')")
+
+    const openHistory = navSource.slice(
+      navSource.indexOf('function openHistory()'),
+      navSource.indexOf('function openAgentManager()'),
+    )
+    expect(openHistory).toContain("router.push({ name: 'hermes.chat' })")
+    expect(openHistory).toContain("router.push({ name: 'hermes.history' })")
+  })
+
+  it('renders the page sidebar on the history page', () => {
     const historyNav = historyViewSource.match(/<PageSidebarNav[\s\S]*?\/>/)?.[0] || ''
 
     expect(historyNav).toContain('active="history"')
