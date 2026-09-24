@@ -64,14 +64,6 @@ describe('SessionListItem', () => {
     settingsDisplay.show_session_identity = true
   })
 
-  it('uses a one-pixel white outline without internal avatar padding', () => {
-    const source = readFileSync('packages/client/src/components/hermes/chat/SessionListItem.vue', 'utf8')
-
-    expect(source).toMatch(/\.session-item-agent-logo\s*\{[^}]*border: 1px solid #fff;/s)
-    expect(source).not.toMatch(/\.session-item-agent-logo\s*\{[^}]*padding:/s)
-    expect(source).not.toMatch(/\.session-item-agent-logo\s*\{[^}]*background:/s)
-  })
-
   it('renders normal mode as a link to the session route', () => {
     const wrapper = mount(SessionListItem, {
       props: {
@@ -80,11 +72,6 @@ describe('SessionListItem', () => {
         pinned: false,
         canDelete: true,
         to: '/session/s1',
-      },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
       },
     })
 
@@ -104,11 +91,6 @@ describe('SessionListItem', () => {
         selected: false,
         to: '/session/s1',
       },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
-      },
     })
 
     expect(wrapper.find('button.session-item').exists()).toBe(true)
@@ -123,11 +105,6 @@ describe('SessionListItem', () => {
         pinned: false,
         canDelete: true,
         categoryLabel: 'Work - Mobile',
-      },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
       },
     })
 
@@ -149,11 +126,6 @@ describe('SessionListItem', () => {
         canDelete: true,
         to: '/session/s1',
       },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
-      },
     })
 
     await wrapper.get('button.session-item-delete').trigger('click')
@@ -169,11 +141,6 @@ describe('SessionListItem', () => {
         canDelete: true,
         to: '/session/s1',
       },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
-      },
     })
 
     const link = wrapper.get('a.session-item')
@@ -181,135 +148,6 @@ describe('SessionListItem', () => {
     await link.trigger('click', { ctrlKey: true })
     expect(wrapper.emitted('select')).toBeUndefined()
     expect(wrapper.emitted('open-new')).toBeUndefined()
-  })
-
-  it('renders the Hermes logo for Hermes sessions', () => {
-    const wrapper = mount(SessionListItem, {
-      props: {
-        session: { ...session, source: 'cli', agent: 'hermes' },
-        active: false,
-        pinned: false,
-        canDelete: true,
-      },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
-      },
-    })
-
-    const logo = wrapper.get('.session-item-agent-logo')
-    expect(logo.attributes('src')).toBe('/coding-agents/hermes.png')
-    expect(logo.attributes('alt')).toBe('Hermes')
-    expect(wrapper.find('.session-item-agent-name').exists()).toBe(false)
-  })
-
-  it('renders the Hermes logo for Hermes Global Agent sessions', () => {
-    const wrapper = mount(SessionListItem, {
-      props: {
-        session: { ...session, source: 'global_agent', agent: 'hermes' },
-        active: false,
-        pinned: false,
-        canDelete: true,
-      },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
-      },
-    })
-
-    const logo = wrapper.get('.session-item-agent-logo')
-    expect(logo.attributes('src')).toBe('/coding-agents/hermes.png')
-    expect(logo.attributes('alt')).toBe('Hermes')
-  })
-
-  it('renders the Ekko logo for Ekko Global Agent sessions', () => {
-    const wrapper = mount(SessionListItem, {
-      props: {
-        session: {
-          ...session,
-          source: 'global_agent',
-          agent: 'ekko-agent',
-          codingAgentId: 'ekko-agent',
-        },
-        active: false,
-        pinned: false,
-        canDelete: true,
-      },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
-      },
-    })
-
-    const logo = wrapper.get('.session-item-agent-logo')
-    expect(logo.attributes('src')).toBe('/coding-agents/ekko-agent.png')
-    expect(logo.attributes('alt')).toBe('Ekko')
-  })
-
-  it('defaults old sessions without agent metadata to the Hermes logo', () => {
-    const wrapper = mount(SessionListItem, {
-      props: {
-        session: { ...session, source: undefined, agent: undefined, codingAgentId: undefined },
-        active: false,
-        pinned: false,
-        canDelete: true,
-      },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
-      },
-    })
-
-    const logo = wrapper.get('.session-item-agent-logo')
-    expect(logo.attributes('src')).toBe('/coding-agents/hermes.png')
-    expect(logo.attributes('alt')).toBe('Hermes')
-    expect(wrapper.find('.session-item-agent-name').exists()).toBe(false)
-  })
-
-  it('renders the Claude logo for Claude coding agent sessions', () => {
-    const wrapper = mount(SessionListItem, {
-      props: {
-        session: { ...session, source: 'coding_agent', agent: 'claude', codingAgentId: 'claude-code' },
-        active: false,
-        pinned: false,
-        canDelete: true,
-      },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
-      },
-    })
-
-    const logo = wrapper.get('.session-item-agent-logo')
-    expect(logo.attributes('src')).toBe('/coding-agents/claude-code.svg')
-    expect(logo.attributes('alt')).toBe('Claude')
-    expect(wrapper.find('.session-item-agent-name').exists()).toBe(false)
-  })
-
-  it('renders the Codex logo for Codex coding agent sessions', () => {
-    const wrapper = mount(SessionListItem, {
-      props: {
-        session: { ...session, source: 'coding_agent', agent: 'codex', codingAgentId: 'codex' },
-        active: false,
-        pinned: false,
-        canDelete: true,
-      },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
-      },
-    })
-
-    const logo = wrapper.get('.session-item-agent-logo')
-    expect(logo.attributes('src')).toBe('/coding-agents/codex-openai.png')
-    expect(logo.attributes('alt')).toBe('Codex')
-    expect(wrapper.find('.session-item-agent-name').exists()).toBe(false)
   })
 
   it('hides the agent/profile identity row when show_session_identity is false', () => {
@@ -321,15 +159,9 @@ describe('SessionListItem', () => {
         pinned: false,
         canDelete: true,
       },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
-      },
     })
 
     expect(wrapper.find('.session-item-agent-row').exists()).toBe(false)
-    expect(wrapper.find('.session-item-agent-logo').exists()).toBe(false)
     expect(wrapper.find('.session-item-profile').exists()).toBe(false)
   })
 
@@ -343,16 +175,11 @@ describe('SessionListItem', () => {
         canDelete: true,
         showProfile: true,
       },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
-      },
     })
 
     expect(wrapper.find('.session-item-agent-row').exists()).toBe(true)
-    expect(wrapper.get('.session-item-agent-logo').attributes('src')).toBe('/coding-agents/hermes.png')
     expect(wrapper.find('.session-item-profile').exists()).toBe(true)
+    expect(wrapper.find('.session-item-agent-logo').exists()).toBe(false)
   })
   it('shows an independent live-status indicator when streaming', () => {
     settingsDisplay.show_session_identity = false
@@ -363,11 +190,6 @@ describe('SessionListItem', () => {
         pinned: false,
         canDelete: true,
         streaming: true,
-      },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
       },
     })
 
@@ -383,11 +205,6 @@ describe('SessionListItem', () => {
         pinned: false,
         canDelete: true,
         streaming: false,
-      },
-      global: {
-        stubs: {
-          ProfileAvatar: true,
-        },
       },
     })
 
