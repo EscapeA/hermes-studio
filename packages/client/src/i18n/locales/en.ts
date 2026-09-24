@@ -613,7 +613,6 @@ export default {
     gateways: 'Gateways',
     terminal: 'Terminal',
     browser: 'Browser',
-    singleChat: 'Chat',
     globalAgent: 'Global Agent',
     files: 'Files',
     devices: 'Devices',

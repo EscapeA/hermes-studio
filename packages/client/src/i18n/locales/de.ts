@@ -623,7 +623,6 @@ export default {
     socialMessages: 'Nachrichten senden',
     terminal: 'Konsole',
     browser: 'Browser',
-    singleChat: 'Chat',
     globalAgent: 'Global Agent',
     files: 'Dateien',
     devices: 'Gerate',
