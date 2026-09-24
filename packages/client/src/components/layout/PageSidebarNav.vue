@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { NTooltip } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { isStoredSuperAdmin } from '@/api/client'
@@ -27,14 +26,15 @@ const canManageAgents = computed(() => isStoredSuperAdmin())
 const hasNavigationRail = useNavigationRail()
 
 const primaryText = computed(() => props.primaryLabel || t('chat.newChat'))
-
-function openChat() {
-  if (props.active === 'chat') return
-  void router.push({ name: 'hermes.chat' })
-}
+const historyButtonLabel = computed(() =>
+  props.active === 'history' ? t('chat.sessions') : t('sidebar.history'),
+)
 
 function openHistory() {
-  if (props.active === 'history') return
+  if (props.active === 'history') {
+    void router.push({ name: 'hermes.chat' })
+    return
+  }
   void router.push({ name: 'hermes.history' })
 }
 
@@ -128,6 +128,13 @@ function openUsage() {
         <span>{{ t('sidebar.connections') }}</span>
       </button>
       <button
+        @click="openHistory"
+          v-if="active === 'history'"
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          v-else
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        <span>{{ historyButtonLabel }}</span>
         v-if="canManageAgents && !hasNavigationRail"
         class="page-sidebar-tab"
         :class="{ active: active === 'agents' }"
@@ -190,45 +197,6 @@ function openUsage() {
       </button>
 .api-relay-logo { border-radius: var(--radius-component, 4px); }
 
-    </div>
-    <div v-if="!hasNavigationRail" class="conversation-switch conversation-switch--two" role="tablist" aria-label="Conversation type">
-      <NTooltip trigger="hover" placement="top">
-        <template #trigger>
-          <button
-            class="conversation-switch-tab"
-            :class="{ active: active === 'chat' }"
-            type="button"
-            role="tab"
-            :aria-label="t('sidebar.singleChat')"
-            :aria-selected="active === 'chat'"
-            @click="openChat"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-          </button>
-        </template>
-        {{ t('sidebar.singleChat') }}
-      </NTooltip>
-      <NTooltip trigger="hover" placement="top">
-        <template #trigger>
-          <button
-            class="conversation-switch-tab"
-            :class="{ active: active === 'history' }"
-            type="button"
-            role="tab"
-            :aria-label="t('sidebar.history')"
-            :aria-selected="active === 'history'"
-            @click="openHistory"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 2" />
-            </svg>
-          </button>
-        </template>
-        {{ t('sidebar.history') }}
-      </NTooltip>
     </div>
   </div>
 </template>
@@ -311,57 +279,5 @@ function openUsage() {
     background: rgba(var(--accent-primary-rgb), 0.06);
     color: $text-primary;
   }
-}
-
-.conversation-switch {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: calc(2px * var(--spacing-scale, 1));
-  padding: calc(2px * var(--spacing-scale, 1));
-  border-radius: $radius-sm;
-  background: rgba(var(--accent-primary-rgb), 0.05);
-}
-
-.conversation-switch--two {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.conversation-switch-tab {
-  width: 100%;
-  min-width: 0;
-  height: 30px;
-  border: none;
-  border-radius: var(--radius-component, 5px);
-  background: transparent;
-  color: $text-secondary;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    color $transition-fast;
-
-  svg {
-    flex: 0 0 auto;
-  }
-
-  &:hover {
-    color: $text-primary;
-  }
-
-  &.active {
-    background: var(--theme-card-bg, $bg-card);
-    color: $text-primary;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  }
-}
-
-:global(.dark .conversation-switch--two .conversation-switch-tab.active) {
-  background: var(--theme-card-bg, $bg-card-hover);
-  color: $accent-primary;
-  box-shadow:
-    inset 0 0 0 1px $border-color,
-    0 2px 5px rgba(0, 0, 0, 0.22);
 }
 </style>
