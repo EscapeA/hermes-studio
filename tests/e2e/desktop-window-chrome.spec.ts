@@ -347,16 +347,6 @@ test('routes the desktop session popup action to the native chat window bridge',
   ])
 })
 
-test('keeps the larger top gutter on macOS workflow pages', async ({ page }) => {
-  await openDesktopPageSidebar(page, 'darwin', '/#/hermes/workflow')
-
-  const workflowSidebar = page.locator('.workflow-view > .workflow-sidebar')
-  const workflowMain = page.locator('.workflow-view > .workflow-main')
-  await expect(workflowMain).toBeVisible()
-  expect((await workflowSidebar.boundingBox())?.y).toBe(10)
-  expect((await workflowMain.boundingBox())?.y).toBe(10)
-})
-
 test('does not reserve macOS traffic-light spacing in Windows chat sidebars', async ({ page }) => {
   await openDesktopPageSidebar(page, 'win32', '/#/hermes/chat')
 

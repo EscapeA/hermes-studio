@@ -13,15 +13,4 @@ describe('scheduled task frequency-first UI', () => {
     expect(source).toContain('data-testid="job-schedule-month-day"')
     expect(source).toContain("scheduleFrequency === 'custom'")
   })
-
-  it('lets Workflow schedules choose a frequency and preserves an advanced custom option', () => {
-    const source = readFileSync('packages/client/src/views/hermes/WorkflowView.vue', 'utf8')
-
-    expect(source).toContain("const workflowScheduleCron = ref('')")
-    expect(source).toContain("value: 'every-30-minutes'")
-    expect(source).toContain('data-testid="workflow-schedule-frequency"')
-    expect(source).toContain('data-testid="workflow-schedule-weekday"')
-    expect(source).toContain('data-testid="workflow-schedule-month-day"')
-    expect(source).toContain("workflowScheduleFrequency === 'custom'")
-  })
 })

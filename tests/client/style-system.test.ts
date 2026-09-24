@@ -47,13 +47,9 @@ describe('client style system', () => {
 
   it('keeps selected conversation titles on the primary text color', () => {
     const sessionListItem = readClientFile('components/hermes/chat/SessionListItem.vue')
-    const workflowView = readClientFile('views/hermes/WorkflowView.vue')
 
     expect(sessionListItem).toMatch(
       /\.session-item\.active \.session-item-title\s*\{\s*color: var\(--text-primary\);/,
-    )
-    expect(workflowView).toMatch(
-      /&\.selected \.workflow-list-name\s*\{\s*color: var\(--text-primary\);/,
     )
   })
 
@@ -77,11 +73,11 @@ describe('client style system', () => {
     expect(historyMessageList).toContain('animation: history-message-surface-fade-in 1.5s ease both;')
   })
 
-  it('keeps the three-way conversation switch active state visible in dark mode', () => {
+  it('keeps the two-way conversation switch active state visible in dark mode', () => {
     const pageSidebarNav = readClientFile('components/layout/PageSidebarNav.vue')
 
     expect(pageSidebarNav).toContain(
-      ':global(.dark .conversation-switch--three .conversation-switch-tab.active)',
+      ':global(.dark .conversation-switch--two .conversation-switch-tab.active)',
     )
     expect(pageSidebarNav).toContain('background: $bg-card-hover;')
     expect(pageSidebarNav).toContain('inset 0 0 0 1px $border-color')
@@ -129,7 +125,7 @@ describe('client style system', () => {
     expect(customBackgroundStyles).toContain(':deep(.virtual-message-list)')
     expect(customBackgroundStyles).toContain(':deep(.agent-manager-panel)')
     expect(customBackgroundStyles).toMatch(
-      /:deep\(\.workflow-view\),[\s\S]*:deep\(\.petdex-view\)\s*\{\s*background-color: transparent;/,
+      /:deep\(\.chat-panel\),[\s\S]*:deep\(\.history-panel\),[\s\S]*:deep\(\.petdex-view\)\s*\{\s*background-color: transparent;/,
     )
     expect(customBackgroundStyles).toMatch(
       /:deep\(\.chat-main-content\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);[\s\S]*backdrop-filter: none;/,

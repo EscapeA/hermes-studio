@@ -17,22 +17,13 @@ describe('ChatPanel tool drawer resizing support', () => {
     expect(source).toMatch(/\.chat-tool-resize-handle\s*\{[\s\S]*inset-inline-start: -7px;/)
   })
 
-  it('mirrors workflow resize seams without changing LTR sizing', () => {
-    const workflowSource = readFileSync('packages/client/src/views/hermes/WorkflowView.vue', 'utf8')
-
-    expect(workflowSource).toContain("deltaSign: document.documentElement.dir === 'rtl' ? -1 : 1")
-    expect(workflowSource).toMatch(/\.workflow-chat-resize-handle\s*\{[\s\S]*inset-inline-end: -7px;/)
-  })
-
   it('uses a full-width mobile workspace tree and replaces it with the selected file', () => {
     const filesSource = readFileSync('packages/client/src/components/hermes/chat/FilesPanel.vue', 'utf8')
-    const workflowSource = readFileSync('packages/client/src/views/hermes/WorkflowView.vue', 'utf8')
 
     expect(filesSource).toContain("'mobile-file-open': mobileFileOpen")
     expect(filesSource).toMatch(/\.files-tree-panel\s*\{[\s\S]*width: 100% !important;/)
     expect(filesSource).toMatch(/\.files-panel-drawer\.mobile-file-open \.files-tree-panel\s*\{\s*display: none;/)
     expect(filesSource).toContain('@click="handleMobileBack"')
-    expect(workflowSource).toMatch(/\.workflow-runs-panel\s*\{[\s\S]*inset-inline-end: 0;[\s\S]*&:dir\(rtl\)\s*\{[\s\S]*box-shadow: 8px/)
   })
 
   it('keeps native Windows title-bar geometry LTR in every app language', () => {
