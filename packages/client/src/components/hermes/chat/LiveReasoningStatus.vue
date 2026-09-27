@@ -11,12 +11,15 @@ const props = withDefaults(defineProps<{
   reasoningId?: string | number | null
   elapsed: string
   deploymentSessionId?: string
-  /** Decode speed of the run's latest finished call, e.g. `94 tok/s`; hidden when null. */
+  /** Decode speed of the run's latest finished call, e.g. `当前：94 tok/s`; hidden when null. */
   speed?: string | null
+  /** Run-wide average decode speed, e.g. `平均：88 tok/s`; hidden when null. */
+  averageSpeed?: string | null
 }>(), {
   agent: () => ({ label: 'Hermes', src: deploymentUrl('/coding-agents/hermes.png') }),
 })
 const isEkko = computed(() => props.agent.label === 'Ekko')
+
 const { t } = useI18n()
 
 const reasoningBodyRef = ref<HTMLElement | null>(null)
@@ -54,6 +57,7 @@ watch(
         <span class="thinking-status-label">{{ t('chat.thinkingInProgress') }}</span>
         <span class="thinking-status-time">{{ elapsed }}</span>
         <span v-if="speed" class="thinking-status-speed">{{ speed }}</span>
+        <span v-if="averageSpeed" class="thinking-status-speed">{{ averageSpeed }}</span>
       </div>
     </div>
     <div
