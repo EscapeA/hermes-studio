@@ -6,6 +6,7 @@ import {
   MAX_THEME_FONT_SIZE,
   MIN_THEME_FONT_SIZE,
 } from '@/styles/theme-customization'
+import { STYLE_LABEL_KEYS, THEME_STYLES } from '@/styles/theme-style'
 import {
   useTheme,
   type BrightnessMode,
@@ -28,6 +29,7 @@ const {
   brightness,
   style,
   isDark,
+  styleForcesDark,
   fontSize,
   textColor,
   accentColor,
@@ -47,16 +49,26 @@ const brightnessOptions = computed(() => [
   { label: t('theme.modeLight'), value: 'light' },
   { label: t('theme.modeDark'), value: 'dark' },
 ])
-const styleOptions = computed(() => [
-  { label: t('theme.styleInk'), value: 'ink' },
-  { label: t('theme.styleComic'), value: 'comic' },
-])
-const resolvedTextColor = computed(() =>
-  textColor.value || (isDark.value ? '#e0e0e0' : '#1a1a1a'),
+const styleOptions = computed(() =>
+  THEME_STYLES.map(value => ({ label: t(STYLE_LABEL_KEYS[value]), value })),
 )
-const resolvedAccentColor = computed(() =>
-  accentColor.value || (isDark.value ? '#e0e0e0' : '#333333'),
-)
+
+// Fall back to the palette the active style actually ships (read off the live
+// CSS variable) rather than the ink defaults, so the swatches stay truthful
+// in tech / terminal.
+function currentPaletteColor(name: string, fallback: string): string {
+  if (typeof window === 'undefined') return fallback
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+}
+const resolvedTextColor = computed(() => {
+  // Read `style` so the swatch re-reads the palette when the style changes.
+  void style.value
+  return textColor.value || currentPaletteColor('--text-primary', isDark.value ? '#e0e0e0' : '#1a1a1a')
+})
+const resolvedAccentColor = computed(() => {
+  void style.value
+  return accentColor.value || currentPaletteColor('--accent-primary', isDark.value ? '#e0e0e0' : '#333333')
+})
 const previewStyle = computed(() => ({
   backgroundImage: backgroundImageUrl.value ? `url("${backgroundImageUrl.value}")` : undefined,
 }))
@@ -168,11 +180,12 @@ async function handleReset() {
         <div class="theme-setting">
           <div>
             <label>{{ t('theme.mode') }}</label>
-            <p>{{ t('theme.modeHint') }}</p>
+            <p>{{ styleForcesDark ? t('theme.modeLockedHint') : t('theme.modeHint') }}</p>
           </div>
           <NSelect
             :value="brightness"
             :options="brightnessOptions"
+            :disabled="styleForcesDark"
             size="small"
             class="theme-select"
             @update:value="value => setBrightness(value as BrightnessMode)"
