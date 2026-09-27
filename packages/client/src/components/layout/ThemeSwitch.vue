@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed, h } from 'vue'
 import { NDropdown, type DropdownOption } from 'naive-ui'
+import { motion } from 'motion-v'
 import { useI18n } from 'vue-i18n'
+import { useMotionPresets } from '@/composables/motion-presets'
 import { useTheme, type ThemeStyle } from '@/composables/useTheme'
 import { STYLE_LABEL_KEYS, STYLE_SWATCH, THEME_STYLES } from '@/styles/theme-style'
 
 const { t } = useI18n()
 const { isDark, style, styleForcesDark, setStyle, toggleBrightness } = useTheme()
+// Tactile feedback on the two icon buttons; the preset honours reduced motion.
+const { springSnappy } = useMotionPresets()
 
 function checkIcon() {
   return h(
@@ -86,17 +90,24 @@ function selectStyle(key: string) {
       :options="styleOptions"
       @select="selectStyle"
     >
-      <button class="theme-switch" :title="t(STYLE_LABEL_KEYS[style])">
+      <motion.button
+        class="theme-switch"
+        :title="t(STYLE_LABEL_KEYS[style])"
+        :transition="springSnappy"
+        :while-press="{ scale: 0.92 }"
+      >
         <!-- Palette icon -->
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
         </svg>
-      </button>
+      </motion.button>
     </NDropdown>
-    <button
+    <motion.button
       class="theme-switch"
       :disabled="styleForcesDark"
       :title="isDark ? 'Light mode' : 'Dark mode'"
+      :transition="springSnappy"
+      :while-press="{ scale: 0.92 }"
       @click="toggleBrightness"
     >
       <!-- Sun icon (shown in dark mode) -->
@@ -115,7 +126,7 @@ function selectStyle(key: string) {
       <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
       </svg>
-    </button>
+    </motion.button>
   </div>
 </template>
 
