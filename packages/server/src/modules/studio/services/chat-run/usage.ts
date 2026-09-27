@@ -233,6 +233,7 @@ export function updateContextTokenUsage(
   const normalizedContextTokens = Math.floor(contextTokens)
   state.contextTokens = normalizedContextTokens
   const speed = settledRunSpeed(state)
+  const latestSpeed = latestRunSpeed(state)
   emit('usage.updated', {
     event: 'usage.updated',
     session_id: sid,
@@ -240,6 +241,7 @@ export function updateContextTokenUsage(
     outputTokens: usage?.outputTokens ?? state.outputTokens ?? 0,
     contextTokens: normalizedContextTokens,
     ...(speed ? { speed } : {}),
+    ...(latestSpeed ? { speedLatest: latestSpeed } : {}),
   })
   return normalizedContextTokens
 }
@@ -369,6 +371,10 @@ export interface RunSpeedFoldState {
   decodeRunStartAt?: number
   decodeMsTotal?: number
   decodeTokensTotal?: number
+  /** Decode span of the run's most recently finished call, for the "current" reading. */
+  decodeLastMs?: number
+  /** Provider output tokens of that same call. */
+  decodeLastTokens?: number
 }
 
 /** One reading: tokens over decode wall time. */
@@ -396,6 +402,8 @@ function scopeRunSpeedToRun(state: RunSpeedFoldState): void {
   state.decodeRunStartAt = startedAt
   state.decodeMsTotal = 0
   state.decodeTokensTotal = 0
+  state.decodeLastMs = 0
+  state.decodeLastTokens = 0
 }
 
 /**
@@ -417,6 +425,8 @@ export function foldDecodeCallResult(
   if (decodeMs <= 0 || !(outputTokens > 0)) return
   state.decodeMsTotal = (state.decodeMsTotal || 0) + decodeMs
   state.decodeTokensTotal = (state.decodeTokensTotal || 0) + outputTokens
+  state.decodeLastMs = decodeMs
+  state.decodeLastTokens = outputTokens
 }
 
 /**
@@ -427,6 +437,20 @@ export function foldDecodeCallResult(
 export function settledRunSpeed(state: RunSpeedFoldState): RunSpeedReading | undefined {
   const elapsedMs = state.decodeMsTotal || 0
   const tokens = state.decodeTokensTotal || 0
+  if (elapsedMs <= 0 || tokens <= 0) return undefined
+  return { tokens, elapsedMs }
+}
+
+/**
+ * Reading of the run's most recently finished call, i.e. the "current" speed
+ * next to the run-wide average. It is a finished measurement of one call, so it
+ * holds its value while a tool runs instead of drifting downward.
+ * @param state - Run speed fold state.
+ * @returns The reading, or undefined when the last call had no usable timing.
+ */
+export function latestRunSpeed(state: RunSpeedFoldState): RunSpeedReading | undefined {
+  const elapsedMs = state.decodeLastMs || 0
+  const tokens = state.decodeLastTokens || 0
   if (elapsedMs <= 0 || tokens <= 0) return undefined
   return { tokens, elapsedMs }
 }
