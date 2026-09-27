@@ -33,6 +33,20 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 21-chat-run-new-session-attachment | chat-run 新建会话首条带附件消息修复（上游 #3144 的 session-upload 守卫要求会话行已存在，而新建会话的行由本次 run 自己创建 → 首条带附件消息必报 `Session not found`；改为只对已存在的会话做严格校验、首条消息的上传也登记进 session uploads、run 前置拒绝补一行 warn 日志） | 001 |
 | 22-theme-styles | 主题风格表驱动化 + 四套新风格（`tech` 升级为「深空 HUD」，新增 `neon` 霓虹赛博 / `aurora` 渐变空间舱 / `blueprint` 浅色蓝图；风格类名与 naive-ui palette 改查表 `STYLE_CLASS` / `STYLE_PALETTES`，材质层拆到新文件 `styles/style-layers.scss`，风格下拉带色卡，11 locale 补标签键） | 001-002 |
 | 23-run-speed-latest | 本轮解码速度「当前/平均」双读数（run 态指示器在原有本轮平均旁补「最近一次已完成调用」的读数；server `usage.updated` 增加 `speedLatest`、client store 增加 `runSpeedLatest`、11 locale 的 `tokensPerSecond` 拆为 Current/Average） | 001-002 |
+| 24-styles-and-motion | 两套克制向风格 + 交互打磨：`graphite`（冷峻工程：近黑 + 单一靛蓝 + 细边框，零渐变零发光，naive-ui 圆角收紧，聚焦只画锐环）、`warm`（暖调暗：暖黑 + 暖白正文 + 无彩色强调，暖色渐隐 + 表面半透明）；新增 `--input-focus-glow` 聚焦光晕（按各风格主色派生，顺带修掉深色下聚焦阴影被 `.dark &` 覆盖的宿疾）；引入 `motion-v@2.4.4`（独立 chunk ≈46KB gzip）+ 共享 `motion-presets.ts`（三档 spring + 尊重减少动效），工具卡展开/入场/按压、会话列表 capped stagger、工具面板弹簧缓动 | 001-002 |
+
+**2026-09-27 新增 `24-styles-and-motion` 组（001 源码、002 测试）**：风格补到 **9 套**，并给交互补上状态反馈与物理手感。
+
+| 风格 | 定位 | 关键点 |
+|---|---|---|
+| `graphite` 冷峻工程 | T1（Linear / Vercel / x.ai） | 近黑 `#08090a` + 靛蓝 `#5e6ad2`；**零渐变/零阴影/零发光**（实测顶-底亮度差 0.00），只靠 1px 半透明白边分层；naive-ui 圆角收紧到 6/4px |
+| `warm` 暖调暗 | T6（Warp / OpenCode） | 暖黑 `#201d1d` + 暖白 `#e6dccd`；**无彩色强调**（按钮是纸白底深字）；暖色渐隐（实测暖度 +4.59、顶-底 +6.43）；表面半透明让渐隐透出 |
+
+- **聚焦光晕（状态样式）**：新增 `--input-focus-glow`，从各风格自己的 `--accent-primary-rgb` 派生，一套变量覆盖 9 风格；`graphite` 按 T1 定义 opt-out（`noFocusGlow` → 只画 1.5px 锐环）。同时修掉一个宿疾：composer 的聚焦 `box-shadow` 在深色风格下**从未生效**（`.dark &` 同等特异性但更靠后）。naive-ui 输入类组件同步加了 `boxShadowFocus` / `boxShadowActive`。
+- **动效（motion-v）**：`motion-v@2.4.4`（MIT，官方 motiondivision/motion-vue）落地为独立 chunk **≈46KB gzip**（占全部 js gzip 1.06%，入口 chunk 只 +1.3KB），无 React 代码混入。共享 `composables/motion-presets.ts` 统一三档 spring 并在系统「减少动效」时降级为短 tween。接入：工具卡展开改 spring `height:auto`（替换原 CSS `grid-template-rows` 技巧）、工具卡入场、工具卡 header / 主题按钮按压；会话列表用 **capped nth-child 纯 CSS stagger**（根元素是动态 `<component :is>` 且有 5 个调用点，加 index prop 不划算）；工具面板用**弹簧形 `linear()` 缓动**（该面板是 Vue `<Transition>` + 4 个生命周期钩子，且上游测试钉死 `width 0.25s`，换 motion-v 风险收益不匹配）。
+- ⚠️ 途中把 spring 加到了 `DrawerPanel.vue`，实测发现它是 **fork 内死代码**（全仓零引用）→ 已 `git checkout` 回退，无无意义改动。
+
+验证：`vue-tsc -b` 与 `vite build` 通过；客户端测试对比**当前环境**基线（56 失败/12 文件）**零新增失败**；9 套风格在真实浏览器逐风格读回 `html` 类名 / `--bg-primary` / `--accent-primary` / `theme-color` 全部命中；聚焦光晕以截图 + 计算值双实证（tech 出青光晕、graphite 无发光）；Aries 真机验收通过。
 
 **2026-09-27 新增 `23-run-speed-latest` 组（001 源码、002 测试）**：
 `04-usage/010` 上线后 run 态指示器只有一个数——本轮平均，随着调用陆续完成会**往上爬**，长工具执行期间看着像在变。
@@ -55,7 +69,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 + 既有 `run-speed` / `message-item-run-speed` / `chat-store-workspace-diff-turn` 共 **30 用例全绿**；`vue-tsc -b` 通过；
 全量 **88/88** 补丁在 `upstream/main` 上零冲突重放、重放树与 `custom` 逐字节一致。
 
-共 **88 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**；**2026-09-24 新增 13-mobile-nav/002-页面侧边栏抽屉打开时隐藏全局 ☰**；**2026-09-24 新增 17-remove-group-chat 组（001 前端源码移除、002 测试适配）**；**2026-09-24 新增 18-remove-workflow 组（001 前端源码移除、002 测试适配；保留 workflow 会话来源与 webhook 事件名）**；**2026-09-24 新增 19-sidebar-history-toggle 组（侧边栏扁平化 + 历史⇄会话切换，对齐上游 #1518）**；**2026-09-24 新增 20-remove-avatars 组（001 前端源码移除、002 测试适配；服务端与静态 logo 保留）**；**2026-09-27 新增 21-chat-run-new-session-attachment/001（上游 #3144 附件守卫 → 新建会话首条带附件消息必报 `Session not found`；只对已存在会话严格校验 + 首条上传登记 + 前置拒绝日志），共 88 个补丁**）。
+共 **90 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**；**2026-09-24 新增 13-mobile-nav/002-页面侧边栏抽屉打开时隐藏全局 ☰**；**2026-09-24 新增 17-remove-group-chat 组（001 前端源码移除、002 测试适配）**；**2026-09-24 新增 18-remove-workflow 组（001 前端源码移除、002 测试适配；保留 workflow 会话来源与 webhook 事件名）**；**2026-09-24 新增 19-sidebar-history-toggle 组（侧边栏扁平化 + 历史⇄会话切换，对齐上游 #1518）**；**2026-09-24 新增 20-remove-avatars 组（001 前端源码移除、002 测试适配；服务端与静态 logo 保留）**；**2026-09-27 新增 21-chat-run-new-session-attachment/001（上游 #3144 附件守卫 → 新建会话首条带附件消息必报 `Session not found`；只对已存在会话严格校验 + 首条上传登记 + 前置拒绝日志），共 90 个补丁**）。
 
 **2026-09-27 新增 `22-theme-styles` 组（001 主题表驱动化 + 四套风格、002 测试）**：
 主题从「四个写死的风格」改为表驱动，并新增三套外观（`tech` 同时升级）：
