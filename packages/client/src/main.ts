@@ -4,8 +4,8 @@ import router from './router'
 import { i18nReady } from './i18n'
 import App from './App.vue'
 import './styles/global.scss'
+import { DEFAULT_THEME_STYLE, STYLE_CLASS, STYLE_FORCES_DARK, normalizeThemeStyle } from './styles/theme-style'
 import { desktopBridge } from '@/utils/desktop-bridge'
-import { useTheme } from '@/composables/useTheme'
 
 // Apply theme classes before mount to prevent FOUC (Flash of Unstyled Content)
 function storedPreference(key: string, fallback: string): string {
@@ -17,14 +17,18 @@ function storedPreference(key: string, fallback: string): string {
 }
 
 const savedBrightness = storedPreference('hermes_brightness', 'system')
-const themeStyle = useTheme().style.value
+const savedStyle = normalizeThemeStyle(storedPreference('hermes_style', DEFAULT_THEME_STYLE))
 
-// Resolve dark mode
+// Resolve dark mode — styles that only ship a dark palette pin it (see
+// STYLE_FORCES_DARK; useTheme repeats this once the app is mounted).
 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-const isDark = savedBrightness === 'dark' || (savedBrightness === 'system' && prefersDark)
+const isDark = STYLE_FORCES_DARK[savedStyle]
+  || savedBrightness === 'dark'
+  || (savedBrightness === 'system' && prefersDark)
 
-// Resolve style
-const isComic = themeStyle === 'comic'
+// Resolve style — the style class is looked up from the shared table so a new
+// style needs no edit here (see STYLE_CLASS in styles/theme-style.ts).
+const styleClass = STYLE_CLASS[savedStyle]
 const bridge = desktopBridge()
 const isDesktopShell = bridge?.isDesktop === true
 const isDesktopPetWindow = bridge?.windowKind === 'pet' || window.location.hash.startsWith('#/desktop-pet')
@@ -33,8 +37,8 @@ const isDesktopPetWindow = bridge?.windowKind === 'pet' || window.location.hash.
 if (isDark) {
   document.documentElement.classList.add('dark')
 }
-if (isComic) {
-  document.documentElement.classList.add('comic')
+if (styleClass) {
+  document.documentElement.classList.add(styleClass)
 }
 if (isDesktopShell) {
   document.documentElement.classList.add('hermes-desktop-shell')
