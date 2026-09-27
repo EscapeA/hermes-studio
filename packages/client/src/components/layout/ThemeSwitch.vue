@@ -1,22 +1,104 @@
 <script setup lang="ts">
-import { useTheme } from '@/composables/useTheme'
+import { computed, h } from 'vue'
+import { NDropdown, type DropdownOption } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
+import { useTheme, type ThemeStyle } from '@/composables/useTheme'
+import { STYLE_LABEL_KEYS, STYLE_SWATCH, THEME_STYLES } from '@/styles/theme-style'
 
-const { isDark, isComic, toggleBrightness, toggleStyle } = useTheme()
+const { t } = useI18n()
+const { isDark, style, styleForcesDark, setStyle, toggleBrightness } = useTheme()
+
+function checkIcon() {
+  return h(
+    'svg',
+    {
+      width: 14,
+      height: 14,
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': 2.4,
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+    },
+    [h('polyline', { points: '20 6 9 17 4 12' })],
+  )
+}
+
+// Seven styles no longer fit a two-state toggle, so the palette button opens
+// the full list and marks the active one instead of cycling through them.
+// Each row carries a swatch (the style's accent on its own surface) so the
+// list stays scannable on a phone without previewing every style in turn.
+// Inline styles on purpose: the dropdown menu is teleported out of this
+// component's scoped-style scope.
+function swatch(value: ThemeStyle) {
+  const { accent, surface } = STYLE_SWATCH[value]
+  return h(
+    'span',
+    {
+      style: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '14px',
+        height: '14px',
+        borderRadius: '4px',
+        backgroundColor: surface,
+        border: `1px solid ${accent}`,
+        marginRight: '8px',
+        verticalAlign: '-2px',
+        flexShrink: '0',
+      },
+    },
+    [h('span', {
+      style: {
+        width: '6px',
+        height: '6px',
+        borderRadius: '50%',
+        backgroundColor: accent,
+      },
+    })],
+  )
+}
+
+const styleOptions = computed<DropdownOption[]>(() =>
+  THEME_STYLES.map(value => ({
+    key: value,
+    label: () => h(
+      'span',
+      { style: { display: 'inline-flex', alignItems: 'center' } },
+      [swatch(value), t(STYLE_LABEL_KEYS[value])],
+    ),
+    icon: value === style.value ? checkIcon : undefined,
+  })),
+)
+
+function selectStyle(key: string) {
+  setStyle(key as ThemeStyle)
+}
 </script>
 
 <template>
   <div class="theme-switch-container" style="display: flex; gap: 4px; align-items: center;">
-    <button class="theme-switch" :title="isComic ? 'Ink style' : 'Comic style'" @click="toggleStyle">
-      <!-- Palette icon for comic toggle -->
-      <svg v-if="isComic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-      </svg>
-      <!-- Sparkle icon for ink mode -->
-      <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z" />
-      </svg>
-    </button>
-    <button class="theme-switch" :title="isDark ? 'Light mode' : 'Dark mode'" @click="toggleBrightness">
+    <NDropdown
+      trigger="click"
+      placement="top-start"
+      :options="styleOptions"
+      @select="selectStyle"
+    >
+      <button class="theme-switch" :title="t(STYLE_LABEL_KEYS[style])">
+        <!-- Palette icon -->
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+        </svg>
+      </button>
+    </NDropdown>
+    <button
+      class="theme-switch"
+      :disabled="styleForcesDark"
+      :title="isDark ? 'Light mode' : 'Dark mode'"
+      @click="toggleBrightness"
+    >
       <!-- Sun icon (shown in dark mode) -->
       <svg v-if="isDark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="5" />
@@ -54,6 +136,17 @@ const { isDark, isComic, toggleBrightness, toggleStyle } = useTheme()
   &:hover {
     color: var(--text-primary);
     background: rgba(var(--accent-primary-rgb), 0.06);
+  }
+
+  // Brightness is pinned by dark-locked styles (tech / terminal).
+  &:disabled {
+    cursor: default;
+    opacity: 0.35;
+
+    &:hover {
+      color: var(--text-muted);
+      background: transparent;
+    }
   }
 }
 </style>
