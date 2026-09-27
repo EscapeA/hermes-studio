@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { AnimatePresence, motion } from 'motion-v'
+import { useMotionPresets } from '@/composables/motion-presets'
 
 const props = defineProps<{
   runId: string
@@ -21,14 +23,32 @@ const toolNames = computed(() => {
 
 const hasError = computed(() => props.tools.some(tool => tool.toolStatus === 'error'))
 const hasInterrupted = computed(() => props.tools.some(tool => tool.toolStatus === 'interrupted'))
+
+// The expand used to be a CSS transition on `grid-template-rows: 0fr → 1fr`.
+// A spring on `height: auto` reads better (it settles instead of stopping dead)
+// and goes through the shared presets, so reduced motion is handled centrally.
+const { springSoft, springSnappy, springGentle } = useMotionPresets()
+const expandTransition = computed(() => ({
+  height: springSoft.value,
+  opacity: { duration: 0.12 },
+}))
+const pressTransition = computed(() => springSnappy.value)
 </script>
 
 <template>
-  <section class="tool-run-card" :data-run-id="runId">
-    <button
+  <motion.section
+    class="tool-run-card"
+    :data-run-id="runId"
+    :initial="{ opacity: 0, y: 5 }"
+    :animate="{ opacity: 1, y: 0 }"
+    :transition="springGentle"
+  >
+    <motion.button
       type="button"
       class="tool-run-header"
       :aria-expanded="expanded"
+      :transition="pressTransition"
+      :while-press="{ scale: 0.99 }"
       @click="expandedOverride = !expanded"
     >
       <svg
@@ -74,16 +94,23 @@ const hasInterrupted = computed(() => props.tools.some(tool => tool.toolStatus =
       >
         <path d="m7 12 3 3 7-7" />
       </svg>
-    </button>
+    </motion.button>
 
-    <Transition name="tool-run-expand">
-      <div v-if="expanded" class="tool-run-expand">
+    <AnimatePresence :initial="false">
+      <motion.div
+        v-if="expanded"
+        class="tool-run-expand"
+        :initial="{ height: 0, opacity: 0 }"
+        :animate="{ height: 'auto', opacity: 1 }"
+        :exit="{ height: 0, opacity: 0 }"
+        :transition="expandTransition"
+      >
         <div class="tool-run-expand-inner">
           <slot />
         </div>
-      </div>
-    </Transition>
-  </section>
+      </motion.div>
+    </AnimatePresence>
+  </motion.section>
 </template>
 
 <style scoped lang="scss">
@@ -162,11 +189,10 @@ const hasInterrupted = computed(() => props.tools.some(tool => tool.toolStatus =
   color: rgba(var(--accent-primary-rgb), 0.78);
 }
 
+// The expand height is driven by motion-v (see expandTransition above), so
+// this only has to clip the moving content.
 .tool-run-expand {
-  display: grid;
-  grid-template-rows: 1fr;
-  opacity: 1;
-  transform: translateY(0);
+  overflow: hidden;
 }
 
 .tool-run-expand-inner {
@@ -174,25 +200,8 @@ const hasInterrupted = computed(() => props.tools.some(tool => tool.toolStatus =
   overflow: hidden;
 }
 
-.tool-run-expand-enter-active,
-.tool-run-expand-leave-active {
-  transition:
-    grid-template-rows 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 150ms ease,
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.tool-run-expand-enter-from,
-.tool-run-expand-leave-to {
-  grid-template-rows: 0fr;
-  opacity: 0;
-  transform: translateY(-4px);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .tool-run-chevron,
-  .tool-run-expand-enter-active,
-  .tool-run-expand-leave-active {
+  .tool-run-chevron {
     transition: none;
   }
 }
