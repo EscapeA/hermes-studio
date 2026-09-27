@@ -177,6 +177,45 @@ html.dark.blueprint {
   }
 }
 
+// ─── 冷峻工程 (graphite) ────────────────────────────────────────
+// Deliberately nothing ambient: this style IS the "no decoration" register
+// (its reference sites ship no shadows, no gradients, no glow). Separation
+// comes from hairline translucent borders, and the card shadow is removed so
+// the surfaces read as flat planes instead of floating cards.
+html.graphite {
+  .chat-main,
+  .session-list {
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .chat-main {
+    border-color: rgba(255, 255, 255, 0.10);
+  }
+}
+
+// ─── 暖调暗 (warm) ──────────────────────────────────────────────
+// A single warm vignette washing down from the top; no texture, no accent
+// colour. Paired with the slightly translucent surfaces in variables.scss.
+html.warm {
+  .app-layout {
+    background-image:
+      radial-gradient(130% 75% at 50% -12%, rgba(244, 222, 190, 0.17), transparent 66%);
+    background-size: 100% 100%;
+    background-attachment: fixed;
+  }
+
+  .app-main {
+    background-color: transparent;
+  }
+
+  .chat-main,
+  .session-list {
+    border-color: rgba(232, 216, 196, 0.10);
+    box-shadow: 0 12px 30px -22px rgba(0, 0, 0, 0.85);
+  }
+}
+
 // ─── Full-viewport texture overlay ──────────────────────────────
 // Why this exists: the card layout only exposes the page background in ~10px
 // gutters, and the inner surfaces are not all themed variables, so a page-level
@@ -238,6 +277,15 @@ html.dark.blueprint body::after {
     linear-gradient(90deg, rgba(125, 200, 255, 0.07) 1px, transparent 1px),
     linear-gradient(rgba(125, 200, 255, 0.13) 1px, transparent 1px),
     linear-gradient(90deg, rgba(125, 200, 255, 0.13) 1px, transparent 1px);
+}
+
+// warm carries only the vignette at page level (see its block above); graphite
+// gets no overlay at all, which is the point of that style.
+html.warm body::after {
+  background-image:
+    radial-gradient(130% 75% at 50% -12%, rgba(244, 222, 190, 0.16), transparent 64%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
 }
 
 // ─── Shared guards ──────────────────────────────────────────────

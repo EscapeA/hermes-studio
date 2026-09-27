@@ -23,6 +23,8 @@ export const THEME_STYLES = [
   'neon',
   'aurora',
   'blueprint',
+  'graphite',
+  'warm',
 ] as const
 
 export type ThemeStyle = typeof THEME_STYLES[number]
@@ -39,6 +41,8 @@ export const STYLE_CLASS: Record<ThemeStyle, string | null> = {
   neon: 'neon',
   aurora: 'aurora',
   blueprint: 'blueprint',
+  graphite: 'graphite',
+  warm: 'warm',
 }
 
 /** Every style class that can appear on `<html>`. The first-paint bootstrap
@@ -57,6 +61,8 @@ export const STYLE_FORCES_DARK: Record<ThemeStyle, boolean> = {
   neon: true,
   aurora: true,
   blueprint: false,
+  graphite: true,
+  warm: true,
 }
 
 /** I18n keys for the style labels — kept next to the style list so a new
@@ -69,6 +75,8 @@ export const STYLE_LABEL_KEYS: Record<ThemeStyle, string> = {
   neon: 'theme.styleNeon',
   aurora: 'theme.styleAurora',
   blueprint: 'theme.styleBlueprint',
+  graphite: 'theme.styleGraphite',
+  warm: 'theme.styleWarm',
 }
 
 // Status bar / browser chrome color per style, mirroring the static
@@ -82,6 +90,8 @@ export const STYLE_THEME_COLOR: Record<ThemeStyle, { light: string; dark: string
   neon: { light: '#05060a', dark: '#05060a' },
   aurora: { light: '#0a0a14', dark: '#0a0a14' },
   blueprint: { light: '#f4f7fb', dark: '#0d1b2a' },
+  graphite: { light: '#08090a', dark: '#08090a' },
+  warm: { light: '#201d1d', dark: '#201d1d' },
 }
 
 /** Preview chip shown next to each option in the style picker: the style's
@@ -95,6 +105,8 @@ export const STYLE_SWATCH: Record<ThemeStyle, { accent: string; surface: string 
   neon: { accent: '#00e5ff', surface: '#05060a' },
   aurora: { accent: '#8b5cf6', surface: '#0a0a14' },
   blueprint: { accent: '#0b6bcb', surface: '#f4f7fb' },
+  graphite: { accent: '#5e6ad2', surface: '#08090a' },
+  warm: { accent: '#e6dccd', surface: '#201d1d' },
 }
 
 export function isThemeStyle(value: unknown): value is ThemeStyle {
