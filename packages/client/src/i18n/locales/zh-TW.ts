@@ -2103,6 +2103,8 @@ export default {
     styleNeon: '霓虹賽博',
     styleAurora: '漸層空間艙',
     styleBlueprint: '藍圖',
+    styleGraphite: '冷峻工程',
+    styleWarm: '暖色暗調',
     modeLockedHint: '該風格固定為深色，明暗設定暫不生效',
     fontSize: '文字大小',
     fontSizeHint: '介面與對話內容的基礎字級',

@@ -1946,6 +1946,8 @@ export default {
     styleNeon: '네온',
     styleAurora: '오로라',
     styleBlueprint: '블루프린트',
+    styleGraphite: '그래파이트',
+    styleWarm: '웜',
     modeLockedHint: '이 스타일은 항상 어둡게 고정되어 밝기 설정이 적용되지 않습니다',
     fontSize: '텍스트 크기',
     fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',

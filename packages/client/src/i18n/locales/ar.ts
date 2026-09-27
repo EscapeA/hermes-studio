@@ -2143,6 +2143,8 @@ export default {
     styleNeon: 'نيون',
     styleAurora: 'الشفق',
     styleBlueprint: 'مخطط',
+    styleGraphite: 'جرافيت',
+    styleWarm: 'دافئ',
     modeLockedHint: 'هذا النمط داكن دائمًا، ولا يُطبَّق إعداد السطوع',
     fontSize: 'حجم النص',
     fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',

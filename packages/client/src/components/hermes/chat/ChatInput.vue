@@ -2255,6 +2255,15 @@ function openAttachmentPreview(attachment: Attachment) {
     background-color: var(--bg-input-elevated);
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
   }
+
+  // Focus halo. Deliberately the last rule in this block: `.dark &` above also
+  // sets `box-shadow` and wins at equal specificity, which is why the focus
+  // shadow had no visible effect in dark mode. The halo colour comes from the
+  // active style's own accent (`--input-focus-glow`), and it is `none` for the
+  // light ink theme, so those styles render exactly as before.
+  &:focus-within {
+    box-shadow: var(--input-focus-glow), var(--input-shadow);
+  }
 }
 
 .resize-handle {
