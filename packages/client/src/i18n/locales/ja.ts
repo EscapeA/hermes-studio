@@ -1967,6 +1967,8 @@ export default {
     styleNeon: 'ネオン',
     styleAurora: 'オーロラ',
     styleBlueprint: 'ブループリント',
+    styleGraphite: 'グラファイト',
+    styleWarm: 'ウォーム',
     modeLockedHint: 'このスタイルは常にダーク固定のため、明暗の設定は反映されません',
     fontSize: '文字サイズ',
     fontSizeHint: '画面と会話テキストの基本サイズ',
