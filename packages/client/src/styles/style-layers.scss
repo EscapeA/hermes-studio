@@ -1,0 +1,269 @@
+// Style material layers — the part of a theme that cannot be expressed as
+// colour variables: ambient backgrounds, glass surfaces and accent glows.
+//
+// Why a separate file: a style's look is added by editing this file plus the
+// palette block in variables.scss, never a component. Every rule is scoped by
+// the <html> style class and reuses selectors that already exist in the app,
+// so if upstream renames one the override silently stops applying instead of
+// conflicting during a patch replay.
+//
+// ── The layout constraint that shapes all of this ───────────────────────────
+// hermes-studio is a FLOATING-CARD layout: `.app-layout` paints the page
+// background and the session list / chat panel are rounded cards sitting on
+// top of it with ~10px margins. An ambient layer on the page background alone
+// is therefore invisible — the first build of these styles measured as flat
+// colour because the cards covered everything except those gutters.
+// The material only reads because the matching palette block in
+// variables.scss makes the surfaces TRANSLUCENT
+// (`--bg-main-surface` / `--bg-sidebar-surface`, e.g. rgba(12, 17, 28, 0.80)):
+// the page ambient then shows through the cards. Both halves are required —
+// atmosphere without translucent surfaces does nothing.
+//
+// Hooks used here (all pre-existing):
+//   .app-layout  — page background; `background-image` paints above its own
+//                  `background-color`. `.app-shell::after` cannot be used: it
+//                  sits below `.app-layout` and is fully covered.
+//   .app-main    — opaque page surface on list routes; cleared here so the
+//                  ambient layer shows through on those routes too.
+//   .chat-main / .session-list — the two top-level floating cards.
+//
+// Cost control: `backdrop-filter` is expensive in Android WebView, so blur is
+// limited to those two cards and softened on narrow viewports; the aurora
+// drift is dropped under `prefers-reduced-motion`.
+
+// ─── 科技蓝 · 深空 HUD (tech) ───────────────────────────────────
+// 32px blue grid over near-black navy with a cyan glow washing down from the
+// top; cards keep a hairline cyan edge.
+html.tech {
+  .app-layout {
+    background-image:
+      radial-gradient(120% 70% at 50% -10%, rgba(34, 211, 238, 0.22), transparent 60%),
+      radial-gradient(90% 60% at 100% 100%, rgba(99, 102, 241, 0.16), transparent 65%),
+      linear-gradient(rgba(148, 190, 255, 0.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 190, 255, 0.10) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+    background-attachment: fixed, fixed, fixed, fixed;
+  }
+
+  .app-main {
+    background-color: transparent;
+  }
+
+  .chat-main,
+  .session-list {
+    border-color: rgba(34, 211, 238, 0.28);
+    box-shadow:
+      0 0 0 1px rgba(34, 211, 238, 0.10),
+      0 0 34px -14px rgba(34, 211, 238, 0.55),
+      0 18px 44px -26px rgba(0, 0, 0, 0.95);
+  }
+}
+
+// ─── 霓虹赛博 (neon) ────────────────────────────────────────────
+// 3px scanlines over near-black with a magenta bloom top-right and a cyan one
+// bottom-left, and neon card outlines. Outlines only: a magenta fill would
+// fight the markdown tables and syntax highlighting inside the chat surface.
+html.neon {
+  .app-layout {
+    background-image:
+      radial-gradient(90% 60% at 100% 0%, rgba(255, 45, 149, 0.22), transparent 58%),
+      radial-gradient(90% 60% at 0% 100%, rgba(0, 229, 255, 0.18), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.085) 0 1px, transparent 1px 3px);
+    background-size: 100% 100%, 100% 100%, 100% 3px;
+    background-attachment: fixed, fixed, fixed;
+  }
+
+  .app-main {
+    background-color: transparent;
+  }
+
+  .chat-main,
+  .session-list {
+    border-color: rgba(0, 229, 255, 0.45);
+    box-shadow:
+      0 0 0 1px rgba(0, 229, 255, 0.12),
+      0 0 26px -4px rgba(0, 229, 255, 0.55),
+      0 18px 44px -26px rgba(0, 0, 0, 0.95);
+  }
+
+  .chat-main {
+    border-color: rgba(0, 229, 255, 0.55);
+    box-shadow:
+      0 0 0 1px rgba(0, 229, 255, 0.16),
+      0 0 30px -2px rgba(0, 229, 255, 0.6),
+      0 18px 44px -26px rgba(0, 0, 0, 0.95);
+  }
+
+  // Title-ish chrome picks up the neon glow; body copy deliberately does not.
+  .app-sidebar-header,
+  .page-header-title {
+    text-shadow: 0 0 12px rgba(0, 229, 255, 0.45);
+  }
+}
+
+// ─── 渐变空间舱 (aurora) ────────────────────────────────────────
+// Three drifting aurora lights behind frosted cards. This style leans hardest
+// on translucent surfaces (0.60–0.62 in variables.scss); the blur only softens
+// what already shows through.
+html.aurora {
+  .app-layout {
+    background-image:
+      radial-gradient(40% 26% at 16% 10%, rgba(34, 211, 238, 0.34), transparent 70%),
+      radial-gradient(44% 30% at 86% 6%, rgba(139, 92, 246, 0.38), transparent 72%),
+      radial-gradient(52% 34% at 50% 98%, rgba(59, 130, 246, 0.30), transparent 74%);
+    background-size: 140% 120%, 150% 130%, 160% 140%;
+    background-repeat: no-repeat;
+    background-position: 0% 0%, 100% 0%, 50% 100%;
+    animation: aurora-drift 42s ease-in-out infinite alternate;
+  }
+
+  .app-main {
+    background-color: transparent;
+  }
+
+  .chat-main,
+  .session-list {
+    -webkit-backdrop-filter: blur(12px) saturate(135%);
+    backdrop-filter: blur(12px) saturate(135%);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 22px 52px -26px rgba(139, 92, 246, 0.85);
+  }
+}
+
+@keyframes aurora-drift {
+  0% { background-position: 0% 0%, 100% 0%, 50% 100%; }
+  100% { background-position: 8% 6%, 92% 10%, 46% 94%; }
+}
+
+// ─── 蓝图 (blueprint) ───────────────────────────────────────────
+// Drafting grid: a fine 16px mesh plus a heavier 80px module grid in ink blue.
+// Light and dark variants differ only in line alpha.
+html.blueprint {
+  .app-layout {
+    background-image:
+      linear-gradient(rgba(11, 107, 203, 0.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(11, 107, 203, 0.10) 1px, transparent 1px),
+      linear-gradient(rgba(11, 107, 203, 0.20) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(11, 107, 203, 0.20) 1px, transparent 1px);
+    background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
+    background-attachment: fixed, fixed, fixed, fixed;
+  }
+
+  .app-main {
+    background-color: transparent;
+  }
+
+  .chat-main,
+  .session-list {
+    border-color: rgba(11, 107, 203, 0.28);
+    box-shadow: 0 10px 28px -20px rgba(16, 35, 58, 0.35);
+  }
+}
+
+html.dark.blueprint .app-layout {
+  background-image:
+    linear-gradient(rgba(125, 200, 255, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 200, 255, 0.09) 1px, transparent 1px),
+    linear-gradient(rgba(125, 200, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 200, 255, 0.18) 1px, transparent 1px);
+}
+
+html.dark.blueprint {
+  .chat-main,
+  .session-list {
+    border-color: rgba(56, 189, 248, 0.26);
+  }
+}
+
+// ─── Full-viewport texture overlay ──────────────────────────────
+// Why this exists: the card layout only exposes the page background in ~10px
+// gutters, and the inner surfaces are not all themed variables, so a page-level
+// ambient layer measures as flat colour (verified: autocorrelation of a card
+// screenshot showed no periodicity for the 32px grid, while the 3px scanline
+// barely leaked through). A fixed overlay above the app content but below
+// teleported overlays is the reliable hook — the wash then covers the cards,
+// which is what makes the texture read.
+// z-index 3 puts it above `.app-layout` (z-index 1) and below Naive UI's
+// teleported modals/dropdowns, so menus keep a clean surface.
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background-repeat: repeat;
+}
+
+html.tech body::after {
+  background-image:
+    radial-gradient(130% 60% at 50% -10%, rgba(34, 211, 238, 0.16), transparent 58%),
+    linear-gradient(rgba(148, 190, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 190, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(rgba(148, 190, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 190, 255, 0.07) 1px, transparent 1px);
+  background-size: 100% 100%, 128px 128px, 128px 128px, 32px 32px, 32px 32px;
+}
+
+html.neon body::after {
+  background-image:
+    radial-gradient(80% 50% at 100% 0%, rgba(255, 45, 149, 0.14), transparent 56%),
+    radial-gradient(80% 50% at 0% 100%, rgba(0, 229, 255, 0.12), transparent 58%),
+    repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.055) 0 1px, transparent 1px 3px);
+  background-size: 100% 100%, 100% 100%, 100% 3px;
+}
+
+html.aurora body::after {
+  background-image:
+    radial-gradient(46% 30% at 14% 8%, rgba(34, 211, 238, 0.18), transparent 68%),
+    radial-gradient(50% 34% at 88% 4%, rgba(139, 92, 246, 0.20), transparent 70%),
+    radial-gradient(58% 38% at 50% 100%, rgba(59, 130, 246, 0.16), transparent 72%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+html.blueprint body::after {
+  background-image:
+    linear-gradient(rgba(11, 107, 203, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(11, 107, 203, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(11, 107, 203, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(11, 107, 203, 0.14) 1px, transparent 1px);
+  background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
+}
+
+html.dark.blueprint body::after {
+  background-image:
+    linear-gradient(rgba(125, 200, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 200, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(125, 200, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 200, 255, 0.13) 1px, transparent 1px);
+}
+
+// ─── Shared guards ──────────────────────────────────────────────
+
+// An account-level background image owns the page background: drop every
+// ambient layer so the photo is not muddied by a grid or aurora on top of it.
+html.theme-has-custom-background .app-layout,
+html.theme-has-custom-background body::after {
+  background-image: none;
+  animation: none;
+}
+
+// Blur is the expensive part on phones; soften it on narrow viewports.
+@media (max-width: 640px) {
+  html.aurora {
+    .chat-main,
+    .session-list {
+      -webkit-backdrop-filter: blur(8px) saturate(125%);
+      backdrop-filter: blur(8px) saturate(125%);
+    }
+  }
+}
+
+// Respect the OS "reduce motion" setting: keep the colours, drop the drift.
+@media (prefers-reduced-motion: reduce) {
+  html.aurora .app-layout {
+    animation: none;
+  }
+}

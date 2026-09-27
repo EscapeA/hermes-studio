@@ -9,6 +9,15 @@ import {
   type UserThemeSettings,
 } from '@/api/studio/theme'
 import {
+  DEFAULT_THEME_STYLE,
+  STYLE_CLASS,
+  STYLE_CLASSES,
+  STYLE_FORCES_DARK,
+  STYLE_THEME_COLOR,
+  normalizeThemeStyle,
+  type ThemeStyle,
+} from '@/styles/theme-style'
+import {
   DEFAULT_THEME_FONT_SIZE,
   normalizeHexColor,
   normalizeThemeCustomization,
@@ -17,16 +26,12 @@ import {
   type ThemeCustomization,
 } from '@/styles/theme-customization'
 
-export type BrightnessMode = 'light' | 'dark' | 'system'
-export type ThemeStyle = 'ink' | 'comic'
+export type { ThemeStyle } from '@/styles/theme-style'
 
-// Status bar / browser chrome theme color — mirrors manifest.theme_color so
-// standalone PWA chrome follows the in-app brightness setting.
-const THEME_COLOR_LIGHT = '#f7f7f4'
-const THEME_COLOR_DARK = '#1a1a1a'
+export type BrightnessMode = 'light' | 'dark' | 'system'
 
 function applyThemeColorMeta() {
-  const color = isDark.value ? THEME_COLOR_DARK : THEME_COLOR_LIGHT
+  const color = STYLE_THEME_COLOR[style.value][isDark.value ? 'dark' : 'light']
   let meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]:not([media])')
   if (!meta) {
     meta = document.createElement('meta')
@@ -105,9 +110,9 @@ function loadCachedTheme(userId: number | null): UserThemeSettings {
 const brightness = ref<BrightnessMode>(
   (localStorage.getItem(BRIGHTNESS_KEY) as BrightnessMode) || 'system',
 )
-// Start in the default style while the quick style switch is unavailable.
-// Keep this in sync with the pre-render theme in index.html.
-const style = ref<ThemeStyle>('ink')
+const style = ref<ThemeStyle>(
+  normalizeThemeStyle(localStorage.getItem(STYLE_KEY)),
+)
 const isDark = ref(false)
 const isComic = ref(false)
 const activeUserId = ref<number | null>(storedUserId())
@@ -124,6 +129,11 @@ const customization = computed<ThemeCustomization>(() => ({
   textColor: serverTheme.value.textColor,
   accentColor: serverTheme.value.accentColor,
 }))
+
+// Styles like tech/terminal only ship a dark palette, so they pin the
+// resolved brightness to dark while the user's own light/dark/system choice
+// stays stored and comes back when another style is selected.
+const styleForcesDark = computed(() => STYLE_FORCES_DARK[style.value])
 
 function resolveDark(mode: BrightnessMode): boolean {
   if (mode === 'system') {
@@ -156,11 +166,17 @@ function applyCustomization() {
 }
 
 function applyClasses() {
-  const dark = resolveDark(brightness.value)
+  const dark = styleForcesDark.value || resolveDark(brightness.value)
   isDark.value = dark
   isComic.value = style.value === 'comic'
-  document.documentElement.classList.toggle('dark', dark)
-  document.documentElement.classList.toggle('comic', isComic.value)
+  const root = document.documentElement
+  root.classList.toggle('dark', dark)
+  // One toggle per style class, driven by the shared table — a new style needs
+  // no edit here (see STYLE_CLASS / STYLE_CLASSES in styles/theme-style.ts).
+  const activeStyleClass = STYLE_CLASS[style.value]
+  for (const className of STYLE_CLASSES) {
+    root.classList.toggle(className, className === activeStyleClass)
+  }
   // Sync CSS color-scheme so the browser/WebView knows the page supports
   // dark mode (mirrors next-themes' enableColorScheme). Without it, Android
   // WebView's FORCE_DARK falls back to UA algorithmic darkening (inverts
@@ -326,7 +342,7 @@ watch(hasBackgroundImage, (active) => {
 export function useTheme() {
   const themeName = computed(() => {
     const mode = isDark.value ? 'dark' : 'light'
-    return isComic.value ? `comic-${mode}` : mode
+    return style.value === DEFAULT_THEME_STYLE ? mode : `${style.value}-${mode}`
   })
 
   function setBrightness(mode: BrightnessMode) {
@@ -350,6 +366,7 @@ export function useTheme() {
     style,
     isDark,
     isComic,
+    styleForcesDark,
     themeName,
     customization,
     fontSize: computed(() => serverTheme.value.fontSize),

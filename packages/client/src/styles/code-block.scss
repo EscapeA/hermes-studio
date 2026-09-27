@@ -288,3 +288,22 @@
     color: #94a3b8;
   }
 }
+
+// 终端黑 — keep the dark syntax colors (they stay legible on black) but pull
+// the neutral text, comments and meta onto the phosphor ramp, so code reads
+// green-on-black instead of gray-on-black. Top-level so it wins over the
+// equally specific `.dark .hljs-code-block` rules above.
+.dark.terminal .hljs-code-block {
+  .hljs {
+    color: #63d96b;
+  }
+
+  .hljs-comment,
+  .hljs-quote {
+    color: #3f9d47;
+  }
+
+  .hljs-meta {
+    color: #55c95d;
+  }
+}
