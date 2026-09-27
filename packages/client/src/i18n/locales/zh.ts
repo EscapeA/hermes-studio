@@ -2171,6 +2171,8 @@ export default {
     styleNeon: '霓虹赛博',
     styleAurora: '渐变空间舱',
     styleBlueprint: '蓝图',
+    styleGraphite: '冷峻工程',
+    styleWarm: '暖调暗',
     modeLockedHint: '该风格固定为深色，明暗设置暂不生效',
     fontSize: '文字大小',
     fontSizeHint: '界面和对话内容的基础字号',

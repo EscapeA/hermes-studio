@@ -3,6 +3,7 @@
 // 支持 light / dark / comic 三主题，另加锁定深色的风格：
 //   .dark.tech（科技蓝·深空 HUD）、.dark.terminal（终端黑）
 //   .dark.neon（霓虹赛博）、.dark.aurora（渐变空间舱）
+//   .dark.graphite（冷峻工程）、.dark.warm（暖调暗）
 // 以及浅色优先的 .blueprint（蓝图，同时带 .dark.blueprint 暗色变体）。
 // 这些风格表必须定义在 .dark 之后，且只能由 styles/theme-style.ts 的
 // STYLE_CLASS / STYLE_FORCES_DARK 对应的类触发（两者必须同步）。
@@ -83,6 +84,14 @@
   --text-on-overlay: #ffffff;
   --accent-info: #4a90d9;
 
+  // Composer focus feedback. `--input-focus-glow` is prepended to the composer
+  // shadow while the field has focus; it is derived from the active style's own
+  // accent so every style glows in its own colour without per-style rules.
+  // Light styles keep no halo (see .dark below); `--input-shadow` carries the
+  // resting drop shadow so the focus rule can rebuild the full list.
+  --input-focus-glow: none;
+  --input-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+
   // RGB components (for rgba() usage)
   --accent-primary-rgb: 51, 51, 51;
   --accent-hover-rgb: 26, 26, 26;
@@ -154,6 +163,13 @@
   --text-on-accent: #1a1a1a;
   --text-on-overlay: #ffffff;
   --accent-info: #6ba3d6;
+
+  // Composer focus halo for every dark style: a hairline ring plus a soft
+  // spread, both tinted by the style's accent.
+  --input-focus-glow:
+    0 0 0 1px rgba(var(--accent-primary-rgb), 0.34),
+    0 0 22px rgba(var(--accent-primary-rgb), 0.26);
+  --input-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
 
   // RGB components
   --accent-primary-rgb: 224, 224, 224;
@@ -415,6 +431,11 @@
 // both a light block (`.blueprint`) and a dark one (`.dark.blueprint`), so the
 // user's own light/dark choice still applies.
 .blueprint {
+  // Light register: a thin ring with a slight spread, no big halo.
+  --input-focus-glow:
+    0 0 0 1px rgba(var(--accent-primary-rgb), 0.32),
+    0 0 16px rgba(var(--accent-primary-rgb), 0.18);
+
   // Backgrounds — paper white with a faint blue cast
   --bg-primary: #f4f7fb;
   --bg-primary-rgb: 244, 247, 251;
@@ -554,6 +575,158 @@
   --accent-info-rgb: 34, 211, 238;
 }
 
+// ─── 冷峻工程 (graphite) — dark-locked palette ──────────────────
+// Linear / Vercel / x.ai register: near-black, a single indigo accent and
+// hairline borders. Deliberately NO ambient texture, no glow, no gradient —
+// the material layer skips this style on purpose, and the opaque surfaces keep
+// it that way.
+.dark.graphite {
+  // T1 register: no glow. The focus ring is a crisp accent hairline instead of
+  // a halo, which is what the reference sites (Linear / Vercel / x.ai) do.
+  --input-focus-glow: 0 0 0 1.5px rgba(var(--accent-primary-rgb), 0.62);
+
+  // Backgrounds — near-black, surfaces lifted by a hair
+  --bg-primary: #08090a;
+  --bg-primary-rgb: 8, 9, 10;
+  --bg-secondary: #0f1011;
+  --bg-sidebar: #0a0b0c;
+  --bg-card: #101113;
+  --bg-card-rgb: 16, 17, 19;
+  --bg-card-hover: #16181a;
+  --bg-input: #0e0f11;
+  --bg-sidebar-surface: var(--bg-primary);
+  --bg-sidebar-surface-rgb: var(--bg-primary-rgb);
+  --bg-main-surface: var(--bg-primary);
+  --bg-main-surface-rgb: var(--bg-primary-rgb);
+  --bg-input-elevated: #16181a;
+  --bg-overlay-surface: #101113;
+
+  // Borders — hairlines do all the separating
+  --border-color: #1c1d20;
+  --border-light: #161719;
+
+  // Accent — indigo
+  --accent-primary: #5e6ad2;
+  --accent-hover: #7170ff;
+  --accent-muted: #4a53a8;
+
+  // Text
+  --text-primary: #f7f8f8;
+  --text-secondary: #8a8f98;
+  --text-muted: #62666d;
+
+  // Status
+  --success: #4cb782;
+  --error: #eb5757;
+  --warning: #f2c94c;
+
+  // Git explorer decorations
+  --git-decoration-added: #4cb782;
+  --git-decoration-modified: #d1a25a;
+  --git-decoration-deleted: #eb5757;
+  --git-decoration-renamed: #7170ff;
+  --git-decoration-untracked: #7170ff;
+  --git-decoration-conflicting: #eb5757;
+
+  // Message bubbles
+  --msg-user-bg: #171a2b;
+  --msg-assistant-bg: #101113;
+  --msg-system-border: #26282c;
+
+  // Code
+  --code-bg: #050607;
+
+  // Utility
+  --text-on-accent: #ffffff;
+  --text-on-overlay: #ffffff;
+  --accent-info: #7170ff;
+
+  // RGB components
+  --accent-primary-rgb: 94, 106, 210;
+  --accent-hover-rgb: 113, 112, 255;
+  --text-primary-rgb: 247, 248, 248;
+  --text-secondary-rgb: 138, 143, 152;
+  --text-muted-rgb: 98, 102, 109;
+  --success-rgb: 76, 183, 130;
+  --error-rgb: 235, 87, 87;
+  --warning-rgb: 242, 201, 76;
+  --accent-info-rgb: 113, 112, 255;
+}
+
+// ─── 暖调暗 (warm) — dark-locked palette ────────────────────────
+// Warp / OpenCode register: warm near-black, warm off-white text, no chromatic
+// accent (the primary is warm paper-white, so filled buttons read as ink on
+// paper). Surfaces are slightly translucent so the warm vignette in
+// styles/style-layers.scss reads through the cards.
+.dark.warm {
+  // Backgrounds — warm near-black (red-brown undertone)
+  --bg-primary: #201d1d;
+  --bg-primary-rgb: 32, 29, 29;
+  --bg-secondary: #292525;
+  --bg-sidebar: #1b1818;
+  --bg-card: #292525;
+  --bg-card-rgb: 41, 37, 37;
+  --bg-card-hover: #332e2d;
+  --bg-input: #262222;
+  --bg-sidebar-surface: rgba(27, 24, 24, 0.88);
+  --bg-sidebar-surface-rgb: 27, 24, 24;
+  --bg-main-surface: rgba(41, 37, 37, 0.86);
+  --bg-main-surface-rgb: 41, 37, 37;
+  --bg-input-elevated: #332e2d;
+  --bg-overlay-surface: #292525;
+
+  // Borders — warm greys, not neutral
+  --border-color: #3a3433;
+  --border-light: #2f2a2a;
+
+  // Accent — warm paper white (buttons read as ink on paper)
+  --accent-primary: #e6dccd;
+  --accent-hover: #f5ecdd;
+  --accent-muted: #a3968a;
+
+  // Text
+  --text-primary: #fdfcfc;
+  --text-secondary: #b9b2ad;
+  --text-muted: #8a817b;
+
+  // Status
+  --success: #8fb996;
+  --error: #e07a5f;
+  --warning: #e0b16a;
+
+  // Git explorer decorations
+  --git-decoration-added: #8fb996;
+  --git-decoration-modified: #e0b16a;
+  --git-decoration-deleted: #e07a5f;
+  --git-decoration-renamed: #c0b3a0;
+  --git-decoration-untracked: #c0b3a0;
+  --git-decoration-conflicting: #e07a5f;
+
+  // Message bubbles
+  --msg-user-bg: #332c26;
+  --msg-assistant-bg: #292525;
+  --msg-system-border: #4a4341;
+
+  // Code
+  --code-bg: #1a1717;
+
+  // Utility — dark text on the paper-white accent; orange carries "info"
+  --text-on-accent: #1f1b19;
+  --text-on-overlay: #ffffff;
+  --accent-info: #e0894f;
+
+  // RGB components
+  --accent-primary-rgb: 230, 220, 205;
+  --accent-hover-rgb: 245, 236, 221;
+  --text-primary-rgb: 253, 252, 252;
+  --text-secondary-rgb: 185, 178, 173;
+  --text-muted-rgb: 138, 129, 123;
+  --success-rgb: 143, 185, 150;
+  --error-rgb: 224, 122, 95;
+  --warning-rgb: 224, 177, 106;
+  --accent-info-rgb: 224, 137, 79;
+}
+
 // ─── 终端黑 (terminal) — dark-locked palette ────────────────────
 // Pure black surfaces with phosphor-green text and a monospace UI font.
 .dark.terminal {
@@ -689,6 +862,15 @@ $mobile-topbar-padding: calc((#{$mobile-topbar-height} - #{$mobile-topbar-conten
 $breakpoint-mobile: 768px;
 
 // Radius
+// Panel open/close timing. The cubic-bezier is the fallback; `linear()`
+// (Chrome 113+, so the Android WebView here is fine) traces a spring curve that
+// overshoots ~6% and settles, which is what makes a panel feel like it lands
+// instead of stopping dead. Used where a Vue <Transition> owns the animation —
+// there the lifecycle hooks matter, so swapping in motion-v would be a bigger
+// change than the feel is worth.
+$ease-spring-settle: cubic-bezier(0.22, 1, 0.36, 1);
+$ease-spring-linear: linear(0, 0.42 9%, 0.83 20%, 1.05 32%, 1.06 42%, 1.01 60%, 1 100%);
+
 $radius-sm: 6px;
 $radius-md: 8px;
 $radius-lg: 8px;
