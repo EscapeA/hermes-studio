@@ -480,6 +480,58 @@ describe('ChatRunSocket bridge readiness gating', () => {
     expect(socket.emit).not.toHaveBeenCalledWith('run.failed', expect.anything())
   })
 
+  it('accepts a first message with attachments in a brand-new session', async () => {
+    // The session row is created by the run itself (handle-bridge-run), so it is absent here.
+    const restoreGetSession = getSessionMock.getMockImplementation()
+    getSessionMock.mockReturnValue(undefined)
+    try {
+      const { ChatRunSocket } = await import('../../packages/server/src/modules/studio/sockets/chat-run')
+      const { handlers, io, socket } = makeServerHarness()
+      const server = new ChatRunSocket(io as any)
+
+      ;(server as any).onConnection(socket)
+      await handlers.get('run')?.({
+        input: [
+          { type: 'text', text: 'with attachment' },
+          { type: 'file', path: '/tmp/upload/abcdef0123456789.txt', name: 'note.txt' },
+        ],
+        session_id: 'session-new',
+        source: 'cli',
+      })
+
+      expect(socket.emit).not.toHaveBeenCalledWith('run.failed', expect.anything())
+      expect(handleBridgeRunMock).toHaveBeenCalledTimes(1)
+      expect(recordSessionUploadAttachmentsMock).toHaveBeenCalledWith('session-new', 'default', expect.any(Array))
+    } finally {
+      getSessionMock.mockImplementation(restoreGetSession as any)
+    }
+  })
+
+  it('still rejects attachment runs for a session owned by another profile', async () => {
+    const restoreGetSession = getSessionMock.getMockImplementation()
+    getSessionMock.mockReturnValue({ id: 'session-other', profile: 'research', source: 'cli', model: 'gpt-test', provider: 'openai' })
+    try {
+      const { ChatRunSocket } = await import('../../packages/server/src/modules/studio/sockets/chat-run')
+      const { handlers, io, socket } = makeServerHarness()
+      const server = new ChatRunSocket(io as any)
+
+      ;(server as any).onConnection(socket)
+      await handlers.get('run')?.({
+        input: [{ type: 'text', text: 'with attachment' }],
+        session_id: 'session-other',
+        source: 'cli',
+      })
+
+      expect(handleBridgeRunMock).not.toHaveBeenCalled()
+      expect(socket.emit).toHaveBeenCalledWith('run.failed', expect.objectContaining({
+        session_id: 'session-other',
+        error: expect.stringContaining('not available on this connection'),
+      }))
+    } finally {
+      getSessionMock.mockImplementation(restoreGetSession as any)
+    }
+  })
+
   it('routes global-agent Hermes runs through the bridge run path while preserving session source', async () => {
     const { ChatRunSocket } = await import('../../packages/server/src/modules/studio/sockets/chat-run')
     const { handlers, io, socket } = makeServerHarness()

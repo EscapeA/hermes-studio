@@ -24,7 +24,9 @@ async function uploadedFileRealPath(path: string, profile: string): Promise<stri
 /** Call only for authenticated host input, never share-recipient packets. */
 export async function recordSessionUploadAttachments(sessionId: string, profile: string, input: unknown): Promise<void> {
   const session = getSession(sessionId)
-  if (!session || session.profile !== profile) return
+  // A brand-new session's first message runs before its row exists; the caller has already
+  // authorized `profile` (resolveRunProfile), so record under that profile either way.
+  if (session && session.profile !== profile) return
   for (const path of new Set(attachmentPaths(input))) {
     const actual = await uploadedFileRealPath(path, profile)
     if (actual) sessionUploadsStore.record(sessionId, profile, resolve(path), actual)

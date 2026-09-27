@@ -944,10 +944,15 @@ export class ChatRunSocket {
       try {
         runProfile = resolveRunProfile(data.session_id, data.profile)
         if (!shared && data.session_id && Array.isArray(data.input)) {
-          requireSocketSessionAccess(data.session_id)
-          await recordSessionUploadAttachments(data.session_id, runProfile, data.input)
+          // A brand-new session has no row yet — handle-bridge-run creates it during this very
+          // run — so the strict check would reject the first message ("Session not found").
+          // resolveRunProfile already authorized the run profile; only guard existing sessions.
+          const sessionId = data.session_id
+          if (getSession(sessionId)) requireSocketSessionAccess(sessionId)
+          await recordSessionUploadAttachments(sessionId, runProfile, data.input)
         }
       } catch (err) {
+        logger.warn('[chat-run-socket] run rejected before start session=%s: %s', data.session_id, err instanceof Error ? err.message : String(err))
         const payload = {
           event: 'run.failed',
           session_id: data.session_id,
