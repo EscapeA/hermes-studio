@@ -43,6 +43,9 @@ describe('theme styles', () => {
     // Blueprint ships both a light and a dark block, so it follows the
     // brightness setting instead of pinning it.
     expect(STYLE_FORCES_DARK.blueprint).toBe(false)
+    // The two "restrained" registers are dark-locked as well.
+    expect(STYLE_FORCES_DARK.graphite).toBe(true)
+    expect(STYLE_FORCES_DARK.warm).toBe(true)
   })
 
   it('derives the <html> class list from the style table', () => {
@@ -54,7 +57,9 @@ describe('theme styles', () => {
     }
     expect(STYLE_CLASSES).not.toContain(null)
     expect(new Set(STYLE_CLASSES).size).toBe(STYLE_CLASSES.length)
-    expect(STYLE_CLASSES).toEqual(['comic', 'tech', 'terminal', 'neon', 'aurora', 'blueprint'])
+    expect(STYLE_CLASSES).toEqual([
+      'comic', 'tech', 'terminal', 'neon', 'aurora', 'blueprint', 'graphite', 'warm',
+    ])
   })
 
   it('falls back to ink for unknown or missing persisted styles', () => {
@@ -93,6 +98,15 @@ describe('theme styles', () => {
     // Blueprint is the only style with two palettes; brightness picks one.
     expect(getThemeOverrides(false, 'blueprint').common?.bodyColor).toBe('#f4f7fb')
     expect(getThemeOverrides(true, 'blueprint').common?.bodyColor).toBe('#0d1b2a')
+    expect(getThemeOverrides(true, 'graphite').common?.bodyColor).toBe('#08090a')
+    expect(getThemeOverrides(true, 'graphite').common?.primaryColor).toBe('#5e6ad2')
+    // Graphite sharpens the naive-ui corner radius; warm keeps the ink default
+    // because its primary is paper-white, not a chromatic accent.
+    expect(getThemeOverrides(true, 'graphite').common?.borderRadius).toBe('6px')
+    expect(getThemeOverrides(true, 'graphite').common?.borderRadiusSmall).toBe('4px')
+    expect(getThemeOverrides(true, 'warm').common?.bodyColor).toBe('#201d1d')
+    expect(getThemeOverrides(true, 'warm').common?.primaryColor).toBe('#e6dccd')
+    expect(getThemeOverrides(true, 'warm').common?.borderRadius).toBe('8px')
     expect(techThemeOverrides.Switch?.railColorActive).toBe('#22d3ee')
     expect(terminalThemeOverrides.Switch?.railColorActive).toBe('#63d96b')
     expect(neonThemeOverrides.Switch?.railColorActive).toBe('#00e5ff')
@@ -123,9 +137,12 @@ describe('theme styles', () => {
 
     // Every ambient/material block must be keyed off the <html> style class,
     // otherwise it would leak into the default ink theme.
-    for (const style of ['tech', 'neon', 'aurora', 'blueprint']) {
+    for (const style of ['tech', 'neon', 'aurora', 'blueprint', 'graphite', 'warm']) {
       expect(layers, style).toContain(`html.${style}`)
     }
+    // Graphite's whole point is having no ambient layer, so it must not
+    // register a full-viewport overlay.
+    expect(layers).not.toContain('html.graphite body::after')
     // A user background image owns the page background.
     expect(layers).toContain('html.theme-has-custom-background .app-layout')
   })
