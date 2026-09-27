@@ -92,7 +92,7 @@ const StudioAnnouncementPrompt = defineAsyncComponent(
 
 const {
   isDark,
-  isComic,
+  style,
   customization,
   hasBackgroundImage,
   syncThemeFromServer,
@@ -106,7 +106,7 @@ const route = useRoute();
 const { sessionSearchOpen } = useSessionSearch();
 
 const themeOverrides = computed(() =>
-  getThemeOverrides(isDark.value, isComic.value, customization.value),
+  getThemeOverrides(isDark.value, style.value, customization.value),
 );
 const naiveTheme = computed(() => (isDark.value ? darkTheme : null));
 
