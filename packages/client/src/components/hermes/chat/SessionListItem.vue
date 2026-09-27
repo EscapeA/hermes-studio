@@ -188,7 +188,12 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* Enter stagger. CSS rather than a motion wrapper on purpose: the item root is
+   a dynamic `<component :is>` and the list re-renders on filter changes, so a
+   per-item delay keyed off nth-child needs no index prop at any of the 5 call
+   sites. Capped at 8 items so a long list never waits. */
 .session-item {
+  animation: session-item-enter 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
   position: relative;
   display: flex;
   align-items: flex-start;
@@ -319,6 +324,28 @@ onUnmounted(() => {
   box-shadow:
     0 0 0 2px rgba(245, 245, 245, 0.16),
     0 0 10px rgba(255, 107, 107, 0.4);
+}
+
+/* Plain CSS on purpose: this block has no `lang="scss"`, so an @for loop is
+   not available — spell the capped stagger out instead. */
+.session-item:nth-child(1) { animation-delay: 0ms; }
+.session-item:nth-child(2) { animation-delay: 22ms; }
+.session-item:nth-child(3) { animation-delay: 44ms; }
+.session-item:nth-child(4) { animation-delay: 66ms; }
+.session-item:nth-child(5) { animation-delay: 88ms; }
+.session-item:nth-child(6) { animation-delay: 110ms; }
+.session-item:nth-child(7) { animation-delay: 132ms; }
+.session-item:nth-child(8) { animation-delay: 154ms; }
+
+@keyframes session-item-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .session-item {
+    animation: none;
+  }
 }
 
 @keyframes session-live-pulse {
