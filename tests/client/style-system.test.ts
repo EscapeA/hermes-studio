@@ -31,7 +31,9 @@ describe('client style system', () => {
 
     expect(chatInput).toContain('background-color: $bg-main-surface;')
     expect(virtualMessageList).toContain('background-color: $bg-main-surface;')
-    expect(chatInput.match(/background-color: #333333;/g)).toHaveLength(1)
+    // The raised composer color is themed so tech/terminal keep their own.
+    expect(chatInput).toContain('background-color: var(--bg-input-elevated);')
+    expect(chatInput).not.toMatch(/background-color: #333333;/)
   })
 
   it('keeps message metadata and context usage on custom theme text colors', () => {
