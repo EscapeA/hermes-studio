@@ -32,8 +32,30 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 20-remove-avatars | 前端头像整体移除（ProfileAvatar 组件 + chat-agent-avatar→chat-agent-label 只留名字映射 + 账号头像设置区 + Profile 头像弹窗/api/store + 聊天头像（气泡/空态/会话列表）+ 看板执行者头像 + `profiles.avatar`/`settings.userAvatar` i18n + 身份开关文案改「只控名字」；服务端路由/存储/DB 保留，coding-agents 静态 logo 保留） | 001-002 |
 | 21-chat-run-new-session-attachment | chat-run 新建会话首条带附件消息修复（上游 #3144 的 session-upload 守卫要求会话行已存在，而新建会话的行由本次 run 自己创建 → 首条带附件消息必报 `Session not found`；改为只对已存在的会话做严格校验、首条消息的上传也登记进 session uploads、run 前置拒绝补一行 warn 日志） | 001 |
 | 22-theme-styles | 主题风格表驱动化 + 四套新风格（`tech` 升级为「深空 HUD」，新增 `neon` 霓虹赛博 / `aurora` 渐变空间舱 / `blueprint` 浅色蓝图；风格类名与 naive-ui palette 改查表 `STYLE_CLASS` / `STYLE_PALETTES`，材质层拆到新文件 `styles/style-layers.scss`，风格下拉带色卡，11 locale 补标签键） | 001-002 |
+| 23-run-speed-latest | 本轮解码速度「当前/平均」双读数（run 态指示器在原有本轮平均旁补「最近一次已完成调用」的读数；server `usage.updated` 增加 `speedLatest`、client store 增加 `runSpeedLatest`、11 locale 的 `tokensPerSecond` 拆为 Current/Average） | 001-002 |
 
-共 **86 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**；**2026-09-24 新增 13-mobile-nav/002-页面侧边栏抽屉打开时隐藏全局 ☰**；**2026-09-24 新增 17-remove-group-chat 组（001 前端源码移除、002 测试适配）**；**2026-09-24 新增 18-remove-workflow 组（001 前端源码移除、002 测试适配；保留 workflow 会话来源与 webhook 事件名）**；**2026-09-24 新增 19-sidebar-history-toggle 组（侧边栏扁平化 + 历史⇄会话切换，对齐上游 #1518）**；**2026-09-24 新增 20-remove-avatars 组（001 前端源码移除、002 测试适配；服务端与静态 logo 保留）**；**2026-09-27 新增 21-chat-run-new-session-attachment/001（上游 #3144 附件守卫 → 新建会话首条带附件消息必报 `Session not found`；只对已存在会话严格校验 + 首条上传登记 + 前置拒绝日志），共 86 个补丁**）。
+**2026-09-27 新增 `23-run-speed-latest` 组（001 源码、002 测试）**：
+`04-usage/010` 上线后 run 态指示器只有一个数——本轮平均，随着调用陆续完成会**往上爬**，长工具执行期间看着像在变。
+本组在旁边补上「当前」= **最近一次已完成调用**的解码速度（一次事件下发一次，工具执行期间数值不动）：
+
+- server：`foldDecodeCallResult` 额外记下最后一次调用的 span/tokens，`latestRunSpeed` 暴露它；
+  `usage.updated` 在原有 `speed`（本轮平均）旁新增 `speedLatest`；新 run 接管 fold state 时两者一起归零。
+- client store：`runSpeedLatest` 与 `runSpeed` 并列，同一事件填充，`clearRunSpeed` 一起清。
+- 聊天视图：run 态指示器并排渲染「当前 / 平均」；run 结束时结算值仍常驻到该轮消息上。
+- i18n：`chat.tokensPerSecond` 拆为 `chat.tokensPerSecondCurrent` / `chat.tokensPerSecondAverage`（11 locale 同步）。
+
+⚠️ **为什么是新组 23 而不是接在 `04-usage/010` 后面**（踩过并已实证的坑）：
+重放顺序是**按组号**（`04` → `05` → … → `22`），而 `LiveReasoningStatus.vue` 同时被
+`04-usage/010`、`05-chat/014/020/021`、`20-remove-avatars/001` 改过。把本补丁放进 `04-usage` 时，
+它会在 `05-chat/020` **之前**被应用，可它的 diff 是在 `05-chat/020` **之后**创作出来的 ⇒ 基线不匹配，
+`git am --3way` 在该文件上直接冲突（实测 87/88 落位、1 失败）。**结论：新补丁必须放进「组号排在它所依赖的所有补丁之后」的组**，
+若它依赖了多个更高组号的补丁，就新建一个组放在最后，而不是塞回早期组。
+
+验证：`tests/client/live-reasoning-status-speed.test.ts`（新）+ `tests/server/run-chat-run-speed.test.ts`（扩）
++ 既有 `run-speed` / `message-item-run-speed` / `chat-store-workspace-diff-turn` 共 **30 用例全绿**；`vue-tsc -b` 通过；
+全量 **88/88** 补丁在 `upstream/main` 上零冲突重放、重放树与 `custom` 逐字节一致。
+
+共 **88 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**；**2026-09-24 新增 13-mobile-nav/002-页面侧边栏抽屉打开时隐藏全局 ☰**；**2026-09-24 新增 17-remove-group-chat 组（001 前端源码移除、002 测试适配）**；**2026-09-24 新增 18-remove-workflow 组（001 前端源码移除、002 测试适配；保留 workflow 会话来源与 webhook 事件名）**；**2026-09-24 新增 19-sidebar-history-toggle 组（侧边栏扁平化 + 历史⇄会话切换，对齐上游 #1518）**；**2026-09-24 新增 20-remove-avatars 组（001 前端源码移除、002 测试适配；服务端与静态 logo 保留）**；**2026-09-27 新增 21-chat-run-new-session-attachment/001（上游 #3144 附件守卫 → 新建会话首条带附件消息必报 `Session not found`；只对已存在会话严格校验 + 首条上传登记 + 前置拒绝日志），共 88 个补丁**）。
 
 **2026-09-27 新增 `22-theme-styles` 组（001 主题表驱动化 + 四套风格、002 测试）**：
 主题从「四个写死的风格」改为表驱动，并新增三套外观（`tech` 同时升级）：
