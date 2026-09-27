@@ -1447,11 +1447,27 @@ function createChatState(scopedSessionId?: string) {
    */
   const runSpeed = ref<Map<string, RunSpeedReading>>(new Map())
 
+  /**
+   * sessionId → decode speed of the run's most recently finished API call, the
+   * "current" number shown beside the run-wide average. Both come off the same
+   * event, so neither can drift while a tool runs.
+   */
+  const runSpeedLatest = ref<Map<string, RunSpeedReading>>(new Map())
+
   function setRunSpeed(sessionId: string, reading: RunSpeedReading) {
     runSpeed.value = new Map(runSpeed.value).set(sessionId, reading)
   }
 
+  function setRunSpeedLatest(sessionId: string, reading: RunSpeedReading) {
+    runSpeedLatest.value = new Map(runSpeedLatest.value).set(sessionId, reading)
+  }
+
   function clearRunSpeed(sessionId: string) {
+    if (runSpeedLatest.value.has(sessionId)) {
+      const nextLatest = new Map(runSpeedLatest.value)
+      nextLatest.delete(sessionId)
+      runSpeedLatest.value = nextLatest
+    }
     if (!runSpeed.value.has(sessionId)) return
     const next = new Map(runSpeed.value)
     next.delete(sessionId)
@@ -1466,10 +1482,14 @@ function createChatState(scopedSessionId?: string) {
    * @param evt - Run event carrying an optional `speed` reading.
    */
   function applyRunSpeedEvent(sessionId: string, evt: unknown) {
-    const reading = toRunSpeedReading((evt as { speed?: unknown } | null)?.speed)
-    if (!reading) return
+
+    const source = (evt ?? null) as { speed?: unknown; speedLatest?: unknown } | null
+    const reading = toRunSpeedReading(source?.speed)
+    const latest = toRunSpeedReading(source?.speedLatest)
+    if (!reading && !latest) return
     if (!isSessionWorking(sessionId)) return
-    setRunSpeed(sessionId, reading)
+    if (reading) setRunSpeed(sessionId, reading)
+    if (latest) setRunSpeedLatest(sessionId, latest)
   }
 
   function setRunStartedAt(sessionId: string, startedAt: number) {
@@ -5823,6 +5843,7 @@ function createChatState(scopedSessionId?: string) {
     isSessionWorking,
     runStartedAt,
     runSpeed,
+    runSpeedLatest,
     isSessionCompletedUnread,
     clearSessionCompletedUnread,
     sessionProfileFilter,
