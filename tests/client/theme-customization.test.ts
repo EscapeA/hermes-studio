@@ -58,7 +58,7 @@ describe('theme customization', () => {
       accentColor: '#ffd400',
     }
     const resolved = resolveThemeCustomization(customization, false)
-    const input = getThemeOverrides(false, false, customization).Input
+    const input = getThemeOverrides(false, 'ink', customization).Input
 
     expect(input).toMatchObject({
       textColor: '#204060',
@@ -68,12 +68,12 @@ describe('theme customization', () => {
       borderHover: '1px solid rgba(255, 212, 0, 0.32)',
       borderFocus: '1px solid #ffd400',
     })
-    expect(getThemeOverrides(false, false, customization).Switch).toMatchObject({
+    expect(getThemeOverrides(false, 'ink', customization).Switch).toMatchObject({
       railColorActive: '#ffd400',
       loadingColor: '#ffd400',
       boxShadowFocus: '0 0 0 2px rgba(255, 212, 0, 0.3)',
     })
-    expect(getThemeOverrides(false, false, customization).InternalSelection).toMatchObject({
+    expect(getThemeOverrides(false, 'ink', customization).InternalSelection).toMatchObject({
       textColor: '#204060',
       placeholderColor: resolved.textMuted,
       border: '1px solid rgba(255, 212, 0, 0.18)',
