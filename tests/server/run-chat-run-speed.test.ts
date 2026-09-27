@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   foldDecodeCallResult,
+  latestRunSpeed,
   settledRunSpeed,
   type RunSpeedFoldState,
 } from '../../packages/server/src/modules/studio/services/chat-run/usage'
@@ -58,5 +59,36 @@ describe('run decode throughput fold', () => {
     foldDecodeCallResult(state, 0, {})
 
     expect(settledRunSpeed(state)).toBeUndefined()
+  })
+
+  it('reports the latest call beside the run-wide totals', () => {
+    const state = newState()
+
+    foldDecodeCallResult(state, 900, { firstChunkAt: 100.5, endedAt: 110.5 })
+    expect(latestRunSpeed(state)).toEqual({ tokens: 900, elapsedMs: 10_000 })
+
+    foldDecodeCallResult(state, 100, { firstChunkAt: 200, endedAt: 201 })
+
+    // "Current" is this one call; "average" keeps folding every call in the run.
+    expect(latestRunSpeed(state)).toEqual({ tokens: 100, elapsedMs: 1_000 })
+    expect(settledRunSpeed(state)).toEqual({ tokens: 1000, elapsedMs: 11_000 })
+  })
+
+  it('forgets the latest call when a new run owns the session state', () => {
+    const state = newState()
+    foldDecodeCallResult(state, 900, { firstChunkAt: 100.5, endedAt: 110.5 })
+
+    state.runStartedAt = RUN_START + 60_000
+    foldDecodeCallResult(state, 0, {})
+
+    expect(latestRunSpeed(state)).toBeUndefined()
+  })
+
+  it('reports no latest call while only untimed calls have finished', () => {
+    const state = newState()
+
+    foldDecodeCallResult(state, 5000, { firstChunkAt: null, endedAt: 200 })
+
+    expect(latestRunSpeed(state)).toBeUndefined()
   })
 })
