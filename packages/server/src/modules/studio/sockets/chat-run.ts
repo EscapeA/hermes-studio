@@ -994,6 +994,7 @@ export class ChatRunSocket {
           await recordSessionUploadAttachments(data.session_id, runProfile, data.input, { allowPendingSession: true })
         }
       } catch (err) {
+        logger.warn('[chat-run-socket] run rejected before start session=%s: %s', data.session_id, err instanceof Error ? err.message : String(err))
         const payload = {
           event: 'run.failed',
           session_id: data.session_id,
