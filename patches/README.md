@@ -31,8 +31,37 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 19-sidebar-history-toggle | 页面侧边栏改为扁平按钮组（新建会话/搜索/历史/Agent管理/模型）：历史并入顶部组并按上游 #1518 实现「历史 ⇄ 会话」切换（`chat.sessions` 文案 + 图标切换 + 回跳 hermes.chat）；移除单聊/历史宫格切换及其 CSS、NTooltip/openChat 死代码、11 locale 的 `sidebar.singleChat` 键 | 001-002 |
 | 20-remove-avatars | 前端头像整体移除（ProfileAvatar 组件 + chat-agent-avatar→chat-agent-label 只留名字映射 + 账号头像设置区 + Profile 头像弹窗/api/store + 聊天头像（气泡/空态/会话列表）+ 看板执行者头像 + `profiles.avatar`/`settings.userAvatar` i18n + 身份开关文案改「只控名字」；服务端路由/存储/DB 保留，coding-agents 静态 logo 保留） | 001-002 |
 | 21-chat-run-new-session-attachment | chat-run 新建会话首条带附件消息修复（上游 #3144 的 session-upload 守卫要求会话行已存在，而新建会话的行由本次 run 自己创建 → 首条带附件消息必报 `Session not found`；改为只对已存在的会话做严格校验、首条消息的上传也登记进 session uploads、run 前置拒绝补一行 warn 日志） | 001 |
+| 22-theme-styles | 主题风格表驱动化 + 四套新风格（`tech` 升级为「深空 HUD」，新增 `neon` 霓虹赛博 / `aurora` 渐变空间舱 / `blueprint` 浅色蓝图；风格类名与 naive-ui palette 改查表 `STYLE_CLASS` / `STYLE_PALETTES`，材质层拆到新文件 `styles/style-layers.scss`，风格下拉带色卡，11 locale 补标签键） | 001-002 |
 
-共 **84 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**；**2026-09-24 新增 13-mobile-nav/002-页面侧边栏抽屉打开时隐藏全局 ☰**；**2026-09-24 新增 17-remove-group-chat 组（001 前端源码移除、002 测试适配）**；**2026-09-24 新增 18-remove-workflow 组（001 前端源码移除、002 测试适配；保留 workflow 会话来源与 webhook 事件名）**；**2026-09-24 新增 19-sidebar-history-toggle 组（侧边栏扁平化 + 历史⇄会话切换，对齐上游 #1518）**；**2026-09-24 新增 20-remove-avatars 组（001 前端源码移除、002 测试适配；服务端与静态 logo 保留）**；**2026-09-27 新增 21-chat-run-new-session-attachment/001（上游 #3144 附件守卫 → 新建会话首条带附件消息必报 `Session not found`；只对已存在会话严格校验 + 首条上传登记 + 前置拒绝日志），共 84 个补丁**）。
+共 **86 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**；**2026-09-24 新增 13-mobile-nav/002-页面侧边栏抽屉打开时隐藏全局 ☰**；**2026-09-24 新增 17-remove-group-chat 组（001 前端源码移除、002 测试适配）**；**2026-09-24 新增 18-remove-workflow 组（001 前端源码移除、002 测试适配；保留 workflow 会话来源与 webhook 事件名）**；**2026-09-24 新增 19-sidebar-history-toggle 组（侧边栏扁平化 + 历史⇄会话切换，对齐上游 #1518）**；**2026-09-24 新增 20-remove-avatars 组（001 前端源码移除、002 测试适配；服务端与静态 logo 保留）**；**2026-09-27 新增 21-chat-run-new-session-attachment/001（上游 #3144 附件守卫 → 新建会话首条带附件消息必报 `Session not found`；只对已存在会话严格校验 + 首条上传登记 + 前置拒绝日志），共 86 个补丁**）。
+
+**2026-09-27 新增 `22-theme-styles` 组（001 主题表驱动化 + 四套风格、002 测试）**：
+主题从「四个写死的风格」改为表驱动，并新增三套外观（`tech` 同时升级）：
+
+| 风格 | 定位 | 关键点 |
+|---|---|---|
+| `tech`（升级） | 深空 HUD | 近黑藏蓝 `#070a12` + 青 `#22d3ee`；128px 模块网格 + 32px 细网格 + 顶部青光 |
+| `neon` | 霓虹赛博 | `#05060a` + 青 `#00e5ff`/品红 `#ff2d95`；3px 扫描线 + 双角 bloom + 卡片霓虹描边 |
+| `aurora` | 渐变空间舱 | `#0a0a14` + 紫 `#8b5cf6`；三层极光 radial（42s 漂移）+ 表面 0.60 半透明 + `backdrop-filter` |
+| `blueprint` | 蓝图（浅色优先，跟随明暗） | 浅 `#f4f7fb` / 暗 `#0d1b2a`，墨蓝 `#0b6bcb`；16px 细网格 + 80px 模块网格 |
+
+泛化：`theme-style.ts` 成为唯一来源（`STYLE_CLASS` 类名表 / `STYLE_CLASSES` / `STYLE_SWATCH` 选择器色卡），
+`main.ts` 与 `useTheme.ts` 删掉逐风格的 `if`，`theme.ts` 用 `STYLE_PALETTES` 注册表取代三元链
+（`DarkStylePalette`→`StylePalette`、`darkStyleOverrides`→`styleOverrides`）。**加风格不再改 main/useTheme/单测。**
+
+⚠️ 落地时最重要的一条：hermes-studio 是**浮动卡片布局**，页面背景只剩 ~10px 缝隙可见，**只把氛围纹理加在 `.app-layout` 上等于没加**
+（实测：卡片截图的频谱里检不出任何周期）。做法 = `body::after` 固定全屏层（z-index 3，在 `.app-layout` 之上、naive-ui teleport 弹层之下）
++ 各风格把 `--bg-main-surface` / `--bg-sidebar-surface` 改半透明（含 `-rgb` 兄弟变量）。**两半必须成对。**
+
+验证（本机）：`vue-tsc -b` 与 `vite build` 通过；客户端测试对照 HEAD 基线 worktree **零新增失败**（基线 101 失败 / 31 文件）；
+Playwright 登录后逐风格读回 `html` 类名 / `--bg-primary` / `--accent-primary` / `theme-color` **全部命中**；
+材质渲染用「去趋势 + FFT 谱峰/底噪比」实证：tech 32px **410**、neon 3px **176**、blueprint 16px **42（浅）/281（暗）**，
+ink/aurora 无周期（符合设计）。Aries 真机验收通过。
+
+⚠️ 提交时工作树另有**既有未提交 WIP**（run 态实时速度 `speedLatest`：`LiveReasoningStatus` / `MessageList` /
+`stores/hermes/chat.ts` / server `contracts+runs/session.ts` / `chat-run/usage.ts` / 两个测试文件 / locale 的
+`tokensPerSecond→tokensPerSecondCurrent+Average`），与主题在 11 个 locale 文件里**同文件不同 hunk**；
+本次只提交主题 hunk，speed hunk 原样留在工作树（拆分脚本见 `hermes_workspace/hermes-studio-tech-ui-research/stage-theme-only.py`）。
 
 **2026-09-23 新增 `09-cleanup/003-remove-connections-sidebar-entry`（用户要求，仅前端）**：
 删除页面侧边栏（chat / 历史 / 群聊 / workflow 共用的 `PageSidebarNav.vue`）的「设备互联」tab 及随之失去引用的 `openConnections()`；
