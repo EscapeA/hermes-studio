@@ -41,6 +41,10 @@ vi.mock('@/composables/useTheme', () => ({
   useTheme: () => ({
     isDark: false,
     isComic: false,
+    // App.vue resolves the naive-ui overrides from the active style, so the
+    // mock has to expose it (a plain ref-shaped object is enough here because
+    // getThemeOverrides itself is mocked below).
+    style: { value: 'ink' },
     customization: { value: { fontSize: 14, textColor: null, accentColor: null } },
     hasBackgroundImage: false,
     syncThemeFromServer: vi.fn().mockResolvedValue(undefined),
