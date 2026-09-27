@@ -2250,7 +2250,9 @@ function openAttachmentPreview(attachment: Attachment) {
   }
 
   .dark & {
-    background-color: $bg-main-surface;
+    // Raised above the chat surface — themed so tech/terminal keep their own
+    // composer color instead of the ink gray.
+    background-color: var(--bg-input-elevated);
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
   }
 }
@@ -2420,7 +2422,7 @@ function openAttachmentPreview(attachment: Attachment) {
   padding: 4px;
 
   .dark & {
-    background: #2a2a2a;
+    background: var(--bg-overlay-surface);
   }
 }
 

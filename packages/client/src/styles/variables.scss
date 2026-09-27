@@ -1,6 +1,12 @@
 // 黑白水墨 — Pure Ink
 // 纯黑白灰，无彩色
-// 支持 light / dark / comic 三主题
+// 支持 light / dark / comic 三主题，另加锁定深色的风格：
+//   .dark.tech（科技蓝·深空 HUD）、.dark.terminal（终端黑）
+//   .dark.neon（霓虹赛博）、.dark.aurora（渐变空间舱）
+// 以及浅色优先的 .blueprint（蓝图，同时带 .dark.blueprint 暗色变体）。
+// 这些风格表必须定义在 .dark 之后，且只能由 styles/theme-style.ts 的
+// STYLE_CLASS / STYLE_FORCES_DARK 对应的类触发（两者必须同步）。
+// 材质层（网格底纹、极光、扫描线、玻璃）在 styles/style-layers.scss。
 
 // ─── CSS Custom Properties ─────────────────────────────────────
 
@@ -20,6 +26,10 @@
   --bg-sidebar-surface-rgb: var(--bg-card-rgb);
   --bg-main-surface: var(--bg-card);
   --bg-main-surface-rgb: var(--bg-card-rgb);
+  // Raised surfaces that used to be hardcoded in components: the composer
+  // wrapper (kept above the chat surface) and the slash-command popover.
+  --bg-input-elevated: #ffffff;
+  --bg-overlay-surface: #fafafa;
 
   // Custom backgrounds: frame, contextual sidebar, then the foreground page.
   --glass-chrome-bg: rgba(var(--bg-primary-rgb), 0.6);
@@ -97,6 +107,8 @@
   --bg-sidebar-surface-rgb: var(--bg-primary-rgb);
   --bg-main-surface: var(--bg-primary);
   --bg-main-surface-rgb: var(--bg-primary-rgb);
+  --bg-input-elevated: #333333;
+  --bg-overlay-surface: #2a2a2a;
 
   --glass-chrome-bg: rgba(var(--bg-primary-rgb), 0.9);
   --glass-content-bg: rgba(var(--bg-card-rgb), 0.82);
@@ -172,6 +184,446 @@
   --msg-system-border: #888888;
 
   --comic-shadow: 3px 3px 0px rgba(255, 255, 255, 0.08);
+}
+
+// ─── 科技蓝 · 深空 HUD (tech) — dark-locked palette ──────────────
+// Near-black navy surfaces, a cyan accent and glassy raised panels.
+// Applied with the `dark` class (see STYLE_FORCES_DARK in theme-style.ts).
+// Defined after `.dark` so it wins the same-specificity cascade.
+.dark.tech {
+  // Backgrounds — near-black navy; every surface lifted one step
+  --bg-primary: #070a12;
+  --bg-primary-rgb: 7, 10, 18;
+  --bg-secondary: #0c111c;
+  --bg-sidebar: #0a0f1a;
+  --bg-card: #0c111c;
+  --bg-card-rgb: 12, 17, 28;
+  --bg-card-hover: #121a29;
+  --bg-input: #0e1522;
+  // Surfaces are deliberately translucent so the page ambient layer (grid +
+  // top glow, see styles/style-layers.scss) reads through the floating cards.
+  // The app is a card layout whose page background is only visible in ~10px
+  // gutters — an opaque surface would hide the material entirely.
+  --bg-sidebar-surface: rgba(10, 15, 26, 0.82);
+  --bg-sidebar-surface-rgb: 10, 15, 26;
+  --bg-main-surface: rgba(12, 17, 28, 0.80);
+  --bg-main-surface-rgb: 12, 17, 28;
+  --bg-input-elevated: #121a29;
+  --bg-overlay-surface: #0c111c;
+
+  // Borders — blue-shifted hairlines
+  --border-color: #1a2438;
+  --border-light: #141c2c;
+
+  // Accent — cyan
+  --accent-primary: #22d3ee;
+  --accent-hover: #67e8f9;
+  --accent-muted: #0e7490;
+
+  // Text
+  --text-primary: #e6edf7;
+  --text-secondary: #9fb0c9;
+  --text-muted: #64748b;
+
+  // Status
+  --success: #34d399;
+  --error: #f87171;
+  --warning: #fbbf24;
+
+  // Git explorer decorations
+  --git-decoration-added: #7dd3a0;
+  --git-decoration-modified: #e2c08d;
+  --git-decoration-deleted: #f87171;
+  --git-decoration-renamed: #7dd3fc;
+  --git-decoration-untracked: #7dd3fc;
+  --git-decoration-conflicting: #fb7185;
+
+  // Message bubbles
+  --msg-user-bg: #12233d;
+  --msg-assistant-bg: #0c111c;
+  --msg-system-border: #22304a;
+
+  // Code
+  --code-bg: #05080f;
+
+  // Utility — dark text on the cyan accent; white stays on dark overlays
+  --text-on-accent: #04121a;
+  --text-on-overlay: #ffffff;
+  --accent-info: #38bdf8;
+
+  // RGB components
+  --accent-primary-rgb: 34, 211, 238;
+  --accent-hover-rgb: 103, 232, 249;
+  --text-primary-rgb: 230, 237, 247;
+  --text-secondary-rgb: 159, 176, 201;
+  --text-muted-rgb: 100, 116, 139;
+  --success-rgb: 52, 211, 153;
+  --error-rgb: 248, 113, 113;
+  --warning-rgb: 251, 191, 36;
+  --accent-info-rgb: 56, 189, 248;
+}
+
+// ─── 霓虹赛博 (neon) — dark-locked palette ──────────────────────
+// Near-black canvas, cyan/magenta neon pair, scanlines from style-layers.scss.
+.dark.neon {
+  // Backgrounds
+  --bg-primary: #05060a;
+  --bg-primary-rgb: 5, 6, 10;
+  --bg-secondary: #0a0d14;
+  --bg-sidebar: #04050a;
+  --bg-card: #0a0d14;
+  --bg-card-rgb: 10, 13, 20;
+  --bg-card-hover: #101520;
+  --bg-input: #080b10;
+  // Translucent so the scanlines + neon blooms behind the cards read through.
+  --bg-sidebar-surface: rgba(4, 5, 10, 0.82);
+  --bg-sidebar-surface-rgb: 4, 5, 10;
+  --bg-main-surface: rgba(10, 13, 20, 0.78);
+  --bg-main-surface-rgb: 10, 13, 20;
+  --bg-input-elevated: #0f131c;
+  --bg-overlay-surface: #0a0d14;
+
+  // Borders — neon-tinted
+  --border-color: #10333d;
+  --border-light: #0b242c;
+
+  // Accent — electric cyan
+  --accent-primary: #00e5ff;
+  --accent-hover: #5cf0ff;
+  --accent-muted: #0e7490;
+
+  // Text
+  --text-primary: #d7f7ff;
+  --text-secondary: #90c7d4;
+  --text-muted: #5f8894;
+
+  // Status
+  --success: #22d3a0;
+  --error: #ff4d6d;
+  --warning: #ffb020;
+
+  // Git explorer decorations
+  --git-decoration-added: #3ddc97;
+  --git-decoration-modified: #ffd166;
+  --git-decoration-deleted: #ff4d6d;
+  --git-decoration-renamed: #00e5ff;
+  --git-decoration-untracked: #00e5ff;
+  --git-decoration-conflicting: #ff2d95;
+
+  // Message bubbles
+  --msg-user-bg: #12212b;
+  --msg-assistant-bg: #0a0d14;
+  --msg-system-border: #1a4d5c;
+
+  // Code
+  --code-bg: #020304;
+
+  // Utility — magenta carries the "second neon" as the info accent
+  --text-on-accent: #04121a;
+  --text-on-overlay: #ffffff;
+  --accent-info: #ff2d95;
+
+  // RGB components
+  --accent-primary-rgb: 0, 229, 255;
+  --accent-hover-rgb: 92, 240, 255;
+  --text-primary-rgb: 215, 247, 255;
+  --text-secondary-rgb: 144, 199, 212;
+  --text-muted-rgb: 95, 136, 148;
+  --success-rgb: 34, 211, 160;
+  --error-rgb: 255, 77, 109;
+  --warning-rgb: 255, 176, 32;
+  --accent-info-rgb: 255, 45, 149;
+}
+
+// ─── 渐变空间舱 (aurora) — dark-locked palette ──────────────────
+// Deep indigo with violet accent; the aurora light lives in style-layers.scss.
+.dark.aurora {
+  // Backgrounds
+  --bg-primary: #0a0a14;
+  --bg-primary-rgb: 10, 10, 20;
+  --bg-secondary: #101024;
+  --bg-sidebar: #0c0c1a;
+  --bg-card: #14142a;
+  --bg-card-rgb: 20, 20, 42;
+  --bg-card-hover: #1c1c38;
+  --bg-input: #121228;
+  // Frosted: translucent surfaces are what turn the aurora behind the cards
+  // into the glass look (paired with backdrop-filter in style-layers.scss).
+  --bg-sidebar-surface: rgba(12, 12, 26, 0.62);
+  --bg-sidebar-surface-rgb: 12, 12, 26;
+  --bg-main-surface: rgba(20, 20, 42, 0.60);
+  --bg-main-surface-rgb: 20, 20, 42;
+  --bg-input-elevated: #1c1c38;
+  --bg-overlay-surface: #14142a;
+
+  // Borders
+  --border-color: #23233d;
+  --border-light: #1b1b30;
+
+  // Accent — violet
+  --accent-primary: #8b5cf6;
+  --accent-hover: #a78bfa;
+  --accent-muted: #6d28d9;
+
+  // Text
+  --text-primary: #eceaff;
+  --text-secondary: #a9a3cc;
+  --text-muted: #6f6a8f;
+
+  // Status
+  --success: #34d399;
+  --error: #fb7185;
+  --warning: #fbbf24;
+
+  // Git explorer decorations
+  --git-decoration-added: #7dd3a0;
+  --git-decoration-modified: #e2c08d;
+  --git-decoration-deleted: #fb7185;
+  --git-decoration-renamed: #7dd3fc;
+  --git-decoration-untracked: #7dd3fc;
+  --git-decoration-conflicting: #f472b6;
+
+  // Message bubbles
+  --msg-user-bg: #221a45;
+  --msg-assistant-bg: #14142a;
+  --msg-system-border: #33335a;
+
+  // Code
+  --code-bg: #08080f;
+
+  // Utility — cyan carries the second aurora hue
+  --text-on-accent: #ffffff;
+  --text-on-overlay: #ffffff;
+  --accent-info: #22d3ee;
+
+  // RGB components
+  --accent-primary-rgb: 139, 92, 246;
+  --accent-hover-rgb: 167, 139, 250;
+  --text-primary-rgb: 236, 234, 255;
+  --text-secondary-rgb: 169, 163, 204;
+  --text-muted-rgb: 111, 106, 143;
+  --success-rgb: 52, 211, 153;
+  --error-rgb: 251, 113, 133;
+  --warning-rgb: 251, 191, 36;
+  --accent-info-rgb: 34, 211, 238;
+}
+
+// ─── 蓝图 (blueprint) — light-first, follows the brightness setting ────
+// Grid paper with ink-blue line work. Unlike the styles above this one ships
+// both a light block (`.blueprint`) and a dark one (`.dark.blueprint`), so the
+// user's own light/dark choice still applies.
+.blueprint {
+  // Backgrounds — paper white with a faint blue cast
+  --bg-primary: #f4f7fb;
+  --bg-primary-rgb: 244, 247, 251;
+  --bg-secondary: #eaf1f9;
+  --bg-sidebar: #eaf0f7;
+  --bg-card: #ffffff;
+  --bg-card-rgb: 255, 255, 255;
+  --bg-card-hover: #f7fafd;
+  --bg-input: #ffffff;
+  // Paper is translucent so the drafting grid behind the cards shows through.
+  --bg-sidebar-surface: rgba(255, 255, 255, 0.78);
+  --bg-sidebar-surface-rgb: 255, 255, 255;
+  --bg-main-surface: rgba(255, 255, 255, 0.82);
+  --bg-main-surface-rgb: 255, 255, 255;
+  --bg-input-elevated: #ffffff;
+  --bg-overlay-surface: #f7fafd;
+
+  // Borders — blueprint line work
+  --border-color: #cfdcea;
+  --border-light: #dde7f2;
+
+  // Accent — ink blue
+  --accent-primary: #0b6bcb;
+  --accent-hover: #0f82f0;
+  --accent-muted: #7fa6cd;
+
+  // Text
+  --text-primary: #10233a;
+  --text-secondary: #46617f;
+  --text-muted: #7c93ab;
+
+  // Status
+  --success: #1a7f4b;
+  --error: #c0392b;
+  --warning: #b7791f;
+
+  // Git explorer decorations (light values)
+  --git-decoration-added: #587c0c;
+  --git-decoration-modified: #895503;
+  --git-decoration-deleted: #ad0707;
+  --git-decoration-renamed: #007100;
+  --git-decoration-untracked: #007100;
+  --git-decoration-conflicting: #ad0707;
+
+  // Message bubbles
+  --msg-user-bg: #e4eefb;
+  --msg-assistant-bg: #f2f6fb;
+  --msg-system-border: #b3c8dc;
+
+  // Code
+  --code-bg: #eef3f9;
+
+  // Utility
+  --text-on-accent: #ffffff;
+  --text-on-overlay: #ffffff;
+  --accent-info: #0b6bcb;
+
+  // RGB components
+  --accent-primary-rgb: 11, 107, 203;
+  --accent-hover-rgb: 15, 130, 240;
+  --text-primary-rgb: 16, 35, 58;
+  --text-secondary-rgb: 70, 97, 127;
+  --text-muted-rgb: 124, 147, 171;
+  --success-rgb: 26, 127, 75;
+  --error-rgb: 192, 57, 43;
+  --warning-rgb: 183, 121, 31;
+  --accent-info-rgb: 11, 107, 203;
+}
+
+.dark.blueprint {
+  // Backgrounds — blueprint sheet at night
+  --bg-primary: #0d1b2a;
+  --bg-primary-rgb: 13, 27, 42;
+  --bg-secondary: #0f1f2f;
+  --bg-sidebar: #0b1725;
+  --bg-card: #122436;
+  --bg-card-rgb: 18, 36, 54;
+  --bg-card-hover: #17304a;
+  --bg-input: #101f30;
+  // Translucent navy sheet so the drafting grid reads through the cards.
+  --bg-sidebar-surface: rgba(11, 23, 37, 0.80);
+  --bg-sidebar-surface-rgb: 11, 23, 37;
+  --bg-main-surface: rgba(18, 36, 54, 0.78);
+  --bg-main-surface-rgb: 18, 36, 54;
+  --bg-input-elevated: #17304a;
+  --bg-overlay-surface: #122436;
+
+  // Borders
+  --border-color: #1e3448;
+  --border-light: #17293a;
+
+  // Accent — brighter cyan-blue reads on the navy sheet
+  --accent-primary: #38bdf8;
+  --accent-hover: #7dd3fc;
+  --accent-muted: #0e7490;
+
+  // Text
+  --text-primary: #d7e6f5;
+  --text-secondary: #93aec7;
+  --text-muted: #62809b;
+
+  // Status
+  --success: #34d399;
+  --error: #f87171;
+  --warning: #fbbf24;
+
+  // Git explorer decorations
+  --git-decoration-added: #7dd3a0;
+  --git-decoration-modified: #e2c08d;
+  --git-decoration-deleted: #f87171;
+  --git-decoration-renamed: #7dd3fc;
+  --git-decoration-untracked: #7dd3fc;
+  --git-decoration-conflicting: #fb7185;
+
+  // Message bubbles
+  --msg-user-bg: #14304a;
+  --msg-assistant-bg: #122436;
+  --msg-system-border: #2a4761;
+
+  // Code
+  --code-bg: #0a1520;
+
+  // Utility
+  --text-on-accent: #04141f;
+  --text-on-overlay: #ffffff;
+  --accent-info: #22d3ee;
+
+  // RGB components
+  --accent-primary-rgb: 56, 189, 248;
+  --accent-hover-rgb: 125, 211, 252;
+  --text-primary-rgb: 215, 230, 245;
+  --text-secondary-rgb: 147, 174, 199;
+  --text-muted-rgb: 98, 128, 155;
+  --success-rgb: 52, 211, 153;
+  --error-rgb: 248, 113, 113;
+  --warning-rgb: 251, 191, 36;
+  --accent-info-rgb: 34, 211, 238;
+}
+
+// ─── 终端黑 (terminal) — dark-locked palette ────────────────────
+// Pure black surfaces with phosphor-green text and a monospace UI font.
+.dark.terminal {
+  // Global UI font — everything except code blocks follows this
+  --font-ui: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+  // Backgrounds — #000 base, surfaces barely lifted off it
+  --bg-primary: #000000;
+  --bg-primary-rgb: 0, 0, 0;
+  --bg-secondary: #070b07;
+  --bg-sidebar: #040604;
+  --bg-card: #0a0f0a;
+  --bg-card-rgb: 10, 15, 10;
+  --bg-card-hover: #111a11;
+  --bg-input: #060906;
+  --bg-sidebar-surface: var(--bg-primary);
+  --bg-sidebar-surface-rgb: var(--bg-primary-rgb);
+  --bg-main-surface: var(--bg-primary);
+  --bg-main-surface-rgb: var(--bg-primary-rgb);
+  --bg-input-elevated: #0d130d;
+  --bg-overlay-surface: #0a0f0a;
+
+  // Borders — dim green out of the black
+  --border-color: #1f4d1f;
+  --border-light: #143014;
+
+  // Accent — phosphor green
+  --accent-primary: #63d96b;
+  --accent-hover: #7fe585;
+  --accent-muted: #2f7a3a;
+
+  // Text
+  --text-primary: #63d96b;
+  --text-secondary: #55c95d;
+  --text-muted: #3f9d47;
+
+  // Status
+  --success: #63d96b;
+  --error: #ff5555;
+  --warning: #ffcc33;
+
+  // Git explorer decorations
+  --git-decoration-added: #63d96b;
+  --git-decoration-modified: #ffcc33;
+  --git-decoration-deleted: #ff5555;
+  --git-decoration-renamed: #5fcfae;
+  --git-decoration-untracked: #5fcfae;
+  --git-decoration-conflicting: #ff5555;
+
+  // Message bubbles
+  --msg-user-bg: #06140a;
+  --msg-assistant-bg: #070b07;
+  --msg-system-border: #2f7a3a;
+
+  // Code
+  --code-bg: #050805;
+
+  // Utility — black text on the green accent; white stays on dark overlays
+  --text-on-accent: #000000;
+  --text-on-overlay: #ffffff;
+  --accent-info: #5fcfae;
+
+  // RGB components
+  --accent-primary-rgb: 99, 217, 107;
+  --accent-hover-rgb: 127, 229, 133;
+  --text-primary-rgb: 99, 217, 107;
+  --text-secondary-rgb: 85, 201, 93;
+  --text-muted-rgb: 63, 157, 71;
+  --success-rgb: 99, 217, 107;
+  --error-rgb: 255, 85, 85;
+  --warning-rgb: 255, 204, 51;
+  --accent-info-rgb: 95, 207, 174;
 }
 
 // ─── SCSS Variables (delegate to CSS custom properties) ────────
