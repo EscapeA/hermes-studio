@@ -145,17 +145,31 @@ const isRunIndicatorActive = computed(() => chatStore.isRunActive || !!chatStore
 const formattedThinkingElapsed = computed(() => formatElapsed(thinkingElapsedMs.value));
 
 /**
- * Decode speed of the run's latest finished API call, shown next to the thinking
- * timer while the run is live; the settled value is later handed to the turn's
- * message, so nothing is lost when this indicator unmounts.
+ * Decode speed of the run's latest finished API call ("current"), shown next to
+ * the thinking timer while the run is live; the run-wide average sits beside it
+ * and is later handed to the turn's message, so nothing is lost when this
+ * indicator unmounts.
  */
 const liveSpeedLabel = computed(() => {
+  const sessionId = chatStore.activeSessionId;
+  const reading = sessionId ? chatStore.runSpeedLatest.get(sessionId) : undefined;
+  if (!reading) return null;
+  const tps = runSpeedTokensPerSecond(reading);
+  if (tps == null) return null;
+  return t('chat.tokensPerSecondCurrent', { tps: formatTokensPerSecond(tps) });
+});
+
+/**
+ * Average decode speed over the run's finished API calls so far — the number the
+ * turn keeps when it settles onto its message.
+ */
+const liveAverageSpeedLabel = computed(() => {
   const sessionId = chatStore.activeSessionId;
   const reading = sessionId ? chatStore.runSpeed.get(sessionId) : undefined;
   if (!reading) return null;
   const tps = runSpeedTokensPerSecond(reading);
   if (tps == null) return null;
-  return t('chat.tokensPerSecond', { tps: formatTokensPerSecond(tps) });
+  return t('chat.tokensPerSecondAverage', { tps: formatTokensPerSecond(tps) });
 });
 
 const currentToolCalls = computed(() => {
@@ -847,6 +861,7 @@ defineExpose({
             :reasoning-id="liveReasoningDetail?.messageId"
             :elapsed="formattedThinkingElapsed"
             :speed="liveSpeedLabel"
+            :average-speed="liveAverageSpeedLabel"
           />
           <div v-if="visibleToolCalls.length > 0 || chatStore.compressionState || chatStore.abortState" class="tool-calls-panel">
             <!-- Abort indicator -->
