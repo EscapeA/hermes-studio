@@ -216,6 +216,15 @@ interface StylePalette {
   menuActive: string
   menuActiveHover: string
   fontFamily?: string
+  /** Opt out of the focus halo — the T1 "cold engineering" register uses a
+   *  crisp ring instead, matching its no-glow reference sites. */
+  noFocusGlow?: boolean
+  /** Corner radius for naive-ui surfaces; defaults to the ink values. The
+   *  global SCSS radii are compile-time constants shared by 61 components, so
+   *  a style can only re-shape the naive-ui layer — layer-level sharpness is
+   *  expressed with borders instead. */
+  borderRadius?: string
+  borderRadiusSmall?: string
 }
 
 function styleOverrides(palette: StylePalette): GlobalThemeOverrides {
@@ -239,8 +248,8 @@ function styleOverrides(palette: StylePalette): GlobalThemeOverrides {
       dividerColor: palette.border,
       borderColor: palette.border,
       hoverColor: palette.hover,
-      borderRadius: '8px',
-      borderRadiusSmall: '6px',
+      borderRadius: palette.borderRadius ?? '8px',
+      borderRadiusSmall: palette.borderRadiusSmall ?? '6px',
       fontSize: '14px',
       fontSizeMedium: '14px',
       heightMedium: '36px',
@@ -278,12 +287,24 @@ function styleOverrides(palette: StylePalette): GlobalThemeOverrides {
       groupLabelBorder: `1px solid ${palette.borderStrong}`,
       placeholderColor: palette.text3,
       caretColor: palette.primary,
+      // 8-digit hex keeps the accent's alpha in one value; the halo is skipped
+      // for styles that opt out (see noFocusGlow).
+      boxShadowFocus: palette.noFocusGlow
+        ? `0 0 0 2px ${palette.primary}9e`
+        : `0 0 0 2px ${palette.primary}33, 0 0 16px ${palette.primary}47`,
+      boxShadowActive: `0 0 0 2px ${palette.primary}33`,
     },
     InternalSelection: {
       border: `1px solid ${palette.borderStrong}`,
       borderHover: `1px solid ${palette.borderHover}`,
       borderActive: `1px solid ${palette.primary}`,
       borderFocus: `1px solid ${palette.primary}`,
+      boxShadowActive: palette.noFocusGlow
+        ? `0 0 0 2px ${palette.primary}9e`
+        : `0 0 0 2px ${palette.primary}33, 0 0 16px ${palette.primary}47`,
+      boxShadowFocus: palette.noFocusGlow
+        ? `0 0 0 2px ${palette.primary}9e`
+        : `0 0 0 2px ${palette.primary}33, 0 0 16px ${palette.primary}47`,
     },
     Card: {
       color: palette.surface,
@@ -411,6 +432,55 @@ const BLUEPRINT_DARK_PALETTE: StylePalette = {
   menuActiveHover: 'rgba(56, 189, 248, 0.24)',
 }
 
+// 冷峻工程 (graphite) — Linear / Vercel / x.ai register: near-black, no
+// shadows, no gradients, no glow. Separation comes from hairline translucent
+// borders and a single indigo accent; the naive-ui layer is sharper too.
+const GRAPHITE_PALETTE: StylePalette = {
+  noFocusGlow: true,
+  primary: '#5e6ad2',
+  primaryHover: '#7170ff',
+  primaryPressed: '#4f5ab8',
+  textOnPrimary: '#ffffff',
+  body: '#08090a',
+  surface: '#101113',
+  action: '#0c0d0f',
+  sider: '#0a0b0c',
+  text1: '#f7f8f8',
+  text2: '#8a8f98',
+  text3: '#62666d',
+  border: '#1c1d20',
+  borderStrong: '#26282c',
+  borderHover: '#3a3d44',
+  hover: 'rgba(255, 255, 255, 0.05)',
+  menuActive: 'rgba(94, 106, 210, 0.16)',
+  menuActiveHover: 'rgba(94, 106, 210, 0.24)',
+  borderRadius: '6px',
+  borderRadiusSmall: '4px',
+}
+
+// 暖调暗 (warm) — Warp / OpenCode register: warm near-black, warm off-white
+// text and no chromatic accent (the primary is warm paper-white, so buttons
+// read as ink on paper). A single warm orange carries "info".
+const WARM_PALETTE: StylePalette = {
+  primary: '#e6dccd',
+  primaryHover: '#f5ecdd',
+  primaryPressed: '#d5c9b6',
+  textOnPrimary: '#1f1b19',
+  body: '#201d1d',
+  surface: '#292525',
+  action: '#252121',
+  sider: '#1b1818',
+  text1: '#fdfcfc',
+  text2: '#b9b2ad',
+  text3: '#8a817b',
+  border: '#3a3433',
+  borderStrong: '#4a4341',
+  borderHover: '#6b615d',
+  hover: 'rgba(255, 240, 220, 0.05)',
+  menuActive: 'rgba(230, 220, 205, 0.14)',
+  menuActiveHover: 'rgba(230, 220, 205, 0.22)',
+}
+
 // 终端黑 — pure black with phosphor-green text and a monospace UI font.
 const TERMINAL_PALETTE: StylePalette = {
   primary: '#63d96b',
@@ -452,6 +522,8 @@ const STYLE_PALETTES: Partial<Record<ThemeStyle, { light: StylePalette; dark: St
   neon: { light: NEON_PALETTE, dark: NEON_PALETTE },
   aurora: { light: AURORA_PALETTE, dark: AURORA_PALETTE },
   blueprint: { light: BLUEPRINT_LIGHT_PALETTE, dark: BLUEPRINT_DARK_PALETTE },
+  graphite: { light: GRAPHITE_PALETTE, dark: GRAPHITE_PALETTE },
+  warm: { light: WARM_PALETTE, dark: WARM_PALETTE },
 }
 
 /** Base overrides for a style, falling back to the original ink pair. */
