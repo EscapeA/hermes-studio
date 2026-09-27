@@ -153,6 +153,10 @@ export interface SessionState {
    */
   decodeMsTotal?: number
   decodeTokensTotal?: number
+  /** Most recently finished call's decode span, for the "current" reading. */
+  decodeLastMs?: number
+  /** Most recently finished call's provider output tokens. */
+  decodeLastTokens?: number
   decodeRunStartAt?: number
   events: Array<{ event: string; data: any }>
   abortController?: AbortController
