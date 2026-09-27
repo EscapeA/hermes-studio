@@ -1997,6 +1997,8 @@ export default {
     styleNeon: 'Неон',
     styleAurora: 'Аврора',
     styleBlueprint: 'Чертёж',
+    styleGraphite: 'Графит',
+    styleWarm: 'Тёплый',
     modeLockedHint: 'Этот стиль всегда тёмный — настройка яркости не применяется',
     fontSize: 'Размер текста',
     fontSizeHint: 'Базовый размер текста интерфейса и диалогов',

@@ -3973,11 +3973,17 @@ async function handleSessionModelCustomSubmit() {
   overflow: hidden;
   pointer-events: none;
   will-change: width, min-width, opacity;
+  // Duration stays 0.25s on purpose: the upstream suite pins `width 0.25s`
+  // here (tests/client/drawer-panel-resize.test.ts), and the spring feel comes
+  // from the easing curve rather than from a longer transition.
   transition:
-    width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.25s $ease-spring-settle,
+    min-width 0.25s $ease-spring-settle,
     opacity 0.16s ease,
     border-color 0.16s ease;
+  // Spring settle where `linear()` is supported; the four values map onto the
+  // four transition properties above, and the bezier stays as the fallback.
+  transition-timing-function: $ease-spring-linear, $ease-spring-linear, ease, ease;
 }
 
 .tool-panel-enter-from,
