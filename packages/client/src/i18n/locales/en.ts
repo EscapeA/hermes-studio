@@ -2166,6 +2166,8 @@ export default {
     styleNeon: 'Neon',
     styleAurora: 'Aurora',
     styleBlueprint: 'Blueprint',
+    styleGraphite: 'Graphite',
+    styleWarm: 'Warm',
     modeLockedHint: 'This style is always dark; the brightness setting is ignored',
     fontSize: 'Text size',
     fontSizeHint: 'Base interface and conversation text size',
