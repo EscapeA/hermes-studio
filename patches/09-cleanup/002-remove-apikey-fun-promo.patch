@@ -1,4 +1,4 @@
-From 8d4d3b727a72db08f325d93eff569406168b0b3c Mon Sep 17 00:00:00 2001
+From c80af09575f6aaa7316503f24626b7924bfc5945 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 6 Sep 2026 09:25:42 +0800
 Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
@@ -82,10 +82,10 @@ index 0b322c52e..70b7adf70 100644
    display: flex;
    justify-content: flex-end;
 diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
-index 77b9d4b3a..ecc95606a 100644
+index 91ee3b141..8cd3a25f2 100644
 --- a/packages/client/src/components/layout/PageSidebarNav.vue
 +++ b/packages/client/src/components/layout/PageSidebarNav.vue
-@@ -58,11 +58,6 @@ function openWorkflow() {
+@@ -59,11 +59,6 @@ function openWorkflow() {
    if (props.active === 'workflow') return
    void router.push({ name: 'hermes.workflow' })
  }
@@ -97,7 +97,7 @@ index 77b9d4b3a..ecc95606a 100644
  </script>
  
  <template>
-@@ -173,21 +168,6 @@ function openApiRelay() {
+@@ -175,21 +170,6 @@ function openApiRelay() {
          </svg>
          <span>{{ t('sidebar.models') }}</span>
        </button>
@@ -120,10 +120,10 @@ index 77b9d4b3a..ecc95606a 100644
      <div class="conversation-switch conversation-switch--four" role="tablist" aria-label="Conversation type">
        <NTooltip trigger="hover" placement="top">
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 6541d5f65..9dec574fb 100644
+index ae0738d0f..396c4e4e5 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -360,7 +360,6 @@ export default {
+@@ -483,7 +483,6 @@ export default {
      chat: 'محادثة',
      backToChat: 'رجوع',
      search: 'بحث',
@@ -132,10 +132,10 @@ index 6541d5f65..9dec574fb 100644
      jobs: 'المهام المجدولة',
      kanban: 'كانبان',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 7212a922f..244dc9500 100644
+index 71eb3debf..301a79668 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -373,7 +373,6 @@ export default {
+@@ -495,7 +495,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Zuruck',
      search: 'Suche',
@@ -144,10 +144,10 @@ index 7212a922f..244dc9500 100644
      jobs: 'Geplante Aufgaben',
      models: 'Modelle',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 3b628f9be..75d8fb767 100644
+index c1d73dff1..c5fe645a1 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -361,7 +361,6 @@ export default {
+@@ -483,7 +483,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Back',
      search: 'Search',
@@ -156,10 +156,10 @@ index 3b628f9be..75d8fb767 100644
      jobs: 'Jobs',
      kanban: 'Kanban',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index f97f7c20a..1ad75eecf 100644
+index 9a2ea2c86..8cf5d3dba 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -373,7 +373,6 @@ export default {
+@@ -495,7 +495,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Volver',
      search: 'Buscar',
@@ -168,10 +168,10 @@ index f97f7c20a..1ad75eecf 100644
      jobs: 'Tareas programadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index adb576928..c0b578d92 100644
+index 9ed076e2b..8ecf0418c 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -372,7 +372,6 @@ export default {
+@@ -495,7 +495,6 @@ export default {
      chat: 'Discussion',
      backToChat: 'Retour',
      search: 'Rechercher',
@@ -180,10 +180,10 @@ index adb576928..c0b578d92 100644
      jobs: 'Taches planifiees',
      models: 'Modeles',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 3e2267a49..5de1053a7 100644
+index 7c8039178..7aed5481c 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -373,7 +373,6 @@ export default {
+@@ -495,7 +495,6 @@ export default {
      chat: 'チャット',
      backToChat: '戻る',
      search: '検索',
@@ -192,10 +192,10 @@ index 3e2267a49..5de1053a7 100644
      jobs: 'ジョブ',
      models: 'モデル',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index d921dbb2a..ab6bc4178 100644
+index 0f8a7a7f4..a46a1ebfc 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -373,7 +373,6 @@ export default {
+@@ -495,7 +495,6 @@ export default {
      chat: '채팅',
      backToChat: '뒤로',
      search: '검색',
@@ -204,10 +204,10 @@ index d921dbb2a..ab6bc4178 100644
      jobs: '예약 작업',
      models: '모델',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 410df560c..343fe9798 100644
+index a34f17238..f575f4965 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -373,7 +373,6 @@ export default {
+@@ -495,7 +495,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Voltar',
      search: 'Pesquisar',
@@ -216,10 +216,10 @@ index 410df560c..343fe9798 100644
      jobs: 'Tarefas agendadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 20c16bef3..240ed6a07 100644
+index 2a2891a9e..8b2d5eaa4 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -287,7 +287,6 @@ export default {
+@@ -409,7 +409,6 @@ export default {
      chat: 'Чат',
      backToChat: 'Назад',
      search: 'Поиск',
@@ -228,10 +228,10 @@ index 20c16bef3..240ed6a07 100644
      jobs: 'Задачи',
      kanban: 'Канбан',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 15cd19468..513c36246 100644
+index a8900e034..95fca558c 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -361,7 +361,6 @@ export default {
+@@ -483,7 +483,6 @@ export default {
      chat: '對話',
      backToChat: '返回',
      search: '搜尋',
@@ -240,10 +240,10 @@ index 15cd19468..513c36246 100644
      jobs: '任務',
      kanban: '看板',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 33b149bec..00022e68c 100644
+index 8acae1835..900ec3bc7 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -361,7 +361,6 @@ export default {
+@@ -483,7 +483,6 @@ export default {
      chat: '对话',
      backToChat: '返回',
      search: '搜索',

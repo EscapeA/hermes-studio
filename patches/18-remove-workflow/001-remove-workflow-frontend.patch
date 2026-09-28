@@ -1,4 +1,4 @@
-From 449d422945af670db80a2798ead7044fadbee8be Mon Sep 17 00:00:00 2001
+From b5987b0733e6b3dfacf3a1c2c3630b30bbaacda9 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] feat(web): remove workflow from the frontend
@@ -24,28 +24,28 @@ Drop the whole workflow surface from the SPA (server modules untouched):
 ---
  packages/client/src/App.vue                   |   20 +-
  .../client/src/api/studio/workflow-socket.ts  |  132 -
- packages/client/src/api/studio/workflows.ts   |  339 -
+ packages/client/src/api/studio/workflows.ts   |  348 --
  .../hermes/workflow/WorkflowAgentNode.vue     |  788 ---
  .../hermes/workflow/WorkflowConditionEdge.vue |  140 -
  .../hermes/workflow/WorkflowFieldHelp.vue     |   68 -
  .../hermes/workflow/WorkflowModelSelector.vue |  121 -
- .../src/components/hermes/workflow/types.ts   |   38 -
+ .../src/components/hermes/workflow/types.ts   |   39 -
  .../layout/GlobalPendingActions.vue           |  143 +-
  .../src/components/layout/PageSidebarNav.vue  |   37 +-
- packages/client/src/i18n/locales/ar.ts        |  294 -
- packages/client/src/i18n/locales/de.ts        |  167 -
- packages/client/src/i18n/locales/en.ts        |  249 -
- packages/client/src/i18n/locales/es.ts        |  167 -
- packages/client/src/i18n/locales/fr.ts        |  167 -
- packages/client/src/i18n/locales/ja.ts        |  167 -
- packages/client/src/i18n/locales/ko.ts        |  167 -
- packages/client/src/i18n/locales/pt.ts        |  167 -
- packages/client/src/i18n/locales/ru.ts        |  265 -
- packages/client/src/i18n/locales/zh-TW.ts     |  290 -
- packages/client/src/i18n/locales/zh.ts        |  295 -
+ packages/client/src/i18n/locales/ar.ts        |  295 -
+ packages/client/src/i18n/locales/de.ts        |  168 -
+ packages/client/src/i18n/locales/en.ts        |  250 -
+ packages/client/src/i18n/locales/es.ts        |  168 -
+ packages/client/src/i18n/locales/fr.ts        |  168 -
+ packages/client/src/i18n/locales/ja.ts        |  168 -
+ packages/client/src/i18n/locales/ko.ts        |  168 -
+ packages/client/src/i18n/locales/pt.ts        |  168 -
+ packages/client/src/i18n/locales/ru.ts        |  266 -
+ packages/client/src/i18n/locales/zh-TW.ts     |  291 -
+ packages/client/src/i18n/locales/zh.ts        |  296 -
  packages/client/src/router/index.ts           |    5 -
  packages/client/src/styles/global.scss        |    2 +-
- .../src/utils/hermes/workflow-skills.ts       |   25 -
+ .../src/utils/hermes/workflow-skills.ts       |   26 -
  .../client/src/utils/workflow-approval-key.ts |    8 -
  packages/client/src/utils/workflow-canvas.ts  |   16 -
  .../src/utils/workflow-edge-authoring.ts      |  373 --
@@ -56,8 +56,8 @@ Drop the whole workflow surface from the SPA (server modules untouched):
  .../client/src/utils/workflow-run-pager.ts    |   22 -
  .../client/src/utils/workflow-run-snapshot.ts |   68 -
  .../client/src/views/hermes/ModelsView.vue    |    2 +-
- .../client/src/views/hermes/WorkflowView.vue  | 5500 -----------------
- 35 files changed, 31 insertions(+), 10670 deletions(-)
+ .../client/src/views/hermes/WorkflowView.vue  | 5514 -----------------
+ 35 files changed, 31 insertions(+), 10706 deletions(-)
  delete mode 100644 packages/client/src/api/studio/workflow-socket.ts
  delete mode 100644 packages/client/src/api/studio/workflows.ts
  delete mode 100644 packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue
@@ -292,10 +292,10 @@ index 442beef20..000000000
 -}
 diff --git a/packages/client/src/api/studio/workflows.ts b/packages/client/src/api/studio/workflows.ts
 deleted file mode 100644
-index e243d5ab0..000000000
+index afc22e59b..000000000
 --- a/packages/client/src/api/studio/workflows.ts
 +++ /dev/null
-@@ -1,339 +0,0 @@
+@@ -1,348 +0,0 @@
 -import { request } from '../client'
 -
 -export interface WorkflowViewport {
@@ -364,6 +364,7 @@ index e243d5ab0..000000000
 -  node_sessions?: WorkflowRunNodeSessionRecord[]
 -  edge_evaluations?: WorkflowRunEdgeEvaluationRecord[]
 -  loop_epochs?: WorkflowRunLoopEpochRecord[]
+-  quality_evaluations?: WorkflowRunQualityEvaluationRecord[]
 -}
 -
 -export interface WorkflowRunNodeSessionRecord {
@@ -386,6 +387,14 @@ index e243d5ab0..000000000
 -  created_at: number
 -  updated_at: number
 -  error: string | null
+-}
+-
+-export interface WorkflowRunQualityEvaluationRecord {
+-  id: string; run_id: string; workflow_id: string; node_session_id: string; node_id: string; execution_id: string
+-  iteration_path: unknown[]; input_hash: string; config_hash: string; status: 'completed' | 'skipped'
+-  decision: 'pass' | 'needs_improvement' | 'unknown'
+-  criteria: Array<{ id: string; decision: 'pass' | 'needs_improvement' | 'unknown'; confidence?: number; evidenceRefs: string[] }>
+-  reason_code: string; duration_ms: number; created_at: number
 -}
 -
 -export interface WorkflowRunEdgeEvaluationRecord {
@@ -637,7 +646,7 @@ index e243d5ab0..000000000
 -}
 diff --git a/packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue b/packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue
 deleted file mode 100644
-index 5aebc1ee2..000000000
+index 148a50853..000000000
 --- a/packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue
 +++ /dev/null
 @@ -1,788 +0,0 @@
@@ -674,7 +683,7 @@ index 5aebc1ee2..000000000
 -    : ''
 -))
 -const isCodingAgent = computed(() => props.data.agent !== 'hermes')
--const supportsGlobalMode = computed(() => ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh'].includes(props.data.agent))
+-const supportsGlobalMode = computed(() => ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor'].includes(props.data.agent))
 -const usesScopedModel = computed(() => !supportsGlobalMode.value || props.data.agentMode !== 'global')
 -const agentModeOptions = computed(() => [
 -  { label: t('codingAgents.launchModeGlobal'), value: 'global' },
@@ -834,7 +843,7 @@ index 5aebc1ee2..000000000
 -      <DshSessionPresetSelect v-if="data.agent === 'dsh'" :model-value="data.agentPreset" :disabled="data.readonly"
 -        @update:model-value="updateField('agentPreset', $event)" @valid="updateField('agentPresetReady', $event)" />
 -      <NSelect
--        v-if="supportsGlobalMode"
+-        v-if="supportsGlobalMode && data.agent !== 'cursor'"
 -        :value="data.agentMode"
 -        :options="agentModeOptions"
 -        size="small"
@@ -1778,10 +1787,10 @@ index d74337dce..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/workflow/types.ts b/packages/client/src/components/hermes/workflow/types.ts
 deleted file mode 100644
-index ab95600ef..000000000
+index 63fc2b22f..000000000
 --- a/packages/client/src/components/hermes/workflow/types.ts
 +++ /dev/null
-@@ -1,38 +0,0 @@
+@@ -1,39 +0,0 @@
 -import type { SelectOption } from 'naive-ui'
 -import type { AvailableModelGroup } from '@/api/hermes/system'
 -import type { CodingAgentApiMode } from '@/api/coding-agents'
@@ -1797,6 +1806,7 @@ index ab95600ef..000000000
 -  title: string
 -  agent: string
 -  agentMode: 'scoped' | 'global'
+-  priorAgentMode?: 'scoped' | 'global'
 -  agentPreset?: string
 -  agentPresetReady?: boolean
 -  provider: string
@@ -1819,7 +1829,7 @@ index ab95600ef..000000000
 -  onUploadImages: (id: string, files: File[]) => Promise<string[]>
 -}
 -
--export type WorkflowAgentNodeEditableData = Pick<WorkflowAgentNodeData, 'title' | 'agent' | 'agentMode' | 'agentPreset' | 'agentPresetReady' | 'provider' | 'model' | 'apiMode' | 'reasoningEffort' | 'input' | 'skills' | 'images' | 'approvalRequired' | 'orchestration'>
+-export type WorkflowAgentNodeEditableData = Pick<WorkflowAgentNodeData, 'title' | 'agent' | 'agentMode' | 'priorAgentMode' | 'agentPreset' | 'agentPresetReady' | 'provider' | 'model' | 'apiMode' | 'reasoningEffort' | 'input' | 'skills' | 'images' | 'approvalRequired' | 'orchestration'>
 diff --git a/packages/client/src/components/layout/GlobalPendingActions.vue b/packages/client/src/components/layout/GlobalPendingActions.vue
 index 0c938bafa..9f7e6db04 100644
 --- a/packages/client/src/components/layout/GlobalPendingActions.vue
@@ -2061,19 +2071,19 @@ index 0c938bafa..9f7e6db04 100644
    handles.clear()
  })
 diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
-index b31ca81b1..e939d1361 100644
+index b9b792fa1..b62a97b6d 100644
 --- a/packages/client/src/components/layout/PageSidebarNav.vue
 +++ b/packages/client/src/components/layout/PageSidebarNav.vue
-@@ -7,7 +7,7 @@ import { isStoredSuperAdmin } from '@/api/client'
- import { useSessionSearch } from '@/composables/useSessionSearch'
+@@ -8,7 +8,7 @@ import { useSessionSearch } from '@/composables/useSessionSearch'
  import { getAgentManagerEntry, resolveAgentManagerEntryRoute } from '@/utils/agent-manager-entry'
+ import DesktopUpdateDownloadTab from './DesktopUpdateDownloadTab.vue'
  
 -type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'global' | 'workflow'
 +type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'global'
  
  const props = defineProps<{
    active: ActiveSection
-@@ -46,11 +46,6 @@ function openModels() {
+@@ -47,11 +47,6 @@ function openModels() {
    if (props.active === 'models') return
    void router.push({ name: 'hermes.models' })
  }
@@ -2085,7 +2095,7 @@ index b31ca81b1..e939d1361 100644
  </script>
  
  <template>
-@@ -137,7 +132,7 @@ function openWorkflow() {
+@@ -139,7 +134,7 @@ function openWorkflow() {
          <span>{{ t('sidebar.models') }}</span>
        </button>
      </div>
@@ -2094,7 +2104,7 @@ index b31ca81b1..e939d1361 100644
        <NTooltip trigger="hover" placement="top">
          <template #trigger>
            <button
-@@ -156,28 +151,6 @@ function openWorkflow() {
+@@ -158,28 +153,6 @@ function openWorkflow() {
          </template>
          {{ t('sidebar.singleChat') }}
        </NTooltip>
@@ -2123,7 +2133,7 @@ index b31ca81b1..e939d1361 100644
        <NTooltip trigger="hover" placement="top">
          <template #trigger>
            <button
-@@ -264,8 +237,8 @@ function openWorkflow() {
+@@ -266,8 +239,8 @@ function openWorkflow() {
    background: rgba(var(--accent-primary-rgb), 0.05);
  }
  
@@ -2134,7 +2144,7 @@ index b31ca81b1..e939d1361 100644
  }
  
  .conversation-switch-tab {
-@@ -299,7 +272,7 @@ function openWorkflow() {
+@@ -301,7 +274,7 @@ function openWorkflow() {
    }
  }
  
@@ -2144,10 +2154,10 @@ index b31ca81b1..e939d1361 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 6e3c1050f..365443ec1 100644
+index 73811659d..e3ed95145 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -363,7 +363,6 @@ export default {
+@@ -486,7 +486,6 @@ export default {
      history: 'السجل',
      jobs: 'المهام المجدولة',
      kanban: 'كانبان',
@@ -2155,12 +2165,13 @@ index 6e3c1050f..365443ec1 100644
      models: 'النماذج',
      profiles: 'البروفايلات',
      skills: 'المهارات',
-@@ -1183,299 +1182,6 @@ export default {
+@@ -1309,300 +1308,6 @@ export default {
      stopSpeech: 'إيقاف',
      speechNotSupported: 'تشغيل الصوت غير مدعوم في هذا المتصفح',
    },
 -
 -  workflow: {
+-    quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
 -    title: 'مسار العمل',
 -    profile: 'البروفايل',
 -    namePlaceholder: 'اسم مسار العمل',
@@ -2456,10 +2467,10 @@ index 6e3c1050f..365443ec1 100644
    kanban: {
      title: 'لوحة كانبان',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 60bbd5767..45135680e 100644
+index c0d2aa590..f8fb590c6 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -424,7 +424,6 @@ export default {
+@@ -547,7 +547,6 @@ export default {
      dockerUpdateGuide: 'In der Docker-Umgebung bitte das neueste Image pullen und den Container neu erstellen:',
      dockerUpdateNote: 'Ihre Daten bleiben nach dem Neuerstellen des Containers erhalten.',
      kanban: 'Kanban',
@@ -2467,12 +2478,13 @@ index 60bbd5767..45135680e 100644
      groupTools: 'Werkzeuge',
      groupToolsShort: "Tools",
      codingAgents: "Coding Agents",
-@@ -2731,172 +2730,6 @@ jobTriggered: 'Job ausgelost',
+@@ -2863,173 +2862,6 @@ jobTriggered: 'Job ausgelost',
      loadFailed: 'Skill-Nutzung konnte nicht geladen werden',
      otherSkills: 'Andere Skills',
    },
 -
 -  workflow: {
+-    quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
 -    title: 'Workflow',
 -    profile: 'Profil',
 -    namePlaceholder: 'Workflow-Name',
@@ -2641,10 +2653,10 @@ index 60bbd5767..45135680e 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 1e03afe54..922f7b45b 100644
+index b41170aab..7a6e0d349 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -363,7 +363,6 @@ export default {
+@@ -486,7 +486,6 @@ export default {
      history: 'History',
      jobs: 'Jobs',
      kanban: 'Kanban',
@@ -2652,12 +2664,13 @@ index 1e03afe54..922f7b45b 100644
      models: 'Models',
      profiles: 'Profiles',
      skills: 'Skills',
-@@ -1197,254 +1196,6 @@ export default {
+@@ -1323,255 +1322,6 @@ export default {
      stopSpeech: 'Stop',
      speechNotSupported: 'Voice playback not supported in this browser',
    },
 -
 -  workflow: {
+-    quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
 -    title: 'Workflow',
 -    profile: 'Profile',
 -    namePlaceholder: 'Workflow name',
@@ -2908,10 +2921,10 @@ index 1e03afe54..922f7b45b 100644
    kanban: {
      title: 'Kanban Board',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index f5e5a3fd8..5880a4845 100644
+index 855f6da7d..f4699b863 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -424,7 +424,6 @@ export default {
+@@ -547,7 +547,6 @@ export default {
      dockerUpdateGuide: 'En el entorno Docker, extraiga la imagen más reciente y vuelva a crear el contenedor:',
      dockerUpdateNote: 'Sus datos se conservarán después de recrear el contenedor.',
      kanban: 'Kanban',
@@ -2919,12 +2932,13 @@ index f5e5a3fd8..5880a4845 100644
      groupTools: 'Herramientas',
      groupToolsShort: "Herr.",
      codingAgents: "Agentes de código",
-@@ -2731,172 +2730,6 @@ jobTriggered: 'Job ejecutado',
+@@ -2863,173 +2862,6 @@ jobTriggered: 'Job ejecutado',
      loadFailed: 'No se pudo cargar el uso de habilidades',
      otherSkills: 'Otras habs.',
    },
 -
 -  workflow: {
+-    quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
 -    title: 'Workflow',
 -    profile: 'Perfil',
 -    namePlaceholder: 'Nombre del Workflow',
@@ -3093,10 +3107,10 @@ index f5e5a3fd8..5880a4845 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 7d9d31a43..5af99ff6d 100644
+index f4d12e82e..cc7fbd2e6 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -424,7 +424,6 @@ export default {
+@@ -547,7 +547,6 @@ export default {
      dockerUpdateGuide: 'Dans l\'environnement Docker, veuillez tirer la dernière image et recréer le conteneur :',
      dockerUpdateNote: 'Vos données seront conservées après la recréation du conteneur.',
      kanban: 'Kanban',
@@ -3104,12 +3118,13 @@ index 7d9d31a43..5af99ff6d 100644
      groupTools: 'Outils',
      groupToolsShort: "Outils",
      codingAgents: "Agents de code",
-@@ -2731,172 +2730,6 @@ jobTriggered: 'Job declenche',
+@@ -2863,173 +2862,6 @@ jobTriggered: 'Job declenche',
      loadFailed: 'Impossible de charger l\'utilisation des compétences',
      otherSkills: 'Autres comp.',
    },
 -
 -  workflow: {
+-    quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
 -    title: 'Workflow',
 -    profile: 'Profil',
 -    namePlaceholder: 'Nom du Workflow',
@@ -3278,10 +3293,10 @@ index 7d9d31a43..5af99ff6d 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index f03fade52..f61804744 100644
+index 6e95aa15d..c9d4c4151 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -424,7 +424,6 @@ export default {
+@@ -547,7 +547,6 @@ export default {
      dockerUpdateGuide: 'Docker 環境で実行中です。最新イメージをプルしてコンテナを再作成してください：',
      dockerUpdateNote: 'データは保持され、コンテナ再作成後も失われません。',
      kanban: 'カンバン',
@@ -3289,12 +3304,13 @@ index f03fade52..f61804744 100644
      groupTools: 'ツール',
      groupToolsShort: "ツール",
      codingAgents: "コーディングエージェント",
-@@ -2730,172 +2729,6 @@ export default {
+@@ -2862,173 +2861,6 @@ export default {
      loadFailed: 'スキル使用状況の読み込みに失敗しました',
      otherSkills: 'その他',
    },
 -
 -  workflow: {
+-    quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
 -    title: 'ワークフロー',
 -    profile: 'プロファイル',
 -    namePlaceholder: 'ワークフロー名',
@@ -3463,10 +3479,10 @@ index f03fade52..f61804744 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 1721862f3..75f922d3a 100644
+index 59c295400..069404f60 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -424,7 +424,6 @@ export default {
+@@ -547,7 +547,6 @@ export default {
      dockerUpdateGuide: 'Docker 환경에서 실행 중입니다. 최신 이미지를 가져와 컨테이너를 다시 생성하세요:',
      dockerUpdateNote: '데이터는 유지되며 컨테이너 재생성 후에도 손실되지 않습니다.',
      kanban: '칸반',
@@ -3474,12 +3490,13 @@ index 1721862f3..75f922d3a 100644
      groupTools: '도구',
      groupToolsShort: "도구",
      codingAgents: "코딩 에이전트",
-@@ -2730,172 +2729,6 @@ export default {
+@@ -2862,173 +2861,6 @@ export default {
      loadFailed: '스킬 사용량을 불러오지 못했습니다',
      otherSkills: '기타',
    },
 -
 -  workflow: {
+-    quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
 -    title: '워크플로',
 -    profile: '프로필',
 -    namePlaceholder: '워크플로 이름',
@@ -3648,10 +3665,10 @@ index 1721862f3..75f922d3a 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index ba22f9224..51a12336d 100644
+index 7ebac37c0..d4806ba0f 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -424,7 +424,6 @@ export default {
+@@ -547,7 +547,6 @@ export default {
      dockerUpdateGuide: 'No ambiente Docker, obtenha a imagem mais recente e recrie o contêiner:',
      dockerUpdateNote: 'Seus dados serão preservados após a recriação do contêiner.',
      kanban: 'Kanban',
@@ -3659,12 +3676,13 @@ index ba22f9224..51a12336d 100644
      groupTools: 'Ferramentas',
      groupToolsShort: "Ferr.",
      codingAgents: "Agentes de código",
-@@ -2731,172 +2730,6 @@ jobTriggered: 'Job acionado',
+@@ -2863,173 +2862,6 @@ jobTriggered: 'Job acionado',
      loadFailed: 'Falha ao carregar o uso de habilidades',
      otherSkills: 'Outras habs.',
    },
 -
 -  workflow: {
+-    quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
 -    title: 'Workflow',
 -    profile: 'Perfil',
 -    namePlaceholder: 'Nome do Workflow',
@@ -3833,10 +3851,10 @@ index ba22f9224..51a12336d 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index c1f84d13a..7206c42d1 100644
+index 1d62b08bb..397e877dd 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -289,7 +289,6 @@ export default {
+@@ -412,7 +412,6 @@ export default {
      history: 'История',
      jobs: 'Задачи',
      kanban: 'Канбан',
@@ -3844,11 +3862,12 @@ index c1f84d13a..7206c42d1 100644
      models: 'Модели',
      profiles: 'Профили',
      plugins: 'Плагины',
-@@ -1067,270 +1066,6 @@ export default {
+@@ -1199,271 +1198,6 @@ export default {
    },
  
  
 -  workflow: {
+-    quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
 -    title: 'Рабочий процесс',
 -    profile: 'Профиль',
 -    namePlaceholder: 'Название рабочего процесса',
@@ -4116,10 +4135,10 @@ index c1f84d13a..7206c42d1 100644
      title: 'Канбан',
      createTask: 'Создать задачу',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index ffa46a375..d41e571a8 100644
+index 7d6777c47..3178a0716 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -363,7 +363,6 @@ export default {
+@@ -486,7 +486,6 @@ export default {
      history: '歷史',
      jobs: '任務',
      kanban: '看板',
@@ -4127,12 +4146,13 @@ index ffa46a375..d41e571a8 100644
      models: '模型',
      profiles: '設定檔',
      plugins: '插件',
-@@ -1190,295 +1189,6 @@ export default {
+@@ -1316,296 +1315,6 @@ export default {
      newCliChat: '新增 CLI',
      cliEmptyState: '開始 CLI 對話',
    },
 -
 -  workflow: {
+-    quality: { results: "JEV 质量观察", rerun: "编辑并从此节点重跑", decision: { pass: "已通过", needs_improvement: "需要改进", unknown: "未知" } },
 -    title: '工作流',
 -    profile: '設定檔',
 -    namePlaceholder: '工作流名稱',
@@ -4424,10 +4444,10 @@ index ffa46a375..d41e571a8 100644
    kanban: {
      title: '看板',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 096a43f46..577b02d0b 100644
+index ab50ebf2f..96a276e3c 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -363,7 +363,6 @@ export default {
+@@ -486,7 +486,6 @@ export default {
      history: '历史',
      jobs: '任务',
      kanban: '看板',
@@ -4435,12 +4455,13 @@ index 096a43f46..577b02d0b 100644
      models: '模型',
      profiles: '配置',
      plugins: '插件',
-@@ -1197,300 +1196,6 @@ export default {
+@@ -1323,301 +1322,6 @@ export default {
      stopSpeech: '停止',
      speechNotSupported: '此浏览器不支持语音播放',
    },
 -
 -  workflow: {
+-    quality: { results: "JEV 质量观察", rerun: "编辑并从此节点重跑", decision: { pass: "已通过", needs_improvement: "需要改进", unknown: "未知" } },
 -    title: '工作流',
 -    profile: '配置',
 -    namePlaceholder: '工作流名称',
@@ -4767,14 +4788,15 @@ index b64f2f50f..9a4e8a57b 100644
    // 这里改用状态兜底：抽屉开着就不渲染 ☰（抽屉自带关闭按钮 + 背板点击可关）。
 diff --git a/packages/client/src/utils/hermes/workflow-skills.ts b/packages/client/src/utils/hermes/workflow-skills.ts
 deleted file mode 100644
-index 80ec36853..000000000
+index 77b5e9e8a..000000000
 --- a/packages/client/src/utils/hermes/workflow-skills.ts
 +++ /dev/null
-@@ -1,25 +0,0 @@
+@@ -1,26 +0,0 @@
 -import type { SkillInfo, SkillTarget, SkillsData } from '@/api/hermes/skills'
 -import type { WorkflowSelectOption } from '@/components/hermes/workflow/types'
 -
 -export function workflowAgentToSkillTarget(agent: string): SkillTarget {
+-  if (agent === 'cursor') return 'cursor'
 -  if (agent === 'claude-code') return 'claude'
 -  if (agent === 'codex') return 'codex'
 -  if (agent === 'pi') return 'pi'
@@ -5797,10 +5819,10 @@ index 857a715a0..000000000
 -  }
 -}
 diff --git a/packages/client/src/views/hermes/ModelsView.vue b/packages/client/src/views/hermes/ModelsView.vue
-index d4a42d0a2..cc9fe6667 100644
+index 03e39c958..973ddc495 100644
 --- a/packages/client/src/views/hermes/ModelsView.vue
 +++ b/packages/client/src/views/hermes/ModelsView.vue
-@@ -194,7 +194,7 @@ async function handleRefreshModelCache() {
+@@ -195,7 +195,7 @@ async function handleRefreshModelCache() {
            :options="profileOptions"
            :disabled="profileLoading || modelsStore.refreshingModelCache"
            :loading="profileLoading"
@@ -5811,11 +5833,12 @@ index d4a42d0a2..cc9fe6667 100644
            @update:value="handleProfileUpdate"
 diff --git a/packages/client/src/views/hermes/WorkflowView.vue b/packages/client/src/views/hermes/WorkflowView.vue
 deleted file mode 100644
-index dddd8d80e..000000000
+index cfa6baebf..000000000
 --- a/packages/client/src/views/hermes/WorkflowView.vue
 +++ /dev/null
-@@ -1,5500 +0,0 @@
+@@ -1,5514 +0,0 @@
 -<script setup lang="ts">
+-import { AGENT_OPTIONS } from "@/utils/agent-options"
 -import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 -import { NButton, NCheckbox, NDrawer, NDrawerContent, NDropdown, NInput, NInputNumber, NModal, NPopconfirm, NSelect, NSpace, NTooltip, useMessage, type DropdownOption } from 'naive-ui'
 -import {
@@ -5832,6 +5855,7 @@ index dddd8d80e..000000000
 -import { MiniMap } from '@vue-flow/minimap'
 -import { useI18n } from 'vue-i18n'
 -import { useRoute } from 'vue-router'
+-import { nextCodingAgentMode, workflowSavedAgentFields } from '@/utils/coding-agent-mode'
 -import { buildWorkflowEvidenceRows, latestWorkflowNodeSession, workflowNodeSessionByExecution, summarizeWorkflowEvidenceRows, workflowEdgePlaybackState, type WorkflowEvidenceRow } from '@/utils/workflow-history'
 -import { resolveWorkflowRunPageSwipe, type WorkflowRunPagerPage } from '@/utils/workflow-run-pager'
 -import {
@@ -6232,16 +6256,7 @@ index dddd8d80e..000000000
 -let edgePreviewTimer: number | null = null
 -let workflowBudgetClock: number | null = null
 -
--const workflowAgentDefinitions: WorkflowSelectOption[] = [
--  { label: 'Hermes', value: 'hermes' },
--  { label: 'Ekko', value: 'ekko-agent' },
--  { label: 'Claude', value: 'claude-code' },
--  { label: 'Codex', value: 'codex' },
--  { label: 'Pi', value: 'pi' },
--  { label: 'Grok', value: 'grok' },
--  { label: 'OpenCode', value: 'opencode' },
--  { label: 'DeepSeek Harness', value: 'dsh' },
--]
+-const workflowAgentDefinitions = AGENT_OPTIONS
 -
 -const agentOptions = computed<WorkflowSelectOption[]>(() => workflowAgentDefinitions.map((option) => {
 -  const disabled = !isAgentStatusAvailable(agentStatusSnapshot.value, option.value)
@@ -6475,7 +6490,8 @@ index dddd8d80e..000000000
 -    data: {
 -      title,
 -      agent,
--      agentMode: data.agentMode === 'global' && ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh'].includes(agent) ? 'global' : 'scoped',
+-      agentMode: agent === 'cursor' || (data.agentMode === 'global' && ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor'].includes(agent)) ? 'global' : 'scoped',
+-      priorAgentMode: data.priorAgentMode === 'global' || data.priorAgentMode === 'scoped' ? data.priorAgentMode : undefined,
 -      provider: data.provider || defaultModelSelection.value.provider,
 -      model: data.model || defaultModelSelection.value.model,
 -      apiMode: data.apiMode || defaultApiMode(data.provider || defaultModelSelection.value.provider),
@@ -6913,10 +6929,13 @@ index dddd8d80e..000000000
 -    style: { ...node.style },
 -    data: {
 -      title: node.data.title,
--      agent: node.data.agent,
--      agentMode: node.data.agentMode,
--      provider: node.data.provider,
--      model: node.data.model,
+-      ...workflowSavedAgentFields({
+-        agent: node.data.agent,
+-        agentMode: node.data.agentMode,
+-        priorAgentMode: node.data.priorAgentMode,
+-        provider: node.data.provider,
+-        model: node.data.model,
+-      }),
 -      apiMode: node.data.apiMode,
 -      agentPreset: node.data.agentPreset,
 -      reasoningEffort: node.data.reasoningEffort,
@@ -6975,6 +6994,7 @@ index dddd8d80e..000000000
 -    {
 -      agent: data.agent,
 -      agentMode: data.agentMode === 'global' ? 'global' : 'scoped',
+-      priorAgentMode: data.priorAgentMode === 'global' || data.priorAgentMode === 'scoped' ? data.priorAgentMode : undefined,
 -      provider: data.provider,
 -      model: data.model,
 -      apiMode: data.apiMode,
@@ -8431,7 +8451,7 @@ index dddd8d80e..000000000
 -    const label = workflowNodeLabel(node)
 -    if (node.data.agent === 'dsh' && (!node.data.agentPreset || node.data.agentPresetReady === false)) return t('dshPresets.selectMode')
 -    if (!node.data.title.trim()) return t('workflow.validation.nodeNameRequired', { node: node.id })
--    const usesGlobalCodingAgent = ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh'].includes(node.data.agent)
+-    const usesGlobalCodingAgent = ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor'].includes(node.data.agent)
 -      && node.data.agentMode === 'global'
 -    if (!usesGlobalCodingAgent && !node.data.provider.trim()) return t('workflow.validation.providerRequired', { node: label })
 -    if (!usesGlobalCodingAgent && !node.data.model.trim()) return t('workflow.validation.modelRequired', { node: label })
@@ -8673,11 +8693,19 @@ index dddd8d80e..000000000
 -    if (node.id !== id) return node
 -    const agentChanged = typeof patch.agent === 'string' && patch.agent !== node.data.agent
 -    const nextAgent = typeof patch.agent === 'string' ? patch.agent : node.data.agent
+-    const switched = agentChanged
+-      ? nextCodingAgentMode({
+-        previousAgent: node.data.agent,
+-        nextAgent,
+-        agentMode: node.data.agentMode,
+-        priorAgentMode: node.data.priorAgentMode,
+-      })
+-      : null
 -    const data = {
 -      ...node.data,
 -      ...patch,
 -      ...(agentChanged ? { agentPreset: undefined, agentPresetReady: undefined } : {}),
--      ...(agentChanged && !['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh'].includes(nextAgent) ? { agentMode: 'scoped' as const } : {}),
+-      ...(switched ? { agentMode: switched.agentMode, priorAgentMode: switched.priorAgentMode } : {}),
 -      skills: agentChanged ? [] : patch.skills ?? node.data.skills,
 -    }
 -    return {
@@ -9807,6 +9835,14 @@ index dddd8d80e..000000000
 -              {{ t('workflow.evidence.runDetails') }}
 -              <span aria-hidden="true">›</span>
 -            </button>
+-          </div>
+-          <div v-if="selectedWorkflowRun.quality_evaluations?.length" class="workflow-quality-results" data-testid="workflow-quality-results">
+-            <h3>{{ t('workflow.quality.results') }}</h3>
+-            <article v-for="quality in selectedWorkflowRun.quality_evaluations" :key="quality.id" class="workflow-quality-result">
+-              <strong>{{ workflowEditorNodeName(quality.node_id) }} · {{ t(`workflow.quality.decision.${quality.decision}`) }}</strong>
+-              <ul><li v-for="criterion in quality.criteria" :key="criterion.id">{{ criterion.id }} · {{ t(`workflow.quality.decision.${criterion.decision}`) }}</li></ul>
+-              <button v-if="quality.decision === 'needs_improvement'" type="button" @click="rerunWorkflowFromNode(quality.node_id, true, undefined)">{{ t('workflow.quality.rerun') }}</button>
+-            </article>
 -          </div>
 -          <div class="workflow-evidence-tabs" data-testid="workflow-evidence-tabs" role="tablist" :aria-label="t('workflow.evidence.pathChecks')" @keydown="handleWorkflowEvidenceTabKeydown">
 -            <button id="workflow-evidence-tab-actual" type="button" role="tab" aria-controls="workflow-evidence-tabpanel" :aria-selected="workflowEvidenceTab === 'actual'" :tabindex="workflowEvidenceTab === 'actual' ? 0 : -1" @click="selectWorkflowEvidenceTab('actual')">

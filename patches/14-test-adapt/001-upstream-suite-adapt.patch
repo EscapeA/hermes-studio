@@ -1,4 +1,4 @@
-From f950956aa0ac3adb9ef1be45b45e1d51dd62b2dd Mon Sep 17 00:00:00 2001
+From 6d69b60d0abc3cdc2997b984fbd7f54b19837760 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 17 Sep 2026 13:43:17 +0800
 Subject: [PATCH] test(client): adapt upstream live-reasoning suite to fork
@@ -15,7 +15,7 @@ delay, so mount with the messages already present and assert fork behavior.
  1 file changed, 68 insertions(+), 45 deletions(-)
 
 diff --git a/tests/client/message-list-live-reasoning.test.ts b/tests/client/message-list-live-reasoning.test.ts
-index 9c2791487..8336ac414 100644
+index e3db35261..8ae1f2e6a 100644
 --- a/tests/client/message-list-live-reasoning.test.ts
 +++ b/tests/client/message-list-live-reasoning.test.ts
 @@ -96,22 +96,17 @@ describe('MessageList live reasoning', () => {
@@ -48,7 +48,7 @@ index 9c2791487..8336ac414 100644
      }
      wrapper.unmount()
    })
-@@ -196,34 +191,46 @@ describe('MessageList live reasoning', () => {
+@@ -207,34 +202,46 @@ describe('MessageList live reasoning', () => {
    })
  
    it('moves a finalized tool and its reasoning into the transcript, then reuses the fixed live line', async () => {
@@ -117,7 +117,7 @@ index 9c2791487..8336ac414 100644
      expect(chatStore.messages.find(message => message.id === 'assistant-1')).toEqual(
        expect.objectContaining({ reasoning: 'Need inspect the file.' }),
      )
-@@ -233,10 +240,14 @@ describe('MessageList live reasoning', () => {
+@@ -244,10 +251,14 @@ describe('MessageList live reasoning', () => {
      runningTool.toolStatus = 'done'
      await nextTick()
  
@@ -136,7 +136,7 @@ index 9c2791487..8336ac414 100644
  
      chatStore.messages.push({
        id: 'assistant-2',
-@@ -248,9 +259,11 @@ describe('MessageList live reasoning', () => {
+@@ -259,9 +270,11 @@ describe('MessageList live reasoning', () => {
      })
      await nextTick()
  
@@ -150,7 +150,7 @@ index 9c2791487..8336ac414 100644
      expect(chatStore.messages.find(message => message.id === 'tool-1')).toEqual(
        expect.objectContaining({ reasoning: 'Need inspect the file.' }),
      )
-@@ -378,14 +391,18 @@ describe('MessageList live reasoning', () => {
+@@ -389,14 +402,18 @@ describe('MessageList live reasoning', () => {
      ])
      await flushPromises()
  
@@ -172,7 +172,7 @@ index 9c2791487..8336ac414 100644
      const wrapper = mountMessageList([
        { id: 'user-1', role: 'user', content: 'Use several tools', timestamp: 1 },
        {
-@@ -415,17 +432,23 @@ describe('MessageList live reasoning', () => {
+@@ -426,17 +443,23 @@ describe('MessageList live reasoning', () => {
          timestamp: 4,
        },
      ], false)

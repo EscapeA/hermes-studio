@@ -1,4 +1,4 @@
-From 168002f569f6bfc531b7fc6f7a0dab460dee441e Mon Sep 17 00:00:00 2001
+From 33114226c4c72462ca0e392ab6ee85ba1257f69a Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 18:56:52 +0800
 Subject: [PATCH] test(web): adapt suites after avatar removal
@@ -16,7 +16,7 @@ Subject: [PATCH] test(web): adapt suites after avatar removal
   assertions
 ---
  tests/client/auth-avatar.test.ts              | 120 ------------
- tests/client/chat-agent-avatar.test.ts        |  39 ----
+ tests/client/chat-agent-avatar.test.ts        |  40 ----
  tests/client/chat-agent-label.test.ts         |  30 +++
  tests/client/kanban-task-card.test.ts         |  13 +-
  tests/client/kanban-view.test.ts              |  16 +-
@@ -30,7 +30,7 @@ Subject: [PATCH] test(web): adapt suites after avatar removal
  tests/client/session-list-item.test.ts        | 185 +-----------------
  tests/e2e/chat-streaming.spec.ts              |   4 -
  tests/e2e/fixtures.ts                         |  14 --
- 15 files changed, 61 insertions(+), 549 deletions(-)
+ 15 files changed, 61 insertions(+), 550 deletions(-)
  delete mode 100644 tests/client/auth-avatar.test.ts
  delete mode 100644 tests/client/chat-agent-avatar.test.ts
  create mode 100644 tests/client/chat-agent-label.test.ts
@@ -164,10 +164,10 @@ index f2446bfbc..000000000
 -})
 diff --git a/tests/client/chat-agent-avatar.test.ts b/tests/client/chat-agent-avatar.test.ts
 deleted file mode 100644
-index dc135ff15..000000000
+index 5f3c762ac..000000000
 --- a/tests/client/chat-agent-avatar.test.ts
 +++ /dev/null
-@@ -1,39 +0,0 @@
+@@ -1,40 +0,0 @@
 -import { describe, expect, it } from 'vitest'
 -import { chatSessionAgentAvatar } from '@/utils/chat-agent-avatar'
 -
@@ -195,6 +195,7 @@ index dc135ff15..000000000
 -    ['DeepSeek Harness', { codingAgentId: 'dsh' }, '/coding-agents/deepseek.svg'],
 -    ['Pi', { codingAgentId: 'pi' }, '/coding-agents/pi.svg'],
 -    ['Grok', { codingAgentId: 'grok' }, '/coding-agents/grok.svg'],
+-    ['Cursor', { codingAgentId: 'cursor' }, '/coding-agents/cursor.svg'],
 -    ['OpenCode', { codingAgentId: 'opencode' }, '/coding-agents/opencode.png'],
 -  ])('maps session identity to the $label avatar', (label, session, src) => {
 -    expect(chatSessionAgentAvatar(session)).toEqual({ label, src })
@@ -426,10 +427,10 @@ index 77870d292..1b8655429 100644
    })
  })
 diff --git a/tests/client/message-list-scroll-position.test.ts b/tests/client/message-list-scroll-position.test.ts
-index 98936895f..4b94f77d2 100644
+index 5a04cc430..aad766ade 100644
 --- a/tests/client/message-list-scroll-position.test.ts
 +++ b/tests/client/message-list-scroll-position.test.ts
-@@ -62,7 +62,6 @@ vi.mock('@/components/hermes/chat/MessageItem.vue', () => ({
+@@ -64,7 +64,6 @@ vi.mock('@/components/hermes/chat/MessageItem.vue', () => ({
        message: { type: Object, required: true },
        assistantAgent: { type: Object, default: null },
        userProfileName: { type: String, default: 'default' },
@@ -437,7 +438,7 @@ index 98936895f..4b94f77d2 100644
      },
      template: '<div class="stub-message" :data-id="message.id">{{ message.content }}</div>',
    }),
-@@ -167,9 +166,8 @@ describe('MessageList session scroll position', () => {
+@@ -283,9 +282,8 @@ describe('MessageList session scroll position', () => {
      const wrapper = mount(MessageList, { global: { stubs: { Transition: false } } })
      await flushSessionScroll()
  
@@ -448,7 +449,7 @@ index 98936895f..4b94f77d2 100644
  
      chatStore.activeSession = {
        ...makeSession('pending-session'),
-@@ -179,53 +177,22 @@ describe('MessageList session scroll position', () => {
+@@ -295,53 +293,22 @@ describe('MessageList session scroll position', () => {
        messages: [],
      }
      await flushSessionScroll()
@@ -512,7 +513,7 @@ index 98936895f..4b94f77d2 100644
      activeSession.messages = [{
        id: `assistant-${label}`,
        role: 'assistant',
-@@ -240,17 +207,16 @@ describe('MessageList session scroll position', () => {
+@@ -356,17 +323,16 @@ describe('MessageList session scroll position', () => {
      })
      await flushSessionScroll()
  
@@ -533,7 +534,7 @@ index 98936895f..4b94f77d2 100644
      ]
  
      const session = makeSession('profile-identity-session')
-@@ -265,7 +231,6 @@ describe('MessageList session scroll position', () => {
+@@ -381,7 +347,6 @@ describe('MessageList session scroll position', () => {
  
      const messageItem = wrapper.getComponent({ name: 'MessageItem' })
      expect(messageItem.props('userProfileName')).toBe('Researcher')

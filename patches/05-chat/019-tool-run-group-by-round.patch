@@ -1,4 +1,4 @@
-From 1ce67c0f137b4fe86cb843d98280a0b0ab3889f2 Mon Sep 17 00:00:00 2001
+From e2157689abc69c4b33875600381592f4f4264f99 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 20:13:57 +0800
 Subject: [PATCH] fix(chat): group tool-run card per user turn not per run_id
@@ -20,7 +20,7 @@ at the last completed tool of the round.
  1 file changed, 45 insertions(+), 27 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/tool-run-grouping.ts b/packages/client/src/components/hermes/chat/tool-run-grouping.ts
-index 52b74c2d..5af77160 100644
+index eeaa39fcd..1e8848b48 100644
 --- a/packages/client/src/components/hermes/chat/tool-run-grouping.ts
 +++ b/packages/client/src/components/hermes/chat/tool-run-grouping.ts
 @@ -1,54 +1,72 @@
@@ -37,7 +37,7 @@ index 52b74c2d..5af77160 100644
 + * both visible mid-stream. Keying on the input boundary keeps exactly one
 + * card per user turn; the count grows as more tools finish.
 + */
- export function groupCompletedToolsByRun(messages: Message[]): Message[] {
+ export function groupCompletedToolsByRun(messages: Message[], ungroupedMessageId?: string | null): Message[] {
 -  const toolsByRun = new Map<string, Message[]>()
 -  const runMaxIndex = new Map<string, number>()
 +  const toolsByRound = new Map<string, Message[]>()
@@ -48,13 +48,13 @@ index 52b74c2d..5af77160 100644
 -    const runId = message.role === 'tool' && message.toolStatus !== 'running'
 -      ? message.runMarker?.trim()
 -      : undefined
--    if (!runId) continue
+-    if (message.id === ungroupedMessageId || !runId) continue
 -    const tools = toolsByRun.get(runId) || []
 +    if (message.role === 'user' || message.role === 'command') {
 +      lastBoundaryId = message.id
 +      continue
 +    }
-+    if (message.role !== 'tool' || message.toolStatus === 'running') continue
++    if (message.id === ungroupedMessageId || message.role !== 'tool' || message.toolStatus === 'running') continue
 +    const roundKey = lastBoundaryId ?? '__session_start__'
 +    const tools = toolsByRound.get(roundKey) || []
      tools.push(message)
@@ -72,7 +72,7 @@ index 52b74c2d..5af77160 100644
 +  let currentBoundaryId: string | null = null
    for (let i = 0; i < messages.length; i++) {
      const message = messages[i]
--    const runId = message.role === 'tool' && message.toolStatus !== 'running'
+-    const runId = message.id !== ungroupedMessageId && message.role === 'tool' && message.toolStatus !== 'running'
 -      ? message.runMarker?.trim()
 -      : undefined
 -    if (!runId) {
@@ -82,7 +82,7 @@ index 52b74c2d..5af77160 100644
 +      continue
 +    }
 +    const roundKey = currentBoundaryId ?? '__session_start__'
-+    if (message.role !== 'tool' || message.toolStatus === 'running') {
++    if (message.id === ungroupedMessageId || message.role !== 'tool' || message.toolStatus === 'running') {
        grouped.push(message)
        continue
      }

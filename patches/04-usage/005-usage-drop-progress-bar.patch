@@ -1,4 +1,4 @@
-From bc7d5b0b5a0a921819fad4beddc27f26ffe86ce8 Mon Sep 17 00:00:00 2001
+From 89a6c072cf43d3e055d691af6f86d42b797473d0 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 14:27:20 +0800
 Subject: [PATCH] feat(chat): drop context progress bar, two-decimal usage
@@ -9,18 +9,19 @@ Subject: [PATCH] feat(chat): drop context progress bar, two-decimal usage
  1 file changed, 1 insertion(+), 64 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 050039613..1f557705f 100644
+index e6b5bb6a0..3d6f10803 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -1221,19 +1221,9 @@ function openAttachmentPreview(attachment: Attachment) {
-               'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
-               'context-percent-danger': usagePercent > 80,
-             }"
--            >{{ usagePercent.toFixed(1) }}%</span
-+            >{{ usagePercent.toFixed(2) }}%</span
-           >
+@@ -1213,20 +1213,10 @@ function openAttachmentPreview(attachment: Attachment) {
+                 'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
+                 'context-percent-danger': usagePercent > 80,
+               }"
+-              >{{ usagePercent.toFixed(1) }}%</span
++              >{{ usagePercent.toFixed(2) }}%</span
+             >
+           </template>
          </span>
--        <div class="context-bar">
+-        <div v-if="showContextLimit" class="context-bar">
 -          <div
 -            class="context-bar-fill"
 -            :class="{
@@ -33,7 +34,7 @@ index 050039613..1f557705f 100644
        </div>
        <textarea
          ref="textareaRef"
-@@ -1952,34 +1942,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1945,34 +1935,6 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -68,7 +69,7 @@ index 050039613..1f557705f 100644
  .dark .context-limit-editable {
    color: var(--text-secondary);
  
-@@ -1989,26 +1951,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1982,26 +1944,6 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -95,7 +96,7 @@ index 050039613..1f557705f 100644
  @media (max-width: 768px) {
    .chat-input-area {
      --voice-overlay-mobile-bottom-offset: 146px;
-@@ -2065,11 +2007,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2058,11 +2000,6 @@ function openAttachmentPreview(attachment: Attachment) {
      font-size: 10px;
      line-height: 14px;
    }

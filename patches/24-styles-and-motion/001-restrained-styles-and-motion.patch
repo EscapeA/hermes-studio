@@ -1,4 +1,4 @@
-From 6e0ef193b6b87b2f99cae74a91366f9aae4b410d Mon Sep 17 00:00:00 2001
+From 75f0fb2f6a19de5c48aa2fb72fe4a413d055ff59 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 12:56:11 +0800
 Subject: [PATCH] feat(web): graphite/warm styles, composer focus halo and
@@ -71,10 +71,10 @@ code in this fork and is rendered nowhere.
  create mode 100644 packages/client/src/composables/motion-presets.ts
 
 diff --git a/package-lock.json b/package-lock.json
-index eef7601ca..461f3b10f 100644
+index ab99915e3..bcc1e8e21 100644
 --- a/package-lock.json
 +++ b/package-lock.json
-@@ -25,6 +25,7 @@
+@@ -26,6 +26,7 @@
          "eventsource": "^4.1.0",
          "js-tiktoken": "^1.0.21",
          "katex": "^0.17.0",
@@ -82,7 +82,7 @@ index eef7601ca..461f3b10f 100644
          "node-edge-tts": "^1.2.10",
          "node-pty": "^1.1.0",
          "sharp": "^0.35.3",
-@@ -7190,6 +7191,29 @@
+@@ -7200,6 +7201,29 @@
          "node": ">= 0.6"
        }
      },
@@ -112,7 +112,7 @@ index eef7601ca..461f3b10f 100644
      "node_modules/fresh": {
        "version": "0.5.2",
        "resolved": "https://registry.npmjs.org/fresh/-/fresh-0.5.2.tgz",
-@@ -7441,6 +7465,12 @@
+@@ -7451,6 +7475,12 @@
        "dev": true,
        "license": "MIT"
      },
@@ -125,7 +125,7 @@ index eef7601ca..461f3b10f 100644
      "node_modules/highlight.js": {
        "version": "11.11.1",
        "resolved": "https://registry.npmjs.org/highlight.js/-/highlight.js-11.11.1.tgz",
-@@ -9037,6 +9067,37 @@
+@@ -9047,6 +9077,37 @@
          "node": ">= 18"
        }
      },
@@ -163,7 +163,7 @@ index eef7601ca..461f3b10f 100644
      "node_modules/mpg123-decoder": {
        "version": "1.0.3",
        "resolved": "https://registry.npmjs.org/mpg123-decoder/-/mpg123-decoder-1.0.3.tgz",
-@@ -11807,7 +11868,6 @@
+@@ -11817,7 +11878,6 @@
        "version": "2.8.1",
        "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz",
        "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
@@ -172,10 +172,10 @@ index eef7601ca..461f3b10f 100644
      },
      "node_modules/tsoa": {
 diff --git a/package.json b/package.json
-index e661bb282..977ae4e72 100644
+index 1dc812fde..c6936c2d8 100644
 --- a/package.json
 +++ b/package.json
-@@ -98,6 +98,7 @@
+@@ -99,6 +99,7 @@
      "eventsource": "^4.1.0",
      "js-tiktoken": "^1.0.21",
      "katex": "^0.17.0",
@@ -184,10 +184,10 @@ index e661bb282..977ae4e72 100644
      "node-pty": "^1.1.0",
      "sharp": "^0.35.3",
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 356abd218..d7972375b 100644
+index 8df3072d6..4fbfb3ca1 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -2230,6 +2230,15 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2255,6 +2255,15 @@ function openAttachmentPreview(attachment: Attachment) {
      background-color: var(--bg-input-elevated);
      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
    }
@@ -204,10 +204,10 @@ index 356abd218..d7972375b 100644
  
  .resize-handle {
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index 61a55d004..831a6cae3 100644
+index d649d881d..6041d4181 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -4135,11 +4135,17 @@ async function handleSessionModelCustomSubmit() {
+@@ -4076,11 +4076,17 @@ async function handleSessionModelCustomSubmit() {
    overflow: hidden;
    pointer-events: none;
    will-change: width, min-width, opacity;
@@ -228,10 +228,10 @@ index 61a55d004..831a6cae3 100644
  
  .tool-panel-enter-from,
 diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
-index b61550f88..f64a2e627 100644
+index 45e68fa56..fba8b2bd8 100644
 --- a/packages/client/src/components/hermes/chat/SessionListItem.vue
 +++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
-@@ -191,7 +191,12 @@ onUnmounted(() => {
+@@ -188,7 +188,12 @@ onUnmounted(() => {
  </template>
  
  <style scoped>
@@ -244,7 +244,7 @@ index b61550f88..f64a2e627 100644
    position: relative;
    display: flex;
    align-items: flex-start;
-@@ -324,6 +329,28 @@ onUnmounted(() => {
+@@ -321,6 +326,28 @@ onUnmounted(() => {
      0 0 10px rgba(255, 107, 107, 0.4);
  }
  
@@ -499,10 +499,10 @@ index 000000000..e51ae33a7
 +  }
 +}
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index c5adabe36..80d4d2e05 100644
+index 01cb9192b..e99f7b694 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -2017,6 +2017,8 @@ export default {
+@@ -2143,6 +2143,8 @@ export default {
      styleNeon: 'نيون',
      styleAurora: 'الشفق',
      styleBlueprint: 'مخطط',
@@ -512,10 +512,10 @@ index c5adabe36..80d4d2e05 100644
      fontSize: 'حجم النص',
      fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index fc94d7a50..4b44b8fc6 100644
+index 46bde9817..6217c60db 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1820,6 +1820,8 @@ jobTriggered: 'Job ausgelost',
+@@ -1946,6 +1946,8 @@ jobTriggered: 'Job ausgelost',
      styleNeon: 'Neon',
      styleAurora: 'Polarlicht',
      styleBlueprint: 'Blaupause',
@@ -525,10 +525,10 @@ index fc94d7a50..4b44b8fc6 100644
      fontSize: 'Textgröße',
      fontSizeHint: 'Grundgröße für Oberfläche und Unterhaltungen',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 11a341af3..214cc7aa0 100644
+index 697fd5d2d..2a4f5d2e8 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -2031,6 +2031,8 @@ export default {
+@@ -2157,6 +2157,8 @@ export default {
      styleNeon: 'Neon',
      styleAurora: 'Aurora',
      styleBlueprint: 'Blueprint',
@@ -538,10 +538,10 @@ index 11a341af3..214cc7aa0 100644
      fontSize: 'Text size',
      fontSizeHint: 'Base interface and conversation text size',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 8a52a48a6..e77f78960 100644
+index 2443c755a..43271e2bd 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1820,6 +1820,8 @@ jobTriggered: 'Job ejecutado',
+@@ -1946,6 +1946,8 @@ jobTriggered: 'Job ejecutado',
      styleNeon: 'Neón',
      styleAurora: 'Aurora',
      styleBlueprint: 'Plano',
@@ -551,10 +551,10 @@ index 8a52a48a6..e77f78960 100644
      fontSize: 'Tamaño del texto',
      fontSizeHint: 'Tamaño base de la interfaz y las conversaciones',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 16a25621d..e0db97e4f 100644
+index 924cf42c7..439a3675b 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1820,6 +1820,8 @@ jobTriggered: 'Job declenche',
+@@ -1946,6 +1946,8 @@ jobTriggered: 'Job declenche',
      styleNeon: 'Néon',
      styleAurora: 'Aurore',
      styleBlueprint: 'Blueprint',
@@ -564,10 +564,10 @@ index 16a25621d..e0db97e4f 100644
      fontSize: 'Taille du texte',
      fontSizeHint: 'Taille de base de l’interface et des conversations',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index bed96c2fa..f94b39936 100644
+index 00a44104c..74f61d004 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1820,6 +1820,8 @@ export default {
+@@ -1946,6 +1946,8 @@ export default {
      styleNeon: 'ネオン',
      styleAurora: 'オーロラ',
      styleBlueprint: 'ブループリント',
@@ -577,10 +577,10 @@ index bed96c2fa..f94b39936 100644
      fontSize: '文字サイズ',
      fontSizeHint: '画面と会話テキストの基本サイズ',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 07808a75b..ae9a63f08 100644
+index b7c347cd4..2155e61e7 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1820,6 +1820,8 @@ export default {
+@@ -1946,6 +1946,8 @@ export default {
      styleNeon: '네온',
      styleAurora: '오로라',
      styleBlueprint: '블루프린트',
@@ -590,10 +590,10 @@ index 07808a75b..ae9a63f08 100644
      fontSize: '텍스트 크기',
      fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index b3d111f98..32bb3250d 100644
+index 5adac07a4..82d09164f 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1820,6 +1820,8 @@ jobTriggered: 'Job acionado',
+@@ -1946,6 +1946,8 @@ jobTriggered: 'Job acionado',
      styleNeon: 'Neon',
      styleAurora: 'Aurora',
      styleBlueprint: 'Blueprint',
@@ -603,10 +603,10 @@ index b3d111f98..32bb3250d 100644
      fontSize: 'Tamanho do texto',
      fontSizeHint: 'Tamanho base da interface e das conversas',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 0b5400e5c..bb959026b 100644
+index e8418ee03..ba6e54959 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1811,6 +1811,8 @@ export default {
+@@ -1943,6 +1943,8 @@ export default {
      styleNeon: 'Неон',
      styleAurora: 'Аврора',
      styleBlueprint: 'Чертёж',
@@ -616,10 +616,10 @@ index 0b5400e5c..bb959026b 100644
      fontSize: 'Размер текста',
      fontSizeHint: 'Базовый размер текста интерфейса и диалогов',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 5068d03ce..a1c6dd793 100644
+index d15cb2646..69477687e 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1977,6 +1977,8 @@ export default {
+@@ -2103,6 +2103,8 @@ export default {
      styleNeon: '霓虹賽博',
      styleAurora: '漸層空間艙',
      styleBlueprint: '藍圖',
@@ -629,10 +629,10 @@ index 5068d03ce..a1c6dd793 100644
      fontSize: '文字大小',
      fontSizeHint: '介面與對話內容的基礎字級',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index e74594338..d4850fe82 100644
+index 8f77e691e..0cf537121 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -2023,6 +2023,8 @@ export default {
+@@ -2149,6 +2149,8 @@ export default {
      styleNeon: '霓虹赛博',
      styleAurora: '渐变空间舱',
      styleBlueprint: '蓝图',

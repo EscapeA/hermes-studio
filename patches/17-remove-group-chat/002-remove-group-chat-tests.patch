@@ -1,4 +1,4 @@
-From d47cd6ffb787c37be727ecf021187dfebc471413 Mon Sep 17 00:00:00 2001
+From f2d073b7d93bf8c9482b880d0ecc8be9b08dac69 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:29 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after group chat
@@ -37,7 +37,7 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  .../group-chat-invite-attachments.test.ts     |   72 -
  tests/client/group-chat-invite-code.test.ts   |   18 -
  .../client/group-chat-mention-options.test.ts |   48 -
- .../group-chat-panel-workspace-source.test.ts |  563 ------
+ .../group-chat-panel-workspace-source.test.ts |  584 ------
  tests/client/group-chat-remote-rooms.test.ts  |   74 -
  tests/client/group-chat-room-drafts.test.ts   |  104 -
  .../client/group-chat-store-baseline.test.ts  | 1456 -------------
@@ -58,11 +58,11 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  tests/desktop/group-chat-agent-popup.test.ts  |   63 -
  tests/e2e/desktop-window-chrome.spec.ts       |    7 -
  tests/e2e/fixtures.ts                         |   10 -
- tests/e2e/group-chat-room-deeplink.spec.ts    | 1795 -----------------
- tests/e2e/group-chat-share.spec.ts            |  345 ----
+ tests/e2e/group-chat-room-deeplink.spec.ts    | 1805 -----------------
+ tests/e2e/group-chat-share.spec.ts            |  388 ----
  tests/e2e/history-session-deeplink.spec.ts    |   42 +-
  tests/e2e/theme.spec.ts                       |   18 -
- 48 files changed, 33 insertions(+), 8525 deletions(-)
+ 48 files changed, 33 insertions(+), 8599 deletions(-)
  delete mode 100644 tests/client/group-agent-avatar.test.ts
  delete mode 100644 tests/client/group-agent-presets-source.test.ts
  delete mode 100644 tests/client/group-agent-presets.test.ts
@@ -261,20 +261,20 @@ index 94e11d911..5b1162e33 100644
      expect(browserSource).toContain('props.visible && !externalOverlayOpen.value')
    })
 diff --git a/tests/client/ekko-display-name.test.ts b/tests/client/ekko-display-name.test.ts
-index f33dda3b9..a23ad548c 100644
+index a28ab2f36..314b1e4fc 100644
 --- a/tests/client/ekko-display-name.test.ts
 +++ b/tests/client/ekko-display-name.test.ts
-@@ -23,10 +23,6 @@ describe('Ekko display name', () => {
+@@ -24,10 +24,6 @@ describe('Ekko display name', () => {
    it.each([
      ['single chat', 'packages/client/src/components/hermes/chat/ChatPanel.vue',
-       '{ label: "Hermes", value: "hermes" }', '{ label: "Ekko", value: "ekko-agent" }', '{ label: "Claude", value: "claude-code" }'],
+       AGENT_OPTIONS, 'AGENT_OPTIONS', 'const newChatAgentOptions = computed(() => AGENT_OPTIONS.map('],
 -    ['group chat', 'packages/client/src/components/hermes/group-chat/GroupChatPanel.vue',
--      "{ label: 'Hermes', value: 'hermes' }", "{ label: 'Ekko', value: 'ekko' }", "{ label: 'Claude', value: 'claude' }"],
+-      GROUP_AGENT_OPTIONS, 'GROUP_AGENT_OPTIONS', 'const groupAgentTypeDefinitions = GROUP_AGENT_OPTIONS'],
 -    ['group chat link', 'packages/client/src/views/hermes/GroupChatLinkView.vue',
--      "{ label: 'Hermes', value: 'hermes' }", "{ label: 'Ekko', value: 'ekko' }", "{ label: 'Claude', value: 'claude' }"],
+-      GROUP_AGENT_OPTIONS, 'GROUP_AGENT_OPTIONS', 'const groupAgentTypeDefinitions = GROUP_AGENT_OPTIONS'],
      ['workflow', 'packages/client/src/views/hermes/WorkflowView.vue',
-       "{ label: 'Hermes', value: 'hermes' }", "{ label: 'Ekko', value: 'ekko-agent' }", "{ label: 'Claude', value: 'claude-code' }"],
-   ])('places Ekko second in the %s Agent dropdown', (_name, path, hermes, ekko, claude) => {
+       AGENT_OPTIONS, 'AGENT_OPTIONS', 'const workflowAgentDefinitions = AGENT_OPTIONS'],
+   ] as const)('uses the shared order with Ekko second in the %s Agent dropdown', (_name, path, options, exportName, binding) => {
 diff --git a/tests/client/files-panel-attach.test.ts b/tests/client/files-panel-attach.test.ts
 index a5ec87dae..c75bf3614 100644
 --- a/tests/client/files-panel-attach.test.ts
@@ -1761,26 +1761,40 @@ index 59e07acf6..000000000
 -})
 diff --git a/tests/client/group-chat-panel-workspace-source.test.ts b/tests/client/group-chat-panel-workspace-source.test.ts
 deleted file mode 100644
-index 3647c58fe..000000000
+index 89df0a30d..000000000
 --- a/tests/client/group-chat-panel-workspace-source.test.ts
 +++ /dev/null
-@@ -1,563 +0,0 @@
+@@ -1,584 +0,0 @@
 -import { readFileSync } from 'node:fs'
 -import { describe, expect, it } from 'vitest'
+-import { GROUP_AGENT_OPTIONS } from '../../packages/client/src/utils/agent-options'
 -
 -describe('GroupChatPanel workspace save handling', () => {
 -  it('offers Pi, Grok, and OpenCode in ordinary and paired group chat and filters each provider target', () => {
 -    const panel = readFileSync('packages/client/src/components/hermes/group-chat/GroupChatPanel.vue', 'utf8')
 -    const linkView = readFileSync('packages/client/src/views/hermes/GroupChatLinkView.vue', 'utf8')
 -
+-    expect(GROUP_AGENT_OPTIONS).toEqual(expect.arrayContaining([
+-      { label: 'Pi', value: 'pi' },
+-      { label: 'Grok', value: 'grok' },
+-      { label: 'OpenCode', value: 'opencode' },
+-      { label: 'Cursor', value: 'cursor' },
+-    ]))
 -    for (const source of [panel, linkView]) {
--      expect(source).toContain("{ label: 'Pi', value: 'pi' }")
+-      expect(source).toContain('const groupAgentTypeDefinitions = GROUP_AGENT_OPTIONS')
 -      expect(source).toMatch(/selectedAgentType\.value === 'pi'[\s\S]*?\\? 'pi'/)
--      expect(source).toContain("{ label: 'Grok', value: 'grok' }")
 -      expect(source).toContain("selectedAgentType.value === 'grok'")
--      expect(source).toContain("{ label: 'OpenCode', value: 'opencode' }")
 -      expect(source).toContain("selectedAgentType.value === 'opencode'")
+-      expect(source).toContain("selectedAgentType.value === 'cursor'")
 -    }
+-    expect(panel).toContain('priorAgentMode.value = storedPriorAgentMode(agent.priorAgentMode)')
+-    expect(panel).toContain('priorAgentMode: priorAgentMode.value,')
+-    expect(panel).toContain('submittedCodingAgentSelection({')
+-    expect(linkView).toContain('priorAgentMode.value = storedPriorAgentMode(agent.priorAgentMode)')
+-    expect(linkView).toContain('priorAgentMode: priorAgentMode.value,')
+-    expect(linkView).toContain('submittedCodingAgentSelection({')
+-    const selection = readFileSync('packages/client/src/utils/coding-agent-mode.ts', 'utf8')
+-    expect(selection).toContain("priorAgentMode: input.priorAgentMode || ''")
 -  })
 -
 -  it('keeps free-text input available alongside clarification choices in single and group chat', () => {
@@ -2295,9 +2309,14 @@ index 3647c58fe..000000000
 -    expect(source).toContain("const selectedAgentModel = ref('')")
 -    expect(source).toContain("const selectedAgentApiMode = ref<CodingAgentApiMode>('codex_responses')")
 -    expect(source).toContain("const selectedAgentReasoningEffort = ref('')")
--    expect(source).toContain("agentMode: usesGlobalAgentMode.value ? 'global' : 'scoped'")
--    expect(source).toContain("provider: usesGlobalAgentMode.value ? '' : selectedAgentProvider.value")
--    expect(source).toContain("model: usesGlobalAgentMode.value ? '' : selectedAgentModel.value")
+-    expect(source).toContain('submittedCodingAgentSelection({')
+-    expect(source).toContain('usesGlobal: usesGlobalAgentMode.value')
+-    expect(linkView).toContain('submittedCodingAgentSelection({')
+-    expect(linkView).toContain('usesGlobal: usesGlobalAgentMode.value')
+-    const selection = readFileSync('packages/client/src/utils/coding-agent-mode.ts', 'utf8')
+-    expect(selection).toContain("agentMode: input.usesGlobal ? 'global' : 'scoped'")
+-    expect(selection).toContain("provider: input.usesGlobal ? '' : input.provider")
+-    expect(selection).toContain("model: input.usesGlobal ? '' : input.model")
 -    expect(source).toContain("apiMode: selectedAgentType.value === 'hermes' || usesGlobalAgentMode.value ? undefined : selectedAgentApiMode.value")
 -    expect(source).toContain("reasoningEffort: usesGlobalAgentMode.value ? '' : selectedAgentReasoningEffort.value")
 -    for (const modelSource of [source, linkView]) {
@@ -2309,17 +2328,19 @@ index 3647c58fe..000000000
 -    expect(source).toContain('normalizeCodingAgentApiMode(')
 -    expect(source).toContain("v-if=\"selectedAgentType !== 'hermes' && !usesGlobalAgentMode\"")
 -    for (const modelSource of [source, linkView]) {
--      expect(modelSource).toContain("const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh'].includes(selectedAgentType.value))")
+-      expect(modelSource).toContain("const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor'].includes(selectedAgentType.value))")
 -      expect(modelSource).toContain("v-if=\"!usesGlobalAgentMode\"")
 -    }
 -    expect(source).toContain('@update:value="handleAgentModeChange"')
 -    expect(source).toContain('selectedAgentPresetId.value = null')
 -    expect(linkView).toContain('v-model:value="selectedAgentMode"')
 -    expect(source).toContain('agent: selectedAgentType.value')
--    expect(source).toContain("{ label: 'Hermes', value: 'hermes' }")
--    expect(source).toContain("{ label: 'Claude', value: 'claude' }")
--    expect(source).toContain("{ label: 'Codex', value: 'codex' }")
--    expect(source).toContain("{ label: 'Ekko', value: 'ekko' }")
+-    expect(GROUP_AGENT_OPTIONS).toEqual(expect.arrayContaining([
+-      { label: 'Hermes', value: 'hermes' },
+-      { label: 'Claude', value: 'claude' },
+-      { label: 'Codex', value: 'codex' },
+-      { label: 'Ekko', value: 'ekko' },
+-    ]))
 -    expect(source).toContain('v-model:value="agentName"')
 -    expect(source).toContain('v-model:value="agentDescription"')
 -    expect(source).toContain('avatar: agentAvatar.value ? JSON.stringify(agentAvatar.value)')
@@ -6580,10 +6601,10 @@ index 42c15835e..000000000
 -  })
 -})
 diff --git a/tests/client/i18n-coverage.test.ts b/tests/client/i18n-coverage.test.ts
-index 4adcf9ddf..84dc1056c 100644
+index 7bdd043a1..ba202a04b 100644
 --- a/tests/client/i18n-coverage.test.ts
 +++ b/tests/client/i18n-coverage.test.ts
-@@ -212,54 +212,6 @@ const REASONING_EFFORT_LOCALIZED_KEYS = [
+@@ -239,54 +239,6 @@ const REASONING_EFFORT_LOCALIZED_KEYS = [
    'chat.reasoningEffort.options.ultra',
  ]
  
@@ -6638,7 +6659,7 @@ index 4adcf9ddf..84dc1056c 100644
  const PLATFORM_SETTINGS_LOCALE_SPECIFIC_LOCALIZED_KEYS: Record<string, string[]> = {
    de: ['platform.qqAppId', 'platform.qqAppSecret'],
    ja: ['platform.homeserver', 'platform.accountId'],
-@@ -423,31 +375,6 @@ describe('i18n locale coverage', () => {
+@@ -450,31 +402,6 @@ describe('i18n locale coverage', () => {
      expect(missing).toEqual([])
    })
  
@@ -6670,7 +6691,7 @@ index 4adcf9ddf..84dc1056c 100644
    it('compiles every changelog message in every locale', () => {
      for (const [locale, localeMessages] of Object.entries(rawMessages)) {
        const i18n = createI18n({
-@@ -547,20 +474,6 @@ describe('i18n locale coverage', () => {
+@@ -574,20 +501,6 @@ describe('i18n locale coverage', () => {
      expect(missing).toEqual([])
    })
  
@@ -7016,10 +7037,10 @@ index dad3635df..000000000
 -  })
 -})
 diff --git a/tests/e2e/desktop-window-chrome.spec.ts b/tests/e2e/desktop-window-chrome.spec.ts
-index bd4f05b26..18a1c3575 100644
+index c8d79a36a..786b3f6ac 100644
 --- a/tests/e2e/desktop-window-chrome.spec.ts
 +++ b/tests/e2e/desktop-window-chrome.spec.ts
-@@ -264,13 +264,6 @@ test('keeps chat gutters while placing New below macOS traffic lights', async ({
+@@ -276,13 +276,6 @@ test('keeps chat gutters while placing New below macOS traffic lights', async ({
    await expect(newChat).toBeVisible()
    expect((await chatSidebar.boundingBox())?.y).toBe(10)
    expect((await newChat.boundingBox())?.y).toBeGreaterThanOrEqual(43)
@@ -7056,10 +7077,10 @@ index ebcac4b46..c495d98c7 100644
        return
 diff --git a/tests/e2e/group-chat-room-deeplink.spec.ts b/tests/e2e/group-chat-room-deeplink.spec.ts
 deleted file mode 100644
-index f4843b737..000000000
+index c2c9e7ed2..000000000
 --- a/tests/e2e/group-chat-room-deeplink.spec.ts
 +++ /dev/null
-@@ -1,1795 +0,0 @@
+@@ -1,1805 +0,0 @@
 -import { expect, test, type Page, type Route } from '@playwright/test'
 -import { authenticate, TEST_MODEL_GROUP } from './fixtures'
 -
@@ -8855,12 +8876,22 @@ index f4843b737..000000000
 -    await expect(page.locator('.room-title-text', { hasText: 'Beta Room' })).toBeVisible()
 -  })
 -})
+-
+-
+-test('group-chat Agent picker follows the single-chat order', async ({ page }) => {
+-  await setup(page, '/#/hermes/group-chat/room/room-alpha')
+-  await page.locator('.agent-avatar-rail-add').click()
+-  const drawer = page.locator('.n-drawer').filter({ hasText: 'Add Agent' })
+-  await drawer.locator('.n-select').first().click()
+-  await expect.poll(async () => (await page.locator('.n-base-select-option__content:visible').allTextContents())
+-    .map(label => label.split(' · ')[0])).toEqual(['Hermes', 'Ekko', 'Claude', 'Codex', 'Pi', 'Grok', 'OpenCode', 'DeepSeek Harness', 'Cursor'])
+-})
 diff --git a/tests/e2e/group-chat-share.spec.ts b/tests/e2e/group-chat-share.spec.ts
 deleted file mode 100644
-index 9e8a20bca..000000000
+index 10ccbebca..000000000
 --- a/tests/e2e/group-chat-share.spec.ts
 +++ /dev/null
-@@ -1,345 +0,0 @@
+@@ -1,388 +0,0 @@
 -import { expect, test, type Page, type Route } from '@playwright/test'
 -
 -const sharedRoom = {
@@ -9051,7 +9082,8 @@ index 9e8a20bca..000000000
 -
 -test.describe('invite-only group chat share page', () => {
 -  test('folds group tool calls with the same summary used in single chat', async ({ page }) => {
--    await mockInviteSocket(page, null, 'Read the project files.', true)
+-    const reply = 'Read the project files. ' + 'The tool summary should fill the existing message bubble. '.repeat(6)
+-    await mockInviteSocket(page, null, reply, true)
 -    await mockInviteApi(page)
 -    await page.goto('/#/share/group-chat/ROOM1')
 -    await page.locator('#group-chat-guest-name input').fill('Visitor')
@@ -9068,10 +9100,24 @@ index 9e8a20bca..000000000
 -    await expect(card.locator('.run-tool-list')).toBeVisible()
 -    await card.locator('.tool-line').click()
 -    await expect(card.locator('.tool-details')).toContainText('File contents')
+-    for (const width of [1440, 390]) {
+-      await page.setViewportSize({ width, height: 1000 })
+-      await expect.poll(() => card.locator('.tool-run-card').evaluate(element => {
+-        const summary = element.getBoundingClientRect()
+-        const bubble = element.closest('.run-card')!.getBoundingClientRect()
+-        const header = element.querySelector('.tool-run-header')!.getBoundingClientRect()
+-        const list = element.querySelector('.run-tool-list')!.getBoundingClientRect()
+-        const style = getComputedStyle(element)
+-        const innerWidth = summary.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
+-        return Math.abs(summary.width - bubble.width) < 0.75
+-          && Math.abs(header.width - innerWidth) < 0.75 && Math.abs(list.width - innerWidth) < 0.75
+-          && element.scrollWidth <= element.clientWidth
+-      }), { message: `Tool summary and expanded calls fill the bubble at ${width}px` }).toBe(true)
+-    }
 -    await toggle.press('Enter')
 -    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
 -    await expect(card.locator('.run-tool-list')).toHaveCount(0)
--    await expect(page.getByText('Read the project files.', { exact: true })).toBeVisible()
+-    await expect(page.getByText(reply.trim(), { exact: true })).toBeVisible()
 -  })
 -
 -  test('loads an Agent Markdown image through the room invite without filesystem API access', async ({ page }) => {
@@ -9198,6 +9244,34 @@ index 9e8a20bca..000000000
 -  await page.evaluate(message => (window as any).__PW_SHARED_GROUP_SOCKET__.socket.__trigger('message', message), groupPlan(1, 'reviewer'))
 -  await expect(cards).toHaveCount(2)
 -  await expect(page.locator('.group-agent-run').filter({ hasText: 'Task output' }).getByTestId('task-plan-card')).toHaveCount(1)
+-  await page.evaluate(() => {
+-    const state = (window as any).__PW_SHARED_GROUP_SOCKET__
+-    state.socket.__trigger('message', { id: 'short-self', roomId: 'room-shared', senderId: state.options.auth.userId,
+-      senderName: 'Visitor', role: 'user', content: 'OK', timestamp: 4 })
+-  })
+-  await expect(page.locator('.group-message.self .msg-content')).toContainText('OK')
+-  for (const width of [1440, 1024, 769, 768, 390, 320]) {
+-    await page.setViewportSize({ width, height: 1000 })
+-    await expect.poll(() => cards.evaluateAll(elements => elements.every(element => {
+-      const card = element.getBoundingClientRect()
+-      const container = element.parentElement!.getBoundingClientRect()
+-      const run = element.closest('.group-agent-run')!.getBoundingClientRect()
+-      const column = element.closest('.run-column')!.getBoundingClientRect()
+-      const expectedWidth = window.innerWidth <= 768 ? run.width : Math.min(500, run.width)
+-      const gaps = [card.left - container.left, container.right - card.right,
+-        card.top - container.top, container.bottom - card.bottom]
+-      return gaps.every(gap => Math.abs(gap - 5) < 0.75)
+-        && Math.abs(column.width - expectedWidth) < 0.75
+-        && element.scrollWidth <= element.clientWidth
+-    })), { message: `Task cards retain 5px gaps in 500px desktop or full-width mobile bubbles at ${width}px` }).toBe(true)
+-    await expect.poll(() => page.locator('.group-message:not(.embedded) .msg-content').evaluateAll(elements =>
+-      elements.every(element => {
+-        const bubble = element.getBoundingClientRect()
+-        const row = element.closest('.group-message')!.getBoundingClientRect()
+-        const expectedWidth = window.innerWidth <= 768 ? row.width : Math.min(500, row.width)
+-        return Math.abs(bubble.width - expectedWidth) < 0.75
+-      })), { message: `Short user bubbles use 500px on desktop and fill the row on mobile at ${width}px` }).toBe(true)
+-  }
 -  await cards.first().getByRole('button').click()
 -  await expect(cards.first().locator('ol')).toHaveCount(0)
 -  await page.reload()

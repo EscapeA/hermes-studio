@@ -1,4 +1,4 @@
-From dc63562a95feddf980636c2dbc0c98e2fd3a4725 Mon Sep 17 00:00:00 2001
+From cbbb0f0c5f163e91234dc21a6a7265e145a08774 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 22:10:11 +0800
 Subject: [PATCH] fix(chat): wrap long session titles in sidebar list
@@ -10,10 +10,10 @@ single-line ellipsis, keeping time/delete icons top-aligned.
  1 file changed, 13 insertions(+), 6 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
-index d04fd9fd1..265356178 100644
+index 82c983951..8792af9bd 100644
 --- a/packages/client/src/components/hermes/chat/SessionListItem.vue
 +++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
-@@ -202,7 +202,7 @@ onUnmounted(() => {
+@@ -199,7 +199,7 @@ onUnmounted(() => {
  .session-item {
    position: relative;
    display: flex;
@@ -22,7 +22,7 @@ index d04fd9fd1..265356178 100644
    justify-content: space-between;
    width: 100%;
    padding: 8px 10px;
-@@ -266,7 +266,7 @@ onUnmounted(() => {
+@@ -263,7 +263,7 @@ onUnmounted(() => {
  
  .session-item-title-row {
    display: flex;
@@ -31,7 +31,7 @@ index d04fd9fd1..265356178 100644
    justify-content: space-between;
    gap: 10px;
    min-width: 0;
-@@ -274,7 +274,7 @@ onUnmounted(() => {
+@@ -271,7 +271,7 @@ onUnmounted(() => {
  
  .session-item-title-main {
    display: flex;
@@ -40,7 +40,7 @@ index d04fd9fd1..265356178 100644
    gap: 6px;
    flex: 1 1 auto;
    min-width: 0;
-@@ -285,9 +285,10 @@ onUnmounted(() => {
+@@ -282,9 +282,10 @@ onUnmounted(() => {
    flex: 1 1 auto;
    min-width: 0;
    font-size: 13px;
@@ -54,7 +54,7 @@ index d04fd9fd1..265356178 100644
  }
  
  .session-item-pin {
-@@ -295,6 +296,7 @@ onUnmounted(() => {
+@@ -292,6 +293,7 @@ onUnmounted(() => {
    align-items: center;
    justify-content: center;
    flex-shrink: 0;
@@ -62,7 +62,7 @@ index d04fd9fd1..265356178 100644
    color: var(--accent-primary);
  }
  
-@@ -302,6 +304,7 @@ onUnmounted(() => {
+@@ -299,6 +301,7 @@ onUnmounted(() => {
    flex: 0 0 auto;
    width: 6px;
    height: 6px;
@@ -70,7 +70,7 @@ index d04fd9fd1..265356178 100644
    border-radius: 50%;
    background: var(--accent-primary);
    box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.12);
-@@ -309,8 +312,11 @@ onUnmounted(() => {
+@@ -306,8 +309,11 @@ onUnmounted(() => {
  
  .session-item-time {
    flex: 0 0 auto;
@@ -82,7 +82,7 @@ index d04fd9fd1..265356178 100644
  }
  
  .session-item-global-icon {
-@@ -325,6 +331,7 @@ onUnmounted(() => {
+@@ -322,6 +328,7 @@ onUnmounted(() => {
    flex-shrink: 0;
    opacity: 0;
    pointer-events: none;

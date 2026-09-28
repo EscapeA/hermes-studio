@@ -1,4 +1,4 @@
-From d34858351ec2aff18b8c6d86d52e6d72cbef8e76 Mon Sep 17 00:00:00 2001
+From 59a2862ad2f04ab007b36fa11d7b8d187fe486f2 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 04:15:34 +0800
 Subject: [PATCH] feat(chat): per-turn decode speed under the assistant message
@@ -92,7 +92,7 @@ index 6da13ecf5..cb44223f8 100644
    display: flex;
    align-items: center;
 diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
-index b83835a77..935b27ecc 100644
+index c2de2a109..d5a426c98 100644
 --- a/packages/client/src/components/hermes/chat/MessageItem.vue
 +++ b/packages/client/src/components/hermes/chat/MessageItem.vue
 @@ -29,6 +29,7 @@ import { useGlobalSpeech } from "@/composables/useSpeech";
@@ -103,7 +103,7 @@ index b83835a77..935b27ecc 100644
  import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
  import type { WorkspaceRunChangeSummary } from "@/api/studio/sessions";
  import { isServerTtsProvider } from "@/api/studio/tts";
-@@ -615,6 +616,18 @@ const toolArgsPayload = computed(() => formatToolPayload(props.message.toolArgs)
+@@ -624,6 +625,18 @@ const toolArgsPayload = computed(() => formatToolPayload(props.message.toolArgs)
  const toolResultPayload = computed(() => formatToolPayload(props.message.toolResult, true));
  const workspaceChanges = computed(() => props.message.workspaceChanges || []);
  
@@ -122,7 +122,7 @@ index b83835a77..935b27ecc 100644
  function isWorkspaceChangeExpanded(changeId: string): boolean {
    return expandedWorkspaceChangeIds.value.has(changeId);
  }
-@@ -1232,6 +1245,15 @@ onBeforeUnmount(() => {
+@@ -1241,6 +1254,15 @@ onBeforeUnmount(() => {
                @select="file => openAssistantWorkspaceChangeFile(file, change)"
              />
  
@@ -138,7 +138,7 @@ index b83835a77..935b27ecc 100644
              <!-- Render system message content -->
              <MarkdownRenderer
                v-if="message.role === 'system' && message.content && !isCommandMessage"
-@@ -2069,6 +2091,15 @@ onBeforeUnmount(() => {
+@@ -2078,6 +2100,15 @@ onBeforeUnmount(() => {
    margin-top: 10px;
  }
  
@@ -155,10 +155,10 @@ index b83835a77..935b27ecc 100644
    to {
      transform: rotate(360deg);
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index a8b5a5fb7..15016bb9d 100644
+index c8d3eded9..6da69449e 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -27,6 +27,7 @@ import { messageScrollPositionKey, rememberMessageScrollPosition } from "./messa
+@@ -28,6 +28,7 @@ import { messageScrollPositionKey, rememberMessageScrollPosition } from "./messa
  import { chatSessionAgentAvatar } from "@/utils/chat-agent-avatar";
  import { parseThinking } from "@/utils/thinking-parser";
  import { groupCompletedToolsByRun } from "./tool-run-grouping";
@@ -166,7 +166,7 @@ index a8b5a5fb7..15016bb9d 100644
  
  const props = withDefaults(defineProps<{
    approvalPortalToBody?: boolean
-@@ -96,6 +97,20 @@ function stopThinkingTimer() {
+@@ -102,6 +103,20 @@ function stopThinkingTimer() {
  const isRunIndicatorActive = computed(() => chatStore.isRunActive || !!chatStore.abortState);
  const formattedThinkingElapsed = computed(() => formatElapsed(thinkingElapsedMs.value));
  
@@ -187,7 +187,7 @@ index a8b5a5fb7..15016bb9d 100644
  const currentToolCalls = computed(() => {
    const msgs = chatStore.messages;
    // Slash commands are also user input boundaries for the live tool strip.
-@@ -705,6 +720,7 @@ defineExpose({
+@@ -729,6 +744,7 @@ defineExpose({
              :reasoning="liveReasoningDetail?.reasoning"
              :reasoning-id="liveReasoningDetail?.messageId"
              :elapsed="formattedThinkingElapsed"
@@ -196,10 +196,10 @@ index a8b5a5fb7..15016bb9d 100644
            <div v-if="visibleToolCalls.length > 0 || chatStore.compressionState || chatStore.abortState" class="tool-calls-panel">
              <!-- Abort indicator -->
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index a372e0f0a..451c7e8bc 100644
+index 67f138f4d..ae10356aa 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -1162,6 +1162,8 @@ export default {
+@@ -1291,6 +1291,8 @@ export default {
      executionDuration: 'وقت التنفيذ',
      thinkingLabel: 'التفكير',
      thinkingInProgress: 'التفكير',
@@ -209,10 +209,10 @@ index a372e0f0a..451c7e8bc 100644
      thinkingHide: 'إخفاء التفكير',
      thinkingDuration: 'المدة المرصودة {duration}',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 2cf94d5d2..78a309253 100644
+index f75ad8658..c6364df0b 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1083,6 +1083,8 @@ export default {
+@@ -1211,6 +1211,8 @@ export default {
      unchangedLines: '{count} unveränderte Zeilen',
      executionDuration: 'Ausführungszeit',    thinkingLabel: 'Denkprozess',
      thinkingInProgress: 'Denkt',
@@ -222,10 +222,10 @@ index 2cf94d5d2..78a309253 100644
      thinkingHide: 'Denkprozess ausblenden',
      thinkingDuration: 'Beobachtet {duration}',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 16af6247e..a8d67bff9 100644
+index f8e1425b6..8d67ff041 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1188,6 +1188,8 @@ export default {
+@@ -1300,6 +1300,8 @@ export default {
      executionDuration: 'Execution time',
      thinkingLabel: 'Thinking',
      thinkingInProgress: 'Thinking',
@@ -235,10 +235,10 @@ index 16af6247e..a8d67bff9 100644
      thinkingHide: 'Hide thinking',
      thinkingDuration: 'Observed {duration}',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 8b5b25801..8b1f0ad70 100644
+index c3e1048de..ae7509e49 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1083,6 +1083,8 @@ export default {
+@@ -1211,6 +1211,8 @@ export default {
      unchangedLines: '{count} líneas sin cambios',
      executionDuration: 'Tiempo de ejecución',    thinkingLabel: 'Pensamiento',
      thinkingInProgress: 'Pensando',
@@ -248,10 +248,10 @@ index 8b5b25801..8b1f0ad70 100644
      thinkingHide: 'Ocultar pensamiento',
      thinkingDuration: 'Observado {duration}',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index e9d0617f6..4b3fd97c1 100644
+index c0d7f4be0..1e6c0dbab 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1082,6 +1082,8 @@ export default {
+@@ -1211,6 +1211,8 @@ export default {
      unchangedLines: '{count} lignes inchangées',
      executionDuration: 'Temps d’exécution',    thinkingLabel: 'Raisonnement',
      thinkingInProgress: 'En réflexion',
@@ -261,10 +261,10 @@ index e9d0617f6..4b3fd97c1 100644
      thinkingHide: 'Masquer le raisonnement',
      thinkingDuration: 'Observé {duration}',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 4b6bb2349..82ef7c6e9 100644
+index 4cb0f639a..9363d2d94 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1083,6 +1083,8 @@ export default {
+@@ -1211,6 +1211,8 @@ export default {
      unchangedLines: '変更なし {count} 行',
      executionDuration: '実行時間',    thinkingLabel: '思考過程',
      thinkingInProgress: '思考中',
@@ -274,10 +274,10 @@ index 4b6bb2349..82ef7c6e9 100644
      thinkingHide: '思考過程を隠す',
      thinkingDuration: '観測 {duration}',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 2eede2090..e8b9fa9ca 100644
+index dfbfb3d4d..4e7752661 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1083,6 +1083,8 @@ export default {
+@@ -1211,6 +1211,8 @@ export default {
      unchangedLines: '변경 없음 {count}줄',
      executionDuration: '실행 시간',    thinkingLabel: '사고 과정',
      thinkingInProgress: '사고 중',
@@ -287,10 +287,10 @@ index 2eede2090..e8b9fa9ca 100644
      thinkingHide: '사고 과정 접기',
      thinkingDuration: '관측 {duration}',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index aeb87729c..1d2ea947b 100644
+index ac448f6fa..65d294b8b 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1083,6 +1083,8 @@ export default {
+@@ -1211,6 +1211,8 @@ export default {
      unchangedLines: '{count} linhas inalteradas',
      executionDuration: 'Tempo de execução',    thinkingLabel: 'Raciocínio',
      thinkingInProgress: 'Pensando',
@@ -300,10 +300,10 @@ index aeb87729c..1d2ea947b 100644
      thinkingHide: 'Ocultar raciocínio',
      thinkingDuration: 'Observado {duration}',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 542bf1640..39863780c 100644
+index fa6fc775a..85326a44f 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1061,6 +1061,8 @@ export default {
+@@ -1179,6 +1179,8 @@ export default {
      executionDuration: 'Длительность выполнения',
      thinkingLabel: 'Процесс размышления',
      thinkingInProgress: 'Размышление',
@@ -313,10 +313,10 @@ index 542bf1640..39863780c 100644
      thinkingHide: 'Свернуть процесс размышления',
      thinkingDuration: 'Наблюдается {duration}',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 110885965..12caba0cc 100644
+index a1c2b7fb1..a8c9c4707 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1170,6 +1170,8 @@ export default {
+@@ -1282,6 +1282,8 @@ export default {
      executionDuration: '執行時長',
      thinkingLabel: '思考過程',
      thinkingInProgress: '正在思考',
@@ -326,10 +326,10 @@ index 110885965..12caba0cc 100644
      thinkingHide: '收起思考過程',
      thinkingDuration: '已觀察 {duration}',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 9ca8a5bf7..3e806db20 100644
+index 985557c98..ba1e1926d 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1188,6 +1188,8 @@ export default {
+@@ -1300,6 +1300,8 @@ export default {
      executionDuration: '执行时长',
      thinkingLabel: '思考过程',
      thinkingInProgress: '正在思考',
@@ -339,7 +339,7 @@ index 9ca8a5bf7..3e806db20 100644
      thinkingHide: '收起思考过程',
      thinkingDuration: '已观察 {duration}',
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 6d4f4a3e7..a28b91b87 100644
+index 6bb8fb663..040c81995 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
 @@ -17,6 +17,7 @@ import { showCompletionNotification } from '@/utils/completion-notification'
@@ -350,7 +350,7 @@ index 6d4f4a3e7..a28b91b87 100644
  import {
    isPendingInteractionExpiredError,
    notifyPendingInteractionExpired,
-@@ -92,6 +93,13 @@ export interface Message {
+@@ -94,6 +95,13 @@ export interface Message {
    toolStatus?: 'running' | 'done' | 'error'
    toolDuration?: number  // 工具执行时长（秒）
    workspaceChanges?: WorkspaceRunChangeSummary[]
@@ -364,7 +364,7 @@ index 6d4f4a3e7..a28b91b87 100644
    isStreaming?: boolean
    attachments?: Attachment[]
    // 思考/推理文本。两条来源：
-@@ -555,6 +563,43 @@ export function attachWorkspaceChangesToExactTurns(
+@@ -560,6 +568,43 @@ export function attachWorkspaceChangesToExactTurns(
    }
  }
  
@@ -408,7 +408,7 @@ index 6d4f4a3e7..a28b91b87 100644
  function isToolOutputError(output: unknown): boolean {
    if (typeof output !== 'string' || !output.trim()) return false
    try {
-@@ -1385,14 +1430,100 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1402,14 +1447,100 @@ export const useChatStore = defineStore('chat', () => {
     */
    const runStartedAt = ref<Map<string, number>>(new Map())
  
@@ -510,23 +510,23 @@ index 6d4f4a3e7..a28b91b87 100644
      const next = new Map(runStartedAt.value)
      next.delete(sessionId)
      runStartedAt.value = next
-@@ -4448,6 +4579,7 @@ export const useChatStore = defineStore('chat', () => {
+@@ -4497,6 +4628,7 @@ export const useChatStore = defineStore('chat', () => {
              }
  
              case 'usage.updated': {
 +              applyRunSpeedEvent(sid, evt)
                const target = sessions.value.find(s => s.id === sid)
                if (target) {
-                 target.inputTokens = (evt as any).inputTokens
-@@ -5116,6 +5248,7 @@ export const useChatStore = defineStore('chat', () => {
+                 applySessionTokenUsage(target, evt as any)
+@@ -5159,6 +5291,7 @@ export const useChatStore = defineStore('chat', () => {
          }
  
          case 'usage.updated': {
 +          applyRunSpeedEvent(sid, evt)
            const target = sessions.value.find(s => s.id === sid)
            if (target) {
-             target.inputTokens = (evt as any).inputTokens
-@@ -5488,6 +5621,7 @@ export const useChatStore = defineStore('chat', () => {
+             applySessionTokenUsage(target, evt as any)
+@@ -5530,6 +5663,7 @@ export const useChatStore = defineStore('chat', () => {
      isSessionLive,
      isSessionWorking,
      runStartedAt,
@@ -603,10 +603,10 @@ index b31c93ceb..783f4e131 100644
  
      @staticmethod
 diff --git a/packages/server/src/modules/studio/contracts/runs/session.ts b/packages/server/src/modules/studio/contracts/runs/session.ts
-index fbcba820b..93b7e6484 100644
+index e1d5e14de..afba7d8c0 100644
 --- a/packages/server/src/modules/studio/contracts/runs/session.ts
 +++ b/packages/server/src/modules/studio/contracts/runs/session.ts
-@@ -142,6 +142,13 @@ export interface SessionState {
+@@ -147,6 +147,13 @@ export interface SessionState {
     * first render.
     */
    runStartedAt?: number
@@ -621,10 +621,10 @@ index fbcba820b..93b7e6484 100644
    abortController?: AbortController
    runId?: string
 diff --git a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
-index 1b9eec4bd..dcf19ce2a 100644
+index 3ff3c7e75..81b137da5 100644
 --- a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
 +++ b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
-@@ -23,6 +23,7 @@ import {
+@@ -24,6 +24,7 @@ import {
    clearApiPromptContextTokens,
    contextTokensWithCachedOverhead,
    estimateUsageTokensFromMessages,
@@ -632,7 +632,7 @@ index 1b9eec4bd..dcf19ce2a 100644
    getCachedBridgeContextOverhead,
    hasApiPromptContextTokens,
    resolveApiPromptTokens,
-@@ -1295,6 +1296,13 @@ function recordBridgeModelUsage(
+@@ -1324,6 +1325,13 @@ function recordBridgeModelUsage(
    // Context-window UI: use full prompt occupancy (log "in=" / prompt_tokens).
    // Hermes CanonicalUsage.input_tokens is uncached-only; prompt_tokens = input+cache_read+cache_write.
    if (live) {
@@ -647,10 +647,10 @@ index 1b9eec4bd..dcf19ce2a 100644
      return applyApiPromptContextTokens(
        sessionId,
 diff --git a/packages/server/src/modules/studio/services/chat-run/usage.ts b/packages/server/src/modules/studio/services/chat-run/usage.ts
-index d8a538c8f..91ee63fc3 100644
+index 31b75c933..8aa462502 100644
 --- a/packages/server/src/modules/studio/services/chat-run/usage.ts
 +++ b/packages/server/src/modules/studio/services/chat-run/usage.ts
-@@ -221,12 +221,14 @@ export function updateContextTokenUsage(
+@@ -232,12 +232,14 @@ export function updateContextTokenUsage(
    }
    const normalizedContextTokens = Math.floor(contextTokens)
    state.contextTokens = normalizedContextTokens
@@ -665,7 +665,7 @@ index d8a538c8f..91ee63fc3 100644
    })
    return normalizedContextTokens
  }
-@@ -340,3 +342,80 @@ export function updateMessageContextTokenUsage(
+@@ -351,3 +353,80 @@ export function updateMessageContextTokenUsage(
      usage,
    )
  }
@@ -939,10 +939,10 @@ index 000000000..f15ef27da
 +  })
 +})
 diff --git a/tests/server/run-chat-bridge-final-context.test.ts b/tests/server/run-chat-bridge-final-context.test.ts
-index 3699ad822..15da5bd3b 100644
+index 0faaeb404..6f2d2e99d 100644
 --- a/tests/server/run-chat-bridge-final-context.test.ts
 +++ b/tests/server/run-chat-bridge-final-context.test.ts
-@@ -71,6 +71,8 @@ const resolveApiPromptTokensMock = vi.fn((raw: any, normalized?: any) => {
+@@ -75,6 +75,8 @@ const resolveApiPromptTokensMock = vi.fn((raw: any, normalized?: any) => {
    }
    return normalized?.inputTokens
  })
@@ -951,7 +951,7 @@ index 3699ad822..15da5bd3b 100644
  const flushBridgePendingToDbMock = vi.fn()
  const ensureOpenBridgeAssistantMessageMock = vi.fn()
  const syncBridgeReasoningToMessageMock = vi.fn()
-@@ -127,6 +129,8 @@ vi.mock('../../packages/server/src/modules/studio/services/chat-run/usage', () =
+@@ -131,6 +133,8 @@ vi.mock('../../packages/server/src/modules/studio/services/chat-run/usage', () =
    clearApiPromptContextTokens: clearApiPromptContextTokensMock,
    hasApiPromptContextTokens: hasApiPromptContextTokensMock,
    resolveApiPromptTokens: resolveApiPromptTokensMock,

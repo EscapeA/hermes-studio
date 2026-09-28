@@ -1,4 +1,4 @@
-From 098b2d66e69febd65f51276338d2f723db8e0ae1 Mon Sep 17 00:00:00 2001
+From 49df0ab1749e2f8cee9828f37c7e1e5059d7bc3a Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:23 +0800
 Subject: [PATCH] feat(web): remove group chat from the frontend
@@ -24,9 +24,9 @@ Drop the entire group chat surface from the SPA (server modules untouched):
 - drop the Electron group-chat agent link popup and its window-open hooks
 ---
  packages/client/src/App.vue                   |   41 +-
- .../src/api/studio/group-chat-agent-link.ts   |  207 -
+ .../src/api/studio/group-chat-agent-link.ts   |  208 -
  .../src/api/studio/group-chat-attachments.ts  |   58 -
- packages/client/src/api/studio/group-chat.ts  |  637 --
+ packages/client/src/api/studio/group-chat.ts  |  660 --
  .../src/components/hermes/chat/FilesPanel.vue |   36 +-
  .../hermes/files/FileContextMenu.vue          |    4 +-
  .../src/components/hermes/files/FileList.vue  |    2 +-
@@ -36,41 +36,41 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  .../hermes/group-chat/CreateRoomForm.vue      |  252 -
  .../group-chat/GroupAgentMessageAvatar.vue    |  257 -
  .../hermes/group-chat/GroupAgentRobotIcon.vue |   62 -
- .../hermes/group-chat/GroupAgentRunCard.vue   |  366 --
+ .../hermes/group-chat/GroupAgentRunCard.vue   |  367 --
  .../hermes/group-chat/GroupChatInput.vue      | 1380 -----
- .../hermes/group-chat/GroupChatPanel.vue      | 5358 -----------------
- .../hermes/group-chat/GroupMessageItem.vue    | 1519 -----
- .../hermes/group-chat/GroupMessageList.vue    |  540 --
+ .../hermes/group-chat/GroupChatPanel.vue      | 5347 -----------------
+ .../hermes/group-chat/GroupMessageItem.vue    | 1543 -----
+ .../hermes/group-chat/GroupMessageList.vue    |  551 --
  .../group-chat/GroupRoomAgentAvatar.vue       |  299 -
  .../group-chat/group-chat-room-drafts.ts      |  140 -
  .../hermes/group-chat/handoff-presentation.ts |   42 -
  .../hermes/group-chat/mention-options.ts      |   57 -
  .../layout/GlobalPendingActions.vue           |   56 +-
  .../src/components/layout/PageSidebarNav.vue  |   36 +-
- packages/client/src/i18n/locales/ar.ts        |  224 -
- packages/client/src/i18n/locales/de.ts        |  224 -
- packages/client/src/i18n/locales/en.ts        |  224 -
- packages/client/src/i18n/locales/es.ts        |  224 -
- packages/client/src/i18n/locales/fr.ts        |  224 -
- packages/client/src/i18n/locales/ja.ts        |  224 -
- packages/client/src/i18n/locales/ko.ts        |  224 -
- packages/client/src/i18n/locales/pt.ts        |  224 -
- packages/client/src/i18n/locales/ru.ts        |  223 -
- packages/client/src/i18n/locales/zh-TW.ts     |  224 -
- packages/client/src/i18n/locales/zh.ts        |  224 -
+ packages/client/src/i18n/locales/ar.ts        |  233 -
+ packages/client/src/i18n/locales/de.ts        |  233 -
+ packages/client/src/i18n/locales/en.ts        |  233 -
+ packages/client/src/i18n/locales/es.ts        |  233 -
+ packages/client/src/i18n/locales/fr.ts        |  233 -
+ packages/client/src/i18n/locales/ja.ts        |  233 -
+ packages/client/src/i18n/locales/ko.ts        |  233 -
+ packages/client/src/i18n/locales/pt.ts        |  233 -
+ packages/client/src/i18n/locales/ru.ts        |  232 -
+ packages/client/src/i18n/locales/zh-TW.ts     |  233 -
+ packages/client/src/i18n/locales/zh.ts        |  233 -
  packages/client/src/router/index.ts           |   36 -
  packages/client/src/stores/hermes/files.ts    |  142 +-
- .../client/src/stores/hermes/group-chat.ts    | 2329 -------
- .../client/src/utils/group-agent-avatar.ts    |   80 -
+ .../client/src/stores/hermes/group-chat.ts    | 2354 --------
+ .../client/src/utils/group-agent-avatar.ts    |   81 -
  .../src/utils/group-chat-invite-code.ts       |    8 -
  .../src/utils/group-chat-remote-rooms.ts      |   69 -
  .../client/src/views/hermes/FilesView.vue     |    1 -
- .../src/views/hermes/GroupChatLinkView.vue    |  956 ---
+ .../src/views/hermes/GroupChatLinkView.vue    |  964 ---
  .../client/src/views/hermes/GroupChatView.vue |   81 -
  .../src/views/hermes/SharedGroupChatView.vue  |  907 ---
  .../src/main/group-chat-agent-popup.ts        |   44 -
  packages/desktop/src/main/index.ts            |    9 +-
- 47 files changed, 88 insertions(+), 18427 deletions(-)
+ 47 files changed, 88 insertions(+), 18609 deletions(-)
  delete mode 100644 packages/client/src/api/studio/group-chat-agent-link.ts
  delete mode 100644 packages/client/src/api/studio/group-chat-attachments.ts
  delete mode 100644 packages/client/src/api/studio/group-chat.ts
@@ -242,15 +242,16 @@ index 223f6e6ef..1f4191cae 100644
  }
 diff --git a/packages/client/src/api/studio/group-chat-agent-link.ts b/packages/client/src/api/studio/group-chat-agent-link.ts
 deleted file mode 100644
-index a1834302f..000000000
+index 08891a664..000000000
 --- a/packages/client/src/api/studio/group-chat-agent-link.ts
 +++ /dev/null
-@@ -1,207 +0,0 @@
+@@ -1,208 +0,0 @@
 -import { request } from '../client'
 -
 -export type RemoteGroupAgentDescriptor = {
--  agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh'
+-  agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor'
 -  agentMode: 'scoped' | 'global'
+-  priorAgentMode?: 'scoped' | 'global' | ''
 -  profile: string
 -  provider: string
 -  model: string
@@ -519,10 +520,10 @@ index 2b7212a95..000000000
 -}
 diff --git a/packages/client/src/api/studio/group-chat.ts b/packages/client/src/api/studio/group-chat.ts
 deleted file mode 100644
-index 7be018537..000000000
+index 0d67135be..000000000
 --- a/packages/client/src/api/studio/group-chat.ts
 +++ /dev/null
-@@ -1,637 +0,0 @@
+@@ -1,660 +0,0 @@
 -import { io } from 'socket.io-client'
 -import { request, getApiKey } from '../client'
 -import { fetchAuthenticatedBlob, saveBlob } from './binary-content'
@@ -599,6 +600,20 @@ index 7be018537..000000000
 -    lastError: string | null
 -}
 -
+-export interface RoomSummaryReview {
+-    id: string
+-    roomId: string
+-    sourceVersion: number
+-    sourceSummaryHash: string
+-    status: 'completed' | 'skipped'
+-    decision: 'pass' | 'needs_improvement' | 'unknown'
+-    ruleResults: Array<{ id: string; decision: 'pass' | 'needs_improvement' | 'unknown'; confidence?: number }>
+-    reasonCode: string
+-    durationMs: number
+-    createdAt: number
+-    appliedRevisionVersion: number | null
+-}
+-
 -export interface RoomSummaryAnchor {
 -    id: string
 -    timestamp: number
@@ -611,8 +626,9 @@ index 7be018537..000000000
 -    id: string
 -    roomId: string
 -    agentId: string
--    agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh'
+-    agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor'
 -    agentMode: 'scoped' | 'global'
+-    priorAgentMode?: 'scoped' | 'global' | ''
 -    profile: string
 -    provider: string
 -    model: string
@@ -636,6 +652,12 @@ index 7be018537..000000000
 -    'id' | 'roomId' | 'agentId' | 'agent' | 'name' | 'avatar'
 ->
 -
+-export interface GroupMessageRoutingDecision {
+-    messageId: string; roomId: string; targetAgentId: string | null; targetAgentName: string | null
+-    mode: 'suggest' | 'auto'; status: 'suggested' | 'queued' | 'skipped'; queueId: string | null
+-    confidence: number | null; handoffComplete: boolean | null; loopDetected: boolean | null; createdAt: number; updatedAt: number
+-}
+-
 -export interface GroupAgentActivity {
 -    roomId: string
 -    /** Stable gc_room_agents row identity. */
@@ -650,8 +672,9 @@ index 7be018537..000000000
 -
 -export interface RoomAgentInput {
 -    presetId?: string
--    agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh'
+-    agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor'
 -    agentMode?: 'scoped' | 'global'
+-    priorAgentMode?: 'scoped' | 'global' | ''
 -    profile: string
 -    provider?: string
 -    model?: string
@@ -682,6 +705,7 @@ index 7be018537..000000000
 -        presetId: preset.id,
 -        agent: preset.agent,
 -        agentMode: preset.agentMode,
+-        priorAgentMode: preset.priorAgentMode,
 -        profile: preset.profile,
 -        provider: preset.provider,
 -        model: preset.model,
@@ -1061,7 +1085,7 @@ index 7be018537..000000000
 -    })
 -}
 -
--export async function getRoomSummary(roomId: string): Promise<{ summary: RoomSummaryState; anchor: RoomSummaryAnchor | null }> {
+-export async function getRoomSummary(roomId: string): Promise<{ summary: RoomSummaryState; review: RoomSummaryReview | null; anchor: RoomSummaryAnchor | null }> {
 -    return request(`/api/studio/group-chat/rooms/${roomId}/summary`)
 -}
 -
@@ -2021,10 +2045,10 @@ index 8b9fd0d32..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupAgentRunCard.vue b/packages/client/src/components/hermes/group-chat/GroupAgentRunCard.vue
 deleted file mode 100644
-index 9f6d605f2..000000000
+index 1a672d4d4..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupAgentRunCard.vue
 +++ /dev/null
-@@ -1,366 +0,0 @@
+@@ -1,367 +0,0 @@
 -<script setup lang="ts">
 -import { computed } from 'vue'
 -import { useI18n } from 'vue-i18n'
@@ -2285,7 +2309,7 @@ index 9f6d605f2..000000000
 -.run-column {
 -    display: flex;
 -    flex-direction: column;
--    min-width: min(260px, 85%);
+-    min-width: min(500px, 100%);
 -    width: fit-content;
 -    max-width: min(85%, 920px);
 -}
@@ -2335,6 +2359,7 @@ index 9f6d605f2..000000000
 -
 -.run-tools {
 -    box-sizing: border-box;
+-    width: 100%;
 -    padding: 6px;
 -}
 -
@@ -2386,7 +2411,7 @@ index 9f6d605f2..000000000
 -@media (max-width: $breakpoint-mobile) {
 -    .run-column {
 -        min-width: 0;
--        width: fit-content;
+-        width: 100%;
 -        max-width: 100%;
 -    }
 -}
@@ -3779,16 +3804,18 @@ index fe51e9d5d..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 deleted file mode 100644
-index e16256578..000000000
+index fcbcd1c29..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 +++ /dev/null
-@@ -1,5358 +0,0 @@
+@@ -1,5347 +0,0 @@
 -<script setup lang="ts">
+-import { GROUP_AGENT_OPTIONS } from "@/utils/agent-options"
 -import DshSessionPresetSelect from "@/components/coding-agents/dsh/DshSessionPresetSelect.vue"
 -import { ref, computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, provide, watch } from 'vue'
 -import { useI18n } from 'vue-i18n'
 -import { useRouter } from 'vue-router'
 -import { useMessage, NInput, NButton, NSpace, NSelect, NPopconfirm, NInputNumber, NDropdown, NModal, NPopover, NDrawer, NDrawerContent, NSwitch, type DropdownOption } from 'naive-ui'
+-import { nextCodingAgentMode, storedPriorAgentMode, submittedCodingAgentSelection } from '@/utils/coding-agent-mode'
 -import { useGroupChatStore } from '@/stores/hermes/group-chat'
 -import { useAppStore } from '@/stores/hermes/app'
 -import { useProfilesStore } from '@/stores/hermes/profiles'
@@ -3822,6 +3849,7 @@ index e16256578..000000000
 -import FolderPicker from '@/components/hermes/chat/FolderPicker.vue'
 -import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
 -import PageSidebarNav from '@/components/layout/PageSidebarNav.vue'
+-import PageSidebarFooter from "@/components/layout/PageSidebarFooter.vue";
 -import { copyToClipboard } from '@/utils/clipboard'
 -import type { Attachment } from '@/stores/hermes/chat'
 -import type {
@@ -3835,6 +3863,7 @@ index e16256578..000000000
 -    RoomSummaryAnchor,
 -    RoomSummaryConfig,
 -    RoomSummaryState,
+-    RoomSummaryReview,
 -} from '@/api/studio/group-chat'
 -import { useFilesStore } from '@/stores/hermes/files'
 -import { useToolPanelStore } from '@/stores/hermes/tool-panel'
@@ -3927,6 +3956,7 @@ index e16256578..000000000
 -const isContinuingHandoff = ref(false)
 -const roomSummaryState = ref<RoomSummaryState | null>(null)
 -const roomSummaryAnchor = ref<RoomSummaryAnchor | null>(null)
+-const roomSummaryReview = ref<RoomSummaryReview | null>(null)
 -const roomSummaryDraft = ref('')
 -const isLoadingRoomSummary = ref(false)
 -const isSavingRoomSummary = ref(false)
@@ -3955,6 +3985,7 @@ index e16256578..000000000
 -let remoteRoomRefreshTimer: ReturnType<typeof setInterval> | null = null
 -const selectedAgentType = ref<GroupAgentType>('hermes')
 -const selectedAgentMode = ref<'scoped' | 'global'>('scoped')
+-const priorAgentMode = ref<'scoped' | 'global' | undefined>()
 -const selectedProfile = ref<string | null>(null)
 -const selectedAgentProvider = ref('')
 -const selectedAgentModel = ref('')
@@ -4021,18 +4052,9 @@ index e16256578..000000000
 -    profilesStore.profiles.map(p => ({ label: p.name, value: p.name }))
 -)
 -
--type GroupAgentType = 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh'
+-type GroupAgentType = 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor'
 -
--const groupAgentTypeDefinitions: Array<{ label: string; value: GroupAgentType }> = [
--    { label: 'Hermes', value: 'hermes' },
--    { label: 'Ekko', value: 'ekko' },
--    { label: 'Claude', value: 'claude' },
--    { label: 'Codex', value: 'codex' },
--    { label: 'Pi', value: 'pi' },
--    { label: 'Grok', value: 'grok' },
--    { label: 'OpenCode', value: 'opencode' },
--  { label: 'DeepSeek Harness', value: 'dsh' },
--]
+-const groupAgentTypeDefinitions = GROUP_AGENT_OPTIONS
 -
 -const groupAgentTypeOptions = computed(() => groupAgentTypeDefinitions.map((option) => {
 -    const disabled = !isAgentStatusAvailable(agentStatusSnapshot.value, option.value)
@@ -4046,7 +4068,7 @@ index e16256578..000000000
 -const firstAvailableGroupAgentType = computed<GroupAgentType | null>(() =>
 -    groupAgentTypeOptions.value.find(option => !option.disabled)?.value || null
 -)
--const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh'].includes(selectedAgentType.value))
+-const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor'].includes(selectedAgentType.value))
 -const usesGlobalAgentMode = computed(() => supportsGlobalAgentMode.value && selectedAgentMode.value === 'global')
 -const agentModeOptions = computed(() => [
 -    { label: t('codingAgents.launchModeGlobal'), value: 'global' },
@@ -4086,6 +4108,8 @@ index e16256578..000000000
 -                        ? 'pi'
 -                        : selectedAgentType.value === 'grok'
 -                            ? 'grok'
+-                            : selectedAgentType.value === 'cursor'
+-                                ? 'cursor'
 -                            : selectedAgentType.value === 'dsh' ? 'dsh' : selectedAgentType.value === 'opencode'
 -                                ? 'opencode'
 -                            : 'codex'
@@ -4191,6 +4215,10 @@ index e16256578..000000000
 -    { label: t('codingAgents.protocolOpenAiResponses'), value: 'codex_responses' },
 -    { label: t('codingAgents.protocolAnthropicMessages'), value: 'anthropic_messages' },
 -])
+-const liveRoomSummaryReview = computed(() => {
+-    const roomId = store.currentRoomId
+-    return roomId ? store.roomSummaryReviews.get(roomId) || roomSummaryReview.value : roomSummaryReview.value
+-})
 -const liveRoomSummaryState = computed(() => {
 -    const roomId = store.currentRoomId
 -    return (roomId && store.roomSummaryStates.get(roomId))
@@ -4315,8 +4343,15 @@ index e16256578..000000000
 -    }
 -    selectedRuntimePreset.value = undefined
 -    selectedRuntimePresetReady.value = false
+-    const switched = nextCodingAgentMode({
+-        previousAgent: selectedAgentType.value,
+-        nextAgent: agent,
+-        agentMode: selectedAgentMode.value,
+-        priorAgentMode: priorAgentMode.value,
+-    })
 -    selectedAgentType.value = agent
--    if (!['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh'].includes(agent)) selectedAgentMode.value = 'scoped'
+-    selectedAgentMode.value = switched.agentMode
+-    priorAgentMode.value = switched.priorAgentMode
 -    if (selectedProfile.value) syncAgentModelSelection(selectedProfile.value)
 -}
 -
@@ -4755,10 +4790,6 @@ index e16256578..000000000
 -    showGroupChatRefactorNotice.value = false
 -}
 -
--function openSettingsPage() {
--    router.push({ name: 'hermes.settings' })
--}
--
 -const remoteRooms = computed(() => buildRemoteGroupChatRooms(
 -    remoteRoomConnections.value,
 -))
@@ -5126,6 +5157,7 @@ index e16256578..000000000
 -    selectedRuntimePresetReady.value = false
 -    selectedAgentType.value = firstAvailableGroupAgentType.value || 'hermes'
 -    selectedAgentMode.value = 'scoped'
+-    priorAgentMode.value = undefined
 -    selectedAgentProvider.value = ''
 -    selectedAgentModel.value = ''
 -    selectedAgentApiMode.value = 'codex_responses'
@@ -5138,11 +5170,15 @@ index e16256578..000000000
 -function currentAgentPresetInput(): GroupAgentPresetInput | null {
 -    if (!canConfirmAddAgent.value || !selectedProfile.value) return null
 -    return {
--        agent: selectedAgentType.value,
--        agentMode: usesGlobalAgentMode.value ? 'global' : 'scoped',
+-        ...submittedCodingAgentSelection({
+-            agent: selectedAgentType.value,
+-            agentMode: selectedAgentMode.value,
+-            priorAgentMode: priorAgentMode.value,
+-            provider: selectedAgentProvider.value,
+-            model: selectedAgentModel.value,
+-            usesGlobal: usesGlobalAgentMode.value,
+-        }),
 -        profile: selectedProfile.value,
--        provider: usesGlobalAgentMode.value ? '' : selectedAgentProvider.value,
--        model: usesGlobalAgentMode.value ? '' : selectedAgentModel.value,
 -        apiMode: selectedAgentType.value === 'hermes' || usesGlobalAgentMode.value ? '' : selectedAgentApiMode.value,
 -        reasoningEffort: usesGlobalAgentMode.value ? '' : selectedAgentReasoningEffort.value,
 -        agentPreset: selectedAgentType.value === 'dsh' ? selectedRuntimePreset.value : undefined,
@@ -5208,6 +5244,7 @@ index e16256578..000000000
 -    const input = groupAgentPresetToRoomAgentInput(preset)
 -    selectedAgentType.value = input.agent
 -    selectedAgentMode.value = input.agentMode === 'global' ? 'global' : 'scoped'
+-    priorAgentMode.value = storedPriorAgentMode(input.priorAgentMode)
 -    selectedProfile.value = input.profile
 -    selectedAgentProvider.value = input.provider || ''
 -    selectedAgentModel.value = input.model || ''
@@ -5357,6 +5394,7 @@ index e16256578..000000000
 -    editingAgent.value = agent
 -    selectedAgentType.value = agent.agent || 'hermes'
 -    selectedAgentMode.value = agent.agentMode === 'global' ? 'global' : 'scoped'
+-    priorAgentMode.value = storedPriorAgentMode(agent.priorAgentMode)
 -    selectedProfile.value = agent.profile
 -    selectedAgentProvider.value = agent.provider || ''
 -    selectedAgentModel.value = agent.model || ''
@@ -5425,6 +5463,8 @@ index e16256578..000000000
 -        if (store.currentRoomId !== roomId) return
 -        roomSummaryState.value = store.roomSummaryStates.get(roomId) || result.summary
 -        roomSummaryAnchor.value = result.anchor
+-        roomSummaryReview.value = result.review
+-        if (result.review) store.applyRoomSummaryReview(result.review)
 -        roomSummaryDraft.value = roomSummaryState.value.summary
 -    } catch {
 -        // A missing summary should not block entering or reading the room.
@@ -5504,11 +5544,15 @@ index e16256578..000000000
 -    try {
 -        await store.addAgentToRoom(store.currentRoomId, {
 -            presetId: selectedAgentPresetId.value || undefined,
--            agent: selectedAgentType.value,
--            agentMode: usesGlobalAgentMode.value ? 'global' : 'scoped',
+-            ...submittedCodingAgentSelection({
+-                agent: selectedAgentType.value,
+-                agentMode: selectedAgentMode.value,
+-                priorAgentMode: priorAgentMode.value,
+-                provider: selectedAgentProvider.value,
+-                model: selectedAgentModel.value,
+-                usesGlobal: usesGlobalAgentMode.value,
+-            }),
 -            profile: selectedProfile.value,
--            provider: usesGlobalAgentMode.value ? '' : selectedAgentProvider.value,
--            model: usesGlobalAgentMode.value ? '' : selectedAgentModel.value,
 -            apiMode: selectedAgentType.value === 'hermes' || usesGlobalAgentMode.value ? undefined : selectedAgentApiMode.value,
 -            reasoningEffort: usesGlobalAgentMode.value ? '' : selectedAgentReasoningEffort.value,
 -            agentPreset: selectedAgentType.value === 'dsh' ? selectedRuntimePreset.value : undefined,
@@ -5539,11 +5583,15 @@ index e16256578..000000000
 -    isSavingAgent.value = true
 -    try {
 -        await store.updateAgentInRoom(store.currentRoomId, editingAgent.value.id, {
--            agent: selectedAgentType.value,
--            agentMode: usesGlobalAgentMode.value ? 'global' : 'scoped',
+-            ...submittedCodingAgentSelection({
+-                agent: selectedAgentType.value,
+-                agentMode: selectedAgentMode.value,
+-                priorAgentMode: priorAgentMode.value,
+-                provider: selectedAgentProvider.value,
+-                model: selectedAgentModel.value,
+-                usesGlobal: usesGlobalAgentMode.value,
+-            }),
 -            profile: selectedProfile.value,
--            provider: usesGlobalAgentMode.value ? '' : selectedAgentProvider.value,
--            model: usesGlobalAgentMode.value ? '' : selectedAgentModel.value,
 -            apiMode: selectedAgentType.value === 'hermes' || usesGlobalAgentMode.value ? undefined : selectedAgentApiMode.value,
 -            reasoningEffort: usesGlobalAgentMode.value ? '' : selectedAgentReasoningEffort.value,
 -            agentPreset: selectedAgentType.value === 'dsh' ? selectedRuntimePreset.value : undefined,
@@ -5651,6 +5699,8 @@ index e16256578..000000000
 -        if (store.currentRoomId !== summaryRoomId) return
 -        roomSummaryState.value = store.roomSummaryStates.get(summaryRoomId) || result.summary
 -        roomSummaryAnchor.value = result.anchor
+-        roomSummaryReview.value = result.review
+-        if (result.review) store.applyRoomSummaryReview(result.review)
 -        roomSummaryDraft.value = roomSummaryState.value.summary
 -    } catch (err: any) {
 -        message.error(err?.message || t('groupChat.summaryLoadFailed'))
@@ -5987,15 +6037,7 @@ index e16256578..000000000
 -                    </div>
 -                </section>
 -            </div>
--            <div class="page-sidebar-bottom">
--                <button class="page-sidebar-menu-btn" type="button" @click="openSettingsPage">
--                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
--                        <circle cx="12" cy="12" r="3" />
--                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
--                    </svg>
--                    <span>{{ t('sidebar.settings') }}</span>
--                </button>
--            </div>
+-            <PageSidebarFooter />
 -        </div>
 -
 -        <NDropdown
@@ -6661,7 +6703,7 @@ index e16256578..000000000
 -                    <DshSessionPresetSelect v-if="selectedAgentType === 'dsh'" class="form-group"
 -                        v-model="selectedRuntimePreset" :disabled="isSavingAgent"
 -                        @valid="selectedRuntimePresetReady = $event" />
--                    <div v-if="supportsGlobalAgentMode" class="form-group">
+-                    <div v-if="supportsGlobalAgentMode && selectedAgentType !== 'cursor'" class="form-group">
 -                        <label class="form-label">{{ t('codingAgents.launchModeScope') }}</label>
 -                        <NSelect
 -                            :value="selectedAgentMode"
@@ -7262,6 +7304,13 @@ index e16256578..000000000
 -                                    <strong>{{ liveRoomSummaryState?.summarizedTurnCount || 0 }}</strong>
 -                                </span>
 -                            </div>
+-                            <div v-if="liveRoomSummaryReview" class="summary-review" :class="`is-${liveRoomSummaryReview.decision}`">
+-                                <strong>{{ t('groupChat.summaryQuality') }} · {{ t(`groupChat.summaryQualityDecision.${liveRoomSummaryReview.decision}`) }}</strong>
+-                                <span>{{ t('groupChat.summaryQualityVersion', { version: liveRoomSummaryReview.sourceVersion }) }}</span>
+-                                <ul v-if="liveRoomSummaryReview.ruleResults.length">
+-                                    <li v-for="rule in liveRoomSummaryReview.ruleResults" :key="rule.id">{{ t(`groupChat.summaryQualityRule.${rule.id}`) }} · {{ t(`groupChat.summaryQualityDecision.${rule.decision}`) }}</li>
+-                                </ul>
+-                            </div>
 -                            <div v-if="liveRoomSummaryState?.lastError" class="summary-error">
 -                                {{ liveRoomSummaryState.lastError }}
 -                            </div>
@@ -7798,48 +7847,6 @@ index e16256578..000000000
 -    text-align: center;
 -    font-size: 13px;
 -    color: $text-muted;
--}
--
--.page-sidebar-bottom {
--    flex-shrink: 0;
--    padding: 10px 12px;
--    display: flex;
--    align-items: center;
--    gap: 8px;
--}
--
--.page-sidebar-menu-btn {
--    flex: 1 1 auto;
--    width: auto;
--    min-width: 0;
--    height: 36px;
--    border: none;
--    border-radius: $radius-sm;
--    background: transparent;
--    color: $text-secondary;
--    display: inline-flex;
--    align-items: center;
--    justify-content: flex-start;
--    gap: 8px;
--    padding: 8px 10px;
--    cursor: pointer;
--    transition:
--        background-color $transition-fast,
--        color $transition-fast;
--
--    &:hover {
--        background: rgba(var(--accent-primary-rgb), 0.06);
--        color: $text-primary;
--    }
--
--    span {
--        min-width: 0;
--        overflow: hidden;
--        text-overflow: ellipsis;
--        white-space: nowrap;
--        font-size: 13px;
--        line-height: 18px;
--    }
 -}
 -
 -// ─── Chat Main ──────────────────────────────────────────
@@ -9141,12 +9148,19 @@ index e16256578..000000000
 -
 -}
 -</style>
+-
+-<style scoped lang="scss">
+-.summary-review { margin: 12px 0; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; display: grid; gap: 6px; }
+-.summary-review.is-pass { border-color: #18a058; }
+-.summary-review.is-needs_improvement { border-color: #f0a020; }
+-.summary-review ul { margin: 0; padding-inline-start: 20px; }
+-</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupMessageItem.vue b/packages/client/src/components/hermes/group-chat/GroupMessageItem.vue
 deleted file mode 100644
-index 80e936a89..000000000
+index 019c2f9ef..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupMessageItem.vue
 +++ /dev/null
-@@ -1,1519 +0,0 @@
+@@ -1,1543 +0,0 @@
 -<script setup lang="ts">
 -import TaskPlanCard from '../chat/TaskPlanCard.vue'
 -import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -9831,7 +9845,9 @@ index 80e936a89..000000000
 -</script>
 -
 -<template>
--    <TaskPlanCard v-if="message.taskPlan" :plan="message.taskPlan" />
+-    <div v-if="message.taskPlan" class="group-task-plan-container">
+-        <TaskPlanCard class="group-task-plan-card" :plan="message.taskPlan" />
+-    </div>
 -    <div v-else-if="isToolMessage" class="group-message tool-message" :class="{ embedded }">
 -        <div class="msg-body">
 -            <div v-if="!embedded" class="msg-header">
@@ -10045,6 +10061,18 @@ index 80e936a89..000000000
 -
 -<style scoped lang="scss">
 -@use "@/styles/variables" as *;
+-
+-.group-task-plan-container {
+-    display: flow-root;
+-    width: 100%;
+-    min-width: 0;
+-}
+-
+-.group-task-plan-card {
+-    width: calc(100% - 10px);
+-    max-width: none;
+-    margin: 5px;
+-}
 -
 -.group-message {
 -    display: flex;
@@ -10273,7 +10301,7 @@ index 80e936a89..000000000
 -.msg-body {
 -    display: flex;
 -    flex-direction: column;
--    min-width: min(260px, 85%);
+-    min-width: min(500px, 100%);
 -    max-width: 85%;
 -    box-sizing: border-box;
 -}
@@ -10420,6 +10448,10 @@ index 80e936a89..000000000
 -            0 0 10px rgba(255, 107, 107, 0.4),
 -            0 0 20px rgba(255, 107, 107, 0.2);
 -    }
+-}
+-
+-.group-message:not(.embedded) .msg-content {
+-    min-width: min(500px, 100%);
 -}
 -
 -.msg-content {
@@ -10654,7 +10686,13 @@ index 80e936a89..000000000
 -@media (max-width: $breakpoint-mobile) {
 -    .group-message .msg-body {
 -        min-width: 0;
+-        width: 100%;
 -        max-width: 100%;
+-    }
+-
+-    .group-message:not(.embedded) .msg-content {
+-        min-width: 0;
+-        width: 100%;
 -    }
 -
 -    .group-message.embedded {
@@ -10668,10 +10706,10 @@ index 80e936a89..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupMessageList.vue b/packages/client/src/components/hermes/group-chat/GroupMessageList.vue
 deleted file mode 100644
-index bec069c4d..000000000
+index 3e4c4a01a..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupMessageList.vue
 +++ /dev/null
-@@ -1,540 +0,0 @@
+@@ -1,551 +0,0 @@
 -<script setup lang="ts">
 -import { computed, onMounted, ref, watch, nextTick } from 'vue'
 -import { useI18n } from 'vue-i18n'
@@ -10755,6 +10793,8 @@ index bec069c4d..000000000
 -    const key = handoffErrorTranslationKey(error)
 -    return key ? t(key) : ''
 -}
+-
+-function routingDecision(message: import('@/api/studio/group-chat').ChatMessage) { return store.messageRoutingDecisions.get(message.id) }
 -
 -function isOtherMemberMessage(message: import('@/api/studio/group-chat').ChatMessage): boolean {
 -    if (!store.userId || message.senderId === store.userId) return false
@@ -10902,6 +10942,13 @@ index bec069c4d..000000000
 -                        :allow-speech="props.allowSpeech"
 -                        @mention-agent="emit('mentionAgent', $event)"
 -                    />
+-                    <div v-if="routingDecision(msg)?.status === 'suggested' && routingDecision(msg)?.targetAgentName" class="routing-suggestion" role="status">
+-                        <span>{{ t('groupChat.routingSuggested', { agent: routingDecision(msg)!.targetAgentName }) }}</span>
+-                        <button type="button" @click="store.acceptRoutingSuggestion(msg.id)">{{ t('groupChat.routingUseSuggestion') }}</button>
+-                    </div>
+-                    <div v-else-if="routingDecision(msg)?.status === 'queued'" class="routing-suggestion" role="status">{{ t('groupChat.routingAutoQueued', { agent: routingDecision(msg)!.targetAgentName }) }}</div>
+-                    <div v-if="routingDecision(msg)?.handoffComplete === false" class="routing-suggestion routing-warning" role="status">{{ t('groupChat.routingHandoffIncomplete') }}</div>
+-                    <div v-if="routingDecision(msg)?.loopDetected === true" class="routing-suggestion routing-warning" role="status">{{ t('groupChat.routingLoopDetected') }}</div>
 -                    <div
 -                        v-if="handoffChainFor(msg)"
 -                        class="handoff-stop-card"
@@ -11212,6 +11259,8 @@ index bec069c4d..000000000
 -    }
 -}
 -</style>
+-
+-<style scoped>.routing-suggestion{margin:4px 12px 10px;padding:8px 10px;border:1px solid var(--border-color);border-radius:8px;display:flex;gap:8px;align-items:center}.routing-warning{border-color:#f0a020}.routing-suggestion button{border:0;background:transparent;color:var(--primary-color);cursor:pointer}</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupRoomAgentAvatar.vue b/packages/client/src/components/hermes/group-chat/GroupRoomAgentAvatar.vue
 deleted file mode 100644
 index f68453bb0..000000000
@@ -11978,19 +12027,19 @@ index da7433efd..0c938bafa 100644
    handles.clear()
  })
 diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
-index 4d14d66b9..b31ca81b1 100644
+index 690b49817..b9b792fa1 100644
 --- a/packages/client/src/components/layout/PageSidebarNav.vue
 +++ b/packages/client/src/components/layout/PageSidebarNav.vue
-@@ -7,7 +7,7 @@ import { isStoredSuperAdmin } from '@/api/client'
- import { useSessionSearch } from '@/composables/useSessionSearch'
+@@ -8,7 +8,7 @@ import { useSessionSearch } from '@/composables/useSessionSearch'
  import { getAgentManagerEntry, resolveAgentManagerEntryRoute } from '@/utils/agent-manager-entry'
+ import DesktopUpdateDownloadTab from './DesktopUpdateDownloadTab.vue'
  
 -type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'group' | 'global' | 'workflow'
 +type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'global' | 'workflow'
  
  const props = defineProps<{
    active: ActiveSection
-@@ -47,11 +47,6 @@ function openModels() {
+@@ -48,11 +48,6 @@ function openModels() {
    void router.push({ name: 'hermes.models' })
  }
  
@@ -12002,7 +12051,7 @@ index 4d14d66b9..b31ca81b1 100644
  function openWorkflow() {
    if (props.active === 'workflow') return
    void router.push({ name: 'hermes.workflow' })
-@@ -142,7 +137,7 @@ function openWorkflow() {
+@@ -144,7 +139,7 @@ function openWorkflow() {
          <span>{{ t('sidebar.models') }}</span>
        </button>
      </div>
@@ -12011,7 +12060,7 @@ index 4d14d66b9..b31ca81b1 100644
        <NTooltip trigger="hover" placement="top">
          <template #trigger>
            <button
-@@ -161,27 +156,6 @@ function openWorkflow() {
+@@ -163,27 +158,6 @@ function openWorkflow() {
          </template>
          {{ t('sidebar.singleChat') }}
        </NTooltip>
@@ -12039,7 +12088,7 @@ index 4d14d66b9..b31ca81b1 100644
        <NTooltip trigger="hover" placement="top">
          <template #trigger>
            <button
-@@ -290,8 +264,8 @@ function openWorkflow() {
+@@ -292,8 +266,8 @@ function openWorkflow() {
    background: rgba(var(--accent-primary-rgb), 0.05);
  }
  
@@ -12050,7 +12099,7 @@ index 4d14d66b9..b31ca81b1 100644
  }
  
  .conversation-switch-tab {
-@@ -325,7 +299,7 @@ function openWorkflow() {
+@@ -327,7 +301,7 @@ function openWorkflow() {
    }
  }
  
@@ -12060,10 +12109,10 @@ index 4d14d66b9..b31ca81b1 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 870925741..6e3c1050f 100644
+index 484548011..73811659d 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -383,7 +383,6 @@ export default {
+@@ -506,7 +506,6 @@ export default {
      browser: 'المتصفح',
      singleChat: 'محادثة',
      globalAgent: 'الوكيل العام',
@@ -12071,13 +12120,22 @@ index 870925741..6e3c1050f 100644
      files: 'الملفات',
      devices: 'الأجهزة',
      connections: 'ترابط الأجهزة',
-@@ -3172,229 +3171,6 @@ export default {
+@@ -3305,238 +3304,6 @@ export default {
      connectionClosed: 'تم إغلاق اتصال الطرفية',
      connectionError: 'خطأ في اتصال الطرفية',
    },
 -
 -  // Group Chat
 -  groupChat: {
+-    routingHandoffIncomplete: 'قد تكون معلومات التسليم غير مكتملة.',
+-    routingLoopDetected: 'تم اكتشاف دوران متكرر محتمل في التعاون.',
+-    routingSuggested: 'يقترح JEV \u200f{agent}',
+-    routingUseSuggestion: 'تعيين',
+-    routingAutoQueued: 'عيّن JEV \u200f{agent}',
+-    summaryQuality: "JEV summary quality",
+-    summaryQualityVersion: "Checked summary version {version}",
+-    summaryQualityDecision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Not evaluated" },
+-    summaryQualityRule: { missing_constraints: "Missing constraints or tasks", stale_or_overstated: "Stale or overstated conclusion", unsupported_completion: "Unsupported completion claim" },
 -    agentPreset: 'Agent preset',
 -    agentPresets: 'Agent presets',
 -    agentPresetPlaceholder: 'Select a preset',
@@ -12302,10 +12360,10 @@ index 870925741..6e3c1050f 100644
    usage: {
      title: 'إحصائيات الاستخدام',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 5cc44a2e4..60bbd5767 100644
+index e6cdbaa34..c0d2aa590 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -396,7 +396,6 @@ export default {
+@@ -519,7 +519,6 @@ export default {
      devices: 'Gerate',
      connections: 'Geräteverbindungen',
      agentManager: 'Agent-Verwaltung',
@@ -12313,13 +12371,22 @@ index 5cc44a2e4..60bbd5767 100644
      groupConversation: 'Konversation',
      groupConversationShort: 'Konv',
      groupAgent: 'Agent',
-@@ -2898,229 +2897,6 @@ jobTriggered: 'Job ausgelost',
+@@ -3031,238 +3030,6 @@ jobTriggered: 'Job ausgelost',
        idle: 'Inaktiv', queued: 'In Warteschlange', running: 'Wird ausgeführt', pending_approval: 'Wartet auf Freigabe', completed: 'Abgeschlossen', skipped: 'Übersprungen', failed: 'Fehlgeschlagen', approval_rejected: 'Freigabe abgelehnt', canceled: 'Abgebrochen',
      },
    },
 -
 -  // Anderungsprotokoll
 -  groupChat: {
+-    routingHandoffIncomplete: 'Die Übergabeinformationen könnten unvollständig sein.',
+-    routingLoopDetected: 'Mögliche wiederholte Kooperationsschleife erkannt.',
+-    routingSuggested: 'JEV empfiehlt {agent}',
+-    routingUseSuggestion: 'Zuweisen',
+-    routingAutoQueued: 'JEV hat {agent} zugewiesen',
+-    summaryQuality: "JEV summary quality",
+-    summaryQualityVersion: "Checked summary version {version}",
+-    summaryQualityDecision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Not evaluated" },
+-    summaryQualityRule: { missing_constraints: "Missing constraints or tasks", stale_or_overstated: "Stale or overstated conclusion", unsupported_completion: "Unsupported completion claim" },
 -    agentPreset: 'Agent preset',
 -    agentPresets: 'Agent presets',
 -    agentPresetPlaceholder: 'Select a preset',
@@ -12544,10 +12611,10 @@ index 5cc44a2e4..60bbd5767 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index e2ee996bb..1e03afe54 100644
+index cb61b1d12..b41170aab 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -383,7 +383,6 @@ export default {
+@@ -506,7 +506,6 @@ export default {
      browser: 'Browser',
      singleChat: 'Chat',
      globalAgent: 'Global Agent',
@@ -12555,13 +12622,22 @@ index e2ee996bb..1e03afe54 100644
      files: 'Files',
      devices: 'Devices',
      connections: 'Device connections',
-@@ -3201,229 +3200,6 @@ export default {
+@@ -3334,238 +3333,6 @@ export default {
      connectionClosed: 'Terminal connection closed',
      connectionError: 'Terminal connection error',
    },
 -
 -  // Group Chat
 -  groupChat: {
+-    routingHandoffIncomplete: 'Handoff information may be incomplete.',
+-    routingLoopDetected: 'Possible repeated collaboration loop detected.',
+-    routingSuggested: 'JEV suggests {agent}',
+-    routingUseSuggestion: 'Assign',
+-    routingAutoQueued: 'JEV assigned {agent}',
+-    summaryQuality: "JEV summary quality",
+-    summaryQualityVersion: "Checked summary version {version}",
+-    summaryQualityDecision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Not evaluated" },
+-    summaryQualityRule: { missing_constraints: "Missing constraints or tasks", stale_or_overstated: "Stale or overstated conclusion", unsupported_completion: "Unsupported completion claim" },
 -    agentPreset: 'Agent preset',
 -    agentPresets: 'Agent presets',
 -    agentPresetPlaceholder: 'Select a preset',
@@ -12786,10 +12862,10 @@ index e2ee996bb..1e03afe54 100644
    usage: {
      title: 'Usage Statistics',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 976ccfc53..f5e5a3fd8 100644
+index e560bf0f0..855f6da7d 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -396,7 +396,6 @@ export default {
+@@ -519,7 +519,6 @@ export default {
      devices: 'Dispositivos',
      connections: 'Conexiones de dispositivos',
      agentManager: 'Gestión de agentes',
@@ -12797,13 +12873,22 @@ index 976ccfc53..f5e5a3fd8 100644
      groupConversation: 'Conversación',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -2898,229 +2897,6 @@ jobTriggered: 'Job ejecutado',
+@@ -3031,238 +3030,6 @@ jobTriggered: 'Job ejecutado',
        idle: 'Inactivo', queued: 'En cola', running: 'En ejecución', pending_approval: 'Pendiente de aprobación', completed: 'Completado', skipped: 'Omitido', failed: 'Fallido', approval_rejected: 'Aprobación rechazada', canceled: 'Cancelado',
      },
    },
 -
 -  // Registro de cambios
 -  groupChat: {
+-    routingHandoffIncomplete: 'La información de entrega puede estar incompleta.',
+-    routingLoopDetected: 'Se detectó un posible ciclo de colaboración repetido.',
+-    routingSuggested: 'JEV sugiere {agent}',
+-    routingUseSuggestion: 'Asignar',
+-    routingAutoQueued: 'JEV asignó a {agent}',
+-    summaryQuality: "JEV summary quality",
+-    summaryQualityVersion: "Checked summary version {version}",
+-    summaryQualityDecision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Not evaluated" },
+-    summaryQualityRule: { missing_constraints: "Missing constraints or tasks", stale_or_overstated: "Stale or overstated conclusion", unsupported_completion: "Unsupported completion claim" },
 -    agentPreset: 'Agent preset',
 -    agentPresets: 'Agent presets',
 -    agentPresetPlaceholder: 'Select a preset',
@@ -13028,10 +13113,10 @@ index 976ccfc53..f5e5a3fd8 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index d7cd4a6cb..7d9d31a43 100644
+index 287e81634..f4d12e82e 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -396,7 +396,6 @@ export default {
+@@ -519,7 +519,6 @@ export default {
      devices: 'Appareils',
      connections: 'Connexions des appareils',
      agentManager: 'Gestion des agents',
@@ -13039,13 +13124,22 @@ index d7cd4a6cb..7d9d31a43 100644
      groupConversation: 'Conversation',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agent',
-@@ -2898,229 +2897,6 @@ jobTriggered: 'Job declenche',
+@@ -3031,238 +3030,6 @@ jobTriggered: 'Job declenche',
        idle: 'Inactif', queued: 'En attente', running: 'En cours', pending_approval: 'En attente d\'approbation', completed: 'Terminé', skipped: 'Ignoré', failed: 'Échec', approval_rejected: 'Approbation refusée', canceled: 'Annulé',
      },
    },
 -
 -  // Journal des modifications
 -  groupChat: {
+-    routingHandoffIncomplete: 'Les informations de transfert peuvent être incomplètes.',
+-    routingLoopDetected: 'Une boucle de collaboration répétitive est possible.',
+-    routingSuggested: 'JEV suggère {agent}',
+-    routingUseSuggestion: 'Affecter',
+-    routingAutoQueued: 'JEV a affecté {agent}',
+-    summaryQuality: "JEV summary quality",
+-    summaryQualityVersion: "Checked summary version {version}",
+-    summaryQualityDecision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Not evaluated" },
+-    summaryQualityRule: { missing_constraints: "Missing constraints or tasks", stale_or_overstated: "Stale or overstated conclusion", unsupported_completion: "Unsupported completion claim" },
 -    agentPreset: 'Agent preset',
 -    agentPresets: 'Agent presets',
 -    agentPresetPlaceholder: 'Select a preset',
@@ -13270,10 +13364,10 @@ index d7cd4a6cb..7d9d31a43 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index d55d63ad0..f03fade52 100644
+index f21c8e1aa..6e95aa15d 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -396,7 +396,6 @@ export default {
+@@ -519,7 +519,6 @@ export default {
      devices: 'デバイス',
      connections: 'デバイス接続',
      agentManager: 'エージェント管理',
@@ -13281,13 +13375,22 @@ index d55d63ad0..f03fade52 100644
      groupConversation: '会話',
      groupConversationShort: '会話',
      groupAgent: 'エージェント',
-@@ -2897,229 +2896,6 @@ export default {
+@@ -3030,238 +3029,6 @@ export default {
        idle: '待機中', queued: '待機列', running: '実行中', pending_approval: '承認待ち', completed: '完了', skipped: 'スキップ', failed: '失敗', approval_rejected: '承認拒否', canceled: 'キャンセル済み',
      },
    },
 -
 -  // 更新履歴
 -  groupChat: {
+-    routingHandoffIncomplete: '引き継ぎ情報が不完全な可能性があります。',
+-    routingLoopDetected: '協力が同じ所を回っている可能性があります。',
+-    routingSuggested: 'JEV の提案: {agent}',
+-    routingUseSuggestion: '割り当て',
+-    routingAutoQueued: 'JEV が {agent} に割り当てました',
+-    summaryQuality: "JEV summary quality",
+-    summaryQualityVersion: "Checked summary version {version}",
+-    summaryQualityDecision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Not evaluated" },
+-    summaryQualityRule: { missing_constraints: "Missing constraints or tasks", stale_or_overstated: "Stale or overstated conclusion", unsupported_completion: "Unsupported completion claim" },
 -    agentPreset: 'Agent preset',
 -    agentPresets: 'Agent presets',
 -    agentPresetPlaceholder: 'Select a preset',
@@ -13512,10 +13615,10 @@ index d55d63ad0..f03fade52 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 14035cc51..1721862f3 100644
+index 6f88eb96f..59c295400 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -396,7 +396,6 @@ export default {
+@@ -519,7 +519,6 @@ export default {
      devices: '기기',
      connections: '기기 연결',
      agentManager: '에이전트 관리',
@@ -13523,13 +13626,22 @@ index 14035cc51..1721862f3 100644
      groupConversation: '대화',
      groupConversationShort: '대화',
      groupAgent: '에이전트',
-@@ -2897,229 +2896,6 @@ export default {
+@@ -3030,238 +3029,6 @@ export default {
        idle: '대기', queued: '대기열', running: '실행 중', pending_approval: '승인 대기', completed: '완료', skipped: '건너뜀', failed: '실패', approval_rejected: '승인 거부', canceled: '취소됨',
      },
    },
 -
 -  // 변경 이력
 -  groupChat: {
+-    routingHandoffIncomplete: '인계 정보가 불완전할 수 있습니다.',
+-    routingLoopDetected: '협업이 반복 공회전 중일 수 있습니다.',
+-    routingSuggested: 'JEV 추천: {agent}',
+-    routingUseSuggestion: '할당',
+-    routingAutoQueued: 'JEV가 {agent}에게 할당했습니다',
+-    summaryQuality: "JEV summary quality",
+-    summaryQualityVersion: "Checked summary version {version}",
+-    summaryQualityDecision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Not evaluated" },
+-    summaryQualityRule: { missing_constraints: "Missing constraints or tasks", stale_or_overstated: "Stale or overstated conclusion", unsupported_completion: "Unsupported completion claim" },
 -    agentPreset: 'Agent preset',
 -    agentPresets: 'Agent presets',
 -    agentPresetPlaceholder: 'Select a preset',
@@ -13754,10 +13866,10 @@ index 14035cc51..1721862f3 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 62d82f1e5..ba22f9224 100644
+index e91f75a7b..7ebac37c0 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -396,7 +396,6 @@ export default {
+@@ -519,7 +519,6 @@ export default {
      devices: 'Dispositivos',
      connections: 'Conexões de dispositivos',
      agentManager: 'Gerenciamento de agentes',
@@ -13765,13 +13877,22 @@ index 62d82f1e5..ba22f9224 100644
      groupConversation: 'Conversa',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -2898,229 +2897,6 @@ jobTriggered: 'Job acionado',
+@@ -3031,238 +3030,6 @@ jobTriggered: 'Job acionado',
        idle: 'Inativo', queued: 'Na fila', running: 'Em execução', pending_approval: 'Aguardando aprovação', completed: 'Concluído', skipped: 'Ignorado', failed: 'Falhou', approval_rejected: 'Aprovação rejeitada', canceled: 'Cancelado',
      },
    },
 -
 -  // Registro de alteracoes
 -  groupChat: {
+-    routingHandoffIncomplete: 'As informações de passagem podem estar incompletas.',
+-    routingLoopDetected: 'Possível ciclo repetido de colaboração detectado.',
+-    routingSuggested: 'JEV sugere {agent}',
+-    routingUseSuggestion: 'Atribuir',
+-    routingAutoQueued: 'JEV atribuiu a {agent}',
+-    summaryQuality: "JEV summary quality",
+-    summaryQualityVersion: "Checked summary version {version}",
+-    summaryQualityDecision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Not evaluated" },
+-    summaryQualityRule: { missing_constraints: "Missing constraints or tasks", stale_or_overstated: "Stale or overstated conclusion", unsupported_completion: "Unsupported completion claim" },
 -    agentPreset: 'Agent preset',
 -    agentPresets: 'Agent presets',
 -    agentPresetPlaceholder: 'Select a preset',
@@ -13996,10 +14117,10 @@ index 62d82f1e5..ba22f9224 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 0d8c092a0..c1f84d13a 100644
+index 90f272cc6..1d62b08bb 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -308,7 +308,6 @@ export default {
+@@ -431,7 +431,6 @@ export default {
      browser: 'Браузер',
      singleChat: 'Чат',
      globalAgent: 'Global Agent',
@@ -14007,11 +14128,20 @@ index 0d8c092a0..c1f84d13a 100644
      files: 'Файлы',
      devices: 'Устройства',
      connections: 'Подключение устройств',
-@@ -2834,228 +2833,6 @@ export default {
+@@ -2967,237 +2966,6 @@ export default {
    },
  
  
 -  groupChat: {
+-    routingHandoffIncomplete: 'Информация для передачи может быть неполной.',
+-    routingLoopDetected: 'Возможно повторное хождение по кругу.',
+-    routingSuggested: 'JEV предлагает {agent}',
+-    routingUseSuggestion: 'Назначить',
+-    routingAutoQueued: 'JEV назначил {agent}',
+-    summaryQuality: "JEV summary quality",
+-    summaryQualityVersion: "Checked summary version {version}",
+-    summaryQualityDecision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Not evaluated" },
+-    summaryQualityRule: { missing_constraints: "Missing constraints or tasks", stale_or_overstated: "Stale or overstated conclusion", unsupported_completion: "Unsupported completion claim" },
 -    agentPreset: 'Agent preset',
 -    agentPresets: 'Agent presets',
 -    agentPresetPlaceholder: 'Select a preset',
@@ -14237,10 +14367,10 @@ index 0d8c092a0..c1f84d13a 100644
      title: 'Статистика использования',
      refresh: 'Обновить',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index dcea97b2b..ffa46a375 100644
+index 46f678058..7d6777c47 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -383,7 +383,6 @@ export default {
+@@ -506,7 +506,6 @@ export default {
      browser: '瀏覽器',
      singleChat: '單聊',
      globalAgent: '全局',
@@ -14248,13 +14378,22 @@ index dcea97b2b..ffa46a375 100644
      files: '檔案',
      devices: '裝置',
      connections: '裝置互聯',
-@@ -3143,229 +3142,6 @@ export default {
+@@ -3276,238 +3275,6 @@ export default {
      connectionClosed: '終端機連線已關閉',
      connectionError: '終端機連線錯誤',
    },
 -
 -  // 群聊
 -  groupChat: {
+-    routingHandoffIncomplete: '交接資訊可能不完整。',
+-    routingLoopDetected: '偵測到協作可能在重複空轉。',
+-    routingSuggested: 'JEV 建議交給 {agent}',
+-    routingUseSuggestion: '分派',
+-    routingAutoQueued: 'JEV 已分派給 {agent}',
+-    summaryQuality: "JEV summary quality",
+-    summaryQualityVersion: "Checked summary version {version}",
+-    summaryQualityDecision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Not evaluated" },
+-    summaryQualityRule: { missing_constraints: "Missing constraints or tasks", stale_or_overstated: "Stale or overstated conclusion", unsupported_completion: "Unsupported completion claim" },
 -    agentPreset: 'Agent 预设',
 -    agentPresets: 'Agent 预设',
 -    agentPresetPlaceholder: '选择预设',
@@ -14479,10 +14618,10 @@ index dcea97b2b..ffa46a375 100644
    usage: {
      title: '用量統計',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 3190b66c1..096a43f46 100644
+index 488869945..ab50ebf2f 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -383,7 +383,6 @@ export default {
+@@ -506,7 +506,6 @@ export default {
      browser: '浏览器',
      singleChat: '单聊',
      globalAgent: '全局',
@@ -14490,13 +14629,22 @@ index 3190b66c1..096a43f46 100644
      files: '文件',
      devices: '设备',
      connections: '设备互联',
-@@ -3249,229 +3248,6 @@ export default {
+@@ -3382,238 +3381,6 @@ export default {
      connectionClosed: '终端连接已关闭',
      connectionError: '终端连接错误',
    },
 -
 -  // 群聊
 -  groupChat: {
+-    routingHandoffIncomplete: '交接信息可能不完整。',
+-    routingLoopDetected: '检测到协作可能在重复空转。',
+-    routingSuggested: 'JEV 建议交给 {agent}',
+-    routingUseSuggestion: '分派',
+-    routingAutoQueued: 'JEV 已分派给 {agent}',
+-    summaryQuality: "JEV 摘要质量",
+-    summaryQualityVersion: "检查的摘要版本：{version}",
+-    summaryQualityDecision: { pass: "已通过", needs_improvement: "有改进建议", unknown: "未评估" },
+-    summaryQualityRule: { missing_constraints: "遗漏约束或任务", stale_or_overstated: "结论过时或表述过度", unsupported_completion: "无依据的完成声明" },
 -    agentPreset: 'Agent 预设',
 -    agentPresets: 'Agent 预设',
 -    agentPresetPlaceholder: '选择预设',
@@ -15092,10 +15240,10 @@ index ba86eaffb..5f1828ed1 100644
    }
 diff --git a/packages/client/src/stores/hermes/group-chat.ts b/packages/client/src/stores/hermes/group-chat.ts
 deleted file mode 100644
-index df3d194ec..000000000
+index d30d6d363..000000000
 --- a/packages/client/src/stores/hermes/group-chat.ts
 +++ /dev/null
-@@ -1,2329 +0,0 @@
+@@ -1,2354 +0,0 @@
 -import { parseGroupTaskPlanMessage, isOlderGroupTaskPlan } from '@/utils/task-plan'
 -import { defineStore } from 'pinia'
 -import { ref, computed } from 'vue'
@@ -15120,10 +15268,12 @@ index df3d194ec..000000000
 -    type RoomAgent,
 -    type RoomAgentSummary,
 -    type GroupAgentActivity,
+-    type GroupMessageRoutingDecision,
 -    type RoomAgentHandoffChain,
 -    type RoomAgentInput,
 -    type RoomSummaryConfig,
 -    type RoomSummaryState,
+-    type RoomSummaryReview,
 -    type ChatMessage,
 -    type GroupChatMention,
 -    type GroupExecutionQueueItem,
@@ -15307,8 +15457,10 @@ index df3d194ec..000000000
 -    const contextStatuses = ref<Map<string, { agentName: string; status: string }>>(new Map())
 -    const activeAgentRuns = ref<Map<string, GroupAgentActivity>>(new Map())
 -    const roomSummaryStates = ref<Map<string, RoomSummaryState>>(new Map())
+-    const roomSummaryReviews = ref<Map<string, RoomSummaryReview>>(new Map())
 -    const handoffChains = ref<Map<string, RoomAgentHandoffChain>>(new Map())
 -    const executionQueue = ref<GroupExecutionQueueItem[]>([])
+-    const messageRoutingDecisions = ref<Map<string, GroupMessageRoutingDecision>>(new Map())
 -    const autoPlaySpeechEnabled = ref(false)
 -    const pendingApprovals = ref<Map<string, GroupPendingApproval>>(new Map())
 -    const pendingClarifies = ref<Map<string, GroupPendingClarify>>(new Map())
@@ -15703,6 +15855,20 @@ index df3d194ec..000000000
 -        roomSummaryStates.value = new Map(roomSummaryStates.value)
 -    }
 -
+-    async function acceptRoutingSuggestion(messageId: string): Promise<void> {
+-        const socket = getSocket(); const roomId = currentRoomId.value
+-        if (!socket || !roomId) throw new Error('Group chat socket not connected')
+-        await new Promise<void>((resolve, reject) => socket.emit('accept_routing_suggestion', { roomId, messageId }, (res?: { ok?: boolean; error?: string }) => res?.ok ? resolve() : reject(new Error(res?.error || 'Suggestion failed'))))
+-    }
+-
+-    function applyRoomSummaryReview(review: RoomSummaryReview) {
+-        if (!review?.roomId) return
+-        const previous = roomSummaryReviews.value.get(review.roomId)
+-        if (previous && (previous.createdAt > review.createdAt || previous.sourceVersion > review.sourceVersion)) return
+-        roomSummaryReviews.value.set(review.roomId, review)
+-        roomSummaryReviews.value = new Map(roomSummaryReviews.value)
+-    }
+-
 -    function clearCurrentRoomTransientState() {
 -        emitStopTyping()
 -        clearRemoteTypingState()
@@ -15838,6 +16004,7 @@ index df3d194ec..000000000
 -        }
 -        if (res.roomSummary?.roomId === currentRoomId.value) applyRoomSummaryState(res.roomSummary)
 -        executionQueue.value = Array.isArray(res.executionQueue) ? res.executionQueue : []
+-        messageRoutingDecisions.value = new Map((Array.isArray(res.routingDecisions) ? res.routingDecisions : []).map((decision: GroupMessageRoutingDecision) => [decision.messageId, decision]))
 -        if (typeof res.roomId === 'string' && res.roomId) {
 -            replaceRoomPendingInteractions(res.roomId, res.pendingApprovals, res.pendingClarifies)
 -        }
@@ -16309,7 +16476,9 @@ index df3d194ec..000000000
 -            hasMoreBefore.value = loadedMessageCount.value < totalMessages.value
 -        })
 -
+-        socket.on('message_routing_updated', (decision: GroupMessageRoutingDecision) => { messageRoutingDecisions.value.set(decision.messageId, decision); messageRoutingDecisions.value = new Map(messageRoutingDecisions.value) })
 -        socket.on('room_summary_updated', applyRoomSummaryState)
+-        socket.on('room_summary_review_updated', applyRoomSummaryReview)
 -
 -        socket.on('handoff_updated', (chain: RoomAgentHandoffChain) => {
 -            if (!chain?.chainId || chain.roomId !== currentRoomId.value) return
@@ -17093,9 +17262,13 @@ index df3d194ec..000000000
 -        contextStatuses,
 -        activeAgentRuns,
 -        roomSummaryStates,
+-        roomSummaryReviews,
 -        applyRoomSummaryState,
+-        applyRoomSummaryReview,
 -        handoffChains,
 -        executionQueue,
+-        messageRoutingDecisions,
+-        acceptRoutingSuggestion,
 -        pendingApprovals,
 -        pendingClarifies,
 -        activePendingApproval,
@@ -17427,10 +17600,10 @@ index df3d194ec..000000000
 -}
 diff --git a/packages/client/src/utils/group-agent-avatar.ts b/packages/client/src/utils/group-agent-avatar.ts
 deleted file mode 100644
-index 632a97a2b..000000000
+index e08927e8c..000000000
 --- a/packages/client/src/utils/group-agent-avatar.ts
 +++ /dev/null
-@@ -1,80 +0,0 @@
+@@ -1,81 +0,0 @@
 -import type { ChatMessage, RoomAgent } from '@/api/studio/group-chat'
 -import type { ProfileAvatar } from '@/api/hermes/profiles'
 -
@@ -17443,6 +17616,7 @@ index 632a97a2b..000000000
 -    grok: '/coding-agents/grok.svg',
 -    opencode: '/coding-agents/opencode.png',
 -    dsh: '/coding-agents/deepseek.svg',
+-    cursor: '/coding-agents/cursor.svg',
 -}
 -
 -export function parseStoredAvatar(raw: unknown): ProfileAvatar | null {
@@ -17614,11 +17788,12 @@ index 85ae5c193..b4669d6b8 100644
  
 diff --git a/packages/client/src/views/hermes/GroupChatLinkView.vue b/packages/client/src/views/hermes/GroupChatLinkView.vue
 deleted file mode 100644
-index 5cb16409f..000000000
+index 5e3811264..000000000
 --- a/packages/client/src/views/hermes/GroupChatLinkView.vue
 +++ /dev/null
-@@ -1,956 +0,0 @@
+@@ -1,964 +0,0 @@
 -<script setup lang="ts">
+-import { GROUP_AGENT_OPTIONS } from "@/utils/agent-options"
 -import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 -import { useI18n } from 'vue-i18n'
 -import { useRoute } from 'vue-router'
@@ -17630,6 +17805,7 @@ index 5cb16409f..000000000
 -  defaultGroupAgentAvatar,
 -  parseStoredAvatar,
 -} from '@/utils/group-agent-avatar'
+-import { nextCodingAgentMode, storedPriorAgentMode, submittedCodingAgentSelection } from '@/utils/coding-agent-mode'
 -import { canScopedCodingAgentUseProvider } from '@/utils/codingAgentProviders'
 -import {
 -  inferCodingAgentApiMode,
@@ -17663,6 +17839,7 @@ index 5cb16409f..000000000
 -const selectedAgentType = ref<GroupAgentType>('hermes')
 -const selectedProfile = ref('')
 -const selectedAgentMode = ref<'scoped' | 'global'>('scoped')
+-const priorAgentMode = ref<'scoped' | 'global' | undefined>()
 -const selectedAgentProvider = ref('')
 -const selectedAgentModel = ref('')
 -const selectedAgentApiMode = ref<CodingAgentApiMode>('codex_responses')
@@ -17717,16 +17894,7 @@ index 5cb16409f..000000000
 -  && !!handoffRequestSecret.value
 -  && !!handoffPairingTicket.value
 -))
--const groupAgentTypeDefinitions: Array<{ label: string; value: GroupAgentType }> = [
--  { label: 'Hermes', value: 'hermes' },
--  { label: 'Ekko', value: 'ekko' },
--  { label: 'Claude', value: 'claude' },
--  { label: 'Codex', value: 'codex' },
--  { label: 'Pi', value: 'pi' },
--  { label: 'Grok', value: 'grok' },
--  { label: 'OpenCode', value: 'opencode' },
--  { label: 'DeepSeek Harness', value: 'dsh' },
--]
+-const groupAgentTypeDefinitions = GROUP_AGENT_OPTIONS
 -const groupAgentTypeOptions = computed(() => groupAgentTypeDefinitions.map((option) => {
 -  const disabled = !isAgentStatusAvailable(agentStatusSnapshot.value, option.value)
 -  return {
@@ -17756,6 +17924,8 @@ index 5cb16409f..000000000
 -            ? 'pi'
 -            : selectedAgentType.value === 'grok'
 -              ? 'grok'
+-            : selectedAgentType.value === 'cursor'
+-              ? 'cursor'
 -            : selectedAgentType.value === 'dsh' ? 'dsh' : selectedAgentType.value === 'opencode'
 -              ? 'opencode'
 -              : 'codex'
@@ -17805,7 +17975,7 @@ index 5cb16409f..000000000
 -  { label: t('chat.reasoningEffort.options.xhigh'), value: 'xhigh' },
 -  { label: t('chat.reasoningEffort.options.max'), value: 'max' },
 -])
--const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh'].includes(selectedAgentType.value))
+-const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor'].includes(selectedAgentType.value))
 -const usesGlobalAgentMode = computed(() => supportsGlobalAgentMode.value && selectedAgentMode.value === 'global')
 -const agentModeOptions = computed(() => [
 -  { label: t('codingAgents.launchModeGlobal'), value: 'global' },
@@ -17818,11 +17988,15 @@ index 5cb16409f..000000000
 -  if (!isAgentStatusAvailable(agentStatusSnapshot.value, selectedAgentType.value)) return null
 -  if (!selectedProfile.value || (!usesGlobalAgentMode.value && (!selectedAgentProvider.value || !selectedAgentModel.value))) return null
 -  return {
--    agent: selectedAgentType.value,
--    agentMode: usesGlobalAgentMode.value ? 'global' : 'scoped',
+-    ...submittedCodingAgentSelection({
+-      agent: selectedAgentType.value,
+-      agentMode: selectedAgentMode.value,
+-      priorAgentMode: priorAgentMode.value,
+-      provider: selectedAgentProvider.value,
+-      model: selectedAgentModel.value,
+-      usesGlobal: usesGlobalAgentMode.value,
+-    }),
 -    profile: selectedProfile.value,
--    provider: usesGlobalAgentMode.value ? '' : selectedAgentProvider.value,
--    model: usesGlobalAgentMode.value ? '' : selectedAgentModel.value,
 -    apiMode: selectedAgentType.value === 'hermes' || usesGlobalAgentMode.value ? '' : selectedAgentApiMode.value,
 -    reasoningEffort: usesGlobalAgentMode.value ? '' : selectedAgentReasoningEffort.value,
 -    name: agentName.value.trim() || selectedProfile.value,
@@ -17910,8 +18084,15 @@ index 5cb16409f..000000000
 -    return
 -  }
 -  error.value = ''
+-  const switched = nextCodingAgentMode({
+-    previousAgent: selectedAgentType.value,
+-    nextAgent: agent,
+-    agentMode: selectedAgentMode.value,
+-    priorAgentMode: priorAgentMode.value,
+-  })
 -  selectedAgentType.value = agent
--  if (!['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh'].includes(agent)) selectedAgentMode.value = 'scoped'
+-  selectedAgentMode.value = switched.agentMode
+-  priorAgentMode.value = switched.priorAgentMode
 -  syncAgentModelSelection(selectedProfile.value)
 -}
 -
@@ -17935,6 +18116,7 @@ index 5cb16409f..000000000
 -function applyAgentConfiguration(agent: RemoteGroupAgentDescriptor): void {
 -  selectedAgentType.value = agent.agent
 -  selectedAgentMode.value = agent.agentMode === 'global' ? 'global' : 'scoped'
+-  priorAgentMode.value = storedPriorAgentMode(agent.priorAgentMode)
 -  selectedProfile.value = agent.profile
 -  selectedAgentProvider.value = agent.provider
 -  selectedAgentModel.value = agent.model
@@ -18297,7 +18479,7 @@ index 5cb16409f..000000000
 -              @update:value="handleAgentProfileChange"
 -            />
 -          </div>
--          <div v-if="supportsGlobalAgentMode" class="field">
+-          <div v-if="supportsGlobalAgentMode && selectedAgentType !== 'cursor'" class="field">
 -            <label>{{ t('codingAgents.launchModeScope') }}</label>
 -            <NSelect
 -              v-model:value="selectedAgentMode"
@@ -19625,10 +19807,10 @@ index 5c05b0412..000000000
 -  }
 -}
 diff --git a/packages/desktop/src/main/index.ts b/packages/desktop/src/main/index.ts
-index 9601f1a37..404eb9329 100644
+index 084f39bb7..44be06ebc 100644
 --- a/packages/desktop/src/main/index.ts
 +++ b/packages/desktop/src/main/index.ts
-@@ -32,7 +32,6 @@ import { resetDesktopDefaultLogin } from './desktop-login-reset'
+@@ -33,7 +33,6 @@ import { resetDesktopDefaultLogin } from './desktop-login-reset'
  import { installHermesStudioCliShim, installHermesStudioMcpShim } from './cli-shim'
  import { parseHermesCliArgs, runBundledHermesCli } from './hermes-cli'
  import { installSelectionContextMenu } from './selection-context-menu'
@@ -19636,7 +19818,7 @@ index 9601f1a37..404eb9329 100644
  import { isTrustedDesktopAppUrl, normalizeExternalHttpUrl } from './window-open-policy'
  import {
    ensureDesktopRuntime,
-@@ -554,9 +553,7 @@ async function createWindow(): Promise<void> {
+@@ -555,9 +554,7 @@ async function createWindow(): Promise<void> {
    installSelectionContextMenu(mainWindow)
  
    // External links → system browser
@@ -19647,7 +19829,7 @@ index 9601f1a37..404eb9329 100644
      if (isTrustedDesktopAppUrl(url, serverUrl)) {
        return { action: 'allow' }
      }
-@@ -643,9 +640,7 @@ async function openChatWindow(sessionIdInput: unknown, profileInput?: unknown):
+@@ -644,9 +641,7 @@ async function openChatWindow(sessionIdInput: unknown, profileInput?: unknown):
    })
  
    installSelectionContextMenu(chatWindow)

@@ -1,4 +1,4 @@
-From c9e904642ebd03bc8eb12c9322338b6bb6cf2df3 Mon Sep 17 00:00:00 2001
+From 3e01ba15958a3d3a33cf4d94e78a301e3173c229 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 18:28:26 +0800
 Subject: [PATCH] feat(chat): dual-select session model picker and mobile
@@ -14,10 +14,10 @@ session drawer covers the global hamburger icon.
  2 files changed, 141 insertions(+), 354 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 3e4f051ac..db1801df5 100644
+index 993e300be..6a5a94c11 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -2099,13 +2099,13 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2092,13 +2092,13 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  
    .input-model-button {
@@ -35,18 +35,18 @@ index 3e4f051ac..db1801df5 100644
  
    .input-settings-button {
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index 60b76262f..e8e2a9184 100644
+index 0276afe53..f098f2ff7 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -58,7 +58,6 @@ import { buildActiveSessionMenuOptions, buildSessionContextMenuOptions } from ".
- import PageSidebarNav from "@/components/layout/PageSidebarNav.vue";
+@@ -62,7 +62,6 @@ import PageSidebarNav from "@/components/layout/PageSidebarNav.vue";
+ import PageSidebarFooter from "@/components/layout/PageSidebarFooter.vue";
  import { isStoredSuperAdmin } from "@/api/client";
  import { useDefaultWorkspace } from "@/composables/useDefaultWorkspace";
 -import { useCollapsedProviderGroups } from "@/composables/useCollapsedProviderGroups";
  import { canScopedCodingAgentUseProvider, usesServerManagedProviderAuth, isKeylessModelProvider, openCodeFreeApiMode } from "@/utils/codingAgentProviders";
  import { OPEN_SUBAGENT_STREAM_EVENT, type OpenSubagentStreamDetail } from "@/utils/hermes/subagent-stream";
  import { desktopBridge, hasDesktopBrowserBridge } from "@/utils/desktop-bridge";
-@@ -2102,12 +2101,7 @@ async function handleWorkspaceConfirm() {
+@@ -2086,12 +2085,7 @@ async function handleWorkspaceConfirm() {
  const showSessionModelModal = ref(false);
  const showSessionModelModeModal = ref(false);
  const sessionModelSessionId = ref<string | null>(null);
@@ -59,7 +59,7 @@ index 60b76262f..e8e2a9184 100644
  const sessionModelValue = ref("");
  const sessionModelProvider = ref("");
  const sessionModelCustomInput = ref("");
-@@ -2175,7 +2169,10 @@ const sessionCanUseMoa = computed(() =>
+@@ -2161,7 +2155,10 @@ const sessionCanUseMoa = computed(() =>
  );
  
  const sessionModelProviderOptions = computed(() =>
@@ -71,7 +71,7 @@ index 60b76262f..e8e2a9184 100644
  );
  
  const sessionModelGroupsWithCustom = computed(() =>
-@@ -2190,25 +2187,23 @@ const sessionModelGroupsWithCustom = computed(() =>
+@@ -2176,25 +2173,23 @@ const sessionModelGroupsWithCustom = computed(() =>
    })),
  );
  
@@ -112,7 +112,7 @@ index 60b76262f..e8e2a9184 100644
  
  async function openSessionModelModal(sessionId: string) {
    const requestedSession =
-@@ -2245,7 +2240,6 @@ async function openSessionModelModal(sessionId: string) {
+@@ -2231,7 +2226,6 @@ async function openSessionModelModal(sessionId: string) {
      ? "moa"
      : providerGroup ? session?.provider || "" : defaults.provider || "";
    sessionModelCustomProvider.value = usesMoa ? defaults.provider : sessionModelProvider.value;
@@ -120,7 +120,7 @@ index 60b76262f..e8e2a9184 100644
    sessionModelCustomInput.value = "";
    showSessionModelModal.value = true;
  }
-@@ -2253,7 +2247,46 @@ async function openSessionModelModal(sessionId: string) {
+@@ -2239,7 +2233,46 @@ async function openSessionModelModal(sessionId: string) {
  function handleSessionModelKindChange(value: "model" | "moa") {
    if (sessionModelSwitching.value || (value === "moa" && !sessionCanUseMoa.value)) return;
    sessionModelKind.value = value;
@@ -168,7 +168,7 @@ index 60b76262f..e8e2a9184 100644
  }
  
  function handleHeaderModelClick() {
-@@ -2266,23 +2299,6 @@ function handleHeaderModelClick() {
+@@ -2252,23 +2285,6 @@ function handleHeaderModelClick() {
    openSessionModelModal(sessionId);
  }
  
@@ -192,7 +192,7 @@ index 60b76262f..e8e2a9184 100644
  function defaultSessionModelApiMode(provider: string): CodingAgentApiMode {
    const group = sessionModelBaseGroups.value.find((item) => item.provider === provider);
    const providerKey = String(group?.provider || provider || "").toLowerCase();
-@@ -2347,8 +2363,9 @@ function cancelSessionModelMode() {
+@@ -2333,8 +2349,9 @@ function cancelSessionModelMode() {
  
  async function handleSessionModelCustomSubmit() {
    const model = sessionModelCustomInput.value.trim();
@@ -203,7 +203,7 @@ index 60b76262f..e8e2a9184 100644
    await selectSessionModel(model, provider);
  }
  </script>
-@@ -2809,152 +2826,74 @@ async function handleSessionModelCustomSubmit() {
+@@ -2778,152 +2795,74 @@ async function handleSessionModelCustomSubmit() {
        v-model:show="showSessionModelModal"
        preset="card"
        :title="t('chat.setModelTitle')"
@@ -410,7 +410,7 @@ index 60b76262f..e8e2a9184 100644
            </div>
          </div>
        </NSpin>
-@@ -3517,187 +3456,30 @@ async function handleSessionModelCustomSubmit() {
+@@ -3490,187 +3429,30 @@ async function handleSessionModelCustomSubmit() {
    background-color: $bg-card;
  }
  
@@ -607,7 +607,7 @@ index 60b76262f..e8e2a9184 100644
    padding-top: 12px;
    border-top: 1px solid $border-color;
  }
-@@ -3707,11 +3489,6 @@ async function handleSessionModelCustomSubmit() {
+@@ -3680,11 +3462,6 @@ async function handleSessionModelCustomSubmit() {
    gap: 8px;
  }
  
@@ -619,7 +619,7 @@ index 60b76262f..e8e2a9184 100644
  .session-model-custom-input {
    flex: 1;
  }
-@@ -3722,6 +3499,13 @@ async function handleSessionModelCustomSubmit() {
+@@ -3695,6 +3472,13 @@ async function handleSessionModelCustomSubmit() {
    color: $text-muted;
  }
  
@@ -633,7 +633,7 @@ index 60b76262f..e8e2a9184 100644
  .session-list {
    width: $sidebar-width;
    min-height: 0;
-@@ -3750,14 +3534,17 @@ async function handleSessionModelCustomSubmit() {
+@@ -3723,14 +3507,17 @@ async function handleSessionModelCustomSubmit() {
    }
  
    @media (max-width: $breakpoint-mobile) {
@@ -653,7 +653,7 @@ index 60b76262f..e8e2a9184 100644
  
      &.collapsed {
        transform: translateX(calc(-100% - 10px));
-@@ -3772,10 +3559,10 @@ async function handleSessionModelCustomSubmit() {
+@@ -3745,10 +3532,10 @@ async function handleSessionModelCustomSubmit() {
    }
  
    .session-backdrop {

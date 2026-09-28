@@ -1,4 +1,4 @@
-From 3deb46135bd149dfa72a5f08551f7e572604e47b Mon Sep 17 00:00:00 2001
+From 5dcdbd21ca72500e4facc60d8ac856785ad156c9 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
@@ -31,18 +31,19 @@ Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
  .../workflow-import-confirmation.test.ts      |   19 -
  tests/client/workflow-locales.test.ts         |  108 --
  .../workflow-notification-target.test.ts      |   34 -
- .../client/workflow-reasoning-effort.test.ts  |   60 -
+ .../client/workflow-reasoning-effort.test.ts  |   62 -
  tests/client/workflow-run-budget.test.ts      |   99 -
  .../workflow-run-evidence-layout.test.ts      |  121 --
  tests/client/workflow-run-pager.test.ts       |   21 -
  .../workflow-run-snapshot-indicator.test.ts   |   17 -
  tests/client/workflow-run-snapshot.test.ts    |   80 -
- tests/client/workflow-skills.test.ts          |   41 -
+ tests/client/workflow-skills.test.ts          |   42 -
  tests/client/workflow-socket.test.ts          |   79 -
  tests/e2e/desktop-window-chrome.spec.ts       |   10 -
  tests/e2e/fixtures.ts                         |  126 +-
+ tests/e2e/workflow-cursor-mode.spec.ts        |   62 -
  tests/e2e/workflow-ui.spec.ts                 | 1606 -----------------
- 28 files changed, 15 insertions(+), 3553 deletions(-)
+ 29 files changed, 15 insertions(+), 3618 deletions(-)
  delete mode 100644 tests/client/workflow-approval-key.test.ts
  delete mode 100644 tests/client/workflow-canvas.test.ts
  delete mode 100644 tests/client/workflow-edge-authoring.test.ts
@@ -59,6 +60,7 @@ Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
  delete mode 100644 tests/client/workflow-run-snapshot.test.ts
  delete mode 100644 tests/client/workflow-skills.test.ts
  delete mode 100644 tests/client/workflow-socket.test.ts
+ delete mode 100644 tests/e2e/workflow-cursor-mode.spec.ts
  delete mode 100644 tests/e2e/workflow-ui.spec.ts
 
 diff --git a/tests/client/api.test.ts b/tests/client/api.test.ts
@@ -141,20 +143,20 @@ index 5b1162e33..0735ab158 100644
  
    it('keeps native Windows title-bar geometry LTR in every app language', () => {
 diff --git a/tests/client/ekko-display-name.test.ts b/tests/client/ekko-display-name.test.ts
-index a23ad548c..2f02e3ced 100644
+index 314b1e4fc..6154e806e 100644
 --- a/tests/client/ekko-display-name.test.ts
 +++ b/tests/client/ekko-display-name.test.ts
-@@ -23,8 +23,6 @@ describe('Ekko display name', () => {
+@@ -24,8 +24,6 @@ describe('Ekko display name', () => {
    it.each([
      ['single chat', 'packages/client/src/components/hermes/chat/ChatPanel.vue',
-       '{ label: "Hermes", value: "hermes" }', '{ label: "Ekko", value: "ekko-agent" }', '{ label: "Claude", value: "claude-code" }'],
+       AGENT_OPTIONS, 'AGENT_OPTIONS', 'const newChatAgentOptions = computed(() => AGENT_OPTIONS.map('],
 -    ['workflow', 'packages/client/src/views/hermes/WorkflowView.vue',
--      "{ label: 'Hermes', value: 'hermes' }", "{ label: 'Ekko', value: 'ekko-agent' }", "{ label: 'Claude', value: 'claude-code' }"],
-   ])('places Ekko second in the %s Agent dropdown', (_name, path, hermes, ekko, claude) => {
+-      AGENT_OPTIONS, 'AGENT_OPTIONS', 'const workflowAgentDefinitions = AGENT_OPTIONS'],
+   ] as const)('uses the shared order with Ekko second in the %s Agent dropdown', (_name, path, options, exportName, binding) => {
      const source = readFileSync(path, 'utf8')
-     const hermesIndex = source.indexOf(hermes)
+ 
 @@ -36,14 +34,6 @@ describe('Ekko display name', () => {
-     expect(claudeIndex).toBeGreaterThan(ekkoIndex)
+     ])
    })
  
 -  it('keeps server-managed provider choices available for Ekko workflow nodes', () => {
@@ -355,10 +357,10 @@ index e971c5494..515361c9b 100644
 -  })
  })
 diff --git a/tests/client/i18n-coverage.test.ts b/tests/client/i18n-coverage.test.ts
-index 84dc1056c..0b09c342a 100644
+index ba202a04b..1c13401f4 100644
 --- a/tests/client/i18n-coverage.test.ts
 +++ b/tests/client/i18n-coverage.test.ts
-@@ -219,55 +219,6 @@ const PLATFORM_SETTINGS_LOCALE_SPECIFIC_LOCALIZED_KEYS: Record<string, string[]>
+@@ -246,55 +246,6 @@ const PLATFORM_SETTINGS_LOCALE_SPECIFIC_LOCALIZED_KEYS: Record<string, string[]>
    ru: ['platform.weixinToken'],
  }
  
@@ -414,7 +416,7 @@ index 84dc1056c..0b09c342a 100644
  const PLATFORM_SETTINGS_LOCALIZED_KEYS = [
    'platform.requireMention',
    'platform.requireMentionGroup',
-@@ -474,27 +425,6 @@ describe('i18n locale coverage', () => {
+@@ -501,27 +452,6 @@ describe('i18n locale coverage', () => {
      expect(missing).toEqual([])
    })
  
@@ -1606,10 +1608,10 @@ index 73b2fdd50..000000000
 \ No newline at end of file
 diff --git a/tests/client/workflow-reasoning-effort.test.ts b/tests/client/workflow-reasoning-effort.test.ts
 deleted file mode 100644
-index 9d81a8c5d..000000000
+index 528fef093..000000000
 --- a/tests/client/workflow-reasoning-effort.test.ts
 +++ /dev/null
-@@ -1,60 +0,0 @@
+@@ -1,62 +0,0 @@
 -import { readFileSync } from 'node:fs'
 -import { describe, expect, it } from 'vitest'
 -
@@ -1646,11 +1648,13 @@ index 9d81a8c5d..000000000
 -    const node = read('packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue')
 -    const view = read('packages/client/src/views/hermes/WorkflowView.vue')
 -    expect(types).toMatch(/agentMode:\s*'scoped' \| 'global'/)
--    expect(node).toContain("['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh'].includes(props.data.agent)")
+-    expect(node).toContain("['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor'].includes(props.data.agent)")
 -    expect(node).toContain("updateField('agentMode'")
 -    expect(node).toContain('v-if="usesScopedModel"')
 -    expect(view).toContain('agentMode: node.data.agentMode')
--    expect(view).toContain("!['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh'].includes(nextAgent) ? { agentMode: 'scoped' as const } : {}")
+-    expect(view).toContain('nextCodingAgentMode({')
+-    expect(view).toContain('agentMode: switched.agentMode')
+-    expect(view).toContain('priorAgentMode: switched.priorAgentMode')
 -  })
 -  it('keeps Workflow nodes aligned with upstream defaults instead of exposing execution-policy controls', () => {
 -    const types = read('packages/client/src/components/hermes/workflow/types.ts')
@@ -2040,10 +2044,10 @@ index 5f13267e4..000000000
 -})
 diff --git a/tests/client/workflow-skills.test.ts b/tests/client/workflow-skills.test.ts
 deleted file mode 100644
-index bdf6d65d9..000000000
+index b4dd1fd4a..000000000
 --- a/tests/client/workflow-skills.test.ts
 +++ /dev/null
-@@ -1,41 +0,0 @@
+@@ -1,42 +0,0 @@
 -import { describe, expect, it } from 'vitest'
 -import { buildWorkflowSkillOptions, workflowAgentToSkillTarget } from '@/utils/hermes/workflow-skills'
 -
@@ -2055,6 +2059,7 @@ index bdf6d65d9..000000000
 -    expect(workflowAgentToSkillTarget('codex')).toBe('codex')
 -    expect(workflowAgentToSkillTarget('pi')).toBe('pi')
 -    expect(workflowAgentToSkillTarget('dsh')).toBe('dsh')
+-    expect(workflowAgentToSkillTarget('cursor')).toBe('cursor')
 -    expect(workflowAgentToSkillTarget('unknown-agent')).toBe('hermes')
 -  })
 -
@@ -2171,10 +2176,10 @@ index 71fecce20..000000000
 -
 -})
 diff --git a/tests/e2e/desktop-window-chrome.spec.ts b/tests/e2e/desktop-window-chrome.spec.ts
-index 18a1c3575..fbe9ec0cb 100644
+index 786b3f6ac..2505fd44f 100644
 --- a/tests/e2e/desktop-window-chrome.spec.ts
 +++ b/tests/e2e/desktop-window-chrome.spec.ts
-@@ -347,16 +347,6 @@ test('routes the desktop session popup action to the native chat window bridge',
+@@ -359,16 +359,6 @@ test('routes the desktop session popup action to the native chat window bridge',
    ])
  })
  
@@ -2349,6 +2354,74 @@ index c495d98c7..357bf60ae 100644
          setTimeout(() => ack({
            roomId: payload && payload.roomId,
            messages: [],
+diff --git a/tests/e2e/workflow-cursor-mode.spec.ts b/tests/e2e/workflow-cursor-mode.spec.ts
+deleted file mode 100644
+index a5bbb103b..000000000
+--- a/tests/e2e/workflow-cursor-mode.spec.ts
++++ /dev/null
+@@ -1,62 +0,0 @@
+-import { expect, test } from '@playwright/test'
+-import { authenticate, mockHermesApi, TEST_ACCESS_KEY } from './fixtures'
+-
+-for (const target of [
+-  { label: 'Hermes', agent: 'hermes', mode: 'scoped' },
+-  { label: 'Ekko', agent: 'ekko-agent', mode: 'scoped' },
+-  { label: 'Codex', agent: 'codex', mode: 'global' },
+-]) {
+-  test(`workflow saves a valid ${target.label} mode after Codex global → Cursor`, async ({ page }) => {
+-    await authenticate(page, TEST_ACCESS_KEY, 'research')
+-    const api = await mockHermesApi(page, {
+-      workflows: [{
+-        id: 'wf-cursor-mode', name: 'Cursor mode', profile: 'research', workspace: null,
+-        nodes: [{
+-          id: 'agent', type: 'agent', position: { x: 80, y: 80 },
+-          data: {
+-            title: 'Agent', agent: 'codex', agentMode: 'global',
+-            provider: 'test-provider', model: 'test-model', apiMode: 'chat_completions',
+-            input: 'Run', skills: [], images: [], approvalRequired: false,
+-          },
+-        }],
+-        edges: [], viewport: { x: 80, y: 80, zoom: .75 }, created_at: 1, updated_at: 1,
+-      }],
+-      workflowRuns: [],
+-    })
+-    await page.route('**/api/agents/status', route => route.fulfill({ json: {
+-      revision: 1, updatedAt: new Date().toISOString(),
+-      agents: ['hermes', 'ekko-agent', 'codex', 'cursor'].map(id => ({
+-        id, installed: true, source: 'user-cli', path: `/test/${id}`, version: '1.0.0',
+-      })),
+-    } }))
+-
+-    await page.goto('/#/hermes/workflow')
+-    const node = page.locator('.vue-flow__node[data-id="agent"]')
+-    await node.locator('.n-select').first().click()
+-    await expect.poll(async () => (await page.locator('.n-base-select-option__content:visible').allTextContents())
+-      .map(label => label.split(' · ')[0])).toEqual(['Hermes', 'Ekko', 'Claude', 'Codex', 'Pi', 'Grok', 'OpenCode', 'DeepSeek Harness', 'Cursor'])
+-    await page.getByText('Cursor', { exact: true }).last().click()
+-    await expect(node.locator('.n-select').first()).toContainText('Cursor')
+-    await expect.poll(() => api.requests.some(request => (
+-      request.pathname === '/api/hermes/skills' && new URLSearchParams(request.search).get('target') === 'cursor'
+-    ))).toBe(true)
+-    await node.locator('.n-select').first().click()
+-    await page.getByText(target.label, { exact: true }).last().click()
+-    await expect(node.locator('.n-select').first()).toContainText(target.label)
+-    if (target.mode === 'scoped') {
+-      await expect(node.locator('.model-trigger')).toContainText('test-model')
+-    }
+-
+-    await page.locator('.header-actions').getByRole('button', { name: 'Save', exact: true }).click()
+-    const saves = () => api.requests.filter(request => (
+-      request.method === 'PATCH' && request.pathname === '/api/studio/workflows/wf-cursor-mode'
+-    ))
+-    await expect.poll(() => saves().length).toBe(1)
+-    const data = JSON.parse(saves()[0].postData || '{}').nodes[0].data
+-    expect(data).toMatchObject({
+-      agent: target.agent, agentMode: target.mode, provider: 'test-provider', model: 'test-model',
+-    })
+-    expect(data.priorAgentMode).toBeUndefined()
+-    expect(api.unexpectedRequests).toEqual([])
+-  })
+-}
 diff --git a/tests/e2e/workflow-ui.spec.ts b/tests/e2e/workflow-ui.spec.ts
 deleted file mode 100644
 index bc691c380..000000000

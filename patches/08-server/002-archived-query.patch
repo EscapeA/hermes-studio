@@ -1,4 +1,4 @@
-From a7cdfa1b5d9a20e409862081c20a99db9b2253aa Mon Sep 17 00:00:00 2001
+From fa7a95169f9a4d21c6db22923ac07a310e6ac0e7 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 23 Aug 2026 08:51:56 +0800
 Subject: [PATCH] fix(server): support archived=1 on GET /sessions (restore
@@ -14,10 +14,10 @@ default exclude archived (original behavior).
  1 file changed, 12 insertions(+), 4 deletions(-)
 
 diff --git a/packages/server/src/modules/studio/controllers/sessions.ts b/packages/server/src/modules/studio/controllers/sessions.ts
-index c37469d50..130408707 100644
+index e80b2eb37..c837b93fd 100644
 --- a/packages/server/src/modules/studio/controllers/sessions.ts
 +++ b/packages/server/src/modules/studio/controllers/sessions.ts
-@@ -491,6 +491,9 @@ export async function list(ctx: any) {
+@@ -498,6 +498,9 @@ export async function list(ctx: any) {
      .map(value => String(value).trim()).filter(Boolean)
    const includedIds = ctx.query.include === undefined ? undefined : readIds(ctx.query.include)
    const excludedIds = readIds(ctx.query.exclude)
@@ -27,7 +27,7 @@ index c37469d50..130408707 100644
  
    const knownProfiles = profile ? null : new Set(listProfileNamesFromDisk())
    const allowedProfiles = allowedProfileSet(ctx)
-@@ -509,10 +512,15 @@ export async function list(ctx: any) {
+@@ -517,10 +520,15 @@ export async function list(ctx: any) {
      ...listOptions,
      ...(paginated ? { offset } : {}),
    })

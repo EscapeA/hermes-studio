@@ -1,4 +1,4 @@
-From 63217698617eab3e80a6bfb5368a6823c5fbfe9f Mon Sep 17 00:00:00 2001
+From 1cc2580dbba7217a5b4be390ee8634e2ff6ab268 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 7 Jul 2026 10:11:13 +0800
 Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
@@ -9067,10 +9067,10 @@ index 000000000..1ee3936c6
 +  return { updateAvailable, applyUpdate }
 +}
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index d4e32970b..1300070de 100644
+index 1313e611a..d1a3e97ac 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -3630,4 +3630,7 @@ export default {
+@@ -3801,4 +3801,7 @@ export default {
      new_0_7_0_10: 'The English and Chinese READMEs now document the five runtimes, three Agent families, module ownership, canonical APIs, and current development and validation workflows (#2745)',
      new_0_7_0_11: 'Device Connections now shows only Android and iOS download cards; official Apple releases are labeled App Store instead of TestFlight · App Store',
    },
@@ -9079,10 +9079,10 @@ index d4e32970b..1300070de 100644
 +  },
  }
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 8cf9c01c9..3f50bb83c 100644
+index 33424a4bd..5839fb0e0 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -3678,4 +3678,7 @@ export default {
+@@ -3849,4 +3849,7 @@ export default {
      new_0_7_0_10: '中英文 README 已更新，完整说明五种运行时、三类 Agent、模块归属、规范 API，以及当前开发和验证流程（#2745）',
      new_0_7_0_11: '“设备互联”现仅显示 Android 和 iOS 下载卡片；Apple 正式版只标记为 App Store，不再显示 TestFlight · App Store',
    },
