@@ -1,0 +1,295 @@
+# EscapeA/hermes-studio 补丁串（Patch Stack）管理
+
+本目录是 fork 的全部自定义内容的**权威来源**。分支模型：
+
+```
+main   = 纯上游同步（git reset --hard upstream/main，不含任何自定义）
+custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge commit）
+```
+
+## 目录结构
+
+| 组 | 内容 | 补丁 |
+|---|---|---|
+| 01-ci | CI/测试（unit-test 移除、custom 触发、CF Pages deploy、mock） | 001-006 |
+| 02-pwa | PWA（离线、SW 缓存、SWR、资源瘦身、_headers、状态栏主题色） | 001-009 |
+| 04-usage | 用量显示（prompt_tokens、百分比、session 累计、composer 对齐、运行中实时解码 tok/s） | 001-010 |
+| 05-chat | Chat 核心（fast-path、avatar、双下拉、identity、滚动、聊天身份开关、用户气泡蓝色、clarify 折叠收起、工具卡按轮分组、去「正在思考」gif 图标、run 态指示器与输入区间距收紧、去输入框语音按钮） | 001-022 |
+| 06-mobile-input | 移动端输入（Enter 换行、模型下拉不弹键盘） | 001-002 |
+| 07-workflow | Workflow 移动端布局 + i18n | 001-002 |
+| 08-server | server 静态缓存头 + GET /sessions archived=1 恢复 | 001-002 |
+| 09-cleanup | 清理（移除 apikey.fun 推广：侧边栏 apiRelay 按钮、FUN_LINK_MAP 提示、apiRelay locale 键；移除页面侧边栏「设备互联」入口） | 002-003 |
+| 10-perf-p1 | P1 性能（highlight core、comic 字体 woff2、locale 构建期合并、logo 单请求） | 001-004 |
+| 11-socket-stall | socket 卡死防护（服务端 backlog 检测断连 + 前端 REST 兜底刷新） | 001-002 |
+| 12-tool-strip | 工具面板防闪烁（500ms 延迟显示）+ 折叠单行（正在调用 N 个工具）+ 运行中工具行展开详情 + toggle 与列表上下堆叠 + 展开详情解除高度限制 | 001-004 |
+| 13-mobile-nav | 移动端顶栏统一 38px（变量派生几何 + ☰ 与内容同轴）+ ☰ 由品牌图改为三条横线图标 + 去掉与 ☰ 重复的四宫格 ▦（Models/Workflow）+ 页面侧边栏抽屉打开时隐藏全局 ☰ | 001-002 |
+| 14-test-adapt | 上游测试套件适配（`tests/client/message-list-live-reasoning.test.ts` 断言 fork 行为：按用户轮折叠的 ToolRunCard、卸载重建的 live ticker） | 001 |
+| 15-mobile-models | 模型页移动端布局（辅助模型面板宽表格 → 两行卡片、summary 双列、动作按钮左对齐、页/面板内边距 20→12px，断点改用 `$breakpoint-mobile`） | 001 |
+| 16-agent-entry | 侧边栏「Agent 管理」入口可配置直达指定 Agent 设置页（本地 localStorage 偏好；默认保持 Agent 列表） | 001 |
+| 17-remove-group-chat | 前端群聊整体移除（3 视图 + group-chat 组件目录 + store/api/utils + 4 条路由与分享页 + 四宫格群聊 tab 回归三宫格 + GlobalPendingActions 群聊分支 + 文件工作区群聊分支 + groupChat i18n 命名空间 + Electron 弹窗；测试同步删除/适配） | 001-002 |
+| 18-remove-workflow | 前端工作流整体移除（WorkflowView 5.5k 行 + workflow 组件目录 + api/socket + 10 个 utils + /hermes/workflow 路由 + 三宫格 tab 回归两宫格 + GlobalPendingActions 工作流审批管道 + App.vue deep CSS + workflow i18n 命名空间；保留 source:'workflow' 会话来源识别与 workflow.* webhook 事件名；测试同步删除/适配） | 001-002 |
+| 19-sidebar-history-toggle | 页面侧边栏改为扁平按钮组（新建会话/搜索/历史/Agent管理/模型）：历史并入顶部组并按上游 #1518 实现「历史 ⇄ 会话」切换（`chat.sessions` 文案 + 图标切换 + 回跳 hermes.chat）；移除单聊/历史宫格切换及其 CSS、NTooltip/openChat 死代码、11 locale 的 `sidebar.singleChat` 键 | 001-002 |
+| 20-remove-avatars | 前端头像整体移除（ProfileAvatar 组件 + chat-agent-avatar→chat-agent-label 只留名字映射 + 账号头像设置区 + Profile 头像弹窗/api/store + 聊天头像（气泡/空态/会话列表）+ 看板执行者头像 + `profiles.avatar`/`settings.userAvatar` i18n + 身份开关文案改「只控名字」；服务端路由/存储/DB 保留，coding-agents 静态 logo 保留） | 001-002 |
+| 21-chat-run-new-session-attachment | chat-run 新建会话首条带附件消息修复（上游 #3144 的 session-upload 守卫要求会话行已存在，而新建会话的行由本次 run 自己创建 → 首条带附件消息必报 `Session not found`；改为只对已存在的会话做严格校验、首条消息的上传也登记进 session uploads、run 前置拒绝补一行 warn 日志） | 001 |
+| 22-theme-styles | 主题风格表驱动化 + 四套新风格（`tech` 升级为「深空 HUD」，新增 `neon` 霓虹赛博 / `aurora` 渐变空间舱 / `blueprint` 浅色蓝图；风格类名与 naive-ui palette 改查表 `STYLE_CLASS` / `STYLE_PALETTES`，材质层拆到新文件 `styles/style-layers.scss`，风格下拉带色卡，11 locale 补标签键） | 001-002 |
+| 23-run-speed-latest | 本轮解码速度「当前/平均」双读数（run 态指示器在原有本轮平均旁补「最近一次已完成调用」的读数；server `usage.updated` 增加 `speedLatest`、client store 增加 `runSpeedLatest`、11 locale 的 `tokensPerSecond` 拆为 Current/Average） | 001-002 |
+| 24-styles-and-motion | 两套克制向风格 + 交互打磨：`graphite`（冷峻工程：近黑 + 单一靛蓝 + 细边框，零渐变零发光，naive-ui 圆角收紧，聚焦只画锐环）、`warm`（暖调暗：暖黑 + 暖白正文 + 无彩色强调，暖色渐隐 + 表面半透明）；新增 `--input-focus-glow` 聚焦光晕（按各风格主色派生，顺带修掉深色下聚焦阴影被 `.dark &` 覆盖的宿疾）；引入 `motion-v@2.4.4`（独立 chunk ≈46KB gzip）+ 共享 `motion-presets.ts`（三档 spring + 尊重减少动效），工具卡展开/入场/按压、会话列表 capped stagger、工具面板弹簧缓动 | 001-002 |
+
+**2026-09-27 新增 `24-styles-and-motion` 组（001 源码、002 测试）**：风格补到 **9 套**，并给交互补上状态反馈与物理手感。
+
+| 风格 | 定位 | 关键点 |
+|---|---|---|
+| `graphite` 冷峻工程 | T1（Linear / Vercel / x.ai） | 近黑 `#08090a` + 靛蓝 `#5e6ad2`；**零渐变/零阴影/零发光**（实测顶-底亮度差 0.00），只靠 1px 半透明白边分层；naive-ui 圆角收紧到 6/4px |
+| `warm` 暖调暗 | T6（Warp / OpenCode） | 暖黑 `#201d1d` + 暖白 `#e6dccd`；**无彩色强调**（按钮是纸白底深字）；暖色渐隐（实测暖度 +4.59、顶-底 +6.43）；表面半透明让渐隐透出 |
+
+- **聚焦光晕（状态样式）**：新增 `--input-focus-glow`，从各风格自己的 `--accent-primary-rgb` 派生，一套变量覆盖 9 风格；`graphite` 按 T1 定义 opt-out（`noFocusGlow` → 只画 1.5px 锐环）。同时修掉一个宿疾：composer 的聚焦 `box-shadow` 在深色风格下**从未生效**（`.dark &` 同等特异性但更靠后）。naive-ui 输入类组件同步加了 `boxShadowFocus` / `boxShadowActive`。
+- **动效（motion-v）**：`motion-v@2.4.4`（MIT，官方 motiondivision/motion-vue）落地为独立 chunk **≈46KB gzip**（占全部 js gzip 1.06%，入口 chunk 只 +1.3KB），无 React 代码混入。共享 `composables/motion-presets.ts` 统一三档 spring 并在系统「减少动效」时降级为短 tween。接入：工具卡展开改 spring `height:auto`（替换原 CSS `grid-template-rows` 技巧）、工具卡入场、工具卡 header / 主题按钮按压；会话列表用 **capped nth-child 纯 CSS stagger**（根元素是动态 `<component :is>` 且有 5 个调用点，加 index prop 不划算）；工具面板用**弹簧形 `linear()` 缓动**（该面板是 Vue `<Transition>` + 4 个生命周期钩子，且上游测试钉死 `width 0.25s`，换 motion-v 风险收益不匹配）。
+- ⚠️ 途中把 spring 加到了 `DrawerPanel.vue`，实测发现它是 **fork 内死代码**（全仓零引用）→ 已 `git checkout` 回退，无无意义改动。
+
+验证：`vue-tsc -b` 与 `vite build` 通过；客户端测试对比**当前环境**基线（56 失败/12 文件）**零新增失败**；9 套风格在真实浏览器逐风格读回 `html` 类名 / `--bg-primary` / `--accent-primary` / `theme-color` 全部命中；聚焦光晕以截图 + 计算值双实证（tech 出青光晕、graphite 无发光）；Aries 真机验收通过。
+
+**2026-09-27 新增 `23-run-speed-latest` 组（001 源码、002 测试）**：
+`04-usage/010` 上线后 run 态指示器只有一个数——本轮平均，随着调用陆续完成会**往上爬**，长工具执行期间看着像在变。
+本组在旁边补上「当前」= **最近一次已完成调用**的解码速度（一次事件下发一次，工具执行期间数值不动）：
+
+- server：`foldDecodeCallResult` 额外记下最后一次调用的 span/tokens，`latestRunSpeed` 暴露它；
+  `usage.updated` 在原有 `speed`（本轮平均）旁新增 `speedLatest`；新 run 接管 fold state 时两者一起归零。
+- client store：`runSpeedLatest` 与 `runSpeed` 并列，同一事件填充，`clearRunSpeed` 一起清。
+- 聊天视图：run 态指示器并排渲染「当前 / 平均」；run 结束时结算值仍常驻到该轮消息上。
+- i18n：`chat.tokensPerSecond` 拆为 `chat.tokensPerSecondCurrent` / `chat.tokensPerSecondAverage`（11 locale 同步）。
+
+⚠️ **为什么是新组 23 而不是接在 `04-usage/010` 后面**（踩过并已实证的坑）：
+重放顺序是**按组号**（`04` → `05` → … → `22`），而 `LiveReasoningStatus.vue` 同时被
+`04-usage/010`、`05-chat/014/020/021`、`20-remove-avatars/001` 改过。把本补丁放进 `04-usage` 时，
+它会在 `05-chat/020` **之前**被应用，可它的 diff 是在 `05-chat/020` **之后**创作出来的 ⇒ 基线不匹配，
+`git am --3way` 在该文件上直接冲突（实测 87/88 落位、1 失败）。**结论：新补丁必须放进「组号排在它所依赖的所有补丁之后」的组**，
+若它依赖了多个更高组号的补丁，就新建一个组放在最后，而不是塞回早期组。
+
+验证：`tests/client/live-reasoning-status-speed.test.ts`（新）+ `tests/server/run-chat-run-speed.test.ts`（扩）
++ 既有 `run-speed` / `message-item-run-speed` / `chat-store-workspace-diff-turn` 共 **30 用例全绿**；`vue-tsc -b` 通过；
+全量 **88/88** 补丁在 `upstream/main` 上零冲突重放、重放树与 `custom` 逐字节一致。
+
+共 **90 个补丁**（含 01-ci/006 的 custom 分支切换；0.7.1 升级新增 10-perf-p1/005、05-chat/016-聊天身份开关、05-chat/017-用户气泡浅蓝；0.7.17 后新增 05-chat/018-clarify 折叠收起、05-chat/019-工具卡按轮分组、12-tool-strip/002-运行中工具行展开详情、12-tool-strip/003-toggle 与列表上下堆叠、12-tool-strip/004-展开详情解除高度限制、09-cleanup/002-移除 apikey.fun 推广、08-server/003-归档数据源放行；0.7.18 重放 77/77 成功，3 处冲突已回写：05-chat/004、05-chat/005、11-socket-stall/001；0.7.22 新增 14-test-adapt/001；**0.7.23 重放 83/83 零冲突、无补丁需回写**；**2026-09-21 移除 03-connection 组（11 补丁）+ 连带失效的 09-cleanup/001，重放 72/72 零冲突**；**2026-09-21 新增 16-agent-entry/001-侧边栏「Agent 管理」入口可配置**；**0.7.24 重放 73/73 落位、2 处位置冲突已回写：01-ci/004、15-mobile-models/001**；**2026-09-24 新增 13-mobile-nav/002-页面侧边栏抽屉打开时隐藏全局 ☰**；**2026-09-24 新增 17-remove-group-chat 组（001 前端源码移除、002 测试适配）**；**2026-09-24 新增 18-remove-workflow 组（001 前端源码移除、002 测试适配；保留 workflow 会话来源与 webhook 事件名）**；**2026-09-24 新增 19-sidebar-history-toggle 组（侧边栏扁平化 + 历史⇄会话切换，对齐上游 #1518）**；**2026-09-24 新增 20-remove-avatars 组（001 前端源码移除、002 测试适配；服务端与静态 logo 保留）**；**2026-09-27 新增 21-chat-run-new-session-attachment/001（上游 #3144 附件守卫 → 新建会话首条带附件消息必报 `Session not found`；只对已存在会话严格校验 + 首条上传登记 + 前置拒绝日志），共 90 个补丁**）。
+
+**2026-09-27 新增 `22-theme-styles` 组（001 主题表驱动化 + 四套风格、002 测试）**：
+主题从「四个写死的风格」改为表驱动，并新增三套外观（`tech` 同时升级）：
+
+| 风格 | 定位 | 关键点 |
+|---|---|---|
+| `tech`（升级） | 深空 HUD | 近黑藏蓝 `#070a12` + 青 `#22d3ee`；128px 模块网格 + 32px 细网格 + 顶部青光 |
+| `neon` | 霓虹赛博 | `#05060a` + 青 `#00e5ff`/品红 `#ff2d95`；3px 扫描线 + 双角 bloom + 卡片霓虹描边 |
+| `aurora` | 渐变空间舱 | `#0a0a14` + 紫 `#8b5cf6`；三层极光 radial（42s 漂移）+ 表面 0.60 半透明 + `backdrop-filter` |
+| `blueprint` | 蓝图（浅色优先，跟随明暗） | 浅 `#f4f7fb` / 暗 `#0d1b2a`，墨蓝 `#0b6bcb`；16px 细网格 + 80px 模块网格 |
+
+泛化：`theme-style.ts` 成为唯一来源（`STYLE_CLASS` 类名表 / `STYLE_CLASSES` / `STYLE_SWATCH` 选择器色卡），
+`main.ts` 与 `useTheme.ts` 删掉逐风格的 `if`，`theme.ts` 用 `STYLE_PALETTES` 注册表取代三元链
+（`DarkStylePalette`→`StylePalette`、`darkStyleOverrides`→`styleOverrides`）。**加风格不再改 main/useTheme/单测。**
+
+⚠️ 落地时最重要的一条：hermes-studio 是**浮动卡片布局**，页面背景只剩 ~10px 缝隙可见，**只把氛围纹理加在 `.app-layout` 上等于没加**
+（实测：卡片截图的频谱里检不出任何周期）。做法 = `body::after` 固定全屏层（z-index 3，在 `.app-layout` 之上、naive-ui teleport 弹层之下）
++ 各风格把 `--bg-main-surface` / `--bg-sidebar-surface` 改半透明（含 `-rgb` 兄弟变量）。**两半必须成对。**
+
+验证（本机）：`vue-tsc -b` 与 `vite build` 通过；客户端测试对照 HEAD 基线 worktree **零新增失败**（基线 101 失败 / 31 文件）；
+Playwright 登录后逐风格读回 `html` 类名 / `--bg-primary` / `--accent-primary` / `theme-color` **全部命中**；
+材质渲染用「去趋势 + FFT 谱峰/底噪比」实证：tech 32px **410**、neon 3px **176**、blueprint 16px **42（浅）/281（暗）**，
+ink/aurora 无周期（符合设计）。Aries 真机验收通过。
+
+⚠️ 提交时工作树另有**既有未提交 WIP**（run 态实时速度 `speedLatest`：`LiveReasoningStatus` / `MessageList` /
+`stores/hermes/chat.ts` / server `contracts+runs/session.ts` / `chat-run/usage.ts` / 两个测试文件 / locale 的
+`tokensPerSecond→tokensPerSecondCurrent+Average`），与主题在 11 个 locale 文件里**同文件不同 hunk**；
+本次只提交主题 hunk，speed hunk 原样留在工作树（拆分脚本见 `hermes_workspace/hermes-studio-tech-ui-research/stage-theme-only.py`）。
+
+**2026-09-23 新增 `09-cleanup/003-remove-connections-sidebar-entry`（用户要求，仅前端）**：
+删除页面侧边栏（chat / 历史 / 群聊 / workflow 共用的 `PageSidebarNav.vue`）的「设备互联」tab 及随之失去引用的 `openConnections()`；
+**路由 `hermes.connections`、`ChatView` 的 `connections` section、`ConnectionsPanel` 全部保留**（页面仍可经 URL 直达，符合「只裁剪入口、保留页面代码」惯例）。
+验证：`vite build` 通过；新产物 `PageSidebarNav-*.js` 中 `sidebar.connections` 与 tab 图标 path 命中 **0**（旧部署产物各 1）；本机 `dist/client` 已热替。
+上游测试 `tests/client/agent-manager-routing.test.ts` 用 `indexOf` 比较先后顺序，删除后 `-1` 不破坏 `>` 断言 ⇒ 无需改测试。
+
+**0.7.24 升级（2026-09-22，上游 `4805c44b1` = 29 提交 / 194 文件 / +8522 −949）**：
+73 个补丁 `git am --3way` 全部落位（无空提交），**2 处位置冲突已解并回写**（0.7.23 为零冲突）：
+- `01-ci/004-test-client-mocks`：上游给 `tests/client/models-store.test.ts` 的 `@/api/client` mock 加了 `getModelsPageProfile`，与我方同一行插入 `getBaseUrlValue` 重叠 → **取并集**（单行含三个成员）。
+- `15-mobile-models/001-models-page-mobile-layout`：上游在 `.models-content` 与 `.header-actions` 之间插入新的 `.models-profile-select`（模型页 profile 选择器），与我方插入的移动端 `.models-content{padding:12px}` 媒体查询同位 → **两侧都保留**（媒体查询在前，维持注释里「必须紧跟基础规则」的约束）。
+- 其余补丁（含 05-chat/016-022、12-tool-strip、13-mobile-nav、16-agent-entry）全部自动合并，无上下文漂移回写。
+依赖与 `bin/` 无变化（`package.json` 仅 version + repository URL）⇒ 热替脚本覆盖范围不变，但仍建议 `npm i -g hermes-web-ui@0.7.24` 对齐安装包元数据。
+API 面：新增 13 条路径（`session-shares` 会话分享、`push/live-activities` 注册、`share-voice`、`share-context-length`、`share-models/workspaces`），**零删除**；hstudio-mobile 无需适配。
+回归判定（双树 JSON 对比，95 个「补丁涉及 + 上游新增」测试文件）：新树 1596 用例 / 13 失败 vs 0.7.23 基线树 1392 用例 / 12 失败，**`新−旧` = 0 条真回归**；
+唯一新增失败 `sessions-controller > returns shared session agent and workspace metadata without account secrets`（`no such table: task_plans`，批量执行时的测试库干扰，单跑该文件 81/81 全绿）在**纯净上游 0.7.24 树同样复现** ⇒ 上游/环境问题，非 fork 引入。
+预演树（worktree `--detach` 到上游 tip）与落地 custom 逐字节一致（`git diff custom <预演 tip>` 排除 `patches/`、`docs/openapi.json` 为空）。
+
+**0.7.23 升级（2026-09-19，上游 `551c1104e` = 13 提交 / 152 文件 / +4511 −560）**：
+83 个补丁 `git am --3way` **全部零冲突落位**（0.7.22 是 3 处），补丁文件**逐字节未变**（无需回写）；
+与补丁重叠的上游文件 20 个（13 locale + `controllers/sessions.ts`、`stores/hermes/chat.ts`、
+`ChatPanel.vue`、`HistoryView.vue`、`sockets/chat-run.ts` 等）全部自动合并，`archived=1` 分支与上游新增
+pinned 过滤共存。⚠️ 上游把 npm 包改名 `ekko-studio`（保留 `hermes-web-ui` 双发包）并把 MCP 服务
+`ekko-studio-plan` 改名为 `ekko-studio-interaction`（autoinject 负责迁移 legacy 名）。
+
+**03-connection 组移除（2026-09-21，用户决定）**：
+- 背景：本机迁入家庭网络后 tailnet 直连（同源访问本机 tailscale serve / tailscale IP），不再使用「静态前端（CF Pages）+ 自定义后端 URL」的前后端分离部署 ⇒ 移除全部「连接」自定义。
+- 移除：03-connection 全组 11 补丁（ConnectionSettings.vue、登录页服务器编辑器、auth.ts base URL、upload 405 修复、i18n ×10 语言、AppSidebar 登出选择性清理）+ 连带失效的 09-cleanup/001（其清理对象 `51ccc514` 残留标记由本组 008 引入，组移除后不再存在）。
+- 重放：`git am --3way` **72/72 零冲突落位**、无补丁需回写；净差异 30 文件 +16 −2848。
+- 保留上游机制：`hermes_server_url` / `getBaseUrlValue` 为上游自带（20 文件在用），不受影响；已存在的 localStorage 自定义 URL 仍被上游逻辑读取（本机同源使用下为空）。
+- 行为变化（恢复上游）：登出 `localStorage.clear()`（不再保留主题/locale/连接配置）；上传恢复相对路径 `/api/studio/uploads`；登录页恢复上游样式（无服务器编辑器）。
+- 验证：vue-tsc 0 错 + vite build 成功；相关单测对照旧 tip 无回归（旧 30 failed/318 passed → 新 29 failed/319 passed；唯一差异 = models-voice-tabs 旧 tip 因 ConnectionSettings 渲染撞不完整 naive-ui mock 失败 1 例、移除后转绿；其余 29 例为 chat-store 套件既有失败）。
+- 交付：本机 dist/client 热替（未重启）；push `a5fb6a388` + tag `backup/pre-conn-removal-20260921`（CI build+deploy 双绿）；**2026-09-21 用户实测确认通过**。
+
+**0.7.19 之后新增（2026-09-12）**：04-usage/010-每轮解码速度（run 态实时 + 单轮结束常驻在消息上）；05-chat/020-去掉 run 态「正在思考」左侧的 thinking.gif 图标（模板/导入/样式三层清理 + 单测与 e2e 断言同步；未导入的 gif 资产保留在源码树，构建产物不再打包）。
+链路：hermes-agent `post_api_request` hook 的 `first_chunk_at` → `bridge_pool.py` 透传 → `chat-run/usage.ts` 折叠（`output_tokens / (ended_at - first_chunk_at)`，仅按**调用**累加，无首 chunk 的调用整体退出）→ 每次调用完成时随 `usage.updated` 的 `speed` 字段下发一次 → 客户端两处显示：① **run 态**：`LiveReasoningStatus`（"正在思考"计时右侧）实时显示 `138 tok/s`；② **单轮结束时**：`clearRunStartedAt` → `settleRunSpeed` 把最后一个读数挂到**本轮最新 assistant 消息**上，`MessageItem` 在消息下方常驻 `本轮平均速度：145 tok/s`（`.assistant-run-speed`），随后清理 run 态读数避免重复显示。
+设计取舍（用户 2026-09-12 定，三轮收敛）：① **不做流式估算、不周期性下发** —— 一次调用完成只发一次，数字在工具执行/思考停顿期间保持不动（早期流式估算会因分母持续增长而一直下降，已废弃）；② **run 态 + 结束常驻两处都要** —— 只放 run 态则单轮结束即消失，只放消息上则运行中看不见；③ 读数**纯客户端**挂载，刷新/重开后丢失（用户已接受，未落库）。
+⚠️ 该补丁改到 `bridge_pool.py`，热替脚本 `patch-hermes-web-ui-from-workspace-dist.sh` 已同步新增 `dist/server/agent-bridge/python/` 的 rsync 段（只换 index.js 不够，bridge worker 从**安装包**里加载这些 py 文件）。
+
+**13-mobile-nav/001-移动端顶栏与 ☰（2026-09-12，用户验收 38px）**：
+- 几何单一来源 = `packages/client/src/styles/variables.scss` 的 `$mobile-topbar-height`(38px) / `$mobile-topbar-content`(32px)，
+  派生出 `$mobile-topbar-min-height`、`$mobile-topbar-padding`（对称垂直内边距 + min-height ⇒ 内容中心恒为 高度/2 = 19px）；
+  ☰ 的 `top` 也从同一变量推导，禁止写死像素。
+- 受管顶栏：global.scss `.page-header`（`!important`，含 Models/Logs/Usage/Agents…）、
+  ChatPanel/GroupChatPanel/HistoryView 的 `.chat-header`、TerminalView 的 `.terminal-header`、WorkflowView 的 `.page-header`；
+  KanbanView 两行 sticky 顶栏**只**用同一变量推导首行 padding（不能固定高）。
+- ☰ 图标：删除 `App.vue` 里的 `/logo.png` 品牌图，改 18px / stroke 1.5 / 圆头圆角三条横线（与终端/侧栏那批内置图标同族）。
+- 移动端隐藏与 ☰ 功能重复的四宫格 ▦：新增 `ModelsView`（`.models-sidebar-toggle`，独立 mobile 块）与 `WorkflowView`（`.header-sidebar-toggle`）。
+  ⚠️ **TerminalView 的 ▦ 有意保留**：`hermes.terminal` 不在 `App.vue usesPageSidebar` 名单内，其 ☰ 打开的是应用导航抽屉而非终端会话列表，
+  隐藏后移动端将无法打开终端会话。
+- 实测（本机 Playwright + 系统 Chrome，390×844）：聊天/历史/终端/群聊顶栏 = 38px、内容中心 18.5~19、☰ 中心 19；`.page-header` 类因 1px 下边框为 39；看板两行 191px、首行中心 19.2。
+  验证配方与三个环境坑见 skill `hermes-webui-development → references/mobile-topbar-geometry.md`。
+
+**15-mobile-models/001-模型页移动端布局（2026-09-20 正式入补丁串）**：
+- `AuxiliaryModelsPanel.vue`：断点由写死的 `760px` 改为共享变量 `$breakpoint-mobile`；
+  `delegation-actions` 左对齐 + `width:auto`（原「整行宽 + 右对齐两个按钮」在 390px 上是空洞）；
+  `delegation-summary` 改 `repeat(auto-fit, minmax(150px, 1fr))`，每个 cell 自带顶部分隔线（换行成单列仍有分隔）；
+  720px 固定宽表格 `.auxiliary-table` → `min-width:0` + `overflow-x:visible` + 隐藏 `.auxiliary-row-head`，
+  `.auxiliary-row` 用 `grid-template-areas` 排成 `name actions / config timeout` 两行卡片。
+- `ModelsView.vue`：`.models-content` 移动端 padding 20 → 12px（**必须放在基础规则之后**，两者特异性相同）。
+- 该改动 2026-09-14 完成并热替本机供用户实测，因未提交而在 0.7.22 / 0.7.23 两次升级里被反复 stash / 取回；
+  本次正式入补丁串（当时的工作树 WIP 与 `stash@{0}` 逐字节相同，stash 已清理）。
+- 范式与 390×844 实测记录见 skill `hermes-webui-development → references/mobile-settings-panel-tables.md`。
+
+**16-agent-entry/001-侧边栏「Agent 管理」入口可配置（2026-09-21）**：
+- 设置 → 显示 tab 新增「侧边栏「Agent 管理」入口」下拉：默认（Agent 列表）/ Ekko / Hermes / Claude / Codex / Pi / Grok / OpenCode / DSH。
+- `utils/agent-manager-entry.ts`（新）：localStorage 键 `hermes_agent_manager_entry`（纯本地偏好，无服务端改动）；`resolveAgentManagerEntryRoute` 映射目标路由。
+- `PageSidebarNav.vue`：`openAgentManager` 读偏好 → 有目标直接跳（Ekko→`ekko.settings`、Hermes→`hermes.configSettings`、编程工具→`codingAgent.config{agentId,section:'settings'}`），未设置时维持 Agent 列表。
+- i18n ×11 新增 `settings.display.agentManagerEntry*` 三键；测试：util 单测 3 例 + display-settings 1 例 + locale parity 1 例。
+- 交付：本机 dist/client 热替（未重启）；push `6acb78d3d`（feature）+ `2d9ce63d5`（补丁登记），CI Build 绿；**2026-09-21 用户实测确认通过**。
+
+**已知偏差（2026-09-21 记录，决定不修）：clarify 折叠态与 approval 共存时的列表留白**：
+- 位置：`packages/client/src/components/hermes/chat/MessageList.vue` 的 `clarifyCompact` / `virtualListPadding`（05-chat/018 引入）。
+- 现象：同一会话中 clarify 已被折叠（`clarifyCollapsed=true`）时又出现 approval → clarify 面板被 `!visibleApproval` 隐藏、真正显示的是 approval 面板，
+  但 `clarifyCompact` 仍为 true → 列表底部只留 80px（上游该分支固定 260px）→ approval 浮层盖住最后几条消息。
+- 复现（实测 jsdom 探针，已删除）：仅 clarify → padding `20px 20px 260px`；点折叠 → `80px`；再注入同会话 approval → 仍 `80px`。
+  该场景不是臆想：上游自带 client 测试 `tests/client/message-list-scroll-position.test.ts`（"has no close control and keeps explicit approval and reply actions usable"）本身就构造了 approval+clarify 同时 pending。
+- 不修原因（用户 2026-09-21 定）：需「折叠态 + 两个 pending 同时存在」才触发，只造成视觉重叠、无功能或数据损失。
+- 若日后要修，一行即可：`const clarifyCompact = computed(() => !visibleApproval.value && !!visibleClarify.value && clarifyCollapsed.value)`。
+- 升级注意：05-chat/018 的 `ru.ts` hunk 是旧上下文，plain `git apply` 会在 `ru.ts:976` 失败，必须走既定流程 `git am --3way`；3-way 结果已核对（两个 i18n key 落在 `interactionCountdownElapsed` 之后，位置合理）。
+
+**05-chat/021-run 态指示器与输入区间距收紧（2026-09-12，用户验收）**：把「正在思考」块与输入框之间 32px 的空白收到 16px，并收紧行内上下与工具卡片间距。
+- `.streaming-indicator`：`padding: 4px` → `0 4px`；`gap: 8px` → `4px`（正在思考行 ↔ 思考详情/工具条）；新增 `margin-top: -6px`（吃掉上一条消息 `.virtual-row` 16px 行距中的 6px）。
+- `LiveReasoningStatus.vue`：`.thinking-status` `min-height: 40px` → `32px`（行内上下留白 9 → 5px）；`.live-reasoning-status` `gap: 8px` → `4px`。
+- `MessageList.vue` 的 `virtualListPadding`：新增 run 态分支 `"20px 20px 10px"`（列表底部 20 → 10，仅 run 期间；排队消息/浮动提问分支的 260/380/80 不变）。
+- `ChatInput.vue` `.chat-input-area`：顶部 8 → 6px（桌面 `6px 20px 14px`、移动 `6px 12px 12px`，**全局生效**，非 run 态专属）。
+- 结果（移动端、无思考内容）：文字↔上一条消息 ≈29 → 15px；「正在思考」行框↔输入框 32 → 16px；文字↔输入框 ≈41 → 21px。
+- ⚠️ 群聊页输入框是另一个组件 `GroupChatInput.vue`，**未同步**（顶部仍 8px）；要统一需另开补丁。
+
+**05-chat/022-去掉输入框底部语音按钮（2026-09-12，用户验收）**：
+- `ChatInput.vue` 的 `.input-actions` 里删掉 `<VoiceDialogueControls />`（录音开关 + 浮层转录），底部工具栏只剩发送按钮。
+- 连带清理（`tsconfig.app.json` 的 `noUnusedLocals: true` 会把残留直接报成编译错误，必须一起删）：`VoiceDialogueControls` 与 `useComposerVoiceInput`/`normalizeComposerVoiceTranscript` 的 import、`const voiceInput = ...`、`insertVoiceTranscriptIntoInput()`、以及唯一消费方随之消失的 `--voice-overlay-mobile-bottom-offset: 146px`（原供转录浮层在移动端定位）。
+- `tests/e2e/voice-dialogue.spec.ts` 里那条测试就是点这个 `voice-record-toggle` → 已 `test.skip` 并注明原因（`playwright.yml` 只在 main/PR 跑，fork 的 CI 不受影响，但不留必挂测试）。组件本体保留：`GroupChatInput.vue` 仍在用，`tests/client/voice-dialogue-controls.test.ts` 单测照旧。
+- **有意保留**：群聊输入框的语音按钮、设置下拉里的「实时语音模式 ◉」入口（仍可打开全屏 `RealtimeVoiceStage`）。
+
+**0.7.19 重放（2026-09-11，上游 b09dafb23）**：77/77 全部落位（无空提交），**8 处冲突已回写**：
+02-pwa/001（上游品牌 Ekko Studio 改写 index.html/manifest/test → 取上游品牌值 + 保留我方 PWA 增量）、
+02-pwa/007（上游修改 logo-original.png vs 我方删除 → 上游全树无引用，接受删除；补丁重生成后内嵌上游新版 pre-image）、
+02-pwa/010（color-scheme meta 与上游新 favicon 行重叠 → 保留双方）、
+03-connection/007（chat.ts import-only 双侧合并）、
+08-server/002（**上游重写 sessions 控制器**（分类分页 #2977 + filtered totals #2982）→ 保留上游分页/total 结构，仅重新植入 archivedOnly 过滤分支，`includeArchived` 交由 003 处理）、
+08-server/003（**改为条件式** `includeArchived: archivedOnly ? true : false` —— store 层只有 `=== false` 才拼 `COALESCE(s.is_archived,0)=0`，不传 = 包含归档；默认列表显式 false 才不污染上游分页窗口与 total）、
+11-socket-stall/001（chat-run.ts close()：上游 mobile-health 清理 + 我方 watchdog/backlog 清理都保留）、
+11-socket-stall/002（客户端 chat.ts：上游 runtimeGeneration 守卫 + 我方心跳都保留）。
+预演与验证记录：`/home/aries/hermes_workspace/hermes-studio-0.7.19-upgrade/`（构建全绿、相关单测 95/95、归档语义 3 条真实 SQLite 集成测试通过）。
+
+**0.7.20 重放（2026-09-12，上游 v0.7.20 = 6e9e68717）**：82/82 全部落位（无空提交），**13 个补丁已回写**（2 处真冲突 + 11 处上下文漂移）：
+- 硬冲突 **09-cleanup/002**（上游把推广域名改成 `apikey.fan`，我方整块删除 → 新 pre-image = `.fan` 版，语义仍是「推广一律去掉」）、
+  硬冲突 **10-perf-p1/003**（`vite.config.ts`：上游新增 `cacheDir` 行与我方 `plugins` 行重叠 → **两侧都保留**，`plugins: [vue(), createLocaleMergePlugin()]`）。
+- 上下文漂移（3-way 回落、`+/-` 行未变，回写为消除下次冲突）：02-pwa/011、03-connection/001、04-usage/001、04-usage/002、04-usage/003、04-usage/010、05-chat/001、05-chat/002、05-chat/003、05-chat/009、08-server/001。
+- 本次上游特征：`bin/` 与 0.7.19 **逐字节一致**（无 0.7.19 那次 MCP 改名陷阱）、依赖仅新增运行时 `yaml`（已 bundle 进 `dist/server/index.js`）、新增一次性启动任务会把各 profile 的 `apikey.fun` 迁到 `apikey.fan`（本机无匹配 ⇒ 空转）、DSH 集成（未使用即无副作用）。
+- 预演与验证记录：`/home/aries/hermes_workspace/hermes-studio-0.7.20-upgrade/`（构建 5/5 全绿、相关单测 96/96、上游新增用例 20/20、归档语义 3 条真实 SQLite 集成测试通过、官方 tarball 热替缺口 0 个功能文件）。
+
+**0.7.21 重放（2026-09-13，上游 v0.7.21 = 8d964022d）**：82/82 全部落位，**零冲突、零空提交、零回写**（唯一 1 次三路回落 = 10-perf-p1/003，产出与存储补丁逐行一致 ⇒ 无需回写；逐补丁审 82/82 IDENTICAL）。
+- 本次上游仅 2 提交（21 文件 / +166 −14）：Windows 下 DSH 配置运行时启动修复（#3026，改 `dsh/host.ts` + `management.ts`）+ 版本号与 changelog 提升（#3027）；12 个 locale 各 +2 条 `new_0_7_21_*`。
+- `bin/`、`dist/ekko-skills`、`dist/skills` 与官方 tarball **逐字节一致**；本机不使用 DSH ⇒ 唯一可见变化 = changelog 两行。
+- 验证记录：`/home/aries/hermes_workspace/hermes-studio-0.7.21-upgrade/`（`UPGRADE-ASSESSMENT.md` + `evidence-stage1/`：verify-am 树零差异、构建 rc=0、相关单测 121/121、全量 47 failed/624 passed（上一版 51/619）、CI `34727445348` build+deploy 双绿）。
+
+**0.7.22 重放（2026-09-17，上游 v0.7.22 = b036cf244）**：82/82 全部落位（无空提交）+ **新增 1 补丁** `14-test-adapt/001`，3 处真冲突与 3 处历史遗留补齐全部回写：
+- **05-chat/014**（多行思考块撞上游 #3052 agent logo 对 `LiveReasoningStatus.vue` 的重写 → **双侧保留**：我们的 `MarkdownRenderer` 多行渲染 + 贴底滚动 + 上游的 `agent` props/`withDefaults`/`isEkko`，并补上被 take-ours 丢掉后仍需要的 `computed` import）、
+  **05-chat/020**（去 thinking 图标：上游新写的 `isEkko ? thinkingImage : agent.src` 与 `thinking-avatar--logo` 一并删除，最终 run 态无头像图标）、
+  **04-usage/010**（tok/s 补丁撞同一文件 → props 双侧保留 `speed?` 与上游 `agent?`）。
+- **历史遗留补齐**（预演期发现，0.7.1 模块化搬迁时漏改）：`04-usage/001/002` 的单测 import 仍指向 `packages/server/src/services/hermes/run-chat/*`（0.7.22 已不存在）→ 改为 `modules/studio/services/chat-run/*`，`04-usage/001` 里 run-chat-bridge 的动态 import 同步改；`04-usage/010` 给 `run-chat-bridge-final-context.test.ts` 补 `foldDecodeCallResult`/`settledRunSpeed` 两个 mock。
+- **14-test-adapt/001**（新增）：上游 `tests/client/message-list-live-reasoning.test.ts` 断言的是 fork 之前的工具条与思考 ticker（完成的工具独立成行、live detail 元素跨轮复用）→ 适配为 fork 行为（按**用户轮**折叠进 ToolRunCard、ticker 在 tool 边界后卸载重建、strip 500ms 防闪烁需先 mount 空列表再注入消息）。
+- 本次上游 17 提交 / 107 文件 / +3234 −292（terminal 移动端会话走 app relay、standalone task-plan MCP、coding-agents MCP 注入与 PATH 处理、DeepSeek reasoning 回放、grok 多行配置、LiveReasoningStatus agent logo…）。**package.json 仅 version 变化**（无需 npm ci）；
+  ⚠️ 但 **`bin/ekko-studio-mcp.mjs` 有改动 ⇒ 部署不能只热替 dist，必须 `npm i -g hermes-web-ui@0.7.22`**（playbook §6）。
+- 落地方式：预演树（worktree `--detach` 到上游 tip → 全量重放 → 解冲突 → 补齐 → 相关单测 103/103、目标套件 13/13）经 `cherry-pick` **原样**落到 custom（非 patches 路径树逐字节一致），避免二次解冲突引入偏差；补丁回写用 55 个重锚定（其中 49 个仅 `From`/`index`/`@@` 行号位移，6 个语义变更 = 上述 001/002/010/014/020 + 05-chat/004 import 上下文）。
+- 验证记录：`/home/aries/hermes_workspace/hermes-studio-0.7.22-upgrade/`（预演遗留修复 diff、verify-am 结论、构建与单测输出）。
+
+## 升级 SOP（上游新版本）
+
+```bash
+# 1. 同步 main
+git fetch upstream --tags
+git checkout main && git merge --ff-only upstream/main
+git push escapea main
+
+# 2. 重放补丁串（custom 重建）
+git checkout -B custom main
+# ⚠️ patches/ 只在 custom 分支存在：checkout -B 会覆盖掉 working tree 的 patches/
+#   若丢失，从旧 custom tip 恢复：git checkout <旧custom-tip> -- patches/ 并 commit
+git am --3way patches/*/*.patch
+# 冲突：只解真正碰上游改动的补丁；上游已吸收某功能 → git am --skip 并从 patches/ 删除该文件
+
+# 2.5 ⚠️ 冲突解决后必须回写补丁文件（2026-08-19 实测踩坑）
+# 手工解决冲突 ≠ 补丁已更新！旧补丁文件仍是升级前版本，下次重放必冲突。
+# 铁律：解完冲突 → git add && git am --continue 后，
+#   git format-patch -1 <该补丁的commit> -o /tmp/xxx/ && cp /tmp/xxx/*.patch patches/<组>/<原文件名>.patch
+# 然后 commit 回写（docs: sync 0XX patch with conflict-resolved commit）
+
+# 3. 验证 + 部署（含可复现性验证，2026-08-19 新增，每次升级必做）
+NODE_ENV= npm run build
+# 临时分支从 main 重放补丁串，对比源码树必须 0 差异（否则某补丁文件没回写）：
+git checkout -B verify-am main && git checkout custom -- patches/ && git commit -m "tmp"
+git am --3way patches/*/*.patch && git diff verify-am custom --stat -- . ':(exclude)patches' ':(exclude)docs/openapi.json'
+git checkout custom && git branch -D verify-am
+git push --force-with-lease escapea custom   # CI → Build + CF Pages deploy
+```
+
+## 新增功能流程
+
+```bash
+git checkout -b feat/xxx main          # 短命开发分支（仅开发期）
+# 开发 → 测试
+git format-patch -1 -o patches/组/ feat/xxx   # 导出补丁
+# 按依赖序重命名（若新功能依赖已有补丁，编号必须排在依赖之后）
+git checkout custom && git am --3way patches/组/新补丁.patch
+git add patches/ && git commit -m "docs: sync patches after adding feat/xxx"
+NODE_ENV= npm run build && git push --force-with-lease escapea custom
+```
+
+**铁律**：任何 custom 上的源码修改，必须同时 `git format-patch -1` 回写 patches/ 并提交，否则视为未完成。
+
+## 历史
+
+- 2026-08-25 升级 v0.6.46 → v0.6.47（main 8dc6d193 = tag v0.6.47 + #2730 run-scoped-tool-calls 等，14+ PR：社交消息推送工作区 / 图片模型可配置 / App resume 缓存 / Codex&Claude system 合并 / 上传上限 HERMES_MAX_UPLOAD_SIZE / GLM-5.3 回滚等）：
+  62 补丁重放冲突 2 个 + 构建期修复 1 个。
+  - 007-conn-upload-405：chat.ts import 行冲突，HEAD 侧上游已加 `setSessionPushEnabled`、删 `fetchWorkspaceRunChangesForSession`（0.6.47 paginated/resume 响应自带 workspaceRunChanges）→ 取并集保留上游新增，删已无调用的 fetch import。
+  - 001-chat-session-fast-path：上游 resume 回调已内联 `setWorkspaceRunChanges`（2006 行）并删了 `loadWorkspaceRunChangesForSession` 函数 → fast-first 逻辑保留，删补丁末尾对已删函数的调用。
+  - **构建期修复新增 10-perf-p1/005-locale-sibling-imports**：0.6.47 locale 文件（zh/en/…）新增 `import { socialMessagesX } from '../social-messages'`，vite.config.ts 的 build-time locale merge 用 `new Function('require')` 相对 vite.config.ts 解析失败 → 自研 loadTsModuleAsCjs（相对 locales 目录解析 + esbuild 转译 .ts 依赖）。**教训：升级后 locale 文件新增同级 import 时，build-time merge 的 require 基准必须从 locale 目录解析**。
+  后端接口零破坏（新增 /api/social-messages/*、POST /sessions/:id/push-enabled、app.resume/app.resumed socket 事件，均为增量；hstudio-mobile 无需改动）。可复现性验证 verify-am 0 差异。备份 tag：`backup/pre-upgrade-20260825-custom-0647`。
+- 2026-08-23 补回 0.6.45 升级丢失的 sessions 行为：上游重构 sessions 控制器丢 `GET /sessions` archived 查询参数（?archived=1 只返回活跃会话，hstudio-mobile 归档页坏）→ `fix(server): support archived=1 on GET /sessions`（patches/08-server/002-archived-query.patch）。**教训：升级后必查 sessions 控制器/DB 层的查询参数与过滤语义，不只查接口结构**（0.6.45 接口结构零破坏但行为变了）
+- 2026-08-22 升级 0.6.44 → v0.6.45（f829a2ce #2665，16 PR：工具轨迹稳定化/ToolRunCard、备用 Provider 链管理、Studio 下载中心、群聊草稿、Pi 续接等）：
+  61 补丁重放仅 0047（live-reasoning-scroll）与 0061（tool-strip anti-flicker）冲突。
+  0047 = 上游 #2662 已把 LiveReasoningStatus 改为单行水平自动滚动（scrollReasoningToLatest，语义已吸收）→ **skip 并从补丁串删除**（05-chat/012-live-reasoning-scroll.patch）。
+  0061 = 上游 #2662 给 .tool-calls-panel 加固定 26px/overflow hidden（会锁死折叠条展开）→ 冲突解决保留补丁折叠结构、仅取上游 max-width:100%，已回写 patches/12-tool-strip/001-tool-strip-anti-flicker.patch。
+  后端接口零破坏（新增 run_marker 字段 + /api/hermes/config/fallback-providers，hstudio-mobile 无需改动）。
+  备份 tag：`backup/pre-upgrade-20260822-custom-0645`。
+- 2026-08-19 升级 0.6.44 → c246ba64（#2622 删旧官网 + 4 chat 修复 + upload 413 修复 + sessions-db 过滤重构）：
+  60 补丁重放仅 0040 冲突（上游 #2606 把折叠组状态抽成 useCollapsedProviderGroups composable；
+  解法=保留 NSelect 双下拉模板、删折叠死代码，补丁语义不变）。后端接口签名零变化（hstudio-mobile 无需改动）。
+  备份 tag：`backup/pre-upgrade-20260819-custom-0644`。
+- 2026-08-17 迁移：21 活跃分支（feat/feature/fix/*）+ dev/main → main/custom + patches/ + 32 archive 分支
+- 备份：tag `backup/pre-migration-20260817-dev`（旧 dev/main）、`backup/pre-upgrade-20260817`（迁移后首次升级前 custom）；全部 backup/* tag 已推远程
+- 旧分支全部保留在 `archive/*`（含 archive/dev-main），可随时对比/回滚

@@ -1,0 +1,47 @@
+From 0b89d0e1e4c360468ad8614e29ce0c211b70794b Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 17 Jun 2026 12:33:44 +0800
+Subject: [PATCH] feat: mobile Enter inserts newline instead of sending
+
+- Add mobile detection via media query (max-width: 768px)
+- On mobile devices, Enter key inserts newline instead of sending message
+- Users on mobile must tap send button explicitly
+- Responsive: automatically switches on window resize
+---
+ .../client/src/components/hermes/chat/ChatInput.vue | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index 014941a07..81c322e88 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -132,6 +132,17 @@ const messageReferencePreview = computed(() =>
+ )
+ const isMobileViewport = ref(typeof window !== 'undefined' ? isMobileChatInputViewport(window.innerWidth) : false)
+ const manualTextareaResize = ref(false)
++
++// Mobile detection — on mobile, Enter inserts newline instead of sending
++const isMobile = ref(false)
++let mobileQuery: MediaQueryList | null = null
++onMounted(() => {
++  mobileQuery = window.matchMedia("(max-width: 768px)")
++  isMobile.value = mobileQuery.matches
++  const handler = (e: MediaQueryListEvent) => { isMobile.value = e.matches }
++  mobileQuery.addEventListener("change", handler)
++  onUnmounted(() => mobileQuery?.removeEventListener("change", handler))
++})
+ const configuredTextareaHeight = computed(() =>
+   isMobileViewport.value ? null : clampChatInputHeight(settingsStore.display.chat_input_height),
+ )
+@@ -1095,7 +1106,7 @@ function handleKeydown(e: KeyboardEvent) {
+     }
+   }
+ 
+-  if (e.key !== 'Enter' || e.shiftKey) return
++  if (e.key !== 'Enter' || e.shiftKey || isMobile.value) return
+   if (isImeEnter(e)) return
+ 
+   e.preventDefault()
+-- 
+2.53.0
+

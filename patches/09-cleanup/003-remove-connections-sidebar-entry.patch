@@ -1,0 +1,67 @@
+From 3fc3672c9fcccd469b222d99b8f1fece43ab2ba0 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 23 Sep 2026 00:15:36 +0800
+Subject: [PATCH] chore(cleanup): remove Devices/connections entry from page
+ sidebar
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The per-page sidebar (chat / history / group chat / workflow) no longer shows
+the "设备互联" (hermes.connections) tab. The route, ChatView section and the
+connections panels are untouched, so the page stays reachable by URL.
+---
+ .../src/components/layout/PageSidebarNav.vue  | 30 -------------------
+ 1 file changed, 30 deletions(-)
+
+diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
+index 60fb8331c..4d14d66b9 100644
+--- a/packages/client/src/components/layout/PageSidebarNav.vue
++++ b/packages/client/src/components/layout/PageSidebarNav.vue
+@@ -35,11 +35,6 @@ function openHistory() {
+   void router.push({ name: 'hermes.history' })
+ }
+ 
+-function openConnections() {
+-  if (props.active === 'connections') return
+-  void router.push({ name: 'hermes.connections' })
+-}
+-
+ function openAgentManager() {
+   if (props.active === 'agents') return
+   void router.push(
+@@ -98,31 +93,6 @@ function openWorkflow() {
+         </svg>
+         <span>{{ t('sidebar.search') }}</span>
+       </button>
+-      <button
+-        class="page-sidebar-tab"
+-        :class="{ active: active === 'connections' }"
+-        type="button"
+-        :aria-current="active === 'connections' ? 'page' : undefined"
+-        @click="openConnections"
+-      >
+-        <svg
+-          width="15"
+-          height="15"
+-          viewBox="0 0 24 24"
+-          fill="none"
+-          stroke="currentColor"
+-          stroke-width="1.8"
+-          stroke-linecap="round"
+-          stroke-linejoin="round"
+-          aria-hidden="true"
+-        >
+-          <circle cx="18" cy="5" r="2.5" />
+-          <circle cx="6" cy="12" r="2.5" />
+-          <circle cx="18" cy="19" r="2.5" />
+-          <path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4" />
+-        </svg>
+-        <span>{{ t('sidebar.connections') }}</span>
+-      </button>
+       <button
+         v-if="canManageAgents"
+         class="page-sidebar-tab"
+-- 
+2.53.0
+

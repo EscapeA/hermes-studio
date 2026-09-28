@@ -1,0 +1,2041 @@
+From 7ef7f366f249f1c2712fdfe60943633ad840c136 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 24 Sep 2026 18:56:52 +0800
+Subject: [PATCH] feat(web): remove avatars from the frontend
+
+Drop every avatar surface from the SPA (server routes, storage and DB
+columns stay untouched):
+
+- delete the shared ProfileAvatar component and the chat-agent-avatar
+  helper; add chat-agent-label which keeps only the runtime -> display
+  name mapping that the chat author rows still use
+- account avatar: drop the "user avatar" settings section (upload /
+  random / reset), the auth api helpers and the CurrentUser avatar fields
+- profile avatar: drop the profile-manager avatar modal, ProfileCard
+  avatar, the profiles api helpers + store actions, and the avatar
+  fields on the profile types
+- chat avatars: drop the assistant avatar (profile + runtime logo) and
+  the user avatar from MessageItem, the empty-state logos, the session
+  list agent logo + 16px profile avatar, and the now-dead agent props on
+  LiveReasoningStatus / SubagentStreamPanel; author rows keep the agent
+  and profile names
+- kanban: drop the task-card assignee avatar and the avatar lookup in
+  KanbanView
+- i18n: remove the profiles.avatar and settings.userAvatar namespaces and
+  retarget the session-identity toggle copy from avatars to names in all
+  11 locales
+- keep the coding-agents logo assets (agent manager cards, notification
+  icons) and the naive-ui avatarGroupRtl style import
+---
+ packages/client/src/api/hermes/profiles.ts    |  22 --
+ packages/client/src/api/studio/auth.ts        |  36 ----
+ .../src/components/hermes/chat/ChatPanel.vue  |   2 -
+ .../hermes/chat/HistoryMessageList.vue        |   5 +-
+ .../hermes/chat/LiveReasoningStatus.vue       |   6 +-
+ .../components/hermes/chat/MessageItem.vue    |  64 +-----
+ .../components/hermes/chat/MessageList.vue    |   9 +-
+ .../hermes/chat/SessionListItem.vue           |  97 ---------
+ .../hermes/chat/SubagentStreamPanel.vue       |   3 -
+ .../hermes/kanban/KanbanTaskCard.vue          |  15 --
+ .../hermes/profiles/ProfileAvatar.vue         | 123 -----------
+ .../hermes/profiles/ProfileCard.vue           |   2 -
+ .../hermes/settings/AccountSettings.vue       | 165 +--------------
+ .../src/components/layout/ProfileSelector.vue | 193 ------------------
+ packages/client/src/i18n/locales/ar.ts        |  27 ---
+ packages/client/src/i18n/locales/de.ts        |  31 +--
+ packages/client/src/i18n/locales/en.ts        |  31 +--
+ packages/client/src/i18n/locales/es.ts        |  31 +--
+ packages/client/src/i18n/locales/fr.ts        |  31 +--
+ packages/client/src/i18n/locales/ja.ts        |  31 +--
+ packages/client/src/i18n/locales/ko.ts        |  31 +--
+ packages/client/src/i18n/locales/pt.ts        |  31 +--
+ packages/client/src/i18n/locales/ru.ts        |  31 +--
+ packages/client/src/i18n/locales/zh-TW.ts     |  31 +--
+ packages/client/src/i18n/locales/zh.ts        |  31 +--
+ packages/client/src/stores/hermes/profiles.ts |  29 ---
+ .../client/src/utils/chat-agent-avatar.ts     |  35 ----
+ packages/client/src/utils/chat-agent-label.ts |  34 +++
+ .../client/src/views/hermes/KanbanView.vue    |   6 -
+ 29 files changed, 65 insertions(+), 1118 deletions(-)
+ delete mode 100644 packages/client/src/components/hermes/profiles/ProfileAvatar.vue
+ delete mode 100644 packages/client/src/utils/chat-agent-avatar.ts
+ create mode 100644 packages/client/src/utils/chat-agent-label.ts
+
+diff --git a/packages/client/src/api/hermes/profiles.ts b/packages/client/src/api/hermes/profiles.ts
+index b8168eda4..3efe76daa 100644
+--- a/packages/client/src/api/hermes/profiles.ts
++++ b/packages/client/src/api/hermes/profiles.ts
+@@ -6,7 +6,6 @@ export interface HermesProfile {
+   model: string
+   gatewayStatus?: string
+   alias: string
+-  avatar?: ProfileAvatar | null
+ }
+ 
+ export interface HermesProfileDetail {
+@@ -17,15 +16,6 @@ export interface HermesProfileDetail {
+   skills: number
+   hasEnv: boolean
+   hasSoulMd: boolean
+-  avatar?: ProfileAvatar | null
+-}
+-
+-export interface ProfileAvatar {
+-  type: 'generated' | 'image'
+-  seed?: string
+-  dataUrl?: string
+-  url?: string
+-  updatedAt?: number
+ }
+ 
+ export interface ProfileRuntimeStatus {
+@@ -84,18 +74,6 @@ export async function fetchProfileRuntimeStatuses(): Promise<ProfileRuntimeStatu
+   return res.profiles
+ }
+ 
+-export async function updateProfileAvatar(name: string, avatar: ProfileAvatar): Promise<ProfileAvatar> {
+-  const res = await request<{ avatar: ProfileAvatar }>(`/api/hermes/profiles/${encodeURIComponent(name)}/avatar`, {
+-    method: 'PUT',
+-    body: JSON.stringify(avatar),
+-  })
+-  return res.avatar
+-}
+-
+-export async function deleteProfileAvatar(name: string): Promise<void> {
+-  await request(`/api/hermes/profiles/${encodeURIComponent(name)}/avatar`, { method: 'DELETE' })
+-}
+-
+ export async function restartProfileGateway(name: string): Promise<ProfileRuntimeStatus['gateway']> {
+   const res = await request<{ success: boolean; gateway: ProfileRuntimeStatus['gateway'] }>(
+     `/api/hermes/profiles/${encodeURIComponent(name)}/gateway/restart`,
+diff --git a/packages/client/src/api/studio/auth.ts b/packages/client/src/api/studio/auth.ts
+index 51794e78a..6c88662b9 100644
+--- a/packages/client/src/api/studio/auth.ts
++++ b/packages/client/src/api/studio/auth.ts
+@@ -42,50 +42,14 @@ export interface CurrentUser {
+   created_at: number
+   updated_at: number
+   last_login_at: number | null
+-  avatar?: string
+-  hasAvatar?: boolean
+   requiresCredentialChange?: boolean
+ }
+ 
+-export interface UserAvatar {
+-  type: 'image' | 'default'
+-  dataUrl?: string
+-  url?: string
+-  seed?: string
+-}
+-
+ export async function fetchCurrentUser(): Promise<CurrentUser> {
+   const res = await request<{ user: CurrentUser }>('/api/auth/me')
+   return res.user
+ }
+ 
+-export async function fetchMyAvatar(): Promise<UserAvatar | null> {
+-  const res = await request<{ avatar: string }>('/api/auth/avatar')
+-  if (!res.avatar) return null
+-  try {
+-    const parsed = JSON.parse(res.avatar) as UserAvatar
+-    if (parsed && (parsed.type === 'image' || parsed.type === 'default')) return parsed
+-    return null
+-  } catch {
+-    return null
+-  }
+-}
+-
+-export async function updateMyAvatar(avatar: UserAvatar): Promise<void> {
+-  const payload = JSON.stringify(avatar)
+-  await request('/api/auth/avatar', {
+-    method: 'PUT',
+-    body: JSON.stringify({ avatar: payload }),
+-  })
+-}
+-
+-export async function resetMyAvatar(): Promise<void> {
+-  await request('/api/auth/avatar', {
+-    method: 'PUT',
+-    body: JSON.stringify({ avatar: { type: 'default' } }),
+-  })
+-}
+-
+ export async function setupPassword(username: string, password: string): Promise<void> {
+   return request('/api/auth/setup', {
+     method: 'POST',
+diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
+index 21cdb25ef..61a55d004 100644
+--- a/packages/client/src/components/hermes/chat/ChatPanel.vue
++++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
+@@ -52,7 +52,6 @@ import SessionListItem from "./SessionListItem.vue";
+ import OutlinePanel from "./OutlinePanel.vue";
+ import TerminalPanel from "./TerminalPanel.vue";
+ import SubagentStreamPanel from "./SubagentStreamPanel.vue";
+-import { chatSessionAgentAvatar } from "@/utils/chat-agent-avatar";
+ import { buildVisibleSessionCategoryGroups, partitionRecentSessions } from "./session-category-groups";
+ import { buildSessionCategoryMenuChildren, resolveRecentSessionCategoryLabel } from "./session-category-menu";
+ import { buildActiveSessionMenuOptions, buildSessionContextMenuOptions } from "./session-menu-options";
+@@ -3332,7 +3331,6 @@ async function handleSessionModelCustomSubmit() {
+                 />
+                 <SubagentStreamPanel
+                   v-else-if="selectedSubagent"
+-                  :agent="chatSessionAgentAvatar(chatStore.activeSession)"
+                   :stream="selectedSubagentStream"
+                   @close="closeToolPanelOverlay"
+                 />
+diff --git a/packages/client/src/components/hermes/chat/HistoryMessageList.vue b/packages/client/src/components/hermes/chat/HistoryMessageList.vue
+index d19c8b761..0a1fa4a44 100644
+--- a/packages/client/src/components/hermes/chat/HistoryMessageList.vue
++++ b/packages/client/src/components/hermes/chat/HistoryMessageList.vue
+@@ -15,7 +15,7 @@ import { useChatStore } from "@/stores/hermes/chat";
+ import { useToolTraceVisibility } from "@/composables/useToolTraceVisibility";
+ import type { Session } from "@/stores/hermes/chat";
+ import { messageScrollPositionKey, rememberMessageScrollPosition } from "./message-scroll-position";
+-import { chatSessionAgentAvatar } from "@/utils/chat-agent-avatar";
++import { chatSessionAgentLabel } from "@/utils/chat-agent-label";
+ import { groupCompletedToolsByRun } from "./tool-run-grouping";
+ 
+ const props = withDefaults(defineProps<{
+@@ -33,7 +33,7 @@ const listRef = ref<InstanceType<typeof VirtualMessageList> | null>(null);
+ const pendingInitialScrollKey = ref<string | null>(null);
+ const showScrollBottomButton = ref(false);
+ const activeSession = computed(() => props.session || null);
+-const assistantAgent = computed(() => chatSessionAgentAvatar(activeSession.value));
++const assistantAgent = computed(() => chatSessionAgentLabel(activeSession.value));
+ const activeSessionScrollKey = computed(() =>
+   messageScrollPositionKey(props.scrollScope, activeSession.value),
+ );
+@@ -200,7 +200,6 @@ defineExpose({
+     >
+       <template #empty>
+         <div class="empty-state">
+-          <img :src="assistantAgent.src" :alt="assistantAgent.label" class="empty-logo" />
+           <p>{{ t("chat.emptyState") }}</p>
+         </div>
+       </template>
+diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+index b70a6ab19..5e923bfa1 100644
+--- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
++++ b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+@@ -1,7 +1,6 @@
+ <script setup lang="ts">
+ import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
+ import { useI18n } from 'vue-i18n'
+-import type { ChatAgentAvatar } from '@/utils/chat-agent-avatar'
+ 
+ const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
+ 
+@@ -9,12 +8,9 @@ const props = withDefaults(defineProps<{
+   reasoning?: string | null
+   reasoningId?: string | number | null
+   elapsed: string
+-  agent?: ChatAgentAvatar
+   /** Decode speed of the run's latest finished call, e.g. `94 tok/s`; hidden when null. */
+   speed?: string | null
+-}>(), {
+-  agent: () => ({ label: 'Hermes', src: '/coding-agents/hermes.png' }),
+-})
++}>(), {})
+ 
+ const { t } = useI18n()
+ 
+diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
+index 40005fc0b..c686b6c7f 100644
+--- a/packages/client/src/components/hermes/chat/MessageItem.vue
++++ b/packages/client/src/components/hermes/chat/MessageItem.vue
+@@ -15,9 +15,7 @@ import { useChatStore } from "@/stores/hermes/chat";
+ import { useFilesStore } from "@/stores/hermes/files";
+ import { useToolPanelStore } from "@/stores/hermes/tool-panel";
+ import { useSettingsStore } from "@/stores/hermes/settings";
+-import { useProfilesStore } from "@/stores/hermes/profiles";
+-import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";
+-import { chatSessionAgentAvatar, type ChatAgentAvatar } from "@/utils/chat-agent-avatar";
++import { chatSessionAgentLabel, type ChatAgentLabel } from "@/utils/chat-agent-label";
+ import TaskPlanCard from './TaskPlanCard.vue';
+ import ToolChangeCard from "./ToolChangeCard.vue";
+ import {
+@@ -35,7 +33,7 @@ import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-spee
+ import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
+ import type { WorkspaceRunChangeSummary } from "@/api/studio/sessions";
+ import { isServerTtsProvider } from "@/api/studio/tts";
+-import type { ProfileAvatar as ProfileAvatarData } from "@/api/hermes/profiles";
++
+ import ImagePreviewOverlay from "./ImagePreviewOverlay.vue";
+ 
+ const MarkdownRenderer = defineAsyncComponent(async () => (await import("./MarkdownRenderer.vue")).default);
+@@ -53,12 +51,10 @@ const props = withDefaults(defineProps<{
+   highlight?: boolean
+   headingIdPrefix?: string
+   showForkAction?: boolean
+-  assistantAgent?: ChatAgentAvatar
++  assistantAgent?: ChatAgentLabel
+   userProfileName?: string
+-  userProfileAvatar?: ProfileAvatarData | null
+ }>(), {
+   userProfileName: "default",
+-  userProfileAvatar: null,
+ });
+ const { t } = useI18n();
+ const toast = useMessage();
+@@ -229,21 +225,10 @@ const chatStore = useChatStore();
+ const filesStore = useFilesStore();
+ const toolPanelStore = useToolPanelStore();
+ const settingsStore = useSettingsStore();
+-const profilesStore = useProfilesStore();
+ const speech = useGlobalSpeech();
+ const voiceSettings = useVoiceSettings();
+-const assistantProfileName = computed(() => chatStore.activeSession?.profile || profilesStore.activeProfileName || "default");
+-const assistantProfileAvatar = computed(() => profilesStore.profiles.find(profile => profile.name === assistantProfileName.value)?.avatar);
+-const isCodingAgentSession = computed(() => {
+-  const session = chatStore.activeSession;
+-  if (!session) return false;
+-  const runtime = String(session.codingAgentId || session.agent || "").trim().toLowerCase();
+-  return session.source === "coding_agent" || session.source === "global_agent"
+-    || runtime === "ekko-agent" || runtime === "ekko" || runtime === "claude"
+-    || runtime === "claude-code" || runtime === "codex" || runtime === "pi";
+-});
+ const showChatIdentity = computed(() => settingsStore.display.show_session_identity !== false);
+-const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
++const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentLabel(chatStore.activeSession));
+ 
+ // Copy entire bubble content
+ const copyableContent = computed(() => {
+@@ -1039,37 +1024,11 @@ onBeforeUnmount(() => {
+     </template>
+     <template v-else>
+       <div class="msg-body">
+-        <ProfileAvatar
+-          v-if="showChatIdentity && message.role === 'assistant' && !isCodingAgentSession"
+-          class="msg-avatar"
+-          :name="assistantProfileName"
+-          :avatar="assistantProfileAvatar"
+-          :size="40"
+-        />
+-        <img
+-          v-else-if="showChatIdentity && message.role === 'assistant'"
+-          class="msg-avatar"
+-          :src="assistantAgent.src"
+-          :alt="assistantAgent.label"
+-          draggable="false"
+-        >
+         <div class="msg-content" :class="message.role">
+           <div v-if="showChatIdentity && message.role === 'user'" class="message-author user-message-author">
+             <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
+-            <ProfileAvatar
+-              class="user-profile-avatar"
+-              :name="userProfileName"
+-              :avatar="userProfileAvatar"
+-              :size="22"
+-            />
+           </div>
+           <div v-if="showChatIdentity && message.role === 'assistant'" class="message-author assistant-message-author">
+-            <img
+-              class="msg-avatar"
+-              :src="assistantAgent.src"
+-              :alt="assistantAgent.label"
+-              draggable="false"
+-            >
+             <span class="message-author-name" dir="auto">{{ assistantAgent.label }}</span>
+           </div>
+           <div
+@@ -1414,16 +1373,6 @@ onBeforeUnmount(() => {
+       z-index: 1;
+     }
+ 
+-    .msg-avatar {
+-      width: 22px;
+-      height: 22px;
+-      flex-shrink: 0;
+-      box-sizing: border-box;
+-      border: 1px solid #fff;
+-      border-radius: 50%;
+-      object-fit: cover;
+-    }
+-
+     .message-bubble {
+       background-color: $msg-assistant-bg;
+       border-radius: 10px;
+@@ -1513,11 +1462,6 @@ onBeforeUnmount(() => {
+   white-space: nowrap;
+ }
+ 
+-.user-profile-avatar {
+-  box-sizing: border-box;
+-  border: 1px solid #fff;
+-}
+-
+ .message-bubble {
+   padding: 10px 14px;
+   font-size: var(--font-size-base);
+diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
+index 88d4dcda9..de9902db2 100644
+--- a/packages/client/src/components/hermes/chat/MessageList.vue
++++ b/packages/client/src/components/hermes/chat/MessageList.vue
+@@ -25,7 +25,7 @@ import { useProfilesStore } from "@/stores/hermes/profiles";
+ import { useToolTraceVisibility } from "@/composables/useToolTraceVisibility";
+ import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
+ import { messageScrollPositionKey, rememberMessageScrollPosition } from "./message-scroll-position";
+-import { chatSessionAgentAvatar } from "@/utils/chat-agent-avatar";
++import { chatSessionAgentLabel } from "@/utils/chat-agent-label";
+ import { parseThinking } from "@/utils/thinking-parser";
+ import { groupCompletedToolsByRun } from "./tool-run-grouping";
+ import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-speed";
+@@ -285,7 +285,7 @@ const liveReasoningDetail = computed<{
+   return null;
+ });
+ 
+-const assistantAgent = computed(() => chatSessionAgentAvatar(chatStore.activeSession));
++const assistantAgent = computed(() => chatSessionAgentLabel(chatStore.activeSession));
+ const activeSessionProfileName = computed(() => (
+   chatStore.activeSession?.profile || profilesStore.activeProfileName || "default"
+ ));
+@@ -295,13 +295,10 @@ const activeSessionProfile = computed(() => (
+ const userProfileName = computed(() => (
+   activeSessionProfile.value?.alias?.trim() || activeSessionProfileName.value
+ ));
+-const userProfileAvatar = computed(() => activeSessionProfile.value?.avatar || null);
+ 
+ const emptyState = computed(() => {
+   const agent = assistantAgent.value;
+   return {
+-    logo: agent.src,
+-    alt: agent.label,
+     text: agent.label === "Hermes"
+       ? t("chat.emptyState")
+       : t("chat.emptyStateAgent", { agent: agent.label }),
+@@ -768,7 +765,6 @@ defineExpose({
+     >
+       <template #empty>
+         <div class="empty-state">
+-          <img :src="emptyState.logo" :alt="emptyState.alt" class="empty-logo" />
+           <p>{{ emptyState.text }}</p>
+         </div>
+       </template>
+@@ -815,7 +811,6 @@ defineExpose({
+           :message="msg"
+           :assistant-agent="assistantAgent"
+           :user-profile-name="userProfileName"
+-          :user-profile-avatar="userProfileAvatar"
+           :highlight="chatStore.focusMessageId === msg.id"
+           :show-fork-action="canForkActiveSession && msg.id === lastForkActionMessageId"
+         />
+diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
+index b47c9818b..b61550f88 100644
+--- a/packages/client/src/components/hermes/chat/SessionListItem.vue
++++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
+@@ -4,11 +4,8 @@ import { NPopconfirm, NCheckbox, NTooltip } from 'naive-ui'
+ import { useI18n } from 'vue-i18n'
+ import type { Session } from '@/stores/hermes/chat'
+ import { useAppStore } from '@/stores/hermes/app'
+-import { useProfilesStore } from '@/stores/hermes/profiles'
+ import { useSettingsStore } from '@/stores/hermes/settings'
+-import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
+ import { formatTimestampMs } from '@/shared/session-display'
+-import { chatSessionAgentAvatar } from '@/utils/chat-agent-avatar'
+ import { resolveSessionNavigation } from './session-list-item-navigation'
+ 
+ const props = withDefaults(defineProps<{
+@@ -38,11 +35,9 @@ const emit = defineEmits<{
+ 
+ const { t } = useI18n()
+ const appStore = useAppStore()
+-const profilesStore = useProfilesStore()
+ const settingsStore = useSettingsStore()
+ const showSessionIdentity = computed(() => settingsStore.display.show_session_identity !== false)
+ const profileName = computed(() => props.session.profile || 'default')
+-const profileAvatar = computed(() => profilesStore.profiles.find(profile => profile.name === profileName.value)?.avatar)
+ const profileHasModels = computed(() => {
+   const profileModels = appStore.profileModelGroups.find(profile => profile.profile === profileName.value)
+   return !!profileModels?.groups?.some(group => group.models.length > 0)
+@@ -51,7 +46,6 @@ const profileModelsMissing = computed(() =>
+   appStore.profileModelGroups.length > 0 && !profileHasModels.value,
+ )
+ const isGlobalAgentSession = computed(() => props.session.source === 'global_agent')
+-const sessionAgentLogo = computed(() => chatSessionAgentAvatar(props.session))
+ 
+ let longPressTimer: ReturnType<typeof setTimeout> | null = null
+ const longPressTriggered = ref(false)
+@@ -155,15 +149,7 @@ onUnmounted(() => {
+         <span class="session-item-time">{{ formatTimestampMs(session.createdAt) }}</span>
+       </span>
+       <span v-if="showSessionIdentity" class="session-item-agent-row">
+-        <span class="session-item-agent-logo-wrap" :class="{ streaming }">
+-          <img
+-            class="session-item-agent-logo"
+-            :src="sessionAgentLogo.src"
+-            :alt="sessionAgentLogo.label"
+-          >
+-        </span>
+         <span v-if="props.showProfile" class="session-item-profile">
+-          <ProfileAvatar class="session-item-profile-avatar" :name="profileName" :avatar="profileAvatar" :size="16" />
+           <span class="session-item-profile-name">{{ profileName }}</span>
+         </span>
+         <span
+@@ -401,10 +387,6 @@ onUnmounted(() => {
+   min-width: 0;
+ }
+ 
+-.session-item-profile-avatar {
+-  background: var(--bg-secondary);
+-}
+-
+ .session-item-profile-name {
+   min-width: 0;
+   overflow: hidden;
+@@ -453,83 +435,4 @@ onUnmounted(() => {
+   padding: 3px 0;
+ }
+ 
+-.session-item-agent-logo-wrap {
+-  position: relative;
+-  flex: 0 0 auto;
+-  display: inline-flex;
+-  align-items: center;
+-  justify-content: center;
+-  width: 18px;
+-  height: 18px;
+-  border-radius: 50%;
+-}
+-
+-.session-item-agent-logo-wrap.streaming::before {
+-  content: "";
+-  position: absolute;
+-  inset: -1px;
+-  box-sizing: border-box;
+-  border-radius: 50%;
+-  box-shadow:
+-    0 0 0 2px #ff6b6b,
+-    0 0 10px rgba(255, 107, 107, 0.4),
+-    0 0 20px rgba(255, 107, 107, 0.2);
+-  animation: rainbow-glow 4s linear infinite;
+-}
+-
+-.session-item-agent-logo {
+-  position: relative;
+-  z-index: 1;
+-  width: 18px;
+-  height: 18px;
+-  box-sizing: border-box;
+-  border: 1px solid #fff;
+-  border-radius: inherit;
+-  object-fit: cover;
+-}
+-
+-@keyframes rainbow-glow {
+-  0% {
+-    box-shadow:
+-      0 0 0 2px #ff6b6b,
+-      0 0 10px rgba(255, 107, 107, 0.4),
+-      0 0 20px rgba(255, 107, 107, 0.2);
+-  }
+-  16.66% {
+-    box-shadow:
+-      0 0 0 2px #feca57,
+-      0 0 10px rgba(254, 202, 87, 0.4),
+-      0 0 20px rgba(254, 202, 87, 0.2);
+-  }
+-  33.33% {
+-    box-shadow:
+-      0 0 0 2px #48dbfb,
+-      0 0 10px rgba(72, 219, 251, 0.4),
+-      0 0 20px rgba(72, 219, 251, 0.2);
+-  }
+-  50% {
+-    box-shadow:
+-      0 0 0 2px #ff9ff3,
+-      0 0 10px rgba(255, 159, 243, 0.4),
+-      0 0 20px rgba(255, 159, 243, 0.2);
+-  }
+-  66.66% {
+-    box-shadow:
+-      0 0 0 2px #54a0ff,
+-      0 0 10px rgba(84, 160, 255, 0.4),
+-      0 0 20px rgba(84, 160, 255, 0.2);
+-  }
+-  83.33% {
+-    box-shadow:
+-      0 0 0 2px #5f27cd,
+-      0 0 10px rgba(95, 39, 205, 0.4),
+-      0 0 20px rgba(95, 39, 205, 0.2);
+-  }
+-  100% {
+-    box-shadow:
+-      0 0 0 2px #ff6b6b,
+-      0 0 10px rgba(255, 107, 107, 0.4),
+-      0 0 20px rgba(255, 107, 107, 0.2);
+-  }
+-}
+ </style>
+diff --git a/packages/client/src/components/hermes/chat/SubagentStreamPanel.vue b/packages/client/src/components/hermes/chat/SubagentStreamPanel.vue
+index 71d71c7f1..46f3b2e05 100644
+--- a/packages/client/src/components/hermes/chat/SubagentStreamPanel.vue
++++ b/packages/client/src/components/hermes/chat/SubagentStreamPanel.vue
+@@ -3,13 +3,11 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+ import { useI18n } from 'vue-i18n'
+ import type { Message, SubagentStream, SubagentStreamEntry, SubagentStreamStatus } from '@/stores/hermes/chat'
+ import LiveReasoningStatus from './LiveReasoningStatus.vue'
+-import type { ChatAgentAvatar } from '@/utils/chat-agent-avatar'
+ import MessageItem from './MessageItem.vue'
+ import VirtualMessageList from './VirtualMessageList.vue'
+ 
+ const props = defineProps<{
+   stream: SubagentStream | null
+-  agent?: ChatAgentAvatar
+ }>()
+ 
+ const emit = defineEmits<{
+@@ -242,7 +240,6 @@ onBeforeUnmount(stopElapsedTimer)
+       </VirtualMessageList>
+       <div v-if="isRunning" class="subagent-run-indicator">
+         <LiveReasoningStatus
+-          :agent="agent"
+           :reasoning="currentReasoningEntry?.text"
+           :reasoning-id="currentReasoningEntry?.id"
+           :elapsed="formattedElapsed"
+diff --git a/packages/client/src/components/hermes/kanban/KanbanTaskCard.vue b/packages/client/src/components/hermes/kanban/KanbanTaskCard.vue
+index 2bf33fea4..76e17026b 100644
+--- a/packages/client/src/components/hermes/kanban/KanbanTaskCard.vue
++++ b/packages/client/src/components/hermes/kanban/KanbanTaskCard.vue
+@@ -2,13 +2,10 @@
+ import { computed } from 'vue'
+ import { NTooltip } from 'naive-ui'
+ import { useI18n } from 'vue-i18n'
+-import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
+ import type { KanbanTask } from '@/api/hermes/kanban'
+-import type { ProfileAvatar as ProfileAvatarData } from '@/api/hermes/profiles'
+ 
+ const props = defineProps<{
+   task: KanbanTask
+-  assigneeAvatar?: ProfileAvatarData | null
+ }>()
+ 
+ const emit = defineEmits<{
+@@ -57,13 +54,6 @@ const priorityText = computed(() => {
+       <NTooltip v-if="task.assignee" trigger="hover">
+         <template #trigger>
+           <span class="assignee">
+-            <ProfileAvatar
+-              class="assignee-profile-avatar"
+-              :name="task.assignee"
+-              :avatar="assigneeAvatar"
+-              :size="18"
+-              aria-hidden="true"
+-            />
+             <span class="assignee-name">{{ task.assignee }}</span>
+           </span>
+         </template>
+@@ -213,11 +203,6 @@ const priorityText = computed(() => {
+   white-space: nowrap;
+ }
+ 
+-.assignee-profile-avatar {
+-  flex: 0 0 auto;
+-  box-shadow: 0 0 0 1px $border-light;
+-}
+-
+ .card-time {
+   flex: 0 0 auto;
+   font-size: 11px;
+diff --git a/packages/client/src/components/hermes/profiles/ProfileAvatar.vue b/packages/client/src/components/hermes/profiles/ProfileAvatar.vue
+deleted file mode 100644
+index 999537966..000000000
+--- a/packages/client/src/components/hermes/profiles/ProfileAvatar.vue
++++ /dev/null
+@@ -1,123 +0,0 @@
+-<script setup lang="ts">
+-import { computed, onUnmounted, ref, watch } from 'vue'
+-import boring from 'boring-avatars-vanilla'
+-import type { ProfileAvatar } from '@/api/hermes/profiles'
+-import { getApiKey, getBaseUrlValue } from '@/api/client'
+-
+-const props = withDefaults(defineProps<{
+-  name: string
+-  avatar?: ProfileAvatar | null
+-  size?: number
+-}>(), {
+-  size: 24,
+-})
+-
+-const fallbackSeed = computed(() => props.name || 'default')
+-const generatedSvg = computed(() => boring({
+-  name: props.avatar?.seed || fallbackSeed.value,
+-  variant: 'beam',
+-  size: props.size,
+-}))
+-const style = computed(() => ({
+-  width: `${props.size}px`,
+-  height: `${props.size}px`,
+-  flexBasis: `${props.size}px`,
+-}))
+-
+-const imageSrc = ref('')
+-let objectUrl = ''
+-let resolveGeneration = 0
+-
+-function revokeObjectUrl() {
+-  if (!objectUrl) return
+-  URL.revokeObjectURL(objectUrl)
+-  objectUrl = ''
+-}
+-
+-async function resolveImageSrc() {
+-  const generation = ++resolveGeneration
+-  revokeObjectUrl()
+-  const avatar = props.avatar
+-  if (avatar?.type !== 'image') {
+-    imageSrc.value = ''
+-    return
+-  }
+-  if (avatar.dataUrl) {
+-    imageSrc.value = avatar.dataUrl
+-    return
+-  }
+-  if (!avatar.url) {
+-    imageSrc.value = ''
+-    return
+-  }
+-  if (!avatar.url.startsWith('/api/')) {
+-    imageSrc.value = avatar.url
+-    return
+-  }
+-  try {
+-    const token = getApiKey()
+-    const res = await fetch(`${getBaseUrlValue()}${avatar.url}`, {
+-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+-    })
+-    if (!res.ok) {
+-      if (generation === resolveGeneration) imageSrc.value = ''
+-      return
+-    }
+-    const blob = await res.blob()
+-    if (generation !== resolveGeneration) return
+-    objectUrl = URL.createObjectURL(blob)
+-    imageSrc.value = objectUrl
+-  } catch {
+-    if (generation === resolveGeneration) imageSrc.value = ''
+-  }
+-}
+-
+-watch(
+-  () => [props.avatar?.type, props.avatar?.dataUrl, props.avatar?.url, props.avatar?.updatedAt],
+-  () => { void resolveImageSrc() },
+-  { immediate: true },
+-)
+-
+-onUnmounted(() => {
+-  resolveGeneration += 1
+-  revokeObjectUrl()
+-})
+-</script>
+-
+-<template>
+-  <span class="profile-avatar-view" :style="style">
+-    <img
+-      v-if="imageSrc"
+-      class="profile-avatar-image"
+-      :src="imageSrc"
+-      alt=""
+-      draggable="false"
+-    >
+-    <span v-else class="profile-avatar-svg" v-html="generatedSvg" />
+-  </span>
+-</template>
+-
+-<style scoped>
+-.profile-avatar-view {
+-  display: inline-flex;
+-  flex: 0 0 auto;
+-  border-radius: 50%;
+-  overflow: hidden;
+-  background: var(--bg-secondary);
+-  /* Declare as still-light so WebView FORCE_DARK won't algorithmically
+-     darken (invert) the avatar image/inline SVG in the shell APK. */
+-  color-scheme: only light;
+-}
+-
+-.profile-avatar-image,
+-.profile-avatar-svg,
+-.profile-avatar-svg :deep(svg) {
+-  width: 100%;
+-  height: 100%;
+-  display: block;
+-}
+-
+-.profile-avatar-image {
+-  object-fit: cover;
+-}
+-</style>
+diff --git a/packages/client/src/components/hermes/profiles/ProfileCard.vue b/packages/client/src/components/hermes/profiles/ProfileCard.vue
+index dd4e2c5e2..337722b41 100644
+--- a/packages/client/src/components/hermes/profiles/ProfileCard.vue
++++ b/packages/client/src/components/hermes/profiles/ProfileCard.vue
+@@ -5,7 +5,6 @@ import { NButton, NTag, NSpin, useMessage, useDialog } from 'naive-ui'
+ import type { HermesProfile, HermesProfileDetail } from '@/api/hermes/profiles'
+ import { useProfilesStore } from '@/stores/hermes/profiles'
+ import { useI18n } from 'vue-i18n'
+-import ProfileAvatar from './ProfileAvatar.vue'
+ 
+ const props = defineProps<{ profile: HermesProfile }>()
+ const emit = defineEmits<{}>()
+@@ -112,7 +111,6 @@ function handleEditConfig() {
+   <div class="profile-card" :class="{ active: profile.active }">
+     <div class="card-header">
+       <div class="profile-title">
+-        <ProfileAvatar :name="profile.name" :avatar="profile.avatar" :size="28" />
+         <h3 class="profile-name">{{ profile.name }}</h3>
+       </div>
+       <NTag v-if="profile.active" size="tiny" type="primary" :bordered="false">
+diff --git a/packages/client/src/components/hermes/settings/AccountSettings.vue b/packages/client/src/components/hermes/settings/AccountSettings.vue
+index 72411c832..a99ad9a91 100644
+--- a/packages/client/src/components/hermes/settings/AccountSettings.vue
++++ b/packages/client/src/components/hermes/settings/AccountSettings.vue
+@@ -2,10 +2,8 @@
+ import { ref, onMounted } from "vue";
+ import { NButton, NInput, NModal, NForm, NFormItem, NPopconfirm, useMessage } from "naive-ui";
+ import { useI18n } from "vue-i18n";
+-import { changePassword, changeUsername, fetchCurrentUser, fetchLockedIps, unlockSpecificIp, unlockAllIps, fetchMyAvatar, updateMyAvatar, resetMyAvatar } from "@/api/studio/auth";
+-import type { LockedIp, UserAvatar } from "@/api/studio/auth";
+-import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";
+-import boring from "boring-avatars-vanilla";
++import { changePassword, changeUsername, fetchCurrentUser, fetchLockedIps, unlockSpecificIp, unlockAllIps } from "@/api/studio/auth";
++import type { LockedIp } from "@/api/studio/auth";
+ 
+ const { t } = useI18n();
+ const message = useMessage();
+@@ -13,107 +11,6 @@ const message = useMessage();
+ const username = ref<string | null>(null);
+ const loading = ref(false);
+ 
+-// User avatar
+-const avatar = ref<UserAvatar | null>(null);
+-const avatarFileInput = ref<HTMLInputElement | null>(null);
+-const avatarSaving = ref(false);
+-
+-function compressImage(file: File, maxBytes: number): Promise<string> {
+-  return new Promise((resolve, reject) => {
+-    const reader = new FileReader()
+-    reader.onload = () => {
+-      const img = new Image()
+-      img.onload = () => {
+-        const canvas = document.createElement('canvas')
+-        canvas.width = img.width
+-        canvas.height = img.height
+-        const ctx = canvas.getContext('2d')!
+-        ctx.drawImage(img, 0, 0)
+-        const tryCompress = (quality: number) => {
+-          const result = canvas.toDataURL('image/jpeg', quality)
+-          if (result.length <= maxBytes || quality <= 0.3) resolve(result)
+-          else tryCompress(quality - 0.1)
+-        }
+-        tryCompress(0.8)
+-      }
+-      img.onerror = reject
+-      img.src = reader.result as string
+-    }
+-    reader.onerror = reject
+-    reader.readAsDataURL(file)
+-  })
+-}
+-
+-async function handleAvatarUpload(event: Event) {
+-  const target = event.target as HTMLInputElement
+-  const file = target.files?.[0]
+-  if (!file) return
+-  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+-    message.error(t('settings.userAvatar.invalidType'))
+-    target.value = ''
+-    return
+-  }
+-  if (file.size > 1024 * 1024) {
+-    message.error(t('settings.userAvatar.tooLarge'))
+-    target.value = ''
+-    return
+-  }
+-  avatarSaving.value = true
+-  try {
+-    let dataUrl: string
+-    if (file.size > 500 * 1024) {
+-      dataUrl = await compressImage(file, 500 * 1024)
+-    } else {
+-      dataUrl = await new Promise<string>((resolve, reject) => {
+-        const r = new FileReader()
+-        r.onload = () => resolve(r.result as string)
+-        r.onerror = reject
+-        r.readAsDataURL(file)
+-      })
+-    }
+-    await updateMyAvatar({ type: 'image', dataUrl })
+-    avatar.value = { type: 'image', dataUrl }
+-    message.success(t('settings.userAvatar.saveSuccess'))
+-  } catch (err: any) {
+-    message.error(err.message || t('settings.userAvatar.saveFailed'))
+-  } finally {
+-    avatarSaving.value = false
+-    target.value = ''
+-  }
+-}
+-
+-async function handleRandomAvatar() {
+-  avatarSaving.value = true
+-  try {
+-    const randomPart = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+-      ? crypto.randomUUID()
+-      : Math.random().toString(36).slice(2)
+-    const seed = `${username.value || 'default'}-${Date.now()}-${randomPart}`
+-    const svg = boring({ name: seed, variant: 'beam' })
+-    const dataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)))
+-    await updateMyAvatar({ type: 'image', dataUrl, seed })
+-    avatar.value = { type: 'image', dataUrl, seed }
+-    message.success(t('settings.userAvatar.saveSuccess'))
+-  } catch (err: any) {
+-    message.error(err.message || t('settings.userAvatar.saveFailed'))
+-  } finally {
+-    avatarSaving.value = false
+-  }
+-}
+-
+-async function handleResetAvatar() {
+-  avatarSaving.value = true
+-  try {
+-    await resetMyAvatar()
+-    avatar.value = { type: 'default', seed: username.value || 'default' }
+-    message.success(t('settings.userAvatar.resetSuccess'))
+-  } catch (err: any) {
+-    message.error(err.message || t('settings.userAvatar.resetFailed'))
+-  } finally {
+-    avatarSaving.value = false
+-  }
+-}
+-
+ // Change password form
+ const showChangePasswordModal = ref(false);
+ const currentPasswordForPwd = ref("");
+@@ -130,10 +27,6 @@ onMounted(async () => {
+     const user = await fetchCurrentUser();
+     username.value = user.username;
+   } catch { /* ignore */ }
+-  try {
+-    const av = await fetchMyAvatar();
+-    avatar.value = av || { type: 'default', seed: username.value || 'default' };
+-  } catch { /* ignore */ }
+ });
+ 
+ async function handleChangePassword() {
+@@ -243,35 +136,6 @@ onMounted(() => { loadLockedIps(); });
+   <div class="account-settings">
+     <p class="section-desc">{{ t("login.setupDescription") }}</p>
+ 
+-    <!-- User Avatar -->
+-    <div class="avatar-section">
+-      <h3 class="section-title">{{ t('settings.userAvatar.title') }}</h3>
+-      <div class="avatar-row">
+-        <div class="avatar-display">
+-          <ProfileAvatar
+-            :name="username || 'default'"
+-            :avatar="avatar?.type === 'image' && (avatar.dataUrl || avatar.url) ? { type: 'image', dataUrl: avatar.dataUrl, url: avatar.url } : null"
+-            :size="80"
+-          />
+-        </div>
+-        <div class="avatar-actions">
+-          <p class="avatar-hint">{{ t('settings.userAvatar.hint') }}</p>
+-          <div class="action-buttons">
+-            <NButton @click="avatarFileInput?.click()">{{ t('settings.userAvatar.upload') }}</NButton>
+-            <NButton @click="handleRandomAvatar" :loading="avatarSaving">{{ t('settings.userAvatar.random') }}</NButton>
+-            <NButton @click="handleResetAvatar" :loading="avatarSaving">{{ t('settings.userAvatar.reset') }}</NButton>
+-          </div>
+-          <input
+-            ref="avatarFileInput"
+-            type="file"
+-            accept=".png,.jpg,.jpeg,.webp"
+-            style="display: none"
+-            @change="handleAvatarUpload"
+-          />
+-        </div>
+-      </div>
+-    </div>
+-
+     <div class="configured-section">
+       <div class="action-row">
+         <span class="action-label">{{ t("login.passwordLoginConfigured", { username }) }}</span>
+@@ -439,29 +303,4 @@ onMounted(() => { loadLockedIps(); });
+   margin: 0;
+ }
+ 
+-.avatar-section {
+-  margin-bottom: 32px;
+-  padding-bottom: 20px;
+-  border-bottom: 1px solid $border-color;
+-}
+-
+-.avatar-row {
+-  display: flex;
+-  align-items: center;
+-  gap: 24px;
+-}
+-
+-.avatar-display {
+-  flex-shrink: 0;
+-}
+-
+-.avatar-actions {
+-  flex: 1;
+-}
+-
+-.avatar-hint {
+-  font-size: 12px;
+-  color: $text-muted;
+-  margin: 0 0 12px;
+-}
+ </style>
+diff --git a/packages/client/src/components/layout/ProfileSelector.vue b/packages/client/src/components/layout/ProfileSelector.vue
+index a9d3a17a5..1319c189e 100644
+--- a/packages/client/src/components/layout/ProfileSelector.vue
++++ b/packages/client/src/components/layout/ProfileSelector.vue
+@@ -6,11 +6,8 @@ import {
+   fetchProfileRuntimeStatusesWithMeta,
+   restartProfileGateway,
+   restartProfileRuntime,
+-  type HermesProfile,
+-  type ProfileAvatar,
+   type ProfileRuntimeStatus,
+ } from '@/api/hermes/profiles'
+-import ProfileAvatarView from '@/components/hermes/profiles/ProfileAvatar.vue'
+ import { useI18n } from 'vue-i18n'
+ 
+ const emit = defineEmits<{
+@@ -23,14 +20,9 @@ const profilesStore = useProfilesStore()
+ 
+ const activeName = computed(() => profilesStore.activeProfileName ?? '')
+ const displayName = computed(() => activeName.value || 'default')
+-const activeProfile = computed(() => profilesStore.profiles.find(profile => profile.name === displayName.value))
+ const runtimeStatuses = ref<ProfileRuntimeStatus[]>([])
+ const runtimeLoading = ref(false)
+ const showProfileModal = ref(false)
+-const showAvatarModal = ref(false)
+-const editingProfile = ref<HermesProfile | null>(null)
+-const avatarSaving = ref(false)
+-const fileInputRef = ref<HTMLInputElement | null>(null)
+ const gatewayRestarting = ref<Record<string, boolean>>({})
+ const profileRestarting = ref<Record<string, boolean>>({})
+ const profileSwitching = ref<Record<string, boolean>>({})
+@@ -83,73 +75,6 @@ function handleProfileModalShowChange(show: boolean) {
+   setProfileModalShow(show)
+ }
+ 
+-function openAvatarModal(profile: HermesProfile) {
+-  editingProfile.value = profile
+-  showAvatarModal.value = true
+-}
+-
+-function randomSeed() {
+-  return `profile-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+-}
+-
+-async function saveAvatar(avatar: ProfileAvatar) {
+-  if (!editingProfile.value) return
+-  avatarSaving.value = true
+-  try {
+-    await profilesStore.updateAvatar(editingProfile.value.name, avatar)
+-    message.success(t('profiles.avatar.saveSuccess'))
+-    showAvatarModal.value = false
+-  } catch (err: any) {
+-    message.error(err?.message || t('profiles.avatar.saveFailed'))
+-  } finally {
+-    avatarSaving.value = false
+-  }
+-}
+-
+-async function handleRandomAvatar() {
+-  await saveAvatar({ type: 'generated', seed: randomSeed() })
+-}
+-
+-async function handleResetAvatar() {
+-  if (!editingProfile.value) return
+-  avatarSaving.value = true
+-  try {
+-    await profilesStore.deleteAvatar(editingProfile.value.name)
+-    message.success(t('profiles.avatar.resetSuccess'))
+-    showAvatarModal.value = false
+-  } catch (err: any) {
+-    message.error(err?.message || t('profiles.avatar.resetFailed'))
+-  } finally {
+-    avatarSaving.value = false
+-  }
+-}
+-
+-function triggerAvatarUpload() {
+-  fileInputRef.value?.click()
+-}
+-
+-async function handleAvatarFileChange(event: Event) {
+-  const input = event.target as HTMLInputElement
+-  const file = input.files?.[0]
+-  input.value = ''
+-  if (!file) return
+-  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+-    message.warning(t('profiles.avatar.invalidType'))
+-    return
+-  }
+-  if (file.size > 1024 * 1024) {
+-    message.warning(t('profiles.avatar.tooLarge'))
+-    return
+-  }
+-  const dataUrl = await new Promise<string>((resolve, reject) => {
+-    const reader = new FileReader()
+-    reader.onload = () => resolve(String(reader.result || ''))
+-    reader.onerror = () => reject(reader.error || new Error('Failed to read file'))
+-    reader.readAsDataURL(file)
+-  })
+-  await saveAvatar({ type: 'image', dataUrl })
+-}
+-
+ function gatewayStatusText(running?: boolean) {
+   if (running == null) return t('profiles.runtime.checking')
+   return running ? t('profiles.runtime.running') : t('profiles.runtime.stopped')
+@@ -219,7 +144,6 @@ onMounted(() => {
+   <div class="profile-selector">
+     <div class="selector-label">{{ t('sidebar.profiles') }}</div>
+     <div class="profile-display" data-testid="profile-selector-select" @click="openProfileModal">
+-      <ProfileAvatarView class="profile-avatar" :name="displayName" :avatar="activeProfile?.avatar" :size="24" />
+       <span class="profile-name">{{ displayName }}</span>
+     </div>
+ 
+@@ -249,7 +173,6 @@ onMounted(() => {
+             :class="{ active: profile.name === displayName }"
+           >
+             <div class="profile-runtime-main">
+-              <ProfileAvatarView class="profile-runtime-avatar" :name="profile.name" :avatar="profile.avatar" :size="34" />
+               <div class="profile-runtime-info">
+                 <div class="profile-runtime-name-row">
+                   <span class="profile-runtime-name">{{ profile.name }}</span>
+@@ -280,13 +203,6 @@ onMounted(() => {
+               </div>
+             </div>
+             <div class="profile-runtime-actions">
+-              <NButton
+-                size="small"
+-                type="primary"
+-                @click="openAvatarModal(profile)"
+-              >
+-                {{ t('profiles.avatar.customize') }}
+-              </NButton>
+               <NButton
+                 size="small"
+                 type="primary"
+@@ -317,40 +233,6 @@ onMounted(() => {
+         </div>
+       </NSpin>
+     </NModal>
+-
+-    <NModal
+-      v-model:show="showAvatarModal"
+-      preset="card"
+-      :title="t('profiles.avatar.title')"
+-      :bordered="false"
+-      :style="{ width: '420px', maxWidth: 'calc(100vw - 32px)' }"
+-    >
+-      <div v-if="editingProfile" class="avatar-editor">
+-        <ProfileAvatarView :name="editingProfile.name" :avatar="editingProfile.avatar" :size="72" />
+-        <div class="avatar-editor-meta">
+-          <div class="avatar-editor-name">{{ editingProfile.name }}</div>
+-          <div class="avatar-editor-hint">{{ t('profiles.avatar.hint') }}</div>
+-        </div>
+-        <input
+-          ref="fileInputRef"
+-          class="avatar-file-input"
+-          type="file"
+-          accept="image/png,image/jpeg,image/webp"
+-          @change="handleAvatarFileChange"
+-        >
+-        <div class="avatar-editor-actions">
+-          <NButton type="primary" :loading="avatarSaving" @click="triggerAvatarUpload">
+-            {{ t('profiles.avatar.upload') }}
+-          </NButton>
+-          <NButton type="primary" :loading="avatarSaving" @click="handleRandomAvatar">
+-            {{ t('profiles.avatar.random') }}
+-          </NButton>
+-          <NButton :loading="avatarSaving" @click="handleResetAvatar">
+-            {{ t('profiles.avatar.reset') }}
+-          </NButton>
+-        </div>
+-      </div>
+-    </NModal>
+   </div>
+ </template>
+ 
+@@ -384,10 +266,6 @@ onMounted(() => {
+   cursor: pointer;
+ }
+ 
+-.profile-avatar {
+-  background: $bg-card;
+-}
+-
+ .profile-name {
+   min-width: 0;
+   overflow: hidden;
+@@ -411,21 +289,6 @@ onMounted(() => {
+   min-width: 0;
+ }
+ 
+-.profile-popover-avatar {
+-  width: 36px;
+-  height: 36px;
+-  border-radius: 50%;
+-  overflow: hidden;
+-  background: $bg-secondary;
+-  flex: 0 0 auto;
+-
+-  :deep(svg) {
+-    width: 100%;
+-    height: 100%;
+-    display: block;
+-  }
+-}
+-
+ .profile-popover-title {
+   min-width: 0;
+   display: flex;
+@@ -487,10 +350,6 @@ onMounted(() => {
+   min-width: 0;
+ }
+ 
+-.profile-runtime-avatar {
+-  background: $bg-secondary;
+-}
+-
+ .profile-runtime-info {
+   min-width: 0;
+   flex: 1;
+@@ -577,48 +436,6 @@ onMounted(() => {
+   word-break: break-word;
+ }
+ 
+-.avatar-editor {
+-  display: flex;
+-  flex-direction: column;
+-  align-items: center;
+-  gap: 14px;
+-}
+-
+-.avatar-editor-meta {
+-  display: flex;
+-  flex-direction: column;
+-  align-items: center;
+-  gap: 4px;
+-  min-width: 0;
+-}
+-
+-.avatar-editor-name {
+-  max-width: 100%;
+-  overflow: hidden;
+-  text-overflow: ellipsis;
+-  white-space: nowrap;
+-  font-size: 15px;
+-  font-weight: 700;
+-  color: $text-primary;
+-}
+-
+-.avatar-editor-hint {
+-  font-size: 12px;
+-  color: $text-muted;
+-  text-align: center;
+-}
+-
+-.avatar-file-input {
+-  display: none;
+-}
+-
+-.avatar-editor-actions {
+-  display: flex;
+-  flex-wrap: wrap;
+-  justify-content: center;
+-  gap: 8px;
+-}
+-
+ @media (max-width: 520px) {
+   .profile-runtime-actions {
+     justify-content: flex-start;
+@@ -631,15 +448,5 @@ onMounted(() => {
+       --n-padding: 0 8px !important;
+     }
+   }
+-
+-  .avatar-editor-actions {
+-    gap: 6px;
+-
+-    :deep(.n-button) {
+-      --n-height: 28px !important;
+-      --n-font-size: 12px !important;
+-      --n-padding: 0 9px !important;
+-    }
+-  }
+ }
+ </style>
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index acf39430b..cce988de8 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -1964,20 +1964,6 @@ export default {
+     hasEnv: 'يحتوي على .env',
+     hasSoulMd: 'يحتوي على soul.md',
+     noProfiles: 'لا توجد بروفايلات. أنشئ واحداً للبدء.',
+-    avatar: {
+-      title: 'صورة رمزية مخصّصة',
+-      customize: 'الصورة الرمزية',
+-      upload: 'رفع صورة',
+-      random: 'صورة عشوائية',
+-      reset: 'استخدام الافتراضية',
+-      hint: 'PNG أو JPEG أو WebP. بحد أقصى 1MB.',
+-      invalidType: 'الرجاء اختيار صورة PNG أو JPEG أو WebP',
+-      tooLarge: 'يجب أن يكون حجم الصورة الرمزية 1MB أو أقل',
+-      saveSuccess: 'تم حفظ الصورة الرمزية',
+-      saveFailed: 'تعذّر حفظ الصورة الرمزية',
+-      resetSuccess: 'تم استعادة الصورة الرمزية الافتراضية',
+-      resetFailed: 'تعذّر استعادة الصورة الرمزية الافتراضية',
+-    },
+     runtime: {
+       activeProfile: 'النشط: {name}',
+       bridgeWorker: 'عامل الجسر',
+@@ -2330,19 +2316,6 @@ export default {
+         pairing: 'إقران الجهاز',
+       },
+     },
+-    userAvatar: {
+-      title: 'صورة المستخدم',
+-      upload: 'رفع صورة',
+-      random: 'توليد عشوائي',
+-      reset: 'إعادة للافتراضي',
+-      hint: 'يدعم PNG/JPEG/WebP حتى 1MB، ويُضغط تلقائياً إلى أقل من 500KB',
+-      invalidType: 'الرجاء اختيار صورة PNG أو JPEG أو WebP',
+-      tooLarge: 'يجب أن تكون صورة المستخدم أقل من 1MB',
+-      saveSuccess: 'تم حفظ الصورة',
+-      saveFailed: 'تعذّر حفظ الصورة',
+-      resetSuccess: 'تمت إعادة الصورة إلى الافتراضي',
+-      resetFailed: 'تعذّر إعادة تعيين الصورة',
+-    },
+     voice: {
+       activeTtsApi: 'واجهة API النشطة لتحويل النص إلى كلام',
+       activeSttApi: 'واجهة API النشطة لتحويل الكلام إلى نص',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index c83b78bb8..c677ec6f3 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1767,20 +1767,6 @@ jobTriggered: 'Job ausgelost',
+     hasEnv: 'Hat .env',
+     hasSoulMd: 'Hat soul.md',
+     noProfiles: 'Keine Profile gefunden. Erstellen Sie eines, um zu beginnen.',
+-    avatar: {
+-      title: 'Eigenes Avatar',
+-      customize: 'Avatar anpassen',
+-      upload: 'Bild hochladen',
+-      random: 'Zufällig erzeugen',
+-      reset: 'Standard wiederherstellen',
+-      hint: 'PNG, JPEG oder WebP, maximal 1 MB',
+-      invalidType: 'Bitte ein PNG-, JPEG- oder WebP-Bild wählen',
+-      tooLarge: 'Das Avatar-Bild darf höchstens 1 MB groß sein',
+-      saveSuccess: 'Avatar gespeichert',
+-      saveFailed: 'Avatar konnte nicht gespeichert werden',
+-      resetSuccess: 'Standard-Avatar wiederhergestellt',
+-      resetFailed: 'Standard-Avatar konnte nicht wiederhergestellt werden',
+-    },
+     runtime: {
+       activeProfile: 'Aktuell: {name}',
+       bridgeWorker: 'Bridge-Status',
+@@ -1936,8 +1922,8 @@ jobTriggered: 'Job ausgelost',
+       showReasoningHint: 'Denkprozess des Modells anzeigen',
+       showCost: 'Kosten anzeigen',
+       showCostHint: 'Token-Nutzung in Antworten anzeigen',
+-      showSessionIdentity: 'Avatare & Profil in Sitzungsliste',
+-      showSessionIdentityHint: 'Agent-Typ-Avatar, Profil-Avatar und Profilname in der Sitzungsliste und in Chat-Nachrichten anzeigen',
++      showSessionIdentity: 'Profilname in der Sitzungsliste',
++      showSessionIdentityHint: 'Agent- und Profilnamen in der Sitzungsliste und in Chat-Nachrichten anzeigen',
+       inlineDiffs: 'Inline-Diffs',
+       inlineDiffsHint: 'Codeanderungen inline anzeigen',
+       bellOnComplete: 'Abschluss-Signalton',
+@@ -2434,19 +2420,6 @@ jobTriggered: 'Job ausgelost',
+         pairing: 'Device pairing',
+       },
+     },
+-    userAvatar: {
+-      title: 'Benutzeravatar',
+-      upload: 'Bild hochladen',
+-      random: 'Zufällig generieren',
+-      reset: 'Auf Standard zurücksetzen',
+-      hint: 'Unterstützt PNG, JPEG und WebP bis 1 MB; wird automatisch auf unter 500 KB komprimiert.',
+-      invalidType: 'Bitte wählen Sie ein PNG-, JPEG- oder WebP-Bild aus',
+-      tooLarge: 'Das Avatarbild darf höchstens 1 MB groß sein',
+-      saveSuccess: 'Avatar gespeichert',
+-      saveFailed: 'Avatar konnte nicht gespeichert werden',
+-      resetSuccess: 'Avatar wurde zurückgesetzt',
+-      resetFailed: 'Avatar konnte nicht zurückgesetzt werden',
+-    },
+     models: {
+       apiKey: 'API Key',
+       apiKeyPlaceholder: 'API Key eingeben',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 029e690f7..a793837c2 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -1978,20 +1978,6 @@ export default {
+     hasEnv: 'Has .env',
+     hasSoulMd: 'Has soul.md',
+     noProfiles: 'No profiles found. Create one to get started.',
+-    avatar: {
+-      title: 'Custom Avatar',
+-      customize: 'Avatar',
+-      upload: 'Upload Image',
+-      random: 'Randomize',
+-      reset: 'Use Default',
+-      hint: 'PNG, JPEG, or WebP. Max 1MB.',
+-      invalidType: 'Please choose a PNG, JPEG, or WebP image',
+-      tooLarge: 'Avatar image must be 1MB or smaller',
+-      saveSuccess: 'Avatar saved',
+-      saveFailed: 'Failed to save avatar',
+-      resetSuccess: 'Default avatar restored',
+-      resetFailed: 'Failed to restore default avatar',
+-    },
+     runtime: {
+       activeProfile: 'Active: {name}',
+       bridgeWorker: 'Bridge worker',
+@@ -2198,8 +2184,8 @@ export default {
+       showReasoningHint: 'Show model thinking process',
+       showCost: 'Show Cost',
+       showCostHint: 'Show token usage in replies',
+-      showSessionIdentity: 'Session list avatars & profile',
+-      showSessionIdentityHint: 'Show agent-type avatar, profile avatar, and profile name in the sidebar session list and chat messages',
++      showSessionIdentity: 'Profile in session list',
++      showSessionIdentityHint: 'Show the agent and profile names in the sidebar session list and chat messages',
+       inlineDiffs: 'Inline Diffs',
+       inlineDiffsHint: 'Show code changes inline',
+       bellOnComplete: 'Completion Sound',
+@@ -2391,19 +2377,6 @@ export default {
+         pairing: 'Device pairing',
+       },
+     },
+-    userAvatar: {
+-      title: 'User Avatar',
+-      upload: 'Upload Image',
+-      random: 'Generate Random',
+-      reset: 'Reset to Default',
+-      hint: 'Supports PNG/JPEG/WebP up to 1MB, auto-compressed to under 500KB',
+-      invalidType: 'Please choose a PNG, JPEG, or WebP image',
+-      tooLarge: 'Avatar image must be under 1MB',
+-      saveSuccess: 'Avatar saved',
+-      saveFailed: 'Failed to save avatar',
+-      resetSuccess: 'Avatar reset to default',
+-      resetFailed: 'Failed to reset avatar',
+-    },
+     voice: {
+       activeTtsApi: 'Active TTS API',
+       activeSttApi: 'Active STT API',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 11b548169..568412b69 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1767,20 +1767,6 @@ jobTriggered: 'Job ejecutado',
+     hasEnv: 'Tiene .env',
+     hasSoulMd: 'Tiene soul.md',
+     noProfiles: 'No se encontraron perfiles. Crea uno para comenzar.',
+-    avatar: {
+-      title: 'Avatar personalizado',
+-      customize: 'Personalizar avatar',
+-      upload: 'Subir imagen',
+-      random: 'Generar aleatorio',
+-      reset: 'Restaurar predeterminado',
+-      hint: 'PNG, JPEG o WebP, máximo 1 MB',
+-      invalidType: 'Elige una imagen PNG, JPEG o WebP',
+-      tooLarge: 'La imagen del avatar no puede superar 1 MB',
+-      saveSuccess: 'Avatar guardado',
+-      saveFailed: 'No se pudo guardar el avatar',
+-      resetSuccess: 'Avatar predeterminado restaurado',
+-      resetFailed: 'No se pudo restaurar el avatar predeterminado',
+-    },
+     runtime: {
+       activeProfile: 'Actual: {name}',
+       bridgeWorker: 'Estado del Bridge',
+@@ -1936,8 +1922,8 @@ jobTriggered: 'Job ejecutado',
+       showReasoningHint: 'Mostrar el proceso de pensamiento del modelo',
+       showCost: 'Mostrar costo',
+       showCostHint: 'Mostrar uso de tokens en las respuestas',
+-      showSessionIdentity: 'Avatares y perfil en la lista de sesiones',
+-      showSessionIdentityHint: 'Mostrar avatar del tipo de agente, avatar del perfil y nombre del perfil en la lista de sesiones y en los mensajes',
++      showSessionIdentity: 'Perfil en la lista de sesiones',
++      showSessionIdentityHint: 'Mostrar los nombres de agente y perfil en la lista de sesiones y en los mensajes',
+       inlineDiffs: 'Diffs en linea',
+       inlineDiffsHint: 'Mostrar cambios de codigo en linea',
+       bellOnComplete: 'Sonido de finalizacion',
+@@ -2434,19 +2420,6 @@ jobTriggered: 'Job ejecutado',
+         pairing: 'Device pairing',
+       },
+     },
+-    userAvatar: {
+-      title: 'Avatar de usuario',
+-      upload: 'Subir imagen',
+-      random: 'Generar aleatorio',
+-      reset: 'Restablecer predeterminado',
+-      hint: 'Admite PNG, JPEG y WebP hasta 1 MB; se comprime automáticamente por debajo de 500 KB.',
+-      invalidType: 'Elige una imagen PNG, JPEG o WebP',
+-      tooLarge: 'La imagen del avatar debe ser de 1 MB o menos',
+-      saveSuccess: 'Avatar guardado',
+-      saveFailed: 'No se pudo guardar el avatar',
+-      resetSuccess: 'Avatar restablecido',
+-      resetFailed: 'No se pudo restablecer el avatar',
+-    },
+     models: {
+       apiKey: 'API Key',
+       apiKeyPlaceholder: 'Introduce API Key',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index cfd642753..f75e65b65 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1767,20 +1767,6 @@ jobTriggered: 'Job declenche',
+     hasEnv: 'A un .env',
+     hasSoulMd: 'A un soul.md',
+     noProfiles: 'Aucun profil trouve. Creez-en un pour commencer.',
+-    avatar: {
+-      title: 'Avatar personnalisé',
+-      customize: 'Personnaliser l’avatar',
+-      upload: 'Importer une image',
+-      random: 'Générer au hasard',
+-      reset: 'Restaurer par défaut',
+-      hint: 'PNG, JPEG ou WebP, 1 Mo maximum',
+-      invalidType: 'Veuillez choisir une image PNG, JPEG ou WebP',
+-      tooLarge: 'L’image d’avatar ne doit pas dépasser 1 Mo',
+-      saveSuccess: 'Avatar enregistré',
+-      saveFailed: 'Échec de l’enregistrement de l’avatar',
+-      resetSuccess: 'Avatar par défaut restauré',
+-      resetFailed: 'Échec de la restauration de l’avatar par défaut',
+-    },
+     runtime: {
+       activeProfile: 'Actuel : {name}',
+       bridgeWorker: 'État du Bridge',
+@@ -1936,8 +1922,8 @@ jobTriggered: 'Job declenche',
+       showReasoningHint: 'Afficher le processus de reflexion du modele',
+       showCost: 'Afficher le cout',
+       showCostHint: 'Afficher l\'utilisation des jetons dans les reponses',
+-      showSessionIdentity: 'Avatars et profil dans la liste',
+-      showSessionIdentityHint: 'Afficher l\'avatar du type d\'agent, l\'avatar de profil et le nom de profil dans la liste des sessions et les messages',
++      showSessionIdentity: 'Profil dans la liste des sessions',
++      showSessionIdentityHint: 'Afficher les noms d\'agent et de profil dans la liste des sessions et les messages',
+       inlineDiffs: 'Diffs en ligne',
+       inlineDiffsHint: 'Afficher les changements de code en ligne',
+       bellOnComplete: 'Son de fin',
+@@ -2434,19 +2420,6 @@ jobTriggered: 'Job declenche',
+         pairing: 'Device pairing',
+       },
+     },
+-    userAvatar: {
+-      title: 'Avatar utilisateur',
+-      upload: 'Importer une image',
+-      random: 'Générer aléatoirement',
+-      reset: 'Rétablir par défaut',
+-      hint: 'PNG, JPEG et WebP jusqu’à 1 Mo; compression automatique sous 500 Ko.',
+-      invalidType: 'Choisissez une image PNG, JPEG ou WebP',
+-      tooLarge: 'L’image d’avatar doit faire 1 Mo ou moins',
+-      saveSuccess: 'Avatar enregistré',
+-      saveFailed: 'Échec de l’enregistrement de l’avatar',
+-      resetSuccess: 'Avatar réinitialisé',
+-      resetFailed: 'Échec de la réinitialisation de l’avatar',
+-    },
+     models: {
+       apiKey: 'API Key',
+       apiKeyPlaceholder: 'Saisir l’API Key',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index e1cd99396..86970b08c 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1767,20 +1767,6 @@ export default {
+     hasEnv: '.env あり',
+     hasSoulMd: 'soul.md あり',
+     noProfiles: 'プロファイルがありません。作成して始めましょう。',
+-    avatar: {
+-      title: 'カスタムアバター',
+-      customize: 'アバター',
+-      upload: '画像をアップロード',
+-      random: 'ランダム生成',
+-      reset: 'デフォルトに戻す',
+-      hint: 'PNG、JPEG、WebP 対応、最大 1MB',
+-      invalidType: 'PNG、JPEG、WebP 画像を選択してください',
+-      tooLarge: 'アバター画像は 1MB 以下にしてください',
+-      saveSuccess: 'アバターを保存しました',
+-      saveFailed: 'アバターの保存に失敗しました',
+-      resetSuccess: 'デフォルトアバターに戻しました',
+-      resetFailed: 'デフォルトアバターへの復元に失敗しました',
+-    },
+     runtime: {
+       activeProfile: '現在: {name}',
+       bridgeWorker: 'Bridge 状態',
+@@ -1936,8 +1922,8 @@ export default {
+       showReasoningHint: 'モデルの思考プロセスを表示',
+       showCost: 'コストを表示',
+       showCostHint: '返信にトークン使用量を表示',
+-      showSessionIdentity: 'セッション一覧のアバターとプロファイル',
+-      showSessionIdentityHint: 'サイドバーのセッション一覧とチャットメッセージにエージェント種別アバター、プロファイルアバター、プロファイル名を表示',
++      showSessionIdentity: 'セッション一覧のプロファイル名',
++      showSessionIdentityHint: 'サイドバーのセッション一覧とチャットメッセージにエージェント名とプロファイル名を表示',
+       inlineDiffs: 'インライン差分',
+       inlineDiffsHint: 'コード変更をインラインで表示',
+       bellOnComplete: '完了通知音',
+@@ -2434,19 +2420,6 @@ export default {
+         pairing: 'Device pairing',
+       },
+     },
+-    userAvatar: {
+-      title: 'ユーザーアバター',
+-      upload: '画像をアップロード',
+-      random: 'ランダム生成',
+-      reset: 'デフォルトに戻す',
+-      hint: 'PNG、JPEG、WebP（最大1MB）に対応し、500KB未満へ自動圧縮します。',
+-      invalidType: 'PNG、JPEG、WebP の画像を選択してください',
+-      tooLarge: 'アバター画像は1MB以下にしてください',
+-      saveSuccess: 'アバターを保存しました',
+-      saveFailed: 'アバターの保存に失敗しました',
+-      resetSuccess: 'アバターをリセットしました',
+-      resetFailed: 'アバターのリセットに失敗しました',
+-    },
+     models: {
+       apiKey: 'API Key',
+       apiKeyPlaceholder: 'API Key を入力',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 4959b9a5a..d32a7b944 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1767,20 +1767,6 @@ export default {
+     hasEnv: '.env 있음',
+     hasSoulMd: 'soul.md 있음',
+     noProfiles: '프로필이 없습니다. 새로 만들어 시작하세요.',
+-    avatar: {
+-      title: '사용자 지정 아바타',
+-      customize: '아바타',
+-      upload: '이미지 업로드',
+-      random: '무작위 생성',
+-      reset: '기본값 복원',
+-      hint: 'PNG, JPEG, WebP 지원, 최대 1MB',
+-      invalidType: 'PNG, JPEG 또는 WebP 이미지를 선택하세요',
+-      tooLarge: '아바타 이미지는 1MB를 초과할 수 없습니다',
+-      saveSuccess: '아바타가 저장되었습니다',
+-      saveFailed: '아바타 저장 실패',
+-      resetSuccess: '기본 아바타로 복원되었습니다',
+-      resetFailed: '기본 아바타 복원 실패',
+-    },
+     runtime: {
+       activeProfile: '현재: {name}',
+       bridgeWorker: 'Bridge 상태',
+@@ -1936,8 +1922,8 @@ export default {
+       showReasoningHint: '모델의 생각 과정 표시',
+       showCost: '비용 표시',
+       showCostHint: '응답에 토큰 사용량 표시',
+-      showSessionIdentity: '세션 목록 아바타 및 프로필',
+-      showSessionIdentityHint: '사이드바 세션 목록과 채팅 메시지에 에이전트 유형 아바타, 프로필 아바타, 프로필 이름 표시',
++      showSessionIdentity: '세션 목록 프로필 이름',
++      showSessionIdentityHint: '사이드바 세션 목록과 채팅 메시지에 에이전트 및 프로필 이름 표시',
+       inlineDiffs: '인라인 변경사항',
+       inlineDiffsHint: '코드 변경사항을 인라인으로 표시',
+       bellOnComplete: '완료 알림음',
+@@ -2434,19 +2420,6 @@ export default {
+         pairing: 'Device pairing',
+       },
+     },
+-    userAvatar: {
+-      title: '사용자 아바타',
+-      upload: '이미지 업로드',
+-      random: '무작위 생성',
+-      reset: '기본값으로 재설정',
+-      hint: 'PNG, JPEG, WebP를 최대 1MB까지 지원하며 500KB 미만으로 자동 압축됩니다.',
+-      invalidType: 'PNG, JPEG 또는 WebP 이미지를 선택하세요',
+-      tooLarge: '아바타 이미지는 1MB 이하여야 합니다',
+-      saveSuccess: '아바타 저장됨',
+-      saveFailed: '아바타 저장 실패',
+-      resetSuccess: '아바타 재설정됨',
+-      resetFailed: '아바타 재설정 실패',
+-    },
+     models: {
+       apiKey: 'API Key',
+       apiKeyPlaceholder: 'API Key 입력',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index b07224f1b..3803b5a04 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1767,20 +1767,6 @@ jobTriggered: 'Job acionado',
+     hasEnv: 'Tem .env',
+     hasSoulMd: 'Tem soul.md',
+     noProfiles: 'Nenhum perfil encontrado. Crie um para comecar.',
+-    avatar: {
+-      title: 'Avatar personalizado',
+-      customize: 'Personalizar avatar',
+-      upload: 'Enviar imagem',
+-      random: 'Gerar aleatório',
+-      reset: 'Restaurar padrão',
+-      hint: 'PNG, JPEG ou WebP, máximo 1 MB',
+-      invalidType: 'Escolha uma imagem PNG, JPEG ou WebP',
+-      tooLarge: 'A imagem do avatar não pode exceder 1 MB',
+-      saveSuccess: 'Avatar salvo',
+-      saveFailed: 'Falha ao salvar avatar',
+-      resetSuccess: 'Avatar padrão restaurado',
+-      resetFailed: 'Falha ao restaurar avatar padrão',
+-    },
+     runtime: {
+       activeProfile: 'Atual: {name}',
+       bridgeWorker: 'Status do Bridge',
+@@ -1936,8 +1922,8 @@ jobTriggered: 'Job acionado',
+       showReasoningHint: 'Mostrar processo de pensamento do modelo',
+       showCost: 'Mostrar custo',
+       showCostHint: 'Mostrar uso de tokens nas respostas',
+-      showSessionIdentity: 'Avatares e perfil na lista de sessoes',
+-      showSessionIdentityHint: 'Mostrar avatar do tipo de agente, avatar do perfil e nome do perfil na lista de sessões e nas mensagens',
++      showSessionIdentity: 'Perfil na lista de sessões',
++      showSessionIdentityHint: 'Mostrar os nomes de agente e perfil na lista de sessões e nas mensagens',
+       inlineDiffs: 'Diffs em linha',
+       inlineDiffsHint: 'Mostrar alterações de código em linha',
+       bellOnComplete: 'Som de conclusão',
+@@ -2434,19 +2420,6 @@ jobTriggered: 'Job acionado',
+         pairing: 'Device pairing',
+       },
+     },
+-    userAvatar: {
+-      title: 'Avatar do usuário',
+-      upload: 'Enviar imagem',
+-      random: 'Gerar aleatório',
+-      reset: 'Restaurar padrão',
+-      hint: 'Suporta PNG, JPEG e WebP até 1 MB; compacta automaticamente para menos de 500 KB.',
+-      invalidType: 'Escolha uma imagem PNG, JPEG ou WebP',
+-      tooLarge: 'A imagem do avatar deve ter 1 MB ou menos',
+-      saveSuccess: 'Avatar salvo',
+-      saveFailed: 'Falha ao salvar avatar',
+-      resetSuccess: 'Avatar restaurado',
+-      resetFailed: 'Falha ao restaurar avatar',
+-    },
+     models: {
+       apiKey: 'API Key',
+       apiKeyPlaceholder: 'Digite a API Key',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index c7c2b4c63..aec7c9182 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -1759,20 +1759,6 @@ export default {
+     hasEnv: 'Есть .env',
+     hasSoulMd: 'Есть soul.md',
+     noProfiles: 'Нет профилей. Создайте первый.',
+-    avatar: {
+-      title: 'Пользовательский аватар',
+-      customize: 'Аватар',
+-      upload: 'Загрузить изображение',
+-      random: 'Случайный',
+-      reset: 'Сбросить на стандартный',
+-      hint: 'Поддерживаются PNG, JPEG, WebP, максимум 1 МБ',
+-      invalidType: 'Выберите изображение в формате PNG, JPEG или WebP',
+-      tooLarge: 'Аватар не может превышать 1 МБ',
+-      saveSuccess: 'Аватар сохранён',
+-      saveFailed: 'Ошибка сохранения аватара',
+-      resetSuccess: 'Стандартный аватар восстановлен',
+-      resetFailed: 'Ошибка восстановления стандартного аватара',
+-    },
+     runtime: {
+       activeProfile: 'Текущий: {name}',
+       bridgeWorker: 'Состояние моста',
+@@ -1935,8 +1921,8 @@ export default {
+       showReasoningHint: 'Отображать ход мыслей модели',
+       showCost: 'Показывать стоимость',
+       showCostHint: 'Отображать количество использованных токенов в ответе',
+-      showSessionIdentity: 'Аватары и профиль в списке сессий',
+-      showSessionIdentityHint: 'Показывать аватар типа агента, аватар профиля и имя профиля в списке сессий и сообщениях чата',
++      showSessionIdentity: 'Профиль в списке сессий',
++      showSessionIdentityHint: 'Показывать имена агента и профиля в списке сессий и сообщениях чата',
+       inlineDiffs: 'Встроенные различия',
+       inlineDiffsHint: 'Отображать изменения в коде внутри строки',
+       bellOnComplete: 'Звук завершения',
+@@ -2126,19 +2112,6 @@ export default {
+         pairing: 'Device pairing',
+       },
+     },
+-    userAvatar: {
+-      title: 'Аватар пользователя',
+-      upload: 'Загрузить изображение',
+-      random: 'Сгенерировать случайный',
+-      reset: 'Сбросить по умолчанию',
+-      hint: 'Поддерживаются PNG, JPEG и WebP до 1 МБ; автоматически сжимается до менее 500 КБ.',
+-      invalidType: 'Выберите изображение PNG, JPEG или WebP',
+-      tooLarge: 'Изображение аватара должно быть не больше 1 МБ',
+-      saveSuccess: 'Аватар сохранён',
+-      saveFailed: 'Не удалось сохранить аватар',
+-      resetSuccess: 'Аватар сброшен',
+-      resetFailed: 'Не удалось сбросить аватар',
+-    },
+     voice: {
+       activeTtsApi: 'Активная TTS API',
+       activeSttApi: 'Активная STT API',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index d5cd49768..026975428 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -1924,20 +1924,6 @@ export default {
+     hasEnv: '有 .env',
+     hasSoulMd: '有 soul.md',
+     noProfiles: '目前無設定檔，建立一個開始吧。',
+-    avatar: {
+-      title: '自訂頭像',
+-      customize: '頭像',
+-      upload: '上傳圖片',
+-      random: '隨機產生',
+-      reset: '恢復預設',
+-      hint: '支援 PNG、JPEG、WebP，最大 1MB',
+-      invalidType: '請選擇 PNG、JPEG 或 WebP 圖片',
+-      tooLarge: '頭像圖片不能超過 1MB',
+-      saveSuccess: '頭像已儲存',
+-      saveFailed: '儲存頭像失敗',
+-      resetSuccess: '已恢復預設頭像',
+-      resetFailed: '恢復預設頭像失敗',
+-    },
+     runtime: {
+       activeProfile: '目前：{name}',
+       bridgeWorker: '橋接狀態',
+@@ -2101,8 +2087,8 @@ export default {
+       showReasoningHint: '展示模型思考過程',
+       showCost: '顯示費用',
+       showCostHint: '在回覆中顯示 token 使用量',
+-      showSessionIdentity: '會話列表頭像與 Profile',
+-      showSessionIdentityHint: '在側邊欄會話列表與聊天訊息中顯示 Agent/Profile 頭像與名稱',
++      showSessionIdentity: '會話列表 Profile 名稱',
++      showSessionIdentityHint: '在側邊欄會話列表與聊天訊息中顯示 Agent/Profile 名稱',
+       inlineDiffs: '內嵌差異',
+       inlineDiffsHint: '程式碼變更以內嵌方式顯示',
+       bellOnComplete: '完成提示音',
+@@ -2294,19 +2280,6 @@ export default {
+         pairing: '裝置配對',
+       },
+     },
+-    userAvatar: {
+-      title: '使用者頭像',
+-      upload: '上傳圖片',
+-      random: '隨機產生',
+-      reset: '恢復預設',
+-      hint: '支援 PNG、JPEG、WebP，最大 1MB，會自動壓縮到 500KB 以下',
+-      invalidType: '請選擇 PNG、JPEG 或 WebP 圖片',
+-      tooLarge: '頭像圖片不能超過 1MB',
+-      saveSuccess: '頭像已儲存',
+-      saveFailed: '儲存頭像失敗',
+-      resetSuccess: '已恢復預設頭像',
+-      resetFailed: '恢復預設頭像失敗',
+-    },
+     voice: {
+       activeTtsApi: '目前 TTS API',
+       activeSttApi: '目前 STT API',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index d37e606c4..b0f1e4578 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -1970,20 +1970,6 @@ export default {
+     hasEnv: '有 .env',
+     hasSoulMd: '有 soul.md',
+     noProfiles: '暂无配置，创建一个开始吧。',
+-    avatar: {
+-      title: '自定义头像',
+-      customize: '头像',
+-      upload: '上传图片',
+-      random: '随机生成',
+-      reset: '恢复默认',
+-      hint: '支持 PNG、JPEG、WebP，最大 1MB',
+-      invalidType: '请选择 PNG、JPEG 或 WebP 图片',
+-      tooLarge: '头像图片不能超过 1MB',
+-      saveSuccess: '头像已保存',
+-      saveFailed: '保存头像失败',
+-      resetSuccess: '已恢复默认头像',
+-      resetFailed: '恢复默认头像失败',
+-    },
+     runtime: {
+       activeProfile: '当前：{name}',
+       bridgeWorker: '桥接状态',
+@@ -2190,8 +2176,8 @@ export default {
+       showReasoningHint: '展示模型思考过程',
+       showCost: '显示费用',
+       showCostHint: '在回复中显示 token 使用量',
+-      showSessionIdentity: '会话列表头像与 Profile',
+-      showSessionIdentityHint: '在侧边栏会话列表与聊天消息中显示 Agent/Profile 头像与名称',
++      showSessionIdentity: '会话列表 Profile 名称',
++      showSessionIdentityHint: '在侧边栏会话列表与聊天消息中显示 Agent/Profile 名称',
+       inlineDiffs: '内联差异',
+       inlineDiffsHint: '代码变更以内联方式显示',
+       bellOnComplete: '完成提示音',
+@@ -2383,19 +2369,6 @@ export default {
+         pairing: '设备配对',
+       },
+     },
+-    userAvatar: {
+-      title: '用户头像',
+-      upload: '上传图片',
+-      random: '随机生成',
+-      reset: '恢复默认',
+-      hint: '支持 PNG、JPEG、WebP，最大 1MB，会自动压缩到 500KB 以下',
+-      invalidType: '请选择 PNG、JPEG 或 WebP 图片',
+-      tooLarge: '头像图片不能超过 1MB',
+-      saveSuccess: '头像已保存',
+-      saveFailed: '保存头像失败',
+-      resetSuccess: '已恢复默认头像',
+-      resetFailed: '恢复默认头像失败',
+-    },
+     voice: {
+       activeTtsApi: '当前 TTS API',
+       activeSttApi: '当前 STT API',
+diff --git a/packages/client/src/stores/hermes/profiles.ts b/packages/client/src/stores/hermes/profiles.ts
+index 630bba1cb..f5a47e99c 100644
+--- a/packages/client/src/stores/hermes/profiles.ts
++++ b/packages/client/src/stores/hermes/profiles.ts
+@@ -86,33 +86,6 @@ export const useProfilesStore = defineStore('profiles', () => {
+     }
+   }
+ 
+-  async function updateAvatar(name: string, avatar: profilesApi.ProfileAvatar) {
+-    const saved = await profilesApi.updateProfileAvatar(name, avatar)
+-    profiles.value = profiles.value.map(profile => (
+-      profile.name === name ? { ...profile, avatar: saved } : profile
+-    ))
+-    if (detailMap.value[name]) {
+-      detailMap.value[name] = { ...detailMap.value[name], avatar: saved }
+-    }
+-    if (activeProfile.value?.name === name) {
+-      activeProfile.value = { ...activeProfile.value, avatar: saved }
+-    }
+-    return saved
+-  }
+-
+-  async function deleteAvatar(name: string) {
+-    await profilesApi.deleteProfileAvatar(name)
+-    profiles.value = profiles.value.map(profile => (
+-      profile.name === name ? { ...profile, avatar: null } : profile
+-    ))
+-    if (detailMap.value[name]) {
+-      detailMap.value[name] = { ...detailMap.value[name], avatar: null }
+-    }
+-    if (activeProfile.value?.name === name) {
+-      activeProfile.value = { ...activeProfile.value, avatar: null }
+-    }
+-  }
+-
+   async function createProfile(name: string, clone?: boolean) {
+     const res = await profilesApi.createProfile(name, clone)
+     if (res.success) await fetchProfiles()
+@@ -202,8 +175,6 @@ export const useProfilesStore = defineStore('profiles', () => {
+     switchHermesProfile,
+     exportProfile,
+     importProfile,
+-    updateAvatar,
+-    deleteAvatar,
+     clearAllSessionCaches,
+   }
+ })
+diff --git a/packages/client/src/utils/chat-agent-avatar.ts b/packages/client/src/utils/chat-agent-avatar.ts
+deleted file mode 100644
+index d29a5d896..000000000
+--- a/packages/client/src/utils/chat-agent-avatar.ts
++++ /dev/null
+@@ -1,35 +0,0 @@
+-export interface ChatAgentAvatar {
+-  label: 'Hermes' | 'Ekko' | 'Claude' | 'Codex' | 'Pi' | 'Grok' | 'OpenCode' | 'DeepSeek Harness'
+-  src: string
+-}
+-
+-interface ChatAgentSessionIdentity {
+-  source?: string
+-  agent?: string
+-  codingAgentId?: string
+-}
+-
+-const AGENT_AVATARS = {
+-  hermes: { label: 'Hermes', src: '/coding-agents/hermes.png' },
+-  'ekko-agent': { label: 'Ekko', src: '/coding-agents/ekko-agent.png' },
+-  'claude-code': { label: 'Claude', src: '/coding-agents/claude-code.svg' },
+-  codex: { label: 'Codex', src: '/coding-agents/codex-openai.png' },
+-  pi: { label: 'Pi', src: '/coding-agents/pi.svg' },
+-  grok: { label: 'Grok', src: '/coding-agents/grok.svg' },
+-  opencode: { label: 'OpenCode', src: '/coding-agents/opencode.png' },
+-  dsh: { label: 'DeepSeek Harness', src: '/coding-agents/deepseek.svg' },
+-} as const satisfies Record<string, ChatAgentAvatar>
+-
+-export function chatSessionAgentAvatar(session?: ChatAgentSessionIdentity | null): ChatAgentAvatar {
+-  if (!session) return AGENT_AVATARS['ekko-agent']
+-  const runtime = String(session?.codingAgentId || session?.agent || '').trim().toLowerCase()
+-  if (runtime === 'ekko-agent' || runtime === 'ekko_agent' || runtime === 'ekko') return AGENT_AVATARS['ekko-agent']
+-  if (runtime === 'claude' || runtime === 'claude-code') return AGENT_AVATARS['claude-code']
+-  if (runtime === 'codex') return AGENT_AVATARS.codex
+-  if (runtime === 'pi') return AGENT_AVATARS.pi
+-  if (runtime === 'grok') return AGENT_AVATARS.grok
+-  if (runtime === 'dsh') return AGENT_AVATARS.dsh
+-  if (runtime === 'opencode') return AGENT_AVATARS.opencode
+-  if (session?.source === 'coding_agent') return AGENT_AVATARS['claude-code']
+-  return AGENT_AVATARS.hermes
+-}
+diff --git a/packages/client/src/utils/chat-agent-label.ts b/packages/client/src/utils/chat-agent-label.ts
+new file mode 100644
+index 000000000..e6be4da15
+--- /dev/null
++++ b/packages/client/src/utils/chat-agent-label.ts
+@@ -0,0 +1,34 @@
++export interface ChatAgentLabel {
++  label: 'Hermes' | 'Ekko' | 'Claude' | 'Codex' | 'Pi' | 'Grok' | 'OpenCode' | 'DeepSeek Harness'
++}
++
++interface ChatAgentSessionIdentity {
++  source?: string
++  agent?: string
++  codingAgentId?: string
++}
++
++const AGENT_LABELS = {
++  hermes: { label: 'Hermes' },
++  'ekko-agent': { label: 'Ekko' },
++  'claude-code': { label: 'Claude' },
++  codex: { label: 'Codex' },
++  pi: { label: 'Pi' },
++  grok: { label: 'Grok' },
++  opencode: { label: 'OpenCode' },
++  dsh: { label: 'DeepSeek Harness' },
++} as const satisfies Record<string, ChatAgentLabel>
++
++export function chatSessionAgentLabel(session?: ChatAgentSessionIdentity | null): ChatAgentLabel {
++  if (!session) return AGENT_LABELS['ekko-agent']
++  const runtime = String(session?.codingAgentId || session?.agent || '').trim().toLowerCase()
++  if (runtime === 'ekko-agent' || runtime === 'ekko_agent' || runtime === 'ekko') return AGENT_LABELS['ekko-agent']
++  if (runtime === 'claude' || runtime === 'claude-code') return AGENT_LABELS['claude-code']
++  if (runtime === 'codex') return AGENT_LABELS.codex
++  if (runtime === 'pi') return AGENT_LABELS.pi
++  if (runtime === 'grok') return AGENT_LABELS.grok
++  if (runtime === 'dsh') return AGENT_LABELS.dsh
++  if (runtime === 'opencode') return AGENT_LABELS.opencode
++  if (session?.source === 'coding_agent') return AGENT_LABELS['claude-code']
++  return AGENT_LABELS.hermes
++}
+diff --git a/packages/client/src/views/hermes/KanbanView.vue b/packages/client/src/views/hermes/KanbanView.vue
+index cf6a167ae..6ad358224 100644
+--- a/packages/client/src/views/hermes/KanbanView.vue
++++ b/packages/client/src/views/hermes/KanbanView.vue
+@@ -14,7 +14,6 @@ import { DEFAULT_KANBAN_BOARD, useKanbanStore } from '@/stores/hermes/kanban'
+ import { useProfilesStore } from '@/stores/hermes/profiles'
+ import { withDefaultAssignee } from '@/utils/hermes/kanban-assignees'
+ import type { KanbanTask, KanbanTaskStatus } from '@/api/hermes/kanban'
+-import type { ProfileAvatar } from '@/api/hermes/profiles'
+ 
+ import '@vue-flow/core/dist/style.css'
+ import '@vue-flow/core/dist/theme-default.css'
+@@ -134,10 +133,6 @@ const kanbanCanvasKey = computed(() => `${kanbanStore.selectedBoard}:${kanbanSto
+ 
+ const visibleAssignees = computed(() => withDefaultAssignee(kanbanStore.assignees, kanbanStore.stats?.by_assignee || {}))
+ 
+-const profileAvatarByName = computed<Record<string, ProfileAvatar | null>>(() => {
+-  return Object.fromEntries(profilesStore.profiles.map(profile => [profile.name, profile.avatar || null]))
+-})
+-
+ const statusFilterOptions = computed(() => [
+   { label: t('kanban.allStatuses'), value: '' },
+   ...boardStatuses.map(s => ({ label: t(`kanban.columns.${s}`, s), value: s })),
+@@ -409,7 +404,6 @@ async function handleDispatch() {
+                   v-for="task in data.tasks"
+                   :key="task.id"
+                   :task="task"
+-                  :assignee-avatar="task.assignee ? profileAvatarByName[task.assignee] || null : null"
+                   @click="handleTaskClick(task.id)"
+                 />
+                 <div v-if="data.tasks.length === 0" class="column-empty">
+-- 
+2.53.0
+
