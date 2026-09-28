@@ -143,7 +143,9 @@ describe('search message navigation', () => {
     await expect(pending).resolves.toBe(false)
     expect(store.activeSessionId).toBe('other')
     expect(store.focusMessageId).toBeNull()
-    expect(api.fetchSessionMessagesPage).toHaveBeenCalledTimes(1)
+    // one focus-paging fetch for the search session, plus the fast-first page
+    // that a plain switch to 'other' fires (fork fast-first behavior)
+    expect(api.fetchSessionMessagesPage).toHaveBeenCalledTimes(2)
   })
 
   it('preserves a search result outside the session list when the chat route mounts', async () => {

@@ -347,15 +347,17 @@ describe('ChatInput draft persistence', () => {
 
     expect(wrapper.get('.context-info').text()).toMatch(/2\.0k\s+\//)
     expect(wrapper.get('.context-limit-editable').text()).toBe('256.0k')
-    expect(wrapper.get('.context-info').text()).toContain('chat.contextRemaining 254.0k')
-    expect(wrapper.find('.context-bar').exists()).toBe(true)
+    // fork behavior: remaining-token text is replaced by the usage percent
+    // chip, and the context progress bar is dropped entirely
+    expect(wrapper.get('.context-info').text()).toContain('0.78%')
+    expect(wrapper.find('.context-bar').exists()).toBe(false)
 
     Object.assign(chatStore.activeSession!, { source: 'cli', agent: 'hermes', codingAgentId: undefined })
     await nextTick()
 
     expect(wrapper.get('.context-info').text()).toMatch(/2\.0k\s+\//)
     expect(wrapper.get('.context-limit-editable').text()).toBe('256.0k')
-    expect(wrapper.find('.context-bar').exists()).toBe(true)
+    expect(wrapper.find('.context-bar').exists()).toBe(false)
   })
 
   it.each(['cursor', 'codex', 'claude-code', 'pi', 'grok', 'opencode', 'dsh'])('shows only this session cumulative usage for %s', async agent => {
