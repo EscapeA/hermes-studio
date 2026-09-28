@@ -434,15 +434,17 @@ describe('ChatInput draft persistence', () => {
 
     expect(wrapper.get('.context-info').text()).toMatch(/2\.0k\s+\//)
     expect(wrapper.get('.context-limit-editable').text()).toBe('256.0k')
-    expect(wrapper.get('.context-info').text()).toContain('chat.contextRemaining 254.0k')
-    expect(wrapper.find('.context-bar').exists()).toBe(true)
+    // fork behavior: remaining-token text is replaced by the usage percent
+    // chip, and the context progress bar is dropped entirely
+    expect(wrapper.get('.context-info').text()).toContain('0.78%')
+    expect(wrapper.find('.context-bar').exists()).toBe(false)
 
     Object.assign(chatStore.activeSession!, { source: 'cli', agent: 'hermes', codingAgentId: undefined })
     await nextTick()
 
     expect(wrapper.get('.context-info').text()).toMatch(/2\.0k\s+\//)
     expect(wrapper.get('.context-limit-editable').text()).toBe('256.0k')
-    expect(wrapper.find('.context-bar').exists()).toBe(true)
+    expect(wrapper.find('.context-bar').exists()).toBe(false)
   })
 
   it.each(['hermes', 'ekko-agent'])('never substitutes historical usage for missing or zero %s context', async agent => {
@@ -456,12 +458,13 @@ describe('ChatInput draft persistence', () => {
     session.contextTokens = 0
     await nextTick()
     expect(wrapper.get('.context-info').text()).toMatch(/^0\s+\//)
-    expect(wrapper.get('.context-info').text()).toContain('chat.contextRemaining 256.0k')
+    // fork behavior: the remaining-token text is replaced by the usage percent chip
+    expect(wrapper.get('.context-percent').text()).toBe('0.00%')
     for (const value of [undefined, NaN, Infinity, -1]) {
       session.contextTokens = value
       await nextTick()
       expect(wrapper.get('.context-info').text()).toMatch(/^—\s+\//)
-      expect(wrapper.get('.context-info').text()).toContain('chat.contextRemaining —')
+      expect(wrapper.get('.context-percent').text()).toBe('0.00%')
       expect(wrapper.find('.context-bar').exists()).toBe(false)
       expect(wrapper.text()).not.toContain('136.1k')
     }
