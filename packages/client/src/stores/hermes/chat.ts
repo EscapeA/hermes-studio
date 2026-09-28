@@ -2175,10 +2175,14 @@ export const useChatStore = defineStore('chat', () => {
     let loaded = false
     try {
       // Fast path: fire the paginated REST request immediately so the latest
-      // messages render while the socket resume fills in the full state.
-      const fastPagePromise = fetchSessionMessagesPage(
-        sessionId, 0, SESSION_FAST_FIRST_PAGE_SIZE, activeSession.value?.profile,
-      )
+      // messages render while the socket resume fills in the full state. Skip it
+      // when navigating to a search hit (focus): resume plus focus paging own
+      // that flow, and the extra fetch would race the focus window.
+      const fastPagePromise = focusId
+        ? Promise.resolve(null)
+        : fetchSessionMessagesPage(
+          sessionId, 0, SESSION_FAST_FIRST_PAGE_SIZE, activeSession.value?.profile,
+        )
       let resumeAppliedMessages = false
 
       // Load messages via Socket.IO resume (server loads from DB if not in memory)
