@@ -1,4 +1,4 @@
-From 1cc2580dbba7217a5b4be390ee8634e2ff6ab268 Mon Sep 17 00:00:00 2001
+From 812feb356beed7035da480e092fe1440e0b194b6 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 7 Jul 2026 10:11:13 +0800
 Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
@@ -33,13 +33,13 @@ Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
  create mode 100644 packages/client/src/composables/usePwa.ts
 
 diff --git a/packages/client/index.html b/packages/client/index.html
-index e43016517..5fcf52abb 100644
+index 35fa2a391..110f851eb 100644
 --- a/packages/client/index.html
 +++ b/packages/client/index.html
-@@ -4,10 +4,15 @@
- <head>
+@@ -5,10 +5,15 @@
    <meta charset="UTF-8" />
    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+   <link rel="stylesheet" href="/logo-loading.css" />
 -  <link rel="apple-touch-icon" href="/logo.png" />
 +  <link rel="apple-touch-icon" href="/icon-192.png" />
    <link rel="manifest" href="/manifest.webmanifest" />
@@ -52,7 +52,7 @@ index e43016517..5fcf52abb 100644
    <meta name="apple-mobile-web-app-capable" content="yes" />
 +  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
    <meta name="apple-mobile-web-app-title" content="Ekko Studio" />
-   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
    <title>Ekko Studio</title>
 diff --git a/packages/client/public/icon-192.png b/packages/client/public/icon-192.png
 new file mode 100644
@@ -8927,18 +8927,18 @@ index 000000000..b775142ab
 +  return cached || fetchPromise;
 +}
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index 2c30e8f46..22f8f484d 100644
+index b2a059ecb..3d53d49f8 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -28,6 +28,7 @@ import AuthEventListener from "@/components/auth/AuthEventListener.vue";
- import { desktopBridge } from "@/utils/desktop-bridge";
- import { naiveLocaleFor } from "@/constants/naiveLocale";
- import { naiveRtlFor } from "@/constants/naiveRtl";
+@@ -35,6 +35,7 @@ import { navigationRailKey } from "@/composables/useNavigationRail";
+ import { pageHeaderTargetKey } from "@/composables/usePageHeader";
+ import { mobileNavigationKey } from "@/composables/usePageSidebar";
+ import HeaderSidebarToggle from "@/components/layout/HeaderSidebarToggle.vue";
 +import { usePwa } from "@/composables/usePwa";
  
- const AppSidebar = defineAsyncComponent(
-   async () => (await import("@/components/layout/AppSidebar.vue")).default,
-@@ -241,6 +242,7 @@ onUnmounted(() => {
+ const StudioNavigationRail = defineAsyncComponent(
+   async () => (await import("@/components/layout/StudioNavigationRail.vue")).default,
+@@ -283,6 +284,7 @@ onUnmounted(() => {
  });
  
  useKeyboard();
@@ -9067,10 +9067,10 @@ index 000000000..1ee3936c6
 +  return { updateAvailable, applyUpdate }
 +}
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 1313e611a..d1a3e97ac 100644
+index a3b19a073..ebfe888c1 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -3801,4 +3801,7 @@ export default {
+@@ -3837,4 +3837,7 @@ export default {
      new_0_7_0_10: 'The English and Chinese READMEs now document the five runtimes, three Agent families, module ownership, canonical APIs, and current development and validation workflows (#2745)',
      new_0_7_0_11: 'Device Connections now shows only Android and iOS download cards; official Apple releases are labeled App Store instead of TestFlight · App Store',
    },
@@ -9079,10 +9079,10 @@ index 1313e611a..d1a3e97ac 100644
 +  },
  }
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 33424a4bd..5839fb0e0 100644
+index c5726bff2..d42a06383 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -3849,4 +3849,7 @@ export default {
+@@ -3885,4 +3885,7 @@ export default {
      new_0_7_0_10: '中英文 README 已更新，完整说明五种运行时、三类 Agent、模块归属、规范 API，以及当前开发和验证流程（#2745）',
      new_0_7_0_11: '“设备互联”现仅显示 Android 和 iOS 下载卡片；Apple 正式版只标记为 App Store，不再显示 TestFlight · App Store',
    },

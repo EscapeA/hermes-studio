@@ -13,7 +13,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 |---|---|---|
 | 01-ci | CI/测试（unit-test 移除、custom 触发、CF Pages deploy、mock） | 001-006 |
 | 02-pwa | PWA（离线、SW 缓存、SWR、资源瘦身、_headers、状态栏主题色） | 001-009 |
-| 04-usage | 用量显示（prompt_tokens、百分比、session 累计、composer 对齐、运行中实时解码 tok/s） | 001-010 |
+| 04-usage | 用量显示（prompt_tokens、百分比、session 累计、composer 对齐、用量行纯文字化＝去上游 0.7.26 的分栏面板、运行中实时解码 tok/s） | 001-010 |
 | 05-chat | Chat 核心（fast-path、avatar、双下拉、identity、滚动、聊天身份开关、用户气泡蓝色、clarify 折叠收起、工具卡按轮分组、去「正在思考」gif 图标、run 态指示器与输入区间距收紧、去输入框语音按钮） | 001-022 |
 | 06-mobile-input | 移动端输入（Enter 换行、模型下拉不弹键盘） | 001-002 |
 | 07-workflow | Workflow 移动端布局 + i18n | 001-002 |
@@ -274,6 +274,20 @@ NODE_ENV= npm run build && git push --force-with-lease escapea custom
 
 ## 历史
 
+- 2026-09-30 升级 0.7.25 → **v0.7.26**（main 07ccb17a4 → 200f0eec8；9 提交 / 272 文件 / +7791−2204；主题：**Studio 导航/头部/移动端布局统一 #3232**、用量成本记录 #3226、desktop 窗口控件、Agent Manager 图标）：
+  93 补丁重放，**26 个补丁冲突**（含 18 处 modify/delete），53 个补丁按新上下文回写。冲突全部源于上游重构，解法一览：
+  - **`04-usage/004|005|006|007|009`（.context-usage-row 搬家）**：上游把用量行从 `.input-wrapper` 内**移到外面**并重排成带边框的 composer 顶栏（`position: relative` / 100% 宽 / 上圆角 / glass）→ 保留上游位置与外框，把 fork 的会话用量 slot、context 百分比重新植进去；`.session-usage-corner` 随之废弃删除。
+  - **`05-chat/003`（会话快速打开）**：上游把 `onMounted` 重写成 `disposed` 门控的重试循环 → 保留上游结构，把 `openPreferredSession` 预取插进循环的 `Promise.all`。
+  - **`05-chat/005`（移动端抽屉）**：上游把 `.session-list` 从「浮起卡片（margin 10px + radius + shadow）」改成齐边（`margin: 0` / `border-inline-end`）并把移动端定位改回 `absolute` 0/0/0 → 保留齐边定位，保留 fork 的 `z-index: 1000` 与安全区 `padding-top`。
+  - **`13-mobile-nav/001|002`**：上游给 App.vue 加 `app-box` 包裹 + nav rail，并把 `<button class="hamburger-btn">` 改成 `:aria-expanded` + logo.png → 取上游结构/属性，重新植入 fork 的 38px 顶栏几何（`$mobile-topbar-*`）、三横线图标与 `hamburger-btn--hidden`；ModelsView 的 ▦ 隐藏规则因上游删掉了该按钮而整体删除。
+  - **`17/18`（群聊/工作流前端整体移除）**：上游重写了同样的样式块 → 用「取上游结构 + 程序化剥掉 `group-chat` / `workflow` 选择器行」解决（注意：**列表尾项被移除时要把 `{` 补回上一行**）；`WorkflowView.vue` / group-chat 组件与视图按 modify/delete 接受删除；11 个 locale 的 `workflow` 命名空间整块删除；`App.vue` 的 `isInviteOnlyPage`（来自被删的分享页）一并清除。
+  - **`19-sidebar-history-toggle`**：上游的 `conversation-switch`（单聊/历史宫格）被 fork 的扁平按钮组取代 → 保留 fork 的历史按钮，宫格整块删除。
+  - **`20-remove-avatars`**：上游给 PageSidebarFooter 加了 `ProfileAvatar` → 去头像时把已被上游删掉的 `useAppStore` 死 import 一起清掉。
+  - **`22-theme-styles`**：上游**删掉 ThemeSwitch 的风格切换按钮**并把启动风格硬钉 `'ink'`（`useTheme.ts` + `index.html`）→ 保留 fork 的表驱动风格 + 下拉色卡，并把 `index.html` 首屏风格改回读 `localStorage.hermes_style`（否则刷新先闪 ink）；`main.ts` 的 `useTheme` import 随之删除。
+  - **`10-perf-p1/004`（boot logo 单请求）**：上游把 boot 微光抽到共享 `logo-loading.css`（带 mask）→ 保留上游文件，改为在 `index.html` 只对 `.boot-fallback__logo-wrap::after` 关掉 mask（保持「冷启动只取一次 /logo.png」的原意，不影响 in-app `LogoLoading`）。
+  - 依赖面：`package.json` / `package-lock.json` **仅 version 变化**、`bin/` 零改动 ⇒ 无需 `npm ci`；部署 = `npm i -g hermes-web-ui@0.7.26` + 热替 dist。
+  - 可复现性：verify-am **0 差异**；备份 tag `backup/custom-pre-0.7.26`（= 6ccfe9b7e）。
+  - **追加（Aries 2026-10-01 定稿）**：上游把用量行做成贴在输入框上的带边框分栏（视觉上像两行表格）→ 去边框/底色/圆角与`.dark` 底色，用量行回归**纯文字一行**（`padding: 0 11px 6px`，左右 11px 与输入框内文字同轴），输入框恢复完整圆角；`App.vue` 的「自定义背景」半透明组同步移除该行。改动并入 `patches/04-usage/009-composer-align.patch`（故该补丁现在同时含 `ChatInput.vue` 与 `App.vue`）；另有 6 个补丁因父 blob 与行号位移仅重生成头部，无内容变化。
 - 2026-08-25 升级 v0.6.46 → v0.6.47（main 8dc6d193 = tag v0.6.47 + #2730 run-scoped-tool-calls 等，14+ PR：社交消息推送工作区 / 图片模型可配置 / App resume 缓存 / Codex&Claude system 合并 / 上传上限 HERMES_MAX_UPLOAD_SIZE / GLM-5.3 回滚等）：
   62 补丁重放冲突 2 个 + 构建期修复 1 个。
   - 007-conn-upload-405：chat.ts import 行冲突，HEAD 侧上游已加 `setSessionPushEnabled`、删 `fetchWorkspaceRunChangesForSession`（0.6.47 paginated/resume 响应自带 workspaceRunChanges）→ 取并集保留上游新增，删已无调用的 fetch import。

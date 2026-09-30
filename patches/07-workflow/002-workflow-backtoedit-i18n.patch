@@ -1,4 +1,4 @@
-From 72ac4c6e317109a86014d3f919f18c4f7cd50a0f Mon Sep 17 00:00:00 2001
+From aa701adcfe70f4ac17540c52f14f2205615ff5ca Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Wed, 5 Aug 2026 02:08:55 +0800
 Subject: [PATCH] fix(i18n): add missing workflow.actions.backToEdit
@@ -12,10 +12,10 @@ Subject: [PATCH] fix(i18n): add missing workflow.actions.backToEdit
  4 files changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 77321a57d..71eb3debf 100644
+index ae16dd935..5263b62e6 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -2871,7 +2871,7 @@ jobTriggered: 'Job ausgelost',
+@@ -2899,7 +2899,7 @@ jobTriggered: 'Job ausgelost',
      canvasAriaLabel: 'Workflow-Arbeitsfläche',
      workspace: { title: 'Arbeitsbereich auswählen', select: 'Arbeitsbereich auswählen', clear: 'Arbeitsbereich entfernen' },
      actions: {
@@ -25,10 +25,10 @@ index 77321a57d..71eb3debf 100644
        rerunDownstreamKeepNode: 'Diesen Knoten beibehalten und nachgelagerte Knoten ausführen', rerunDownstreamClearNode: 'Diesen Knoten leeren und nachgelagerte Knoten ausführen', rerunDownstreamStarted: 'Erneute Ausführung der nachgelagerten Knoten gestartet', rerunFromNodeStarted: 'Erneute Ausführung ab diesem Knoten gestartet', rerunFailed: 'Erneute Workflow-Ausführung fehlgeschlagen',
        deleteNode: 'Knoten löschen', deleteEdge: 'Verbindung löschen', editEdge: 'Verbindung bearbeiten', undo: 'Rückgängig',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 0abdc16ff..9a2ea2c86 100644
+index 2c7551115..6883d63a2 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -2871,7 +2871,7 @@ jobTriggered: 'Job ejecutado',
+@@ -2899,7 +2899,7 @@ jobTriggered: 'Job ejecutado',
      canvasAriaLabel: 'Lienzo del Workflow',
      workspace: { title: 'Seleccionar espacio de trabajo', select: 'Seleccionar espacio de trabajo', clear: 'Limpiar espacio de trabajo' },
      actions: {
@@ -38,10 +38,10 @@ index 0abdc16ff..9a2ea2c86 100644
        rerunDownstreamKeepNode: 'Conservar este nodo y ejecutar los siguientes', rerunDownstreamClearNode: 'Limpiar este nodo y ejecutar los siguientes', rerunDownstreamStarted: 'Reejecución de los nodos siguientes iniciada', rerunFromNodeStarted: 'Reejecución iniciada desde este nodo', rerunFailed: 'La reejecución del Workflow ha fallado',
        deleteNode: 'Eliminar nodo', deleteEdge: 'Eliminar conexión', editEdge: 'Editar conexión', undo: 'Deshacer',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index f36c10522..9ed076e2b 100644
+index 9a19f0b46..0d0088f63 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -2871,7 +2871,7 @@ jobTriggered: 'Job declenche',
+@@ -2899,7 +2899,7 @@ jobTriggered: 'Job declenche',
      canvasAriaLabel: 'Canevas du Workflow',
      workspace: { title: 'Sélectionner un espace de travail', select: 'Sélectionner un espace de travail', clear: 'Effacer l’espace de travail' },
      actions: {
@@ -51,10 +51,10 @@ index f36c10522..9ed076e2b 100644
        rerunDownstreamKeepNode: 'Conserver ce nœud et exécuter la suite', rerunDownstreamClearNode: 'Effacer ce nœud et exécuter la suite', rerunDownstreamStarted: 'Réexécution de la suite démarrée', rerunFromNodeStarted: 'Réexécution démarrée depuis ce nœud', rerunFailed: 'Échec de la réexécution du Workflow',
        deleteNode: 'Supprimer le nœud', deleteEdge: 'Supprimer la connexion', editEdge: 'Modifier la connexion', undo: 'Annuler',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 62e02b1ee..a34f17238 100644
+index fb98962cf..3464cfb25 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -2871,7 +2871,7 @@ jobTriggered: 'Job acionado',
+@@ -2899,7 +2899,7 @@ jobTriggered: 'Job acionado',
      canvasAriaLabel: 'Tela do Workflow',
      workspace: { title: 'Selecionar espaço de trabalho', select: 'Selecionar espaço de trabalho', clear: 'Limpar espaço de trabalho' },
      actions: {

@@ -1,4 +1,4 @@
-From f2d073b7d93bf8c9482b880d0ecc8be9b08dac69 Mon Sep 17 00:00:00 2001
+From 3fb8bb5b0ec53b6fa1a6d4d536cd4842c1048d97 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:29 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after group chat
@@ -37,16 +37,16 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  .../group-chat-invite-attachments.test.ts     |   72 -
  tests/client/group-chat-invite-code.test.ts   |   18 -
  .../client/group-chat-mention-options.test.ts |   48 -
- .../group-chat-panel-workspace-source.test.ts |  584 ------
+ .../group-chat-panel-workspace-source.test.ts |  585 ------
  tests/client/group-chat-remote-rooms.test.ts  |   74 -
  tests/client/group-chat-room-drafts.test.ts   |  104 -
  .../client/group-chat-store-baseline.test.ts  | 1456 -------------
  .../client/group-chat-store-streaming.test.ts | 1203 -----------
  .../client/group-chat-store-workspace.test.ts |  131 --
- tests/client/group-chat-view-settings.test.ts |   61 -
+ tests/client/group-chat-view-settings.test.ts |   65 -
  .../client/group-chat-workspace-diff.test.ts  |  416 ----
- .../group-message-item-highlight.test.ts      |  284 ---
- .../client/group-message-list-scroll.test.ts  |  311 ---
+ .../group-message-item-highlight.test.ts      |  292 ---
+ .../client/group-message-list-scroll.test.ts  |  315 ---
  tests/client/group-room-agent-avatar.test.ts  |  151 --
  tests/client/i18n-coverage.test.ts            |   87 -
  tests/client/login-view.test.ts               |    4 +-
@@ -56,13 +56,13 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  tests/client/style-system.test.ts             |   31 +-
  tests/client/use-speech-tts.test.ts           |   21 +-
  tests/desktop/group-chat-agent-popup.test.ts  |   63 -
- tests/e2e/desktop-window-chrome.spec.ts       |    7 -
+ tests/e2e/desktop-window-chrome.spec.ts       |    6 -
  tests/e2e/fixtures.ts                         |   10 -
- tests/e2e/group-chat-room-deeplink.spec.ts    | 1805 -----------------
+ tests/e2e/group-chat-room-deeplink.spec.ts    | 1855 -----------------
  tests/e2e/group-chat-share.spec.ts            |  388 ----
  tests/e2e/history-session-deeplink.spec.ts    |   42 +-
  tests/e2e/theme.spec.ts                       |   18 -
- 48 files changed, 33 insertions(+), 8599 deletions(-)
+ 48 files changed, 33 insertions(+), 8665 deletions(-)
  delete mode 100644 tests/client/group-agent-avatar.test.ts
  delete mode 100644 tests/client/group-agent-presets-source.test.ts
  delete mode 100644 tests/client/group-agent-presets.test.ts
@@ -1761,10 +1761,10 @@ index 59e07acf6..000000000
 -})
 diff --git a/tests/client/group-chat-panel-workspace-source.test.ts b/tests/client/group-chat-panel-workspace-source.test.ts
 deleted file mode 100644
-index 89df0a30d..000000000
+index 999b322b9..000000000
 --- a/tests/client/group-chat-panel-workspace-source.test.ts
 +++ /dev/null
-@@ -1,584 +0,0 @@
+@@ -1,585 +0,0 @@
 -import { readFileSync } from 'node:fs'
 -import { describe, expect, it } from 'vitest'
 -import { GROUP_AGENT_OPTIONS } from '../../packages/client/src/utils/agent-options'
@@ -1858,15 +1858,16 @@ index 89df0a30d..000000000
 -    expect(source).not.toContain('store.rooms[index] = result.room')
 -  })
 -
--  it('renders the active room workspace badge beside the room title like single chat', () => {
+-  it('renders the active room workspace icon in the right header actions', () => {
 -    const source = readFileSync('packages/client/src/components/hermes/group-chat/GroupChatPanel.vue', 'utf8')
+-    const headerInfo = source.slice(source.indexOf('<div class="header-info">'), source.indexOf('</PageHeader>'))
 -
--    expect(source).toContain('<div class="header-left">')
--    expect(source).toContain('class="workspace-badge"')
--    expect(source).toContain('v-if="currentRoom?.workspace"')
--    expect(source).toContain(':title="currentRoom.workspace"')
+-    expect(headerInfo).toContain('class="header-workspace-button"')
+-    expect(headerInfo).toContain('v-if="currentRoomCanManage"')
+-    expect(headerInfo).toContain(':title="currentRoom?.workspace || t(\'chat.setWorkspace\')"')
+-    expect(headerInfo).toContain('@click="handleOpenWorkspacePicker()"')
+-    expect(source).not.toContain('class="workspace-badge"')
 -    expect(source).not.toContain('class="workspace-chip"')
--    expect(source).not.toContain("currentWorkspaceLabel || t('chat.setWorkspace')")
 -  })
 -
 -  it('offers a selected manual room link when browser clipboard access fails', () => {
@@ -5349,10 +5350,10 @@ index 01dc2b948..000000000
 -})
 diff --git a/tests/client/group-chat-view-settings.test.ts b/tests/client/group-chat-view-settings.test.ts
 deleted file mode 100644
-index 7b75b1fe5..000000000
+index 39d7b8b87..000000000
 --- a/tests/client/group-chat-view-settings.test.ts
 +++ /dev/null
-@@ -1,61 +0,0 @@
+@@ -1,65 +0,0 @@
 -// @vitest-environment jsdom
 -import { beforeEach, describe, expect, it, vi } from 'vitest'
 -import { mount, flushPromises } from '@vue/test-utils'
@@ -5360,6 +5361,10 @@ index 7b75b1fe5..000000000
 -import GroupChatView from '@/views/hermes/GroupChatView.vue'
 -import { useGroupChatStore } from '@/stores/hermes/group-chat'
 -import { useSettingsStore } from '@/stores/hermes/settings'
+-
+-vi.mock('@/components/common/PageLoading.vue', () => ({
+-  default: { props: ['show'], template: '<div><slot /></div>' },
+-}))
 -
 -vi.mock('@/components/hermes/group-chat/GroupChatPanel.vue', () => ({
 -  default: { template: '<div data-testid="group-chat-panel" />' },
@@ -5838,10 +5843,10 @@ index a41958009..000000000
 -})
 diff --git a/tests/client/group-message-item-highlight.test.ts b/tests/client/group-message-item-highlight.test.ts
 deleted file mode 100644
-index 61c66cdfb..000000000
+index 1f28de69c..000000000
 --- a/tests/client/group-message-item-highlight.test.ts
 +++ /dev/null
-@@ -1,284 +0,0 @@
+@@ -1,292 +0,0 @@
 -// @vitest-environment jsdom
 -import { beforeEach, describe, expect, it, vi } from 'vitest'
 -import { mount } from '@vue/test-utils'
@@ -5865,6 +5870,14 @@ index 61c66cdfb..000000000
 -
 -vi.mock('@/api/studio/download', () => ({
 -  getDownloadUrl: (_path: string, name: string) => `/download/${name}`,
+-}))
+-
+-vi.mock('@/components/hermes/chat/MarkdownRenderer.vue', () => ({
+-  default: {
+-    name: 'MarkdownRenderer',
+-    props: ['content'],
+-    template: '<markdown-renderer-stub :content="content" />',
+-  },
 -}))
 -
 -import GroupMessageItem from '@/components/hermes/group-chat/GroupMessageItem.vue'
@@ -6128,10 +6141,10 @@ index 61c66cdfb..000000000
 -})
 diff --git a/tests/client/group-message-list-scroll.test.ts b/tests/client/group-message-list-scroll.test.ts
 deleted file mode 100644
-index 0033257d7..000000000
+index 549dc809f..000000000
 --- a/tests/client/group-message-list-scroll.test.ts
 +++ /dev/null
-@@ -1,311 +0,0 @@
+@@ -1,315 +0,0 @@
 -// @vitest-environment jsdom
 -import { beforeEach, describe, expect, it, vi } from 'vitest'
 -import { mount } from '@vue/test-utils'
@@ -6422,6 +6435,9 @@ index 0033257d7..000000000
 -    await nextTick()
 -
 -    expect(getRoomDetail).toHaveBeenCalledTimes(1)
+-    expect(wrapper.find('.history-loader-spinner').exists()).toBe(true)
+-    expect(wrapper.find('.studio-loading-logo').exists()).toBe(false)
+-    expect(wrapper.get('.stub-group-message').text()).toBe(makeMessage('message-151').content)
 -    expect(getRoomDetail).toHaveBeenCalledWith('room-1', {
 -      before: 'message-151',
 -      limit: 150,
@@ -6441,6 +6457,7 @@ index 0033257d7..000000000
 -    })
 -
 -    expect(store.messages.map(message => message.id)).toEqual(['message-150', 'message-151'])
+-    expect(wrapper.find('.history-loader-spinner').exists()).toBe(false)
 -  })
 -})
 diff --git a/tests/client/group-room-agent-avatar.test.ts b/tests/client/group-room-agent-avatar.test.ts
@@ -6810,12 +6827,12 @@ index 2095d5f4b..5a9b72fce 100644
      mockHasApiKey.mockReturnValue(true)
      ;(window as any).hermesDesktop = { isDesktop: true }
 diff --git a/tests/client/style-system.test.ts b/tests/client/style-system.test.ts
-index ee07946f2..66b9f241e 100644
+index 18c98a949..0e5c3fca0 100644
 --- a/tests/client/style-system.test.ts
 +++ b/tests/client/style-system.test.ts
 @@ -27,25 +27,19 @@ describe('client style system', () => {
  
-   it('keeps chat surfaces aligned while preserving composer elevation in dark mode', () => {
+   it('keeps chat and composer surfaces aligned in dark mode', () => {
      const chatInput = readClientFile('components/hermes/chat/ChatInput.vue')
 -    const groupChatInput = readClientFile('components/hermes/group-chat/GroupChatInput.vue')
      const virtualMessageList = readClientFile('components/hermes/chat/VirtualMessageList.vue')
@@ -6823,8 +6840,8 @@ index ee07946f2..66b9f241e 100644
      expect(chatInput).toContain('background-color: $bg-main-surface;')
 -    expect(groupChatInput).toContain('background-color: $bg-main-surface;')
      expect(virtualMessageList).toContain('background-color: $bg-main-surface;')
-     expect(chatInput.match(/background-color: #333333;/g)).toHaveLength(1)
--    expect(groupChatInput.match(/background-color: #333333;/g)).toHaveLength(1)
+     expect(chatInput).not.toContain('background-color: #333333;')
+-    expect(groupChatInput).not.toContain('background-color: #333333;')
    })
  
    it('keeps message metadata and context usage on custom theme text colors', () => {
@@ -6877,8 +6894,8 @@ index ee07946f2..66b9f241e 100644
      const messageItem = readClientFile('components/hermes/chat/MessageItem.vue')
      const customBackgroundStyles = app
        .split('.app-shell--custom-background {')[1]
-@@ -137,26 +126,25 @@ describe('client style system', () => {
-     expect(customBackgroundStyles).toContain('rgba(var(--bg-sidebar-surface-rgb), 0.72)')
+@@ -138,26 +127,25 @@ describe('client style system', () => {
+     expect(customBackgroundStyles).toContain('background-color: var(--glass-content-bg)')
      expect(customBackgroundStyles).toContain('backdrop-filter: blur(8px) saturate(110%)')
      expect(customBackgroundStyles).toContain(':deep(.chat-panel > .chat-main)')
 -    expect(customBackgroundStyles).toContain(':deep(.group-chat-panel > .chat-main)')
@@ -6900,16 +6917,16 @@ index ee07946f2..66b9f241e 100644
 +      /:deep\(\.chat-panel > \.chat-main\)\s*\{[\s\S]*background-color: transparent;[\s\S]*backdrop-filter: none;/,
      )
      expect(customBackgroundStyles).toMatch(
--      /:deep\(\.chat-panel > \.chat-main > \.chat-header\),[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
-+      /:deep\(\.chat-panel > \.chat-main > \.chat-header\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
+-      /:deep\(\.chat-panel > \.chat-main > \.chat-header\),[\s\S]*background-color: var\(--glass-chrome-bg\);[\s\S]*backdrop-filter: blur\(16px\) saturate\(110%\);/,
++      /:deep\(\.chat-panel > \.chat-main > \.chat-header\),?[\s\S]*background-color: var\(--glass-chrome-bg\);[\s\S]*backdrop-filter: blur\(16px\) saturate\(110%\);/,
      )
      expect(customBackgroundStyles).toMatch(
--      /:deep\(\.desktop-titlebar\),[\s\S]*:deep\(\.chat-panel > \.chat-main > \.chat-header\),[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
-+      /:deep\(\.desktop-titlebar\),[\s\S]*:deep\(\.chat-panel > \.chat-main > \.chat-header\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
+-      /:deep\(\.desktop-titlebar:not\(\.desktop-titlebar--flush\)\),[\s\S]*:deep\(\.chat-panel > \.chat-main > \.chat-header\),[\s\S]*background-color: var\(--glass-chrome-bg\);[\s\S]*backdrop-filter: blur\(16px\) saturate\(110%\);/,
++      /:deep\(\.desktop-titlebar:not\(\.desktop-titlebar--flush\)\),[\s\S]*:deep\(\.chat-panel > \.chat-main > \.chat-header\),?[\s\S]*background-color: var\(--glass-chrome-bg\);[\s\S]*backdrop-filter: blur\(16px\) saturate\(110%\);/,
      )
      expect(customBackgroundStyles).toMatch(
        /:deep\(\.chat-input-area \.input-wrapper\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
-@@ -164,14 +152,11 @@ describe('client style system', () => {
+@@ -165,14 +153,11 @@ describe('client style system', () => {
      expect(customBackgroundStyles).toMatch(
        /:deep\(\.browser-settings-page > \.settings-card\)\s*\{\s*background-color: transparent;/,
      )
@@ -7037,25 +7054,24 @@ index dad3635df..000000000
 -  })
 -})
 diff --git a/tests/e2e/desktop-window-chrome.spec.ts b/tests/e2e/desktop-window-chrome.spec.ts
-index c8d79a36a..786b3f6ac 100644
+index 2df01550d..89ba43367 100644
 --- a/tests/e2e/desktop-window-chrome.spec.ts
 +++ b/tests/e2e/desktop-window-chrome.spec.ts
-@@ -276,13 +276,6 @@ test('keeps chat gutters while placing New below macOS traffic lights', async ({
-   await expect(newChat).toBeVisible()
-   expect((await chatSidebar.boundingBox())?.y).toBe(10)
-   expect((await newChat.boundingBox())?.y).toBeGreaterThanOrEqual(43)
--
+@@ -333,12 +333,6 @@ test('keeps chat and group actions below the shared macOS header', async ({ page
+   expect((await newChat.boundingBox())?.x).toBeGreaterThanOrEqual(64)
+   expect((await page.locator('.studio-navigation-rail .page-sidebar-account-btn').boundingBox())?.y).toBeGreaterThanOrEqual(44)
+ 
 -  await page.goto('/#/hermes/group-chat')
 -  const groupSidebar = page.locator('.group-chat-panel > .room-sidebar')
 -  const newRoom = groupSidebar.locator('.page-sidebar-tab').first()
 -  await expect(newRoom).toBeVisible()
--  expect((await groupSidebar.boundingBox())?.y).toBe(10)
--  expect((await newRoom.boundingBox())?.y).toBeGreaterThanOrEqual(43)
+-  expect((await groupSidebar.boundingBox())?.y).toBe(40)
+-  expect((await newRoom.boundingBox())?.x).toBeGreaterThanOrEqual(64)
  })
  
  test('renders a native-chrome desktop chat route with only messages and input', async ({ page }) => {
 diff --git a/tests/e2e/fixtures.ts b/tests/e2e/fixtures.ts
-index ebcac4b46..c495d98c7 100644
+index c46a3406f..62abc9e58 100644
 --- a/tests/e2e/fixtures.ts
 +++ b/tests/e2e/fixtures.ts
 @@ -949,16 +949,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
@@ -7077,10 +7093,10 @@ index ebcac4b46..c495d98c7 100644
        return
 diff --git a/tests/e2e/group-chat-room-deeplink.spec.ts b/tests/e2e/group-chat-room-deeplink.spec.ts
 deleted file mode 100644
-index c2c9e7ed2..000000000
+index 70b9e02fd..000000000
 --- a/tests/e2e/group-chat-room-deeplink.spec.ts
 +++ /dev/null
-@@ -1,1805 +0,0 @@
+@@ -1,1855 +0,0 @@
 -import { expect, test, type Page, type Route } from '@playwright/test'
 -import { authenticate, TEST_MODEL_GROUP } from './fixtures'
 -
@@ -7413,6 +7429,14 @@ index c2c9e7ed2..000000000
 -      return json({ policy })
 -    }
 -
+-    const workspaceMatch = pathname.match(/^\/api\/studio\/group-chat\/rooms\/([^/]+)\/workspace$/)
+-    if (workspaceMatch && request.method() === 'PUT') {
+-      const room = rooms.find(item => item.id === decodeURIComponent(workspaceMatch[1]))
+-      if (!room || !room.canManage) return json({ error: 'Forbidden' }, 403)
+-      room.workspace = request.postDataJSON().workspace
+-      return json({ room })
+-    }
+-
 -    const workspaceListMatch = pathname.match(/^\/api\/studio\/group-chat\/rooms\/([^/]+)\/workspace-files\/list$/)
 -    if (workspaceListMatch) {
 -      return json({
@@ -7684,6 +7708,23 @@ index c2c9e7ed2..000000000
 -  })
 -  await triggerGroupSocket(page, 'connect', undefined)
 -}
+-
+-test('keeps populated group header actions within the available window width', async ({ page }) => {
+-  await setup(page, '/#/hermes/group-chat/room/room-alpha', 'win32')
+-  await expect(page.locator('.room-title-text')).toHaveText('Alpha Room')
+-  for (const width of [1440, 900, 769, 390]) {
+-    await page.setViewportSize({ width, height: 900 })
+-    const header = page.locator('.chat-header')
+-    await expect.poll(() => header.locator('button').evaluateAll(buttons => buttons
+-      .filter(button => button.getBoundingClientRect().width > 0)
+-      .every(button => {
+-        const box = button.getBoundingClientRect()
+-        const header = button.closest('.chat-header')!.getBoundingClientRect()
+-        return box.left >= Math.max(0, header.left) && box.right <= Math.min(innerWidth, header.right) + 1
+-          && box.top >= header.top && box.bottom <= header.bottom + 1
+-      }))).toBe(true)
+-  }
+-})
 -
 -test.describe('group chat room deep links', () => {
 -  // This file already covers multi-tab behavior explicitly; keeping the deep-link/socket fixture serial
@@ -8232,10 +8273,34 @@ index c2c9e7ed2..000000000
 -    await expect.poll(async () => (await geometry()).panelWidth).toBeLessThan(rtl.panelWidth)
 -  })
 -
--  test('workspace control sits beside the upper-right settings control and toggles the group workspace panel', async ({ page }) => {
+-  test('workspace icon switches the room workspace while the adjacent panel control toggles the drawer', async ({ page }) => {
 -    await setup(page, '/#/hermes/group-chat/room/room-alpha')
 -
 -    const toolbar = page.locator('.chat-header .header-info')
+-    const folderButton = toolbar.locator('.header-workspace-button')
+-    await expect(folderButton).toHaveAttribute('title', '/tmp/alpha')
+-    await expect(folderButton).toHaveText('')
+-    await expect(page.locator('.header-left .workspace-badge')).toHaveCount(0)
+-    await folderButton.click()
+-    const picker = page.locator('.workspace-modal')
+-    await expect(picker).toBeVisible()
+-    await expect(page.locator('.group-workspace-panel')).toHaveCount(0)
+-    const pathInput = picker.locator('.folder-path-input input')
+-    await expect(pathInput).toHaveValue('/tmp/alpha')
+-    await pathInput.fill('/tmp/alpha-new')
+-    const saveResponse = page.waitForResponse(response =>
+-      response.request().method() === 'PUT'
+-      && response.url().endsWith('/api/studio/group-chat/rooms/room-alpha/workspace'))
+-    await picker.getByRole('button', { name: 'Save', exact: true }).click()
+-    const saved = await saveResponse
+-    expect(saved.status()).toBe(200)
+-    expect(saved.request().postDataJSON()).toEqual({ workspace: '/tmp/alpha-new' })
+-    await expect(picker).not.toBeVisible()
+-    await expect(folderButton).toHaveAttribute('title', '/tmp/alpha-new')
+-    await folderButton.click()
+-    await expect(pathInput).toHaveValue('/tmp/alpha-new')
+-    await picker.getByRole('button', { name: 'Cancel', exact: true }).click()
+-
 -    const workspaceButton = toolbar.locator('.workspace-panel-toggle')
 -    const settingsButton = toolbar.locator('.compression-settings-button')
 -    await expect(workspaceButton).toBeVisible()
@@ -8545,6 +8610,7 @@ index c2c9e7ed2..000000000
 -    await expect(page.locator('.room-title-text', { hasText: 'Read Only Room' })).toBeVisible()
 -    await expect(page.locator('.room-item', { hasText: 'Read Only Room' }).locator('.room-code')).toHaveCount(0)
 -    await expect(page.locator('.chat-header .header-info .compression-settings-button')).toHaveCount(0)
+-    await expect(page.locator('.chat-header .header-workspace-button')).toHaveCount(0)
 -  })
 -
 -  test('group workspace diffs use the single-chat card and shared diff panel', async ({ page }) => {
@@ -8888,7 +8954,7 @@ index c2c9e7ed2..000000000
 -})
 diff --git a/tests/e2e/group-chat-share.spec.ts b/tests/e2e/group-chat-share.spec.ts
 deleted file mode 100644
-index 10ccbebca..000000000
+index a86c64d75..000000000
 --- a/tests/e2e/group-chat-share.spec.ts
 +++ /dev/null
 @@ -1,388 +0,0 @@
@@ -9148,7 +9214,7 @@ index 10ccbebca..000000000
 -    })
 -    await page.locator('#group-chat-guest-name input').fill('Visitor')
 -    await page.getByRole('button', { name: 'Enter room' }).click()
--    await expect(page.locator('.invite-loading')).toBeVisible()
+-    await expect(page.locator('.shared-group-chat-view > .page-loading-overlay')).toBeVisible()
 -    await expect(page.locator('.invite-card')).toHaveCount(0)
 -    await expect(page.locator('.room-title-text')).toHaveText('Shared Planning Room')
 -    await expect(page.getByText('Welcome to the shared room')).toBeVisible()
@@ -9281,7 +9347,7 @@ index 10ccbebca..000000000
 -  await expect(cards).toContainText('1/2 completed')
 -})
 diff --git a/tests/e2e/history-session-deeplink.spec.ts b/tests/e2e/history-session-deeplink.spec.ts
-index 2adfe84ec..715a823a4 100644
+index 5602bf295..b3bcff329 100644
 --- a/tests/e2e/history-session-deeplink.spec.ts
 +++ b/tests/e2e/history-session-deeplink.spec.ts
 @@ -132,12 +132,7 @@ function detailFor(id: string, sessions = historySessions) {
@@ -9332,7 +9398,7 @@ index 2adfe84ec..715a823a4 100644
      if (pathname === '/api/studio/sessions/hermes/groups') {
        const limit = Number(url.searchParams.get('limit') || 20)
        const includedIds = new Set(url.searchParams.getAll('include'))
-@@ -293,14 +261,6 @@ test.describe('history session deep links', () => {
+@@ -362,14 +330,6 @@ test.describe('history session deep links', () => {
      await expect(page.getByText('API Server', { exact: true }).first()).toBeVisible()
    })
  
@@ -9348,10 +9414,10 @@ index 2adfe84ec..715a823a4 100644
      await page.goto('/#/hermes/history/session/hist-alpha')
      await expect(page.getByText('Answer from Alpha History Session')).toBeVisible()
 diff --git a/tests/e2e/theme.spec.ts b/tests/e2e/theme.spec.ts
-index 5e3f599c9..9dcd0874c 100644
+index 213f41f22..979a428f3 100644
 --- a/tests/e2e/theme.spec.ts
 +++ b/tests/e2e/theme.spec.ts
-@@ -164,24 +164,6 @@ test('tints transparent app surfaces with the active theme background color', as
+@@ -170,24 +170,6 @@ test('tints transparent app surfaces with the active theme background color', as
      'blur(8px) saturate(1.1)',
    )
  
@@ -9362,15 +9428,15 @@ index 5e3f599c9..9dcd0874c 100644
 -  )
 -  await expect(page.locator('.group-chat-panel > .room-sidebar')).toHaveCSS(
 -    'background-color',
--    'rgba(26, 26, 26, 0.72)',
+-    'rgba(26, 26, 26, 0.78)',
 -  )
 -  await expect(page.locator('.group-chat-panel > .chat-main')).toHaveCSS(
 -    'background-color',
 -    'rgba(0, 0, 0, 0)',
 -  )
--  await expect(page.locator('.group-chat-panel > .chat-main > .chat-header')).toHaveCSS(
+-  await expect(page.locator('.studio-page-header > .chat-header')).toHaveCSS(
 -    'background-color',
--    'rgba(26, 26, 26, 0.72)',
+-    'rgba(0, 0, 0, 0)',
 -  )
 -
    await page.goto('/#/hermes/petdex')

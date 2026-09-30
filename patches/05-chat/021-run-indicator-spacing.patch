@@ -1,4 +1,4 @@
-From 3b99af8171807837b7aced8420bb6593fea3929b Mon Sep 17 00:00:00 2001
+From a49fa13aa862593b78dc9fa26a1e7aafa29e793c Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 12:33:27 +0800
 Subject: [PATCH] fix(chat): tighten run indicator and composer spacing
@@ -13,33 +13,10 @@ Subject: [PATCH] fix(chat): tighten run indicator and composer spacing
 
 - composer top padding 8px -> 6px (desktop 6px 20px 14px, mobile 6px 12px 12px)
 ---
- .../client/src/components/hermes/chat/ChatInput.vue |  4 ++--
  .../components/hermes/chat/LiveReasoningStatus.vue  |  4 ++--
  .../src/components/hermes/chat/MessageList.vue      | 13 +++++++++++--
- 3 files changed, 15 insertions(+), 6 deletions(-)
+ 2 files changed, 13 insertions(+), 4 deletions(-)
 
-diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 4ff2a8680..366181c2e 100644
---- a/packages/client/src/components/hermes/chat/ChatInput.vue
-+++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -1675,7 +1675,7 @@ function openAttachmentPreview(attachment: Attachment) {
- .chat-input-area {
-   position: relative;
-   z-index: 80;
--  padding: 8px 20px 14px;
-+  padding: 6px 20px 14px;
-   border-top: 0;
-   background-color: $bg-main-surface;
-   flex-shrink: 0;
-@@ -2074,7 +2074,7 @@ function openAttachmentPreview(attachment: Attachment) {
- @media (max-width: 768px) {
-   .chat-input-area {
-     --voice-overlay-mobile-bottom-offset: 146px;
--    padding: 8px 12px 12px;
-+    padding: 6px 12px 12px;
-   }
- 
-   .input-top-bar {
 diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
 index 9209dc0b1..b70a6ab19 100644
 --- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
@@ -63,10 +40,10 @@ index 9209dc0b1..b70a6ab19 100644
  
  .thinking-status-copy {
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 1b79590a8..b7a761fde 100644
+index ed227a624..9d0ea31ac 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -343,6 +343,10 @@ const virtualListPadding = computed(() => {
+@@ -346,6 +346,10 @@ const virtualListPadding = computed(() => {
    if (queuedMessages.value.length > 0 && hasFloatingPrompt.value) return "20px 20px 380px";
    if (queuedMessages.value.length > 0) return "20px 20px 260px";
    if (hasFloatingPrompt.value) return clarifyCompact.value ? "20px 20px 80px" : "20px 20px 260px";
@@ -77,7 +54,7 @@ index 1b79590a8..b7a761fde 100644
    return "20px";
  });
  
-@@ -1810,11 +1814,16 @@ defineExpose({
+@@ -1791,11 +1795,16 @@ defineExpose({
    display: flex;
    flex-direction: column;
    align-items: flex-start;

@@ -1,4 +1,4 @@
-From 8d654f0366964453f099587fe5db98fc00961fc4 Mon Sep 17 00:00:00 2001
+From f54581fb8b8a6b444133d9b7919be8dbacde53c1 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 23:21:16 +0800
 Subject: [PATCH] fix(chat): keep session live indicator when identity row is
@@ -82,125 +82,125 @@ index 8792af9bd..03f4c6471 100644
    flex: 0 0 auto;
    margin-top: 1px;
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index cbeb7dccc..84900a80c 100644
+index c09fdbce2..69004e656 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1150,6 +1150,7 @@ export default {
-     interactionCountdown: '{time} verbleibend',
-     interactionCountdownElapsed: '00:00 · Serverbestätigung ausstehend',
-     deleteSession: 'Diese Sitzung loschen?',
+@@ -1154,6 +1154,7 @@ export default {
+     sessionListActions: 'Aktionen für die Sitzungsliste',
+     filterByProfile: 'Nach Profil filtern',
+     selectedSessions: '{count} ausgewählt',
 +    sessionLive: 'Sitzung arbeitet',
      toggleBatchMode: 'Batch-Auswahl',
      selectAll: 'Alle auswählen',
      confirmBatchDelete: '{count} ausgewählte Sitzungen löschen?',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index bbc574847..3d0467147 100644
+index 41bca4bb5..efe2bb91e 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1212,6 +1212,7 @@ export default {
+@@ -1213,6 +1213,7 @@ export default {
      interactionCountdownElapsed: '00:00 · Awaiting server confirmation',
      newCliChat: 'New CLI',
      deleteSession: 'Delete this session?',
 +    sessionLive: 'Session is working',
      sessionDeleted: 'Session deleted',
-     toggleBatchMode: 'Batch selection',
-     selectAll: 'Select all',
+     sessionListActions: 'Session list actions',
+     filterByProfile: 'Filter by Profile',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 4849eb571..76e4ced65 100644
+index fcf04fb35..ac3fdd442 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1150,6 +1150,7 @@ export default {
-     interactionCountdown: 'Quedan {time}',
-     interactionCountdownElapsed: '00:00 · Esperando confirmación del servidor',
-     deleteSession: 'Eliminar esta sesion?',
+@@ -1154,6 +1154,7 @@ export default {
+     sessionListActions: 'Acciones de la lista de sesiones',
+     filterByProfile: 'Filtrar por perfil',
+     selectedSessions: '{count} seleccionadas',
 +    sessionLive: 'Sesion en curso',
      toggleBatchMode: 'Selección por lotes',
      selectAll: 'Seleccionar todo',
      confirmBatchDelete: '¿Eliminar {count} sesiones seleccionadas?',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 10a0c0d2e..a531020ed 100644
+index 3dee159f4..766380663 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1150,6 +1150,7 @@ export default {
-     interactionCountdown: '{time} restante',
-     interactionCountdownElapsed: '00:00 · Confirmation du serveur en attente',
-     deleteSession: 'Supprimer cette session ?',
+@@ -1154,6 +1154,7 @@ export default {
+     sessionListActions: 'Actions de la liste des sessions',
+     filterByProfile: 'Filtrer par profil',
+     selectedSessions: '{count} sélectionnées',
 +    sessionLive: 'Session en cours',
      toggleBatchMode: 'Sélection par lot',
      selectAll: 'Tout sélectionner',
      confirmBatchDelete: 'Supprimer {count} sessions sélectionnées?',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 9d0d385b1..7242348bf 100644
+index 4967c8014..3759ab8f4 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1150,6 +1150,7 @@ export default {
-     interactionCountdown: '残り {time}',
-     interactionCountdownElapsed: '00:00 · サーバー確認待ち',
-     deleteSession: 'このセッションを削除しますか？',
+@@ -1154,6 +1154,7 @@ export default {
+     sessionListActions: 'セッション一覧の操作',
+     filterByProfile: 'プロファイルで絞り込み',
+     selectedSessions: '{count} 件選択中',
 +    sessionLive: 'セッション実行中',
      toggleBatchMode: '一括選択',
      selectAll: 'すべて選択',
      confirmBatchDelete: '{count}件のセッションを削除しますか？',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 20f7d1202..a00f0b68f 100644
+index 6fd06539e..5781b2f95 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1150,6 +1150,7 @@ export default {
-     interactionCountdown: '{time} 남음',
-     interactionCountdownElapsed: '00:00 · 서버 확인 대기 중',
-     deleteSession: '이 세션을 삭제하시겠습니까?',
+@@ -1154,6 +1154,7 @@ export default {
+     sessionListActions: '세션 목록 작업',
+     filterByProfile: '프로필로 필터링',
+     selectedSessions: '{count}개 선택됨',
 +    sessionLive: '세션 작업 중',
      toggleBatchMode: '일괄 선택',
      selectAll: '모두 선택',
      confirmBatchDelete: '선택한 {count}개의 세션을 삭제하시겠습니까?',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 2e3ba5568..4b9692c8b 100644
+index 388ecca23..9c6b4ee1d 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1150,6 +1150,7 @@ export default {
-     interactionCountdown: '{time} restante',
-     interactionCountdownElapsed: '00:00 · Aguardando confirmação do servidor',
-     deleteSession: 'Excluir esta sessão?',
+@@ -1154,6 +1154,7 @@ export default {
+     sessionListActions: 'Ações da lista de sessões',
+     filterByProfile: 'Filtrar por perfil',
+     selectedSessions: '{count} selecionadas',
 +    sessionLive: 'Sessão em execução',
      toggleBatchMode: 'Seleção em lote',
      selectAll: 'Selecionar tudo',
      confirmBatchDelete: 'Excluir {count} sessões selecionadas?',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 1a29c448f..fb5d0b425 100644
+index c9df4e8b9..05ad3bed5 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1096,6 +1096,7 @@ export default {
+@@ -1097,6 +1097,7 @@ export default {
      interactionCountdownElapsed: '00:00 · Ожидание подтверждения сервера',
      newCliChat: 'Новый CLI',
      deleteSession: 'Удалить этот сеанс?',
 +    sessionLive: 'Сессия выполняется',
      sessionDeleted: 'Сеанс удалён',
-     toggleBatchMode: 'Пакетный выбор',
-     selectAll: 'Выбрать всё',
+     sessionListActions: 'Действия со списком сеансов',
+     filterByProfile: 'Фильтр по профилю',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 1c0ee486d..0ebaa088f 100644
+index 21c54b56a..6f641a743 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1202,6 +1202,7 @@ export default {
+@@ -1203,6 +1203,7 @@ export default {
      interactionCountdown: '剩餘 {time}',
      interactionCountdownElapsed: '00:00 · 等待伺服器確認',
      deleteSession: '確定刪除此工作階段？',
 +    sessionLive: '會話進行中',
      sessionDeleted: '工作階段已刪除',
-     toggleBatchMode: '批次選取',
-     selectAll: '全選',
+     sessionListActions: '會話列表操作',
+     filterByProfile: '依 Profile 篩選',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index a9f495f81..f774a615c 100644
+index 2741912b6..20d4f5dd0 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1212,6 +1212,7 @@ export default {
+@@ -1213,6 +1213,7 @@ export default {
      interactionCountdownElapsed: '00:00 · 等待服务端确认',
      newCliChat: '新建 CLI',
      deleteSession: '确定删除此会话？',
 +    sessionLive: '会话进行中',
      sessionDeleted: '会话已删除',
-     toggleBatchMode: '批量选择',
-     selectAll: '全选',
+     sessionListActions: '会话列表操作',
+     filterByProfile: '按 Profile 筛选',
 diff --git a/tests/client/session-list-item.test.ts b/tests/client/session-list-item.test.ts
 index 37d8d65ef..8c7172592 100644
 --- a/tests/client/session-list-item.test.ts

@@ -1,4 +1,4 @@
-From 49df0ab1749e2f8cee9828f37c7e1e5059d7bc3a Mon Sep 17 00:00:00 2001
+From 14226fa85d04cacfdd02b74f8e280f900832b56f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:23 +0800
 Subject: [PATCH] feat(web): remove group chat from the frontend
@@ -23,7 +23,7 @@ Drop the entire group chat surface from the SPA (server modules untouched):
   from all 11 locales
 - drop the Electron group-chat agent link popup and its window-open hooks
 ---
- packages/client/src/App.vue                   |   41 +-
+ packages/client/src/App.vue                   |   43 +-
  .../src/api/studio/group-chat-agent-link.ts   |  208 -
  .../src/api/studio/group-chat-attachments.ts  |   58 -
  packages/client/src/api/studio/group-chat.ts  |  660 --
@@ -37,10 +37,10 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  .../group-chat/GroupAgentMessageAvatar.vue    |  257 -
  .../hermes/group-chat/GroupAgentRobotIcon.vue |   62 -
  .../hermes/group-chat/GroupAgentRunCard.vue   |  367 --
- .../hermes/group-chat/GroupChatInput.vue      | 1380 -----
- .../hermes/group-chat/GroupChatPanel.vue      | 5347 -----------------
- .../hermes/group-chat/GroupMessageItem.vue    | 1543 -----
- .../hermes/group-chat/GroupMessageList.vue    |  551 --
+ .../hermes/group-chat/GroupChatInput.vue      | 1386 -----
+ .../hermes/group-chat/GroupChatPanel.vue      | 5301 -----------------
+ .../hermes/group-chat/GroupMessageItem.vue    | 1542 -----
+ .../hermes/group-chat/GroupMessageList.vue    |  552 --
  .../group-chat/GroupRoomAgentAvatar.vue       |  299 -
  .../group-chat/group-chat-room-drafts.ts      |  140 -
  .../hermes/group-chat/handoff-presentation.ts |   42 -
@@ -65,12 +65,12 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  .../src/utils/group-chat-invite-code.ts       |    8 -
  .../src/utils/group-chat-remote-rooms.ts      |   69 -
  .../client/src/views/hermes/FilesView.vue     |    1 -
- .../src/views/hermes/GroupChatLinkView.vue    |  964 ---
- .../client/src/views/hermes/GroupChatView.vue |   81 -
- .../src/views/hermes/SharedGroupChatView.vue  |  907 ---
+ .../src/views/hermes/GroupChatLinkView.vue    |  971 ---
+ .../client/src/views/hermes/GroupChatView.vue |  113 -
+ .../src/views/hermes/SharedGroupChatView.vue  |  887 ---
  .../src/main/group-chat-agent-popup.ts        |   44 -
  packages/desktop/src/main/index.ts            |    9 +-
- 47 files changed, 88 insertions(+), 18609 deletions(-)
+ 47 files changed, 89 insertions(+), 18589 deletions(-)
  delete mode 100644 packages/client/src/api/studio/group-chat-agent-link.ts
  delete mode 100644 packages/client/src/api/studio/group-chat-attachments.ts
  delete mode 100644 packages/client/src/api/studio/group-chat.ts
@@ -96,18 +96,18 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  delete mode 100644 packages/desktop/src/main/group-chat-agent-popup.ts
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index 223f6e6ef..1f4191cae 100644
+index 5a8c4219e..6cd20dd83 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -104,7 +104,6 @@ watchServerTtsSettingsHydration({
+@@ -118,7 +118,6 @@ watchServerTtsSettingsHydration({
  const isStandaloneChatPage = computed(
    () => route.meta?.standaloneChat === true,
  );
 -const isInviteOnlyPage = computed(() => route.meta?.inviteOnly === true);
- const usesPageSidebar = computed(() =>
-   [
-     "hermes.chat",
-@@ -116,8 +115,6 @@ const usesPageSidebar = computed(() =>
+ const wideViewportQuery = window.matchMedia('(min-width: 769px)');
+ const isWideViewport = ref(wideViewportQuery.matches);
+ const hasNavigationRail = computed(() =>
+@@ -156,8 +155,6 @@ const usesPageSidebar = computed(() =>
      "hermes.historySession",
      "hermes.globalAgent",
      "hermes.globalAgentSession",
@@ -116,7 +116,7 @@ index 223f6e6ef..1f4191cae 100644
      "hermes.workflow",
    ].includes(route.name as string),
  );
-@@ -201,9 +198,9 @@ function handleMobileMenuClick() {
+@@ -241,9 +238,9 @@ function handleMobileMenuClick() {
  }
  
  watch(
@@ -129,10 +129,10 @@ index 223f6e6ef..1f4191cae 100644
        appStore.stopHealthPolling();
        return;
      }
-@@ -216,9 +213,7 @@ watch(
- );
+@@ -257,9 +254,7 @@ watch(
  
  onMounted(() => {
+   wideViewportQuery.addEventListener('change', handleWideViewportChange);
 -  if (!isInviteOnlyPage.value) {
 -    void syncThemeFromServer().catch(() => undefined);
 -  }
@@ -140,7 +140,7 @@ index 223f6e6ef..1f4191cae 100644
    const bridge = desktopBridge();
    if (
      !bridge?.isDesktop ||
-@@ -362,7 +357,7 @@ usePwa();
+@@ -427,7 +422,7 @@ usePwa();
              v-if="!isLoginPage && !isDesktopPetRoute && !isStandaloneChatPage && isStoredSuperAdmin()"
            />
            <StudioAnnouncementPrompt
@@ -149,7 +149,17 @@ index 223f6e6ef..1f4191cae 100644
            />
          </NNotificationProvider>
        </NDialogProvider>
-@@ -467,7 +462,6 @@ usePwa();
+@@ -667,8 +662,7 @@ usePwa();
+   .app-main--card,
+   :deep(.chat-panel > .chat-main),
+   :deep(.history-panel > .page-loading-content > .chat-main),
+-  :deep(.workflow-view > .page-loading-content > .workflow-main),
+-  :deep(.group-chat-panel > .chat-main) {
++  :deep(.workflow-view > .page-loading-content > .workflow-main)
+     margin: 0;
+     border: none;
+     border-radius: 0;
+@@ -714,7 +708,6 @@ usePwa();
  
    :deep(.chat-panel),
    :deep(.history-panel),
@@ -157,15 +167,27 @@ index 223f6e6ef..1f4191cae 100644
    :deep(.workflow-view),
    :deep(.petdex-view) {
      background-color: transparent;
-@@ -479,7 +473,6 @@ usePwa();
+@@ -723,8 +716,7 @@ usePwa();
+   &.app-shell--navigation-rail .app-box::before,
+   :deep(.studio-navigation-rail),
+   :deep(.desktop-titlebar:not(.desktop-titlebar--flush)),
+-  :deep(.chat-panel > .chat-main > .chat-header),
+-  :deep(.group-chat-panel > .chat-main > .chat-header) {
++  :deep(.chat-panel > .chat-main > .chat-header)
+     background-color: var(--glass-chrome-bg);
+     -webkit-backdrop-filter: blur(16px) saturate(110%);
+     backdrop-filter: blur(16px) saturate(110%);
+@@ -735,8 +727,7 @@ usePwa();
+   :deep(.ekko-config-sidebar),
    :deep(.coding-agent-config-sidebar),
    :deep(.chat-panel > .session-list),
-   :deep(.history-panel > .session-list),
+-  :deep(.history-panel > .page-loading-content > .session-list),
 -  :deep(.group-chat-panel > .room-sidebar),
-   :deep(.workflow-view > .workflow-sidebar) {
-     background-color: rgba(var(--bg-sidebar-surface-rgb), 0.72);
-     -webkit-backdrop-filter: blur(8px) saturate(110%);
-@@ -493,16 +486,14 @@ usePwa();
++  :deep(.history-panel > .page-loading-content > .session-list)
+   :deep(.workflow-view > .page-loading-content > .workflow-sidebar) {
+     background-color: var(--glass-sidebar-bg);
+     -webkit-backdrop-filter: blur(12px) saturate(110%);
+@@ -753,8 +744,7 @@ usePwa();
      backdrop-filter: blur(8px) saturate(110%);
    }
  
@@ -175,16 +197,7 @@ index 223f6e6ef..1f4191cae 100644
      background-color: transparent;
      -webkit-backdrop-filter: none;
      backdrop-filter: none;
-   }
- 
-   :deep(.desktop-titlebar),
--  :deep(.chat-panel > .chat-main > .chat-header),
--  :deep(.group-chat-panel > .chat-main > .chat-header) {
-+  :deep(.chat-panel > .chat-main > .chat-header) {
-     background-color: rgba(var(--bg-main-surface-rgb), 0.72);
-     -webkit-backdrop-filter: blur(8px) saturate(110%);
-     backdrop-filter: blur(8px) saturate(110%);
-@@ -513,15 +504,13 @@ usePwa();
+@@ -765,15 +755,13 @@ usePwa();
      background-color: transparent;
    }
  
@@ -202,42 +215,33 @@ index 223f6e6ef..1f4191cae 100644
      background-color: transparent;
      -webkit-backdrop-filter: none;
      backdrop-filter: none;
-@@ -575,15 +564,13 @@ usePwa();
-   .app-main--card,
-   :deep(.chat-panel > .chat-main),
-   :deep(.history-panel > .chat-main),
--  :deep(.workflow-view > .workflow-main),
--  :deep(.group-chat-panel > .chat-main) {
-+  :deep(.workflow-view > .workflow-main) {
-     margin-top: 50px;
+@@ -831,16 +819,14 @@ usePwa();
+     .app-main--card,
+     :deep(.chat-panel > .chat-main),
+     :deep(.history-panel > .page-loading-content > .chat-main),
+-    :deep(.workflow-view > .page-loading-content > .workflow-main),
+-    :deep(.group-chat-panel > .chat-main) {
++    :deep(.workflow-view > .page-loading-content > .workflow-main)
+       margin-top: 50px;
+     }
    }
  
    :deep(.chat-panel > .session-list > .page-sidebar-top),
-   :deep(.history-panel > .session-list > .page-sidebar-top),
--  :deep(.workflow-view > .workflow-sidebar > .page-sidebar-top),
+   :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top),
+-  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top),
 -  :deep(.group-chat-panel > .room-sidebar > .sidebar-header) {
-+  :deep(.workflow-view > .workflow-sidebar > .page-sidebar-top) {
++  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top)
      -webkit-app-region: drag;
  
      button,
-@@ -606,8 +593,7 @@ usePwa();
-    .app-layout > :deep(.coding-agent-config-sidebar),
-   :deep(.chat-panel > .session-list),
-   :deep(.history-panel > .session-list),
--  :deep(.workflow-view > .workflow-sidebar),
--  :deep(.group-chat-panel > .room-sidebar) {
-+  :deep(.workflow-view > .workflow-sidebar) {
-     position: relative;
- 
-     &::before {
-@@ -631,8 +617,7 @@ usePwa();
+@@ -887,8 +873,7 @@ usePwa();
  
    :deep(.chat-panel > .session-list > .page-sidebar-top),
-   :deep(.history-panel > .session-list > .page-sidebar-top),
--  :deep(.workflow-view > .workflow-sidebar > .page-sidebar-top),
+   :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top),
+-  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top),
 -  :deep(.group-chat-panel > .room-sidebar > .sidebar-header) {
-+  :deep(.workflow-view > .workflow-sidebar > .page-sidebar-top) {
-     padding-top: 32px;
++  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top)
+     padding-top: 44px;
    }
  }
 diff --git a/packages/client/src/api/studio/group-chat-agent-link.ts b/packages/client/src/api/studio/group-chat-agent-link.ts
@@ -1308,7 +1312,7 @@ index a3972c69c..1737dfe22 100644
        break
      case 'copyPath': {
 diff --git a/packages/client/src/components/hermes/files/FileList.vue b/packages/client/src/components/hermes/files/FileList.vue
-index d213b18ce..b8f24c038 100644
+index 729723fae..90b885630 100644
 --- a/packages/client/src/components/hermes/files/FileList.vue
 +++ b/packages/client/src/components/hermes/files/FileList.vue
 @@ -126,7 +126,7 @@ async function handleDownload(entry: FileEntry) {
@@ -1321,10 +1325,10 @@ index d213b18ce..b8f24c038 100644
          </div>
        </div>
 diff --git a/packages/client/src/components/hermes/files/FilePreview.vue b/packages/client/src/components/hermes/files/FilePreview.vue
-index 73418c103..e4d043543 100644
+index f0d22493f..7e9902d63 100644
 --- a/packages/client/src/components/hermes/files/FilePreview.vue
 +++ b/packages/client/src/components/hermes/files/FilePreview.vue
-@@ -9,7 +9,6 @@ import { fetchFilePreviewBlob } from '@/api/studio/files'
+@@ -10,7 +10,6 @@ import { fetchFilePreviewBlob } from '@/api/studio/files'
  import { fetchAuthenticatedBlob, saveBlob } from '@/api/studio/binary-content'
  import { downloadFile } from '@/api/studio/download'
  import { downloadSessionWorkspaceFile, fetchSessionWorkspaceFileBlob } from '@/api/studio/sessions'
@@ -1332,7 +1336,7 @@ index 73418c103..e4d043543 100644
  import { handleCodeBlockCopyClick, renderHighlightedCodeBlock } from '@/components/hermes/chat/highlight'
  import { previewMimeMatches } from '@/utils/hermes/file-preview'
  import { openHtmlInDesktopBrowser } from '@/utils/desktop-browser'
-@@ -72,11 +71,9 @@ async function loadPreview(): Promise<void> {
+@@ -73,11 +72,9 @@ async function loadPreview(): Promise<void> {
    try {
      const blob = file.sourceUrl
        ? await fetchAuthenticatedBlob(file.sourceUrl, { profile: null, signal: requestController.signal })
@@ -1347,7 +1351,7 @@ index 73418c103..e4d043543 100644
      if (generation !== requestGeneration) return
      if (!previewMimeMatches(file.type, blob.type)) {
        throw new Error(t('files.previewMimeMismatch'))
-@@ -117,8 +114,6 @@ async function handleDownload(): Promise<void> {
+@@ -118,8 +115,6 @@ async function handleDownload(): Promise<void> {
    try {
      if (file.sourceUrl) {
        saveBlob(await fetchAuthenticatedBlob(file.sourceUrl, { profile: null }), file.name)
@@ -1388,10 +1392,10 @@ index db1dd8abc..729578840 100644
    selectedKeys.value = []
    treeInstanceKey.value += 1
 diff --git a/packages/client/src/components/hermes/files/WorkspaceFileDiff.vue b/packages/client/src/components/hermes/files/WorkspaceFileDiff.vue
-index 0cdcaae6d..2d1ae8b38 100644
+index 4dedda88a..ec26534e7 100644
 --- a/packages/client/src/components/hermes/files/WorkspaceFileDiff.vue
 +++ b/packages/client/src/components/hermes/files/WorkspaceFileDiff.vue
-@@ -4,7 +4,6 @@ import { NAlert, NButton, NSpin, NTooltip, useMessage } from 'naive-ui'
+@@ -5,7 +5,6 @@ import { computed, defineAsyncComponent, ref, watch } from 'vue'
  import { useI18n } from 'vue-i18n'
  import type { FileEntry, WorkspaceFileDiff } from '@/api/studio/files'
  import { fetchSessionWorkspaceFileDiff, readSessionWorkspaceFile } from '@/api/studio/sessions'
@@ -1399,7 +1403,7 @@ index 0cdcaae6d..2d1ae8b38 100644
  import { getLanguageFromPath, isMarkdownFile, useFilesStore } from '@/stores/hermes/files'
  import { handleCodeBlockCopyClick, renderHighlightedCodeBlock } from '@/components/hermes/chat/highlight'
  import FileTreeToggle from './FileTreeToggle.vue'
-@@ -15,7 +14,6 @@ const props = withDefaults(defineProps<{
+@@ -16,7 +15,6 @@ const props = withDefaults(defineProps<{
    entry: FileEntry
    workspace?: string | null
    workspaceSessionId?: string | null
@@ -1407,7 +1411,7 @@ index 0cdcaae6d..2d1ae8b38 100644
    showTreeToggle?: boolean
    treeCollapsed?: boolean
  }>(), {
-@@ -65,20 +63,16 @@ async function loadDiff(): Promise<void> {
+@@ -66,20 +64,16 @@ async function loadDiff(): Promise<void> {
    diff.value = null
    fileContent.value = null
    try {
@@ -1434,7 +1438,7 @@ index 0cdcaae6d..2d1ae8b38 100644
        if (generation !== requestGeneration) return
        fileContent.value = file?.content ?? ''
      }
-@@ -92,9 +86,7 @@ async function loadDiff(): Promise<void> {
+@@ -93,9 +87,7 @@ async function loadDiff(): Promise<void> {
  
  async function editFile(): Promise<void> {
    try {
@@ -1445,7 +1449,7 @@ index 0cdcaae6d..2d1ae8b38 100644
        await filesStore.openSessionWorkspaceEditor(props.workspaceSessionId, props.entry.path)
      }
    } catch (editError) {
-@@ -109,7 +101,7 @@ async function handleDiffClick(event: MouseEvent): Promise<void> {
+@@ -110,7 +102,7 @@ async function handleDiffClick(event: MouseEvent): Promise<void> {
  }
  
  watch(
@@ -2418,10 +2422,10 @@ index 1a672d4d4..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupChatInput.vue b/packages/client/src/components/hermes/group-chat/GroupChatInput.vue
 deleted file mode 100644
-index fe51e9d5d..000000000
+index e88f518a7..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupChatInput.vue
 +++ /dev/null
-@@ -1,1380 +0,0 @@
+@@ -1,1386 +0,0 @@
 -<script setup lang="ts">
 -import { ref, computed, nextTick, onMounted, onUnmounted, watch, h } from 'vue'
 -import { useI18n } from 'vue-i18n'
@@ -3313,7 +3317,7 @@ index fe51e9d5d..000000000
 -@use "@/styles/variables" as *;
 -
 -.chat-input-area {
--    padding: 8px 20px 14px;
+-    padding: 6px 12px 10px;
 -    border-top: 0;
 -    background-color: $bg-main-surface;
 -    flex-shrink: 0;
@@ -3561,8 +3565,8 @@ index fe51e9d5d..000000000
 -    min-height: 150px;
 -    background-color: $bg-card;
 -    border: 1px solid var(--input-border-color);
--    border-radius: 18px;
--    padding: 14px 12px 9px;
+-    border-radius: $radius-md;
+-    padding: 12px 10px 8px;
 -    position: relative;
 -    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
 -    transition: border-color $transition-fast, box-shadow $transition-fast;
@@ -3582,7 +3586,7 @@ index fe51e9d5d..000000000
 -    }
 -
 -    .dark & {
--        background-color: #333333;
+-        background-color: $bg-main-surface;
 -        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
 -    }
 -}
@@ -3695,7 +3699,7 @@ index fe51e9d5d..000000000
 -
 -@media (max-width: 768px) {
 -    .chat-input-area {
--        padding: 8px 12px 12px;
+-        padding: 6px 8px calc(12px + env(safe-area-inset-bottom, 0px));
 -    }
 -
 -    .input-top-bar {
@@ -3776,7 +3780,13 @@ index fe51e9d5d..000000000
 -
 -@media (max-width: 768px) {
 -    .input-wrapper {
--        min-height: 118px;
+-        min-height: 96px;
+-        gap: 6px;
+-        padding: 8px 10px;
+-    }
+-
+-    .input-textarea {
+-        flex: 1 1 auto;
 -    }
 -
 -    .input-settings-button {
@@ -3804,17 +3814,22 @@ index fe51e9d5d..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 deleted file mode 100644
-index fcbcd1c29..000000000
+index ccfca4c0c..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 +++ /dev/null
-@@ -1,5347 +0,0 @@
+@@ -1,5301 +0,0 @@
 -<script setup lang="ts">
+-import PageSidebar from "@/components/layout/PageSidebar.vue"
+-import { usePageSidebarState } from "@/composables/usePageSidebar"
+-import { usePageLoadingState } from '@/composables/usePageLoading'
+-import PageHeader from '@/components/layout/PageHeader.vue'
+-import HeaderSidebarToggle from '@/components/layout/HeaderSidebarToggle.vue'
 -import { GROUP_AGENT_OPTIONS } from "@/utils/agent-options"
 -import DshSessionPresetSelect from "@/components/coding-agents/dsh/DshSessionPresetSelect.vue"
 -import { ref, computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, provide, watch } from 'vue'
 -import { useI18n } from 'vue-i18n'
 -import { useRouter } from 'vue-router'
--import { useMessage, NInput, NButton, NSpace, NSelect, NPopconfirm, NInputNumber, NDropdown, NModal, NPopover, NDrawer, NDrawerContent, NSwitch, type DropdownOption } from 'naive-ui'
+-import { NSpin, useMessage, NInput, NButton, NSpace, NSelect, NPopconfirm, NInputNumber, NDropdown, NModal, NPopover, NDrawer, NDrawerContent, NSwitch, type DropdownOption } from 'naive-ui'
 -import { nextCodingAgentMode, storedPriorAgentMode, submittedCodingAgentSelection } from '@/utils/coding-agent-mode'
 -import { useGroupChatStore } from '@/stores/hermes/group-chat'
 -import { useAppStore } from '@/stores/hermes/app'
@@ -3920,7 +3935,7 @@ index fcbcd1c29..000000000
 -const filesStore = useFilesStore()
 -const toolPanelStore = useToolPanelStore()
 -
--const showSidebar = ref(!props.standalone && window.innerWidth > 768)
+-const { expanded: showSidebar } = usePageSidebarState(!props.standalone)
 -watch(
 -    showSidebar,
 -    expanded => appStore.setPageSidebarExpanded(expanded),
@@ -3930,6 +3945,7 @@ index fcbcd1c29..000000000
 -const showCloneModal = ref(false)
 -const showAddAgentDrawer = ref(false)
 -const showGroupChatRefactorNotice = ref(false)
+-const pageLoading = usePageLoadingState()
 -const showManualRoomLinkModal = ref(false)
 -const manualRoomLink = ref('')
 -const manualRoomLinkInput = ref<HTMLInputElement | null>(null)
@@ -4505,7 +4521,6 @@ index fcbcd1c29..000000000
 -const visibleAgentPairing = computed(() =>
 -    currentRoomCanManage.value ? pendingAgentPairings.value[0] || null : null,
 -)
--const currentWorkspaceLabel = computed(() => workspaceBasename(currentRoom.value?.workspace || ''))
 -const groupToolPanelTitle = computed(() => desktopBrowserAvailable
 -    ? `${t('drawer.files')} / ${t('drawer.terminal')} / ${t('browser.title')}`
 -    : `${t('drawer.files')} / ${t('drawer.terminal')}`
@@ -4558,12 +4573,6 @@ index fcbcd1c29..000000000
 -function formatTokens(tokens: number): string {
 -    const value = tokens >= 1000 ? `${(tokens / 1000).toFixed(1)}k` : String(tokens)
 -    return `${value} ${t('usage.tokens')}`
--}
--
--function workspaceBasename(path: string): string {
--    const trimmed = String(path || '').trim().replace(/[\\/]+$/, '')
--    if (!trimmed) return ''
--    return trimmed.split(/[\\/]/).pop() || trimmed
 -}
 -
 -function toggleSidebar() {
@@ -4659,15 +4668,6 @@ index fcbcd1c29..000000000
 -
 -function handleToolPanelLeaveCancelled(): void {
 -    toolPanelTransitionReady.value = true
--}
--
--function openWorkspaceFilesPanel(): void {
--    if (!currentRoom.value?.workspace) return
--    if (showWorkspacePanel.value && activeWorkspacePanel.value === 'files') {
--        closeWorkspacePanel()
--        return
--    }
--    selectWorkspacePanel('files')
 -}
 -
 -function selectWorkspacePanel(panel: 'files' | 'terminal' | 'browser'): void {
@@ -4776,10 +4776,6 @@ index fcbcd1c29..000000000
 -    })
 -}
 -
--function openPageSidebar() {
--    if (props.standalone) return
--    showSidebar.value = true
--}
 -
 -function acknowledgeGroupChatRefactorNotice() {
 -    try {
@@ -5419,7 +5415,6 @@ index fcbcd1c29..000000000
 -            showGroupChatRefactorNotice.value = true
 -        }
 -    }
--    window.addEventListener('hermes:open-page-sidebar', openPageSidebar)
 -    window.addEventListener('hermes:preview-workspace-file', handleWorkspaceFilePreviewRequest)
 -    window.addEventListener('hermes:preview-group-attachment', handleGroupAttachmentPreviewRequest)
 -    window.addEventListener(OPEN_DESKTOP_BROWSER_PANEL_EVENT, handleOpenDesktopBrowserPanelRequest)
@@ -5439,7 +5434,6 @@ index fcbcd1c29..000000000
 -
 -onUnmounted(() => {
 -    hideInlineSummaryStatus()
--    window.removeEventListener('hermes:open-page-sidebar', openPageSidebar)
 -    window.removeEventListener('hermes:preview-workspace-file', handleWorkspaceFilePreviewRequest)
 -    window.removeEventListener('hermes:preview-group-attachment', handleGroupAttachmentPreviewRequest)
 -    window.removeEventListener(OPEN_DESKTOP_BROWSER_PANEL_EVENT, handleOpenDesktopBrowserPanelRequest)
@@ -5941,9 +5935,8 @@ index fcbcd1c29..000000000
 -
 -<template>
 -    <div class="group-chat-panel">
--        <!-- Mobile backdrop -->
--        <div v-if="!props.standalone" class="sidebar-backdrop" :class="{ active: showSidebar }" @click="showSidebar = false" />
 -        <!-- Room sidebar -->
+-        <PageSidebar>
 -        <div v-if="!props.standalone && showSidebar" class="room-sidebar">
 -            <div class="sidebar-header">
 -                <PageSidebarNav
@@ -6039,6 +6032,7 @@ index fcbcd1c29..000000000
 -            </div>
 -            <PageSidebarFooter />
 -        </div>
+-        </PageSidebar>
 -
 -        <NDropdown
 -            v-if="!props.standalone"
@@ -6073,31 +6067,34 @@ index fcbcd1c29..000000000
 -            @dragleave="handleChatDragLeave"
 -            @drop="handleChatDrop"
 -        >
+-            <PageHeader :disabled="props.standalone">
 -            <div class="chat-header">
 -                <div class="header-left">
--                    <button v-if="!props.standalone" class="icon-btn header-sidebar-toggle" @click="toggleSidebar">
--                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
--                            <rect x="3" y="3" width="7" height="7" />
--                            <rect x="14" y="3" width="7" height="7" />
--                            <rect x="3" y="14" width="7" height="7" />
--                            <rect x="14" y="14" width="7" height="7" />
--                        </svg>
--                    </button>
+-                    <HeaderSidebarToggle
+-                      v-if="!props.standalone"
+-                      class="header-sidebar-toggle"
+-                      :expanded="showSidebar"
+-                      @toggle="toggleSidebar"
+-                    />
 -                    <span class="room-title-text">{{ store.roomName || (store.currentRoomId || t('groupChat.title')) }}</span>
--                    <button
--                        v-if="currentRoom?.workspace"
--                        class="workspace-badge"
--                        type="button"
--                        :title="currentRoom.workspace"
--                        @click="openWorkspaceFilesPanel"
--                    >
--                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
--                            <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
--                        </svg>
--                        <span>{{ currentWorkspaceLabel }}</span>
--                    </button>
 -                </div>
 -                <div class="header-info">
+-                    <NButton
+-                        v-if="currentRoomCanManage"
+-                        class="header-workspace-button"
+-                        quaternary
+-                        size="small"
+-                        circle
+-                        :title="currentRoom?.workspace || t('chat.setWorkspace')"
+-                        :aria-label="t('chat.setWorkspace')"
+-                        @click="handleOpenWorkspacePicker()"
+-                    >
+-                        <template #icon>
+-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+-                                <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+-                            </svg>
+-                        </template>
+-                    </NButton>
 -                    <button
 -                        v-if="currentRoomCanManage && pendingAgentPairings.length"
 -                        class="agent-pairing-header-button"
@@ -6150,6 +6147,7 @@ index fcbcd1c29..000000000
 -                    <span class="connection-dot" :class="{ connected: store.connected, disconnected: !store.connected }"></span>
 -                </div>
 -            </div>
+-            </PageHeader>
 -
 -            <div
 -                v-if="hasRoom"
@@ -6808,7 +6806,7 @@ index fcbcd1c29..000000000
 -                        :placeholder="t('groupChat.searchAgentPresets')"
 -                    />
 -                    <div v-if="isLoadingAgentPresets" class="agent-preset-dialog-state">
--                        {{ t('groupChat.agentPresetsLoading') }}
+-                        <NSpin size="small" :description="t('groupChat.agentPresetsLoading')" />
 -                    </div>
 -                    <div v-else-if="agentPresetLoadError" class="agent-preset-dialog-state is-error">
 -                        <span>{{ agentPresetLoadError }}</span>
@@ -7005,6 +7003,7 @@ index fcbcd1c29..000000000
 -            </NModal>
 -            <NModal
 -                v-model:show="showGroupChatRefactorNotice"
+-                v-if="!pageLoading"
 -                preset="dialog"
 -                :title="t('groupChat.refactorNoticeTitle')"
 -                :mask-closable="false"
@@ -7292,7 +7291,7 @@ index fcbcd1c29..000000000
 -                                {{ roomSummaryStatusLabel(liveRoomSummaryState?.status) }}
 -                            </span>
 -                        </div>
--                        <div v-if="isLoadingRoomSummary" class="summary-loading">{{ t('common.loading') }}</div>
+-                        <div v-if="isLoadingRoomSummary" class="summary-loading"><NSpin size="small" :description="t('common.loading')" /></div>
 -                        <template v-else>
 -                            <div class="summary-meta">
 -                                <span>
@@ -7572,11 +7571,9 @@ index fcbcd1c29..000000000
 -    width: $sidebar-width;
 -    min-height: 0;
 -    align-self: stretch;
--    margin: 10px;
+-    margin: 0;
 -    background: $bg-sidebar-surface;
--    border: 1px solid $border-color;
--    border-radius: 14px;
--    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+-    border-inline-end: 1px solid $border-color;
 -    flex-shrink: 0;
 -    display: flex;
 -    flex-direction: column;
@@ -7689,7 +7686,7 @@ index fcbcd1c29..000000000
 -.room-list {
 -    flex: 1;
 -    overflow-y: auto;
--    padding: 8px;
+-    padding: 0 8px 8px;
 -}
 -
 -.room-section + .room-section {
@@ -8515,39 +8512,6 @@ index fcbcd1c29..000000000
 -        flex-shrink: 0;
 -    }
 -
--    .workspace-badge {
--        border: 0;
--        font-size: 11px;
--        line-height: 16px;
--        color: $text-muted;
--        background: rgba(255, 255, 255, 0.05);
--        padding: 2px 8px;
--        border-radius: 4px;
--        max-width: 160px;
--        display: inline-flex;
--        align-items: center;
--        gap: 4px;
--        overflow: hidden;
--        cursor: pointer;
--        flex-shrink: 0;
--
--        svg {
--            flex: 0 0 auto;
--        }
--
--        span {
--            min-width: 0;
--            overflow: hidden;
--            text-overflow: ellipsis;
--            white-space: nowrap;
--        }
--
--        &:hover {
--            color: $text-secondary;
--            background: rgba(var(--accent-primary-rgb), 0.06);
--        }
--    }
--
 -    .member-count {
 -        font-size: 12px;
 -        color: $text-muted;
@@ -9098,9 +9062,9 @@ index fcbcd1c29..000000000
 -
 -    .room-sidebar {
 -        position: absolute;
--        left: 10px;
--        top: 10px;
--        bottom: 10px;
+-        left: 0;
+-        top: 0;
+-        bottom: 0;
 -        height: auto;
 -        margin: 0;
 -        z-index: 100;
@@ -9157,13 +9121,13 @@ index fcbcd1c29..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupMessageItem.vue b/packages/client/src/components/hermes/group-chat/GroupMessageItem.vue
 deleted file mode 100644
-index 019c2f9ef..000000000
+index 75e513568..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupMessageItem.vue
 +++ /dev/null
-@@ -1,1543 +0,0 @@
+@@ -1,1542 +0,0 @@
 -<script setup lang="ts">
 -import TaskPlanCard from '../chat/TaskPlanCard.vue'
--import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 -import { useI18n } from 'vue-i18n'
 -import { useMessage } from 'naive-ui'
 -import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
@@ -9198,8 +9162,7 @@ index 019c2f9ef..000000000
 -import GroupAgentMessageAvatar from './GroupAgentMessageAvatar.vue'
 -import GroupAgentRobotIcon from './GroupAgentRobotIcon.vue'
 -import ImagePreviewOverlay from '@/components/hermes/chat/ImagePreviewOverlay.vue'
--
--const MarkdownRenderer = defineAsyncComponent(async () => (await import('../chat/MarkdownRenderer.vue')).default)
+-import MarkdownRenderer from '../chat/MarkdownRenderer.vue'
 -
 -const TOOL_PAYLOAD_DISPLAY_LIMIT = 1000
 -const JSON_STRING_DISPLAY_LIMIT = 200
@@ -10706,10 +10669,10 @@ index 019c2f9ef..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupMessageList.vue b/packages/client/src/components/hermes/group-chat/GroupMessageList.vue
 deleted file mode 100644
-index 3e4c4a01a..000000000
+index a6fb86775..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupMessageList.vue
 +++ /dev/null
-@@ -1,551 +0,0 @@
+@@ -1,552 +0,0 @@
 -<script setup lang="ts">
 -import { computed, onMounted, ref, watch, nextTick } from 'vue'
 -import { useI18n } from 'vue-i18n'
@@ -10914,7 +10877,7 @@ index 3e4c4a01a..000000000
 -                    v-else-if="store.hasMoreBefore || store.isLoadingOlderMessages"
 -                    class="history-loader"
 -                >
--                    <span v-if="store.isLoadingOlderMessages" class="history-loader-spinner"></span>
+-                    <span v-if="store.isLoadingOlderMessages" class="history-loader-spinner" role="status" :aria-label="t('common.loading')"></span>
 -                </div>
 -            </template>
 -            <template #item="{ message: msg }">
@@ -11186,14 +11149,6 @@ index 3e4c4a01a..000000000
 -    letter-spacing: 0.02em;
 -}
 -
--.history-loader {
--    height: 28px;
--    display: flex;
--    align-items: center;
--    justify-content: center;
--    flex: 0 0 auto;
--}
--
 -.history-loader-spinner {
 -    width: 14px;
 -    height: 14px;
@@ -11207,6 +11162,15 @@ index 3e4c4a01a..000000000
 -        border-top-color: $accent-primary;
 -    }
 -}
+-
+-.history-loader {
+-    height: 28px;
+-    display: flex;
+-    align-items: center;
+-    justify-content: center;
+-    flex: 0 0 auto;
+-}
+-
 -
 -.history-load-error {
 -    display: flex;
@@ -11242,11 +11206,6 @@ index 3e4c4a01a..000000000
 -    cursor: pointer;
 -}
 -
--@keyframes spin {
--    to {
--        transform: rotate(360deg);
--    }
--}
 -
 -@media (max-width: 640px) {
 -    .summary-anchor-divider {
@@ -11256,6 +11215,11 @@ index 3e4c4a01a..000000000
 -
 -    .summary-anchor-divider-line {
 -        display: none;
+-    }
+-}
+-@keyframes spin {
+-    to {
+-        transform: rotate(360deg);
 -    }
 -}
 -</style>
@@ -12027,19 +11991,19 @@ index da7433efd..0c938bafa 100644
    handles.clear()
  })
 diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
-index 690b49817..b9b792fa1 100644
+index be2fbd388..f10e17a19 100644
 --- a/packages/client/src/components/layout/PageSidebarNav.vue
 +++ b/packages/client/src/components/layout/PageSidebarNav.vue
-@@ -8,7 +8,7 @@ import { useSessionSearch } from '@/composables/useSessionSearch'
- import { getAgentManagerEntry, resolveAgentManagerEntryRoute } from '@/utils/agent-manager-entry'
+@@ -9,7 +9,7 @@ import { getAgentManagerEntry, resolveAgentManagerEntryRoute } from '@/utils/age
  import DesktopUpdateDownloadTab from './DesktopUpdateDownloadTab.vue'
+ import { useNavigationRail } from '@/composables/useNavigationRail'
  
 -type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'group' | 'global' | 'workflow'
 +type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'global' | 'workflow'
  
  const props = defineProps<{
    active: ActiveSection
-@@ -48,11 +48,6 @@ function openModels() {
+@@ -50,11 +50,6 @@ function openModels() {
    void router.push({ name: 'hermes.models' })
  }
  
@@ -12051,16 +12015,16 @@ index 690b49817..b9b792fa1 100644
  function openWorkflow() {
    if (props.active === 'workflow') return
    void router.push({ name: 'hermes.workflow' })
-@@ -144,7 +139,7 @@ function openWorkflow() {
+@@ -155,7 +150,7 @@ function openWorkflow() {
          <span>{{ t('sidebar.models') }}</span>
        </button>
      </div>
--    <div class="conversation-switch conversation-switch--four" role="tablist" aria-label="Conversation type">
-+    <div class="conversation-switch conversation-switch--three" role="tablist" aria-label="Conversation type">
+-    <div v-if="!hasNavigationRail" class="conversation-switch conversation-switch--four" role="tablist" aria-label="Conversation type">
++    <div v-if="!hasNavigationRail" class="conversation-switch conversation-switch--three" role="tablist" aria-label="Conversation type">
        <NTooltip trigger="hover" placement="top">
          <template #trigger>
            <button
-@@ -163,27 +158,6 @@ function openWorkflow() {
+@@ -174,27 +169,6 @@ function openWorkflow() {
          </template>
          {{ t('sidebar.singleChat') }}
        </NTooltip>
@@ -12088,7 +12052,7 @@ index 690b49817..b9b792fa1 100644
        <NTooltip trigger="hover" placement="top">
          <template #trigger>
            <button
-@@ -292,8 +266,8 @@ function openWorkflow() {
+@@ -329,8 +303,8 @@ function openWorkflow() {
    background: rgba(var(--accent-primary-rgb), 0.05);
  }
  
@@ -12099,7 +12063,7 @@ index 690b49817..b9b792fa1 100644
  }
  
  .conversation-switch-tab {
-@@ -327,7 +301,7 @@ function openWorkflow() {
+@@ -364,7 +338,7 @@ function openWorkflow() {
    }
  }
  
@@ -12109,10 +12073,10 @@ index 690b49817..b9b792fa1 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 484548011..73811659d 100644
+index 15587c613..419f13d04 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -506,7 +506,6 @@ export default {
+@@ -507,7 +507,6 @@ export default {
      browser: 'المتصفح',
      singleChat: 'محادثة',
      globalAgent: 'الوكيل العام',
@@ -12120,7 +12084,7 @@ index 484548011..73811659d 100644
      files: 'الملفات',
      devices: 'الأجهزة',
      connections: 'ترابط الأجهزة',
-@@ -3305,238 +3304,6 @@ export default {
+@@ -3315,238 +3314,6 @@ export default {
      connectionClosed: 'تم إغلاق اتصال الطرفية',
      connectionError: 'خطأ في اتصال الطرفية',
    },
@@ -12358,12 +12322,12 @@ index 484548011..73811659d 100644
 -
    // Usage
    usage: {
-     title: 'إحصائيات الاستخدام',
+     costStates: {
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index e6cdbaa34..c0d2aa590 100644
+index f41cf62da..34f0fd359 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -519,7 +519,6 @@ export default {
+@@ -520,7 +520,6 @@ export default {
      devices: 'Gerate',
      connections: 'Geräteverbindungen',
      agentManager: 'Agent-Verwaltung',
@@ -12371,7 +12335,7 @@ index e6cdbaa34..c0d2aa590 100644
      groupConversation: 'Konversation',
      groupConversationShort: 'Konv',
      groupAgent: 'Agent',
-@@ -3031,238 +3030,6 @@ jobTriggered: 'Job ausgelost',
+@@ -3059,238 +3058,6 @@ jobTriggered: 'Job ausgelost',
        idle: 'Inaktiv', queued: 'In Warteschlange', running: 'Wird ausgeführt', pending_approval: 'Wartet auf Freigabe', completed: 'Abgeschlossen', skipped: 'Übersprungen', failed: 'Fehlgeschlagen', approval_rejected: 'Freigabe abgelehnt', canceled: 'Abgebrochen',
      },
    },
@@ -12611,10 +12575,10 @@ index e6cdbaa34..c0d2aa590 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index cb61b1d12..b41170aab 100644
+index 327145c9c..a2b8e9190 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -506,7 +506,6 @@ export default {
+@@ -507,7 +507,6 @@ export default {
      browser: 'Browser',
      singleChat: 'Chat',
      globalAgent: 'Global Agent',
@@ -12622,7 +12586,7 @@ index cb61b1d12..b41170aab 100644
      files: 'Files',
      devices: 'Devices',
      connections: 'Device connections',
-@@ -3334,238 +3333,6 @@ export default {
+@@ -3344,238 +3343,6 @@ export default {
      connectionClosed: 'Terminal connection closed',
      connectionError: 'Terminal connection error',
    },
@@ -12860,12 +12824,12 @@ index cb61b1d12..b41170aab 100644
 -
    // Usage
    usage: {
-     title: 'Usage Statistics',
+     costStates: {
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index e560bf0f0..855f6da7d 100644
+index d5581aa57..118767a52 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -519,7 +519,6 @@ export default {
+@@ -520,7 +520,6 @@ export default {
      devices: 'Dispositivos',
      connections: 'Conexiones de dispositivos',
      agentManager: 'Gestión de agentes',
@@ -12873,7 +12837,7 @@ index e560bf0f0..855f6da7d 100644
      groupConversation: 'Conversación',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3031,238 +3030,6 @@ jobTriggered: 'Job ejecutado',
+@@ -3059,238 +3058,6 @@ jobTriggered: 'Job ejecutado',
        idle: 'Inactivo', queued: 'En cola', running: 'En ejecución', pending_approval: 'Pendiente de aprobación', completed: 'Completado', skipped: 'Omitido', failed: 'Fallido', approval_rejected: 'Aprobación rechazada', canceled: 'Cancelado',
      },
    },
@@ -13113,10 +13077,10 @@ index e560bf0f0..855f6da7d 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 287e81634..f4d12e82e 100644
+index 843e9dd97..caabd2e0d 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -519,7 +519,6 @@ export default {
+@@ -520,7 +520,6 @@ export default {
      devices: 'Appareils',
      connections: 'Connexions des appareils',
      agentManager: 'Gestion des agents',
@@ -13124,7 +13088,7 @@ index 287e81634..f4d12e82e 100644
      groupConversation: 'Conversation',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agent',
-@@ -3031,238 +3030,6 @@ jobTriggered: 'Job declenche',
+@@ -3059,238 +3058,6 @@ jobTriggered: 'Job declenche',
        idle: 'Inactif', queued: 'En attente', running: 'En cours', pending_approval: 'En attente d\'approbation', completed: 'Terminé', skipped: 'Ignoré', failed: 'Échec', approval_rejected: 'Approbation refusée', canceled: 'Annulé',
      },
    },
@@ -13364,10 +13328,10 @@ index 287e81634..f4d12e82e 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index f21c8e1aa..6e95aa15d 100644
+index 96c5858a8..37b70ca32 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -519,7 +519,6 @@ export default {
+@@ -520,7 +520,6 @@ export default {
      devices: 'デバイス',
      connections: 'デバイス接続',
      agentManager: 'エージェント管理',
@@ -13375,7 +13339,7 @@ index f21c8e1aa..6e95aa15d 100644
      groupConversation: '会話',
      groupConversationShort: '会話',
      groupAgent: 'エージェント',
-@@ -3030,238 +3029,6 @@ export default {
+@@ -3058,238 +3057,6 @@ export default {
        idle: '待機中', queued: '待機列', running: '実行中', pending_approval: '承認待ち', completed: '完了', skipped: 'スキップ', failed: '失敗', approval_rejected: '承認拒否', canceled: 'キャンセル済み',
      },
    },
@@ -13615,10 +13579,10 @@ index f21c8e1aa..6e95aa15d 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 6f88eb96f..59c295400 100644
+index cb718cf67..b9f9a3f06 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -519,7 +519,6 @@ export default {
+@@ -520,7 +520,6 @@ export default {
      devices: '기기',
      connections: '기기 연결',
      agentManager: '에이전트 관리',
@@ -13626,7 +13590,7 @@ index 6f88eb96f..59c295400 100644
      groupConversation: '대화',
      groupConversationShort: '대화',
      groupAgent: '에이전트',
-@@ -3030,238 +3029,6 @@ export default {
+@@ -3058,238 +3057,6 @@ export default {
        idle: '대기', queued: '대기열', running: '실행 중', pending_approval: '승인 대기', completed: '완료', skipped: '건너뜀', failed: '실패', approval_rejected: '승인 거부', canceled: '취소됨',
      },
    },
@@ -13866,10 +13830,10 @@ index 6f88eb96f..59c295400 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index e91f75a7b..7ebac37c0 100644
+index 0774f8233..7e75d7ee8 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -519,7 +519,6 @@ export default {
+@@ -520,7 +520,6 @@ export default {
      devices: 'Dispositivos',
      connections: 'Conexões de dispositivos',
      agentManager: 'Gerenciamento de agentes',
@@ -13877,7 +13841,7 @@ index e91f75a7b..7ebac37c0 100644
      groupConversation: 'Conversa',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3031,238 +3030,6 @@ jobTriggered: 'Job acionado',
+@@ -3059,238 +3058,6 @@ jobTriggered: 'Job acionado',
        idle: 'Inativo', queued: 'Na fila', running: 'Em execução', pending_approval: 'Aguardando aprovação', completed: 'Concluído', skipped: 'Ignorado', failed: 'Falhou', approval_rejected: 'Aprovação rejeitada', canceled: 'Cancelado',
      },
    },
@@ -14117,10 +14081,10 @@ index e91f75a7b..7ebac37c0 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 90f272cc6..1d62b08bb 100644
+index 7a5ec22ba..fa9b3fcf2 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -431,7 +431,6 @@ export default {
+@@ -432,7 +432,6 @@ export default {
      browser: 'Браузер',
      singleChat: 'Чат',
      globalAgent: 'Global Agent',
@@ -14128,7 +14092,7 @@ index 90f272cc6..1d62b08bb 100644
      files: 'Файлы',
      devices: 'Устройства',
      connections: 'Подключение устройств',
-@@ -2967,237 +2966,6 @@ export default {
+@@ -2977,237 +2976,6 @@ export default {
    },
  
  
@@ -14364,13 +14328,13 @@ index 90f272cc6..1d62b08bb 100644
 -
 -
    usage: {
-     title: 'Статистика использования',
-     refresh: 'Обновить',
+     costStates: {
+       unknown: "Не записано",
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 46f678058..7d6777c47 100644
+index ff7f51fcc..194ea1675 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -506,7 +506,6 @@ export default {
+@@ -507,7 +507,6 @@ export default {
      browser: '瀏覽器',
      singleChat: '單聊',
      globalAgent: '全局',
@@ -14378,7 +14342,7 @@ index 46f678058..7d6777c47 100644
      files: '檔案',
      devices: '裝置',
      connections: '裝置互聯',
-@@ -3276,238 +3275,6 @@ export default {
+@@ -3286,238 +3285,6 @@ export default {
      connectionClosed: '終端機連線已關閉',
      connectionError: '終端機連線錯誤',
    },
@@ -14616,12 +14580,12 @@ index 46f678058..7d6777c47 100644
 -
    // 用量統計
    usage: {
-     title: '用量統計',
+     costStates: {
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 488869945..ab50ebf2f 100644
+index f08f75562..e1b34b2e2 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -506,7 +506,6 @@ export default {
+@@ -507,7 +507,6 @@ export default {
      browser: '浏览器',
      singleChat: '单聊',
      globalAgent: '全局',
@@ -14629,7 +14593,7 @@ index 488869945..ab50ebf2f 100644
      files: '文件',
      devices: '设备',
      connections: '设备互联',
-@@ -3382,238 +3381,6 @@ export default {
+@@ -3392,238 +3391,6 @@ export default {
      connectionClosed: '终端连接已关闭',
      connectionError: '终端连接错误',
    },
@@ -14867,7 +14831,7 @@ index 488869945..ab50ebf2f 100644
 -
    // 用量统计
    usage: {
-     title: '用量统计',
+     costStates: {
 diff --git a/packages/client/src/router/index.ts b/packages/client/src/router/index.ts
 index a27107d24..71d47d510 100644
 --- a/packages/client/src/router/index.ts
@@ -17600,7 +17564,7 @@ index d30d6d363..000000000
 -}
 diff --git a/packages/client/src/utils/group-agent-avatar.ts b/packages/client/src/utils/group-agent-avatar.ts
 deleted file mode 100644
-index e08927e8c..000000000
+index 62791b1ae..000000000
 --- a/packages/client/src/utils/group-agent-avatar.ts
 +++ /dev/null
 @@ -1,81 +0,0 @@
@@ -17616,7 +17580,7 @@ index e08927e8c..000000000
 -    grok: '/coding-agents/grok.svg',
 -    opencode: '/coding-agents/opencode.png',
 -    dsh: '/coding-agents/deepseek.svg',
--    cursor: '/coding-agents/cursor.svg',
+-    cursor: '/coding-agents/cursor-logo.png',
 -}
 -
 -export function parseStoredAvatar(raw: unknown): ProfileAvatar | null {
@@ -17775,24 +17739,25 @@ index 4ca69b095..000000000
 -  )
 -}
 diff --git a/packages/client/src/views/hermes/FilesView.vue b/packages/client/src/views/hermes/FilesView.vue
-index 85ae5c193..b4669d6b8 100644
+index 10e396e87..055653cc7 100644
 --- a/packages/client/src/views/hermes/FilesView.vue
 +++ b/packages/client/src/views/hermes/FilesView.vue
-@@ -98,7 +98,6 @@ async function loadFromRoute() {
-     await filesStore.fetchEntries(directoryPath, {
-       profile,
-       workspaceSessionId: null,
--      workspaceRoomId: null,
-     })
-   }
+@@ -106,7 +106,6 @@ async function loadFromRoute() {
+       await filesStore.fetchEntries(directoryPath, {
+         profile,
+         workspaceSessionId: null,
+-        workspaceRoomId: null,
+       })
+     }
  
 diff --git a/packages/client/src/views/hermes/GroupChatLinkView.vue b/packages/client/src/views/hermes/GroupChatLinkView.vue
 deleted file mode 100644
-index 5e3811264..000000000
+index e5073c450..000000000
 --- a/packages/client/src/views/hermes/GroupChatLinkView.vue
 +++ /dev/null
-@@ -1,964 +0,0 @@
+@@ -1,971 +0,0 @@
 -<script setup lang="ts">
+-import PageLoading from '@/components/common/PageLoading.vue'
 -import { GROUP_AGENT_OPTIONS } from "@/utils/agent-options"
 -import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 -import { useI18n } from 'vue-i18n'
@@ -18413,7 +18378,7 @@ index 5e3811264..000000000
 -</script>
 -
 -<template>
--  <main class="group-chat-link-view">
+-  <PageLoading :show="loading" class="group-chat-link-view">
 -    <section class="link-card">
 -      <img src="/logo.png" alt="" class="link-logo">
 -      <h1>
@@ -18426,7 +18391,7 @@ index 5e3811264..000000000
 -        {{ editingConnection?.cloudOrigin || parentOrigin }}
 -      </code>
 -
--      <div v-if="loading" class="link-status">{{ t('common.loading') }}</div>
+-      <div v-if="loading" class="link-status"></div>
 -      <div v-else-if="connected" class="link-success">
 -        <strong>{{ t('groupChat.agentLinkConnected') }}</strong>
 -        <NButton type="primary" @click="closeWindow">{{ t('groupChat.agentLinkClose') }}</NButton>
@@ -18593,19 +18558,25 @@ index 5e3811264..000000000
 -      <p v-if="error" class="link-error" role="alert">{{ error }}</p>
 -      <p class="link-security">{{ t('groupChat.agentLinkSecurityHint') }}</p>
 -    </section>
--  </main>
+-  </PageLoading>
 -</template>
 -
 -<style scoped lang="scss">
 -@use '@/styles/variables' as *;
 -
 -.group-chat-link-view {
--  min-height: calc(100 * var(--vh));
+-  min-height: 100%;
 -  box-sizing: border-box;
 -  display: grid;
 -  place-items: center;
 -  padding: 24px;
 -  background: $bg-primary;
+-}
+-
+-.group-chat-link-view > :deep(.page-loading-content) {
+-  width: 100%;
+-  display: grid;
+-  place-items: center;
 -}
 -
 -.link-card {
@@ -18758,12 +18729,13 @@ index 5e3811264..000000000
 -</style>
 diff --git a/packages/client/src/views/hermes/GroupChatView.vue b/packages/client/src/views/hermes/GroupChatView.vue
 deleted file mode 100644
-index 15d23f0de..000000000
+index 1547e2e8b..000000000
 --- a/packages/client/src/views/hermes/GroupChatView.vue
 +++ /dev/null
-@@ -1,81 +0,0 @@
+@@ -1,113 +0,0 @@
 -<script setup lang="ts">
--import { computed, onMounted, watch } from 'vue'
+-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+-import PageLoading from '@/components/common/PageLoading.vue'
 -import { useRoute, useRouter } from 'vue-router'
 -import GroupChatPanel from '@/components/hermes/group-chat/GroupChatPanel.vue'
 -import { useGroupChatStore } from '@/stores/hermes/group-chat'
@@ -18775,6 +18747,12 @@ index 15d23f0de..000000000
 -const settingsStore = useSettingsStore()
 -const route = useRoute()
 -const router = useRouter()
+-const initializing = ref(true)
+-const routeLoading = ref(false)
+-const pageLoading = computed(() => initializing.value || routeLoading.value || store.isJoining)
+-let routeLoadSequence = 0
+-let disposed = false
+-onUnmounted(() => { disposed = true; routeLoadSequence++ })
 -
 -const routeRoomId = computed(() => {
 -    const value = route.params.roomId
@@ -18797,7 +18775,9 @@ index 15d23f0de..000000000
 -    const roomId = routeRoomId.value
 -    if (!roomId) {
 -        if (!store.currentRoomId && store.rooms.length > 0) {
--            await router.replace({ name: 'hermes.groupChatRoom', params: { roomId: store.rooms[0].id } })
+-            const firstRoomId = store.rooms[0].id
+-            await router.replace({ name: 'hermes.groupChatRoom', params: { roomId: firstRoomId } })
+-            if (!disposed && routeRoomId.value === firstRoomId && store.currentRoomId !== firstRoomId) await store.joinRoom(firstRoomId)
 -        }
 -        return
 -    }
@@ -18807,49 +18787,73 @@ index 15d23f0de..000000000
 -        return
 -    }
 -
--    if (store.currentRoomId !== roomId) {
+-    if (store.currentRoomId !== roomId || store.isJoining) {
 -        await store.joinRoom(roomId)
 -    }
 -}
 -
 -onMounted(async () => {
--    await profilesStore.fetchProfiles()
--    await applyRouteProfile()
--    await store.connect()
--    await Promise.all([
--        store.loadRooms(),
--        settingsStore.fetchSettings(),
--    ])
--    await syncRouteRoom()
+-    try {
+-        await profilesStore.fetchProfiles()
+-        if (disposed) return
+-        await applyRouteProfile()
+-        await Promise.all([
+-            store.connect(),
+-            store.loadRooms(),
+-            settingsStore.fetchSettings(),
+-        ])
+-        if (disposed) return
+-        do {
+-            const target = [routeRoomId.value, routeProfile.value].join(':')
+-            await applyRouteProfile()
+-            if (disposed) return
+-            await syncRouteRoom()
+-            if (target === [routeRoomId.value, routeProfile.value].join(':')) break
+-        } while (!disposed)
+-    } catch (error) {
+-        console.error('Failed to initialize group chat page:', error)
+-    } finally {
+-        initializing.value = false
+-    }
 -})
 -
 -watch([routeRoomId, routeProfile], async () => {
--    await applyRouteProfile()
--    if (store.rooms.length === 0) return
--    await syncRouteRoom()
+-    if (initializing.value) return
+-    const sequence = ++routeLoadSequence
+-    routeLoading.value = true
+-    try {
+-        await applyRouteProfile()
+-        if (disposed || sequence !== routeLoadSequence || store.rooms.length === 0) return
+-        await syncRouteRoom()
+-    } catch (error) {
+-        console.error('Failed to switch group chat page:', error)
+-    } finally {
+-        if (sequence === routeLoadSequence) routeLoading.value = false
+-    }
 -})
 -</script>
 -
 -<template>
--    <div class="group-chat-view">
+-    <PageLoading :show="pageLoading" initial-only class="group-chat-view">
 -        <GroupChatPanel />
--    </div>
+-    </PageLoading>
 -</template>
 -
 -<style scoped lang="scss">
 -.group-chat-view {
--    height: calc(100 * var(--vh));
+-    height: 100%;
 -    display: flex;
 -    flex-direction: column;
 -}
 -</style>
 diff --git a/packages/client/src/views/hermes/SharedGroupChatView.vue b/packages/client/src/views/hermes/SharedGroupChatView.vue
 deleted file mode 100644
-index 5fa42e2b3..000000000
+index b146f0b49..000000000
 --- a/packages/client/src/views/hermes/SharedGroupChatView.vue
 +++ /dev/null
-@@ -1,907 +0,0 @@
+@@ -1,887 +0,0 @@
 -<script setup lang="ts">
+-import PageLoading from '@/components/common/PageLoading.vue'
 -import { computed, onUnmounted, ref, watch } from 'vue'
 -import { useI18n } from 'vue-i18n'
 -import { useRoute, useRouter } from 'vue-router'
@@ -19340,7 +19344,7 @@ index 5fa42e2b3..000000000
 -</script>
 -
 -<template>
--    <div class="shared-group-chat-view">
+-    <PageLoading :show="joining && !joined" class="shared-group-chat-view">
 -        <template v-if="joined">
 -            <GroupChatPanel
 -                standalone
@@ -19401,7 +19405,7 @@ index 5fa42e2b3..000000000
 -            :aria-label="t('groupChat.shareJoining')"
 -            aria-busy="true"
 -        >
--            <span class="invite-loading-spinner" aria-hidden="true" />
+-
 -        </main>
 -
 -        <main v-else class="invite-gate">
@@ -19511,15 +19515,16 @@ index 5fa42e2b3..000000000
 -                <p class="invite-hint">{{ t('groupChat.shareCodeHint') }}</p>
 -            </section>
 -        </main>
--    </div>
+-    </PageLoading>
 -</template>
 -
 -<style scoped lang="scss">
 -@use '@/styles/variables' as *;
 -
 -.shared-group-chat-view {
+-    flex-direction: column;
 -    width: 100%;
--    height: calc(100 * var(--vh));
+-    height: 100%;
 -    min-height: 0;
 -}
 -
@@ -19597,18 +19602,6 @@ index 5fa42e2b3..000000000
 -    background: $bg-main-surface;
 -}
 -
--.invite-loading-spinner {
--    width: 24px;
--    height: 24px;
--    box-sizing: border-box;
--    border: 2px solid $border-color;
--    border-top-color: var(--accent-primary);
--    border-radius: 50%;
--    opacity: 0;
--    animation:
--        invite-loading-reveal 0s linear 200ms forwards,
--        invite-loading-spin 0.7s linear infinite;
--}
 -
 -.invite-gate {
 -    box-sizing: border-box;
@@ -19729,17 +19722,7 @@ index 5fa42e2b3..000000000
 -    text-align: center;
 -}
 -
--@keyframes invite-loading-reveal {
--    to {
--        opacity: 1;
--    }
--}
 -
--@keyframes invite-loading-spin {
--    to {
--        transform: rotate(360deg);
--    }
--}
 -
 -@media (max-width: 520px) {
 -    .invite-gate {
@@ -19807,7 +19790,7 @@ index 5c05b0412..000000000
 -  }
 -}
 diff --git a/packages/desktop/src/main/index.ts b/packages/desktop/src/main/index.ts
-index 084f39bb7..44be06ebc 100644
+index 05f592acb..8a2bc1cef 100644
 --- a/packages/desktop/src/main/index.ts
 +++ b/packages/desktop/src/main/index.ts
 @@ -33,7 +33,6 @@ import { resetDesktopDefaultLogin } from './desktop-login-reset'
@@ -19818,7 +19801,7 @@ index 084f39bb7..44be06ebc 100644
  import { isTrustedDesktopAppUrl, normalizeExternalHttpUrl } from './window-open-policy'
  import {
    ensureDesktopRuntime,
-@@ -555,9 +554,7 @@ async function createWindow(): Promise<void> {
+@@ -562,9 +561,7 @@ async function createWindow(): Promise<void> {
    installSelectionContextMenu(mainWindow)
  
    // External links → system browser
@@ -19829,7 +19812,7 @@ index 084f39bb7..44be06ebc 100644
      if (isTrustedDesktopAppUrl(url, serverUrl)) {
        return { action: 'allow' }
      }
-@@ -644,9 +641,7 @@ async function openChatWindow(sessionIdInput: unknown, profileInput?: unknown):
+@@ -651,9 +648,7 @@ async function openChatWindow(sessionIdInput: unknown, profileInput?: unknown):
    })
  
    installSelectionContextMenu(chatWindow)

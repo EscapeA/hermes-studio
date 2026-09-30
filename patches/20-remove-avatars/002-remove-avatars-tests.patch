@@ -1,4 +1,4 @@
-From 33114226c4c72462ca0e392ab6ee85ba1257f69a Mon Sep 17 00:00:00 2001
+From ffd8510cb7124f240c5c33d1d10f604a6f2c4f09 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 18:56:52 +0800
 Subject: [PATCH] test(web): adapt suites after avatar removal
@@ -164,7 +164,7 @@ index f2446bfbc..000000000
 -})
 diff --git a/tests/client/chat-agent-avatar.test.ts b/tests/client/chat-agent-avatar.test.ts
 deleted file mode 100644
-index 5f3c762ac..000000000
+index ac7afc73e..000000000
 --- a/tests/client/chat-agent-avatar.test.ts
 +++ /dev/null
 @@ -1,40 +0,0 @@
@@ -195,7 +195,7 @@ index 5f3c762ac..000000000
 -    ['DeepSeek Harness', { codingAgentId: 'dsh' }, '/coding-agents/deepseek.svg'],
 -    ['Pi', { codingAgentId: 'pi' }, '/coding-agents/pi.svg'],
 -    ['Grok', { codingAgentId: 'grok' }, '/coding-agents/grok.svg'],
--    ['Cursor', { codingAgentId: 'cursor' }, '/coding-agents/cursor.svg'],
+-    ['Cursor', { codingAgentId: 'cursor' }, '/coding-agents/cursor-logo.png'],
 -    ['OpenCode', { codingAgentId: 'opencode' }, '/coding-agents/opencode.png'],
 -  ])('maps session identity to the $label avatar', (label, session, src) => {
 -    expect(chatSessionAgentAvatar(session)).toEqual({ label, src })
@@ -427,7 +427,7 @@ index 77870d292..1b8655429 100644
    })
  })
 diff --git a/tests/client/message-list-scroll-position.test.ts b/tests/client/message-list-scroll-position.test.ts
-index 5a04cc430..aad766ade 100644
+index 9053b1bca..e67a492b1 100644
 --- a/tests/client/message-list-scroll-position.test.ts
 +++ b/tests/client/message-list-scroll-position.test.ts
 @@ -64,7 +64,6 @@ vi.mock('@/components/hermes/chat/MessageItem.vue', () => ({
@@ -629,7 +629,7 @@ index 7d8f20354..b52dfa1f6 100644
      })
  
 diff --git a/tests/client/profiles-store.test.ts b/tests/client/profiles-store.test.ts
-index 7555b0842..9bb22916e 100644
+index e83fc687a..ed6ebebd3 100644
 --- a/tests/client/profiles-store.test.ts
 +++ b/tests/client/profiles-store.test.ts
 @@ -11,8 +11,6 @@ const mockProfilesApi = vi.hoisted(() => ({
@@ -641,7 +641,7 @@ index 7555b0842..9bb22916e 100644
  }))
  
  const mockAgentStatusApi = vi.hoisted(() => ({
-@@ -163,54 +161,6 @@ describe('Profiles Store', () => {
+@@ -221,54 +219,6 @@ describe('Profiles Store', () => {
      expect(mockProfilesApi.fetchProfileDetail).not.toHaveBeenCalled()
    })
  
@@ -991,7 +991,7 @@ index 8c7172592..64f4cbf5b 100644
  
      expect(wrapper.find('.session-item-live-dot').exists()).toBe(false)
 diff --git a/tests/e2e/chat-streaming.spec.ts b/tests/e2e/chat-streaming.spec.ts
-index dc1b5be32..1978312a8 100644
+index 7a9517a21..d37f13824 100644
 --- a/tests/e2e/chat-streaming.spec.ts
 +++ b/tests/e2e/chat-streaming.spec.ts
 @@ -107,10 +107,6 @@ test('freezes the current reasoning between the thinking animation and its tool
@@ -1006,7 +1006,7 @@ index dc1b5be32..1978312a8 100644
    await page.evaluate((sid) => {
      const socket = (window as any).__PW_CHAT_SOCKET__.latest
 diff --git a/tests/e2e/fixtures.ts b/tests/e2e/fixtures.ts
-index 357bf60ae..88e0d4bd5 100644
+index e52b030b9..f59a862b6 100644
 --- a/tests/e2e/fixtures.ts
 +++ b/tests/e2e/fixtures.ts
 @@ -342,25 +342,11 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =

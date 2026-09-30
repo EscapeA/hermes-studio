@@ -1,4 +1,4 @@
-From 3e01ba15958a3d3a33cf4d94e78a301e3173c229 Mon Sep 17 00:00:00 2001
+From b7f01d6b973d1f0e648c95cd9ebb3fcc522a09c3 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 18:28:26 +0800
 Subject: [PATCH] feat(chat): dual-select session model picker and mobile
@@ -10,11 +10,11 @@ label next to the mobile input button, and use fixed stacking so the
 session drawer covers the global hamburger icon.
 ---
  .../src/components/hermes/chat/ChatInput.vue  |   6 +-
- .../src/components/hermes/chat/ChatPanel.vue  | 489 +++++-------------
- 2 files changed, 141 insertions(+), 354 deletions(-)
+ .../src/components/hermes/chat/ChatPanel.vue  | 487 +++++-------------
+ 2 files changed, 140 insertions(+), 353 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 993e300be..6a5a94c11 100644
+index 0cfc54940..8df94af05 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -2092,13 +2092,13 @@ function openAttachmentPreview(attachment: Attachment) {
@@ -35,10 +35,10 @@ index 993e300be..6a5a94c11 100644
  
    .input-settings-button {
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index 0276afe53..f098f2ff7 100644
+index a067efb2a..d1406b159 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -62,7 +62,6 @@ import PageSidebarNav from "@/components/layout/PageSidebarNav.vue";
+@@ -68,7 +68,6 @@ import PageSidebarNav from "@/components/layout/PageSidebarNav.vue";
  import PageSidebarFooter from "@/components/layout/PageSidebarFooter.vue";
  import { isStoredSuperAdmin } from "@/api/client";
  import { useDefaultWorkspace } from "@/composables/useDefaultWorkspace";
@@ -46,7 +46,7 @@ index 0276afe53..f098f2ff7 100644
  import { canScopedCodingAgentUseProvider, usesServerManagedProviderAuth, isKeylessModelProvider, openCodeFreeApiMode } from "@/utils/codingAgentProviders";
  import { OPEN_SUBAGENT_STREAM_EVENT, type OpenSubagentStreamDetail } from "@/utils/hermes/subagent-stream";
  import { desktopBridge, hasDesktopBrowserBridge } from "@/utils/desktop-bridge";
-@@ -2086,12 +2085,7 @@ async function handleWorkspaceConfirm() {
+@@ -2059,12 +2058,7 @@ async function handleWorkspaceConfirm() {
  const showSessionModelModal = ref(false);
  const showSessionModelModeModal = ref(false);
  const sessionModelSessionId = ref<string | null>(null);
@@ -59,7 +59,7 @@ index 0276afe53..f098f2ff7 100644
  const sessionModelValue = ref("");
  const sessionModelProvider = ref("");
  const sessionModelCustomInput = ref("");
-@@ -2161,7 +2155,10 @@ const sessionCanUseMoa = computed(() =>
+@@ -2134,7 +2128,10 @@ const sessionCanUseMoa = computed(() =>
  );
  
  const sessionModelProviderOptions = computed(() =>
@@ -71,7 +71,7 @@ index 0276afe53..f098f2ff7 100644
  );
  
  const sessionModelGroupsWithCustom = computed(() =>
-@@ -2176,25 +2173,23 @@ const sessionModelGroupsWithCustom = computed(() =>
+@@ -2149,25 +2146,23 @@ const sessionModelGroupsWithCustom = computed(() =>
    })),
  );
  
@@ -112,7 +112,7 @@ index 0276afe53..f098f2ff7 100644
  
  async function openSessionModelModal(sessionId: string) {
    const requestedSession =
-@@ -2231,7 +2226,6 @@ async function openSessionModelModal(sessionId: string) {
+@@ -2204,7 +2199,6 @@ async function openSessionModelModal(sessionId: string) {
      ? "moa"
      : providerGroup ? session?.provider || "" : defaults.provider || "";
    sessionModelCustomProvider.value = usesMoa ? defaults.provider : sessionModelProvider.value;
@@ -120,7 +120,7 @@ index 0276afe53..f098f2ff7 100644
    sessionModelCustomInput.value = "";
    showSessionModelModal.value = true;
  }
-@@ -2239,7 +2233,46 @@ async function openSessionModelModal(sessionId: string) {
+@@ -2212,7 +2206,46 @@ async function openSessionModelModal(sessionId: string) {
  function handleSessionModelKindChange(value: "model" | "moa") {
    if (sessionModelSwitching.value || (value === "moa" && !sessionCanUseMoa.value)) return;
    sessionModelKind.value = value;
@@ -168,7 +168,7 @@ index 0276afe53..f098f2ff7 100644
  }
  
  function handleHeaderModelClick() {
-@@ -2252,23 +2285,6 @@ function handleHeaderModelClick() {
+@@ -2225,23 +2258,6 @@ function handleHeaderModelClick() {
    openSessionModelModal(sessionId);
  }
  
@@ -192,7 +192,7 @@ index 0276afe53..f098f2ff7 100644
  function defaultSessionModelApiMode(provider: string): CodingAgentApiMode {
    const group = sessionModelBaseGroups.value.find((item) => item.provider === provider);
    const providerKey = String(group?.provider || provider || "").toLowerCase();
-@@ -2333,8 +2349,9 @@ function cancelSessionModelMode() {
+@@ -2306,8 +2322,9 @@ function cancelSessionModelMode() {
  
  async function handleSessionModelCustomSubmit() {
    const model = sessionModelCustomInput.value.trim();
@@ -203,7 +203,7 @@ index 0276afe53..f098f2ff7 100644
    await selectSessionModel(model, provider);
  }
  </script>
-@@ -2778,152 +2795,74 @@ async function handleSessionModelCustomSubmit() {
+@@ -2725,152 +2742,74 @@ async function handleSessionModelCustomSubmit() {
        v-model:show="showSessionModelModal"
        preset="card"
        :title="t('chat.setModelTitle')"
@@ -410,7 +410,7 @@ index 0276afe53..f098f2ff7 100644
            </div>
          </div>
        </NSpin>
-@@ -3490,187 +3429,30 @@ async function handleSessionModelCustomSubmit() {
+@@ -3407,187 +3346,30 @@ async function handleSessionModelCustomSubmit() {
    background-color: $bg-card;
  }
  
@@ -433,9 +433,8 @@ index 0276afe53..f098f2ff7 100644
 -
  .session-model-switch-spin {
 -  min-height: 180px;
-+  min-height: 120px;
- }
- 
+-}
+-
 -.session-model-list {
 -  max-height: 50vh;
 -  overflow-y: auto;
@@ -489,8 +488,9 @@ index 0276afe53..f098f2ff7 100644
 -
 -.session-moa-items {
 -  padding-inline-start: 0;
--}
--
++  min-height: 120px;
+ }
+ 
 -.session-model-item {
 +.session-model-form {
    display: flex;
@@ -607,7 +607,7 @@ index 0276afe53..f098f2ff7 100644
    padding-top: 12px;
    border-top: 1px solid $border-color;
  }
-@@ -3680,11 +3462,6 @@ async function handleSessionModelCustomSubmit() {
+@@ -3597,11 +3379,6 @@ async function handleSessionModelCustomSubmit() {
    gap: 8px;
  }
  
@@ -619,7 +619,7 @@ index 0276afe53..f098f2ff7 100644
  .session-model-custom-input {
    flex: 1;
  }
-@@ -3695,6 +3472,13 @@ async function handleSessionModelCustomSubmit() {
+@@ -3612,6 +3389,13 @@ async function handleSessionModelCustomSubmit() {
    color: $text-muted;
  }
  
@@ -633,17 +633,16 @@ index 0276afe53..f098f2ff7 100644
  .session-list {
    width: $sidebar-width;
    min-height: 0;
-@@ -3723,14 +3507,17 @@ async function handleSessionModelCustomSubmit() {
+@@ -3643,14 +3427,17 @@ async function handleSessionModelCustomSubmit() {
    }
  
    @media (max-width: $breakpoint-mobile) {
--    position: absolute;
-+    // fixed + high z-index so it covers the global .hamburger-btn (z-index: 99)
-+    // and is not trapped under the chat header stacking context.
-+    position: fixed;
-     left: 10px;
-     top: 10px;
-     bottom: 10px;
++    // Upstream 0.7.26 made the sidebar flush (no card margin/radius); keep its
++    // absolute placement but stay above the global .hamburger-btn (z-index 99).
+     position: absolute;
+     left: 0;
+     top: 0;
+     bottom: 0;
      height: auto;
      margin: 0;
 -    z-index: 120;
@@ -652,10 +651,10 @@ index 0276afe53..f098f2ff7 100644
 +    padding-top: env(safe-area-inset-top, 0px);
  
      &.collapsed {
-       transform: translateX(calc(-100% - 10px));
-@@ -3745,10 +3532,10 @@ async function handleSessionModelCustomSubmit() {
-   }
+       transform: translateX(-100%);
+@@ -3661,10 +3448,10 @@ async function handleSessionModelCustomSubmit() {
  
+ @media (max-width: $breakpoint-mobile) {
    .session-backdrop {
 -    position: absolute;
 +    position: fixed;

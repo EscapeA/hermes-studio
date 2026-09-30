@@ -1,4 +1,4 @@
-From e54e7beb7e4eb8b56ce058d673fd812838d57a8b Mon Sep 17 00:00:00 2001
+From c2d61313dd74ba3196f1d19ad6bb44ee768e737a Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 3 Sep 2026 01:56:18 +0800
 Subject: [PATCH] fix(webview): declare color-scheme meta so Android WebView
@@ -20,7 +20,7 @@ the page then applies its own dark theme and icons keep their colors.
  1 file changed, 1 insertion(+)
 
 diff --git a/packages/client/index.html b/packages/client/index.html
-index 5fcf52abb..4d29ccd5f 100644
+index 110f851eb..69edc1131 100644
 --- a/packages/client/index.html
 +++ b/packages/client/index.html
 @@ -3,6 +3,7 @@
@@ -29,8 +29,8 @@ index 5fcf52abb..4d29ccd5f 100644
    <meta charset="UTF-8" />
 +  <meta name="color-scheme" content="dark light" />
    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+   <link rel="stylesheet" href="/logo-loading.css" />
    <link rel="apple-touch-icon" href="/icon-192.png" />
-   <link rel="manifest" href="/manifest.webmanifest" />
 -- 
 2.53.0
 

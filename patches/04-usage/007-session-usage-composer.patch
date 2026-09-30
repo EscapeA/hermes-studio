@@ -1,4 +1,4 @@
-From 6cc48f7c4c7e1cf118d7d923dde47b4ccda71ad0 Mon Sep 17 00:00:00 2001
+From 927cb4e300869f6ce87f6975000e7233f5c63631 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 14:35:38 +0800
 Subject: [PATCH] feat(chat): move session usage to composer top-left, show
@@ -9,7 +9,7 @@ Subject: [PATCH] feat(chat): move session usage to composer top-left, show
  1 file changed, 19 insertions(+), 4 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index f551d3b70..05b8f0c8d 100644
+index 50fa1a72f..b8f1d6ded 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -895,6 +895,11 @@ const showSessionTokensUsed = computed(() => {
@@ -24,30 +24,30 @@ index f551d3b70..05b8f0c8d 100644
  const sessionUsageDetailText = computed(() => {
    const u = sessionUsageTotal.value
    if (!u) return ''
-@@ -1263,17 +1268,18 @@ function openAttachmentPreview(attachment: Attachment) {
-         @mousedown="startResize"
-         @dblclick="resetTextareaHeight"
-       ></div>
--      <div v-if="showContextUsage" class="context-usage-row">
-+      <div v-if="showContextUsage && showSessionTokensUsed" class="session-usage-corner">
-         <NPopover
--          v-if="showSessionTokensUsed"
-           :trigger="isMobileViewport ? 'click' : 'hover'"
--          placement="top-start"
-+          placement="bottom-start"
-         >
-           <template #trigger>
--            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }}</span>
-+            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · {{ cacheHitRatePercent }}%</span>
-           </template>
-           <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
-         </NPopover>
-+      </div>
-+      <div v-if="showContextUsage" class="context-usage-row">
-         <span class="context-info" :class="{ 'context-warning': showContextLimit && usagePercent > 80 }">
-           <template v-if="showSessionUsage">{{ t('chat.sessionUsage') }} </template>
-           {{ formatTokens(totalTokens) }}
-@@ -1962,6 +1968,15 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1240,17 +1245,18 @@ function openAttachmentPreview(attachment: Attachment) {
+       </button>
+     </div>
+ 
+-    <div v-if="showContextUsage" class="context-usage-row">
++    <div v-if="showContextUsage && showSessionTokensUsed" class="session-usage-corner">
+       <NPopover
+-        v-if="showSessionTokensUsed"
+         :trigger="isMobileViewport ? 'click' : 'hover'"
+-        placement="top-start"
++        placement="bottom-start"
+       >
+         <template #trigger>
+-          <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }}</span>
++          <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · {{ cacheHitRatePercent }}%</span>
+         </template>
+         <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
+       </NPopover>
++    </div>
++    <div v-if="showContextUsage" class="context-usage-row">
+       <span class="context-info" :class="{ 'context-warning': showContextLimit && usagePercent > 80 }">
+         <template v-if="showSessionUsage">{{ t('chat.sessionUsage') }} </template>
+         {{ formatTokens(totalTokens) }}
+@@ -1963,6 +1969,15 @@ function openAttachmentPreview(attachment: Attachment) {
    color: $text-muted;
  }
  

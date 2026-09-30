@@ -1,4 +1,4 @@
-From b704513577e96aa88cd6a130198440f07d57a1a2 Mon Sep 17 00:00:00 2001
+From 7f5b5729ab56d02646febd98041c76e7f7e35801 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 18:56:52 +0800
 Subject: [PATCH] feat(web): remove avatars from the frontend
@@ -144,10 +144,10 @@ index 51794e78a..ed7d791cb 100644
  export async function setupPassword(username: string, password: string): Promise<void> {
    return request('/api/auth/setup', {
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index 5e2d9e463..d649d881d 100644
+index 61f7109e0..cc73f745f 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -54,7 +54,6 @@ import SessionListItem from "./SessionListItem.vue";
+@@ -60,7 +60,6 @@ import ListActionsMenu from "@/components/layout/ListActionsMenu.vue";
  import OutlinePanel from "./OutlinePanel.vue";
  import TerminalPanel from "./TerminalPanel.vue";
  import SubagentStreamPanel from "./SubagentStreamPanel.vue";
@@ -155,7 +155,7 @@ index 5e2d9e463..d649d881d 100644
  import { buildVisibleSessionCategoryGroups, partitionRecentSessions } from "./session-category-groups";
  import { buildSessionCategoryMenuChildren, resolveRecentSessionCategoryLabel } from "./session-category-menu";
  import { buildActiveSessionMenuOptions, buildSessionContextMenuOptions } from "./session-menu-options";
-@@ -3315,7 +3314,6 @@ async function handleSessionModelCustomSubmit() {
+@@ -3232,7 +3231,6 @@ async function handleSessionModelCustomSubmit() {
                  />
                  <SubagentStreamPanel
                    v-else-if="selectedSubagent"
@@ -164,7 +164,7 @@ index 5e2d9e463..d649d881d 100644
                    @close="closeToolPanelOverlay"
                  />
 diff --git a/packages/client/src/components/hermes/chat/HistoryMessageList.vue b/packages/client/src/components/hermes/chat/HistoryMessageList.vue
-index d19c8b761..0a1fa4a44 100644
+index 64587618d..34ca9ed84 100644
 --- a/packages/client/src/components/hermes/chat/HistoryMessageList.vue
 +++ b/packages/client/src/components/hermes/chat/HistoryMessageList.vue
 @@ -15,7 +15,7 @@ import { useChatStore } from "@/stores/hermes/chat";
@@ -220,7 +220,7 @@ index b70a6ab19..5e923bfa1 100644
  const { t } = useI18n()
  
 diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
-index 9d2e065c2..392a1276a 100644
+index b1a5c449a..b4725b0ff 100644
 --- a/packages/client/src/components/hermes/chat/MessageItem.vue
 +++ b/packages/client/src/components/hermes/chat/MessageItem.vue
 @@ -15,9 +15,7 @@ import { useChatStore } from "@/stores/hermes/chat";
@@ -241,9 +241,9 @@ index 9d2e065c2..392a1276a 100644
 -import type { ProfileAvatar as ProfileAvatarData } from "@/api/hermes/profiles";
 +
  import ImagePreviewOverlay from "./ImagePreviewOverlay.vue";
+ import MarkdownRenderer from "./MarkdownRenderer.vue";
  
- const MarkdownRenderer = defineAsyncComponent(async () => (await import("./MarkdownRenderer.vue")).default);
-@@ -53,12 +51,10 @@ const props = withDefaults(defineProps<{
+@@ -52,12 +50,10 @@ const props = withDefaults(defineProps<{
    highlight?: boolean
    headingIdPrefix?: string
    showForkAction?: boolean
@@ -257,7 +257,7 @@ index 9d2e065c2..392a1276a 100644
  });
  const { t } = useI18n();
  const toast = useMessage();
-@@ -238,21 +234,10 @@ const chatStore = useChatStore();
+@@ -237,21 +233,10 @@ const chatStore = useChatStore();
  const filesStore = useFilesStore();
  const toolPanelStore = useToolPanelStore();
  const settingsStore = useSettingsStore();
@@ -280,7 +280,7 @@ index 9d2e065c2..392a1276a 100644
  
  // Copy entire bubble content
  const copyableContent = computed(() => {
-@@ -1048,37 +1033,11 @@ onBeforeUnmount(() => {
+@@ -1047,37 +1032,11 @@ onBeforeUnmount(() => {
      </template>
      <template v-else>
        <div class="msg-body">
@@ -318,7 +318,7 @@ index 9d2e065c2..392a1276a 100644
              <span class="message-author-name" dir="auto">{{ assistantAgent.label }}</span>
            </div>
            <div
-@@ -1423,16 +1382,6 @@ onBeforeUnmount(() => {
+@@ -1422,16 +1381,6 @@ onBeforeUnmount(() => {
        z-index: 1;
      }
  
@@ -335,7 +335,7 @@ index 9d2e065c2..392a1276a 100644
      .message-bubble {
        background-color: $msg-assistant-bg;
        border-radius: 10px;
-@@ -1522,11 +1471,6 @@ onBeforeUnmount(() => {
+@@ -1521,11 +1470,6 @@ onBeforeUnmount(() => {
    white-space: nowrap;
  }
  
@@ -348,10 +348,10 @@ index 9d2e065c2..392a1276a 100644
    padding: 10px 14px;
    font-size: var(--font-size-base);
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 141a71048..065df312b 100644
+index 6a697b47d..4ab9a2849 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -25,7 +25,7 @@ import { useProfilesStore } from "@/stores/hermes/profiles";
+@@ -27,7 +27,7 @@ import { useProfilesStore } from "@/stores/hermes/profiles";
  import { useToolTraceVisibility } from "@/composables/useToolTraceVisibility";
  import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
  import { messageScrollPositionKey, rememberMessageScrollPosition } from "./message-scroll-position";
@@ -360,7 +360,7 @@ index 141a71048..065df312b 100644
  import { parseThinking } from "@/utils/thinking-parser";
  import { groupCompletedToolsByRun } from "./tool-run-grouping";
  import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-speed";
-@@ -290,7 +290,7 @@ const liveReasoningDetail = computed<{
+@@ -293,7 +293,7 @@ const liveReasoningDetail = computed<{
    return null;
  });
  
@@ -369,7 +369,7 @@ index 141a71048..065df312b 100644
  const activeSessionProfileName = computed(() => (
    chatStore.activeSession?.profile || profilesStore.activeProfileName || "default"
  ));
-@@ -300,13 +300,10 @@ const activeSessionProfile = computed(() => (
+@@ -303,13 +303,10 @@ const activeSessionProfile = computed(() => (
  const userProfileName = computed(() => (
    activeSessionProfile.value?.alias?.trim() || activeSessionProfileName.value
  ));
@@ -383,7 +383,7 @@ index 141a71048..065df312b 100644
      text: agent.label === "Hermes"
        ? t("chat.emptyState")
        : t("chat.emptyStateAgent", { agent: agent.label }),
-@@ -791,7 +788,6 @@ defineExpose({
+@@ -794,7 +791,6 @@ defineExpose({
      >
        <template #empty>
          <div class="empty-state">
@@ -391,7 +391,7 @@ index 141a71048..065df312b 100644
            <p>{{ emptyState.text }}</p>
          </div>
        </template>
-@@ -838,7 +834,6 @@ defineExpose({
+@@ -841,7 +837,6 @@ defineExpose({
            :message="msg"
            :assistant-agent="assistantAgent"
            :user-profile-name="userProfileName"
@@ -747,10 +747,10 @@ index 999537966..000000000
 -}
 -</style>
 diff --git a/packages/client/src/components/hermes/profiles/ProfileCard.vue b/packages/client/src/components/hermes/profiles/ProfileCard.vue
-index dd4e2c5e2..337722b41 100644
+index bee68b85f..00c4df065 100644
 --- a/packages/client/src/components/hermes/profiles/ProfileCard.vue
 +++ b/packages/client/src/components/hermes/profiles/ProfileCard.vue
-@@ -5,7 +5,6 @@ import { NButton, NTag, NSpin, useMessage, useDialog } from 'naive-ui'
+@@ -5,7 +5,6 @@ import { NSpin, NButton, NTag, useMessage, useDialog } from 'naive-ui'
  import type { HermesProfile, HermesProfileDetail } from '@/api/hermes/profiles'
  import { useProfilesStore } from '@/stores/hermes/profiles'
  import { useI18n } from 'vue-i18n'
@@ -958,18 +958,18 @@ index 806f7ef8e..ba015c571 100644
 -}
  </style>
 diff --git a/packages/client/src/components/layout/PageSidebarFooter.vue b/packages/client/src/components/layout/PageSidebarFooter.vue
-index 77ca7034a..adbf61087 100644
+index c11a6c5b9..183d23cd9 100644
 --- a/packages/client/src/components/layout/PageSidebarFooter.vue
 +++ b/packages/client/src/components/layout/PageSidebarFooter.vue
-@@ -5,7 +5,6 @@ import { useI18n } from 'vue-i18n'
- import { useRoute, useRouter } from 'vue-router'
+@@ -4,7 +4,6 @@ import { NPopover } from 'naive-ui'
+ import { useI18n } from 'vue-i18n'
+ import { useRoute } from 'vue-router'
  import { useAccountStore } from '@/stores/account'
- import { useAppStore } from '@/stores/hermes/app'
 -import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
  import SidebarAccountControls from './SidebarAccountControls.vue'
+ import { useNavigationRail } from '@/composables/useNavigationRail'
  
- const props = defineProps<{ collapsed?: boolean }>()
-@@ -92,7 +91,6 @@ function openSettingsPage() {
+@@ -89,7 +88,6 @@ async function focusMenu() {
            @keydown.up.prevent="focusMenu"
            @keydown.down.prevent="focusMenu"
          >
@@ -977,7 +977,7 @@ index 77ca7034a..adbf61087 100644
            <span class="account-name">{{ displayName }}</span>
            <svg class="account-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
              <polyline points="6 14 12 8 18 14" />
-@@ -109,7 +107,6 @@ function openSettingsPage() {
+@@ -106,7 +104,6 @@ async function focusMenu() {
          @keydown.esc.stop.prevent="handleEscape"
        >
          <div class="account-menu-heading">
@@ -986,7 +986,7 @@ index 77ca7034a..adbf61087 100644
              <span class="account-name" :title="displayName">{{ displayName }}</span>
              <span class="account-label">{{ t('settings.tabs.account') }}</span>
 diff --git a/packages/client/src/components/layout/ProfileSelector.vue b/packages/client/src/components/layout/ProfileSelector.vue
-index e2e0319e3..0a76b887b 100644
+index cae0c46a0..c0709eaec 100644
 --- a/packages/client/src/components/layout/ProfileSelector.vue
 +++ b/packages/client/src/components/layout/ProfileSelector.vue
 @@ -6,11 +6,8 @@ import {
@@ -1271,10 +1271,10 @@ index e2e0319e3..0a76b887b 100644
  }
  </style>
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 2f1a1d556..9b59d6f37 100644
+index e68b357ce..22dbfb5c4 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -2090,20 +2090,6 @@ export default {
+@@ -2095,20 +2095,6 @@ export default {
      hasEnv: 'يحتوي على .env',
      hasSoulMd: 'يحتوي على soul.md',
      noProfiles: 'لا توجد بروفايلات. أنشئ واحداً للبدء.',
@@ -1295,7 +1295,7 @@ index 2f1a1d556..9b59d6f37 100644
      runtime: {
        activeProfile: 'النشط: {name}',
        bridgeWorker: 'عامل الجسر',
-@@ -2456,19 +2442,6 @@ export default {
+@@ -2465,19 +2451,6 @@ export default {
          pairing: 'إقران الجهاز',
        },
      },
@@ -1316,10 +1316,10 @@ index 2f1a1d556..9b59d6f37 100644
        activeTtsApi: 'واجهة API النشطة لتحويل النص إلى كلام',
        activeSttApi: 'واجهة API النشطة لتحويل الكلام إلى نص',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index e5ab0235c..2adc93f5b 100644
+index 862e7f61a..360330c87 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1893,20 +1893,6 @@ jobTriggered: 'Job ausgelost',
+@@ -1898,20 +1898,6 @@ jobTriggered: 'Job ausgelost',
      hasEnv: 'Hat .env',
      hasSoulMd: 'Hat soul.md',
      noProfiles: 'Keine Profile gefunden. Erstellen Sie eines, um zu beginnen.',
@@ -1340,7 +1340,7 @@ index e5ab0235c..2adc93f5b 100644
      runtime: {
        activeProfile: 'Aktuell: {name}',
        bridgeWorker: 'Bridge-Status',
-@@ -2062,8 +2048,8 @@ jobTriggered: 'Job ausgelost',
+@@ -2071,8 +2057,8 @@ jobTriggered: 'Job ausgelost',
        showReasoningHint: 'Denkprozess des Modells anzeigen',
        showCost: 'Kosten anzeigen',
        showCostHint: 'Token-Nutzung in Antworten anzeigen',
@@ -1351,7 +1351,7 @@ index e5ab0235c..2adc93f5b 100644
        inlineDiffs: 'Inline-Diffs',
        inlineDiffsHint: 'Codeanderungen inline anzeigen',
        bellOnComplete: 'Abschluss-Signalton',
-@@ -2560,19 +2546,6 @@ jobTriggered: 'Job ausgelost',
+@@ -2569,19 +2555,6 @@ jobTriggered: 'Job ausgelost',
          pairing: 'Device pairing',
        },
      },
@@ -1372,10 +1372,10 @@ index e5ab0235c..2adc93f5b 100644
        apiKey: 'API Key',
        apiKeyPlaceholder: 'API Key eingeben',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 31b0ff76e..eb4091d62 100644
+index f2b9dc5d8..0064a81ed 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -2104,20 +2104,6 @@ export default {
+@@ -2109,20 +2109,6 @@ export default {
      hasEnv: 'Has .env',
      hasSoulMd: 'Has soul.md',
      noProfiles: 'No profiles found. Create one to get started.',
@@ -1396,7 +1396,7 @@ index 31b0ff76e..eb4091d62 100644
      runtime: {
        activeProfile: 'Active: {name}',
        bridgeWorker: 'Bridge worker',
-@@ -2324,8 +2310,8 @@ export default {
+@@ -2333,8 +2319,8 @@ export default {
        showReasoningHint: 'Show model thinking process',
        showCost: 'Show Cost',
        showCostHint: 'Show token usage in replies',
@@ -1407,7 +1407,7 @@ index 31b0ff76e..eb4091d62 100644
        inlineDiffs: 'Inline Diffs',
        inlineDiffsHint: 'Show code changes inline',
        bellOnComplete: 'Completion Sound',
-@@ -2517,19 +2503,6 @@ export default {
+@@ -2526,19 +2512,6 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -1428,10 +1428,10 @@ index 31b0ff76e..eb4091d62 100644
        activeTtsApi: 'Active TTS API',
        activeSttApi: 'Active STT API',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index fd8570cab..3f4cbd30b 100644
+index 882f1b59b..51ceafd97 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1893,20 +1893,6 @@ jobTriggered: 'Job ejecutado',
+@@ -1898,20 +1898,6 @@ jobTriggered: 'Job ejecutado',
      hasEnv: 'Tiene .env',
      hasSoulMd: 'Tiene soul.md',
      noProfiles: 'No se encontraron perfiles. Crea uno para comenzar.',
@@ -1452,7 +1452,7 @@ index fd8570cab..3f4cbd30b 100644
      runtime: {
        activeProfile: 'Actual: {name}',
        bridgeWorker: 'Estado del Bridge',
-@@ -2062,8 +2048,8 @@ jobTriggered: 'Job ejecutado',
+@@ -2071,8 +2057,8 @@ jobTriggered: 'Job ejecutado',
        showReasoningHint: 'Mostrar el proceso de pensamiento del modelo',
        showCost: 'Mostrar costo',
        showCostHint: 'Mostrar uso de tokens en las respuestas',
@@ -1463,7 +1463,7 @@ index fd8570cab..3f4cbd30b 100644
        inlineDiffs: 'Diffs en linea',
        inlineDiffsHint: 'Mostrar cambios de codigo en linea',
        bellOnComplete: 'Sonido de finalizacion',
-@@ -2560,19 +2546,6 @@ jobTriggered: 'Job ejecutado',
+@@ -2569,19 +2555,6 @@ jobTriggered: 'Job ejecutado',
          pairing: 'Device pairing',
        },
      },
@@ -1484,10 +1484,10 @@ index fd8570cab..3f4cbd30b 100644
        apiKey: 'API Key',
        apiKeyPlaceholder: 'Introduce API Key',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 638370ef4..4bbf5189e 100644
+index c06b9dec5..54ff1f44a 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1893,20 +1893,6 @@ jobTriggered: 'Job declenche',
+@@ -1898,20 +1898,6 @@ jobTriggered: 'Job declenche',
      hasEnv: 'A un .env',
      hasSoulMd: 'A un soul.md',
      noProfiles: 'Aucun profil trouve. Creez-en un pour commencer.',
@@ -1508,7 +1508,7 @@ index 638370ef4..4bbf5189e 100644
      runtime: {
        activeProfile: 'Actuel : {name}',
        bridgeWorker: 'État du Bridge',
-@@ -2062,8 +2048,8 @@ jobTriggered: 'Job declenche',
+@@ -2071,8 +2057,8 @@ jobTriggered: 'Job declenche',
        showReasoningHint: 'Afficher le processus de reflexion du modele',
        showCost: 'Afficher le cout',
        showCostHint: 'Afficher l\'utilisation des jetons dans les reponses',
@@ -1519,7 +1519,7 @@ index 638370ef4..4bbf5189e 100644
        inlineDiffs: 'Diffs en ligne',
        inlineDiffsHint: 'Afficher les changements de code en ligne',
        bellOnComplete: 'Son de fin',
-@@ -2560,19 +2546,6 @@ jobTriggered: 'Job declenche',
+@@ -2569,19 +2555,6 @@ jobTriggered: 'Job declenche',
          pairing: 'Device pairing',
        },
      },
@@ -1540,10 +1540,10 @@ index 638370ef4..4bbf5189e 100644
        apiKey: 'API Key',
        apiKeyPlaceholder: 'Saisir l’API Key',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index a912b160b..9062636ec 100644
+index 61bfcd82b..352415513 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1893,20 +1893,6 @@ export default {
+@@ -1898,20 +1898,6 @@ export default {
      hasEnv: '.env あり',
      hasSoulMd: 'soul.md あり',
      noProfiles: 'プロファイルがありません。作成して始めましょう。',
@@ -1564,7 +1564,7 @@ index a912b160b..9062636ec 100644
      runtime: {
        activeProfile: '現在: {name}',
        bridgeWorker: 'Bridge 状態',
-@@ -2062,8 +2048,8 @@ export default {
+@@ -2071,8 +2057,8 @@ export default {
        showReasoningHint: 'モデルの思考プロセスを表示',
        showCost: 'コストを表示',
        showCostHint: '返信にトークン使用量を表示',
@@ -1575,7 +1575,7 @@ index a912b160b..9062636ec 100644
        inlineDiffs: 'インライン差分',
        inlineDiffsHint: 'コード変更をインラインで表示',
        bellOnComplete: '完了通知音',
-@@ -2560,19 +2546,6 @@ export default {
+@@ -2569,19 +2555,6 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -1596,10 +1596,10 @@ index a912b160b..9062636ec 100644
        apiKey: 'API Key',
        apiKeyPlaceholder: 'API Key を入力',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index bdac228a1..8e01d66d9 100644
+index 3d32e8100..b50c1cce2 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1893,20 +1893,6 @@ export default {
+@@ -1898,20 +1898,6 @@ export default {
      hasEnv: '.env 있음',
      hasSoulMd: 'soul.md 있음',
      noProfiles: '프로필이 없습니다. 새로 만들어 시작하세요.',
@@ -1620,7 +1620,7 @@ index bdac228a1..8e01d66d9 100644
      runtime: {
        activeProfile: '현재: {name}',
        bridgeWorker: 'Bridge 상태',
-@@ -2062,8 +2048,8 @@ export default {
+@@ -2071,8 +2057,8 @@ export default {
        showReasoningHint: '모델의 생각 과정 표시',
        showCost: '비용 표시',
        showCostHint: '응답에 토큰 사용량 표시',
@@ -1631,7 +1631,7 @@ index bdac228a1..8e01d66d9 100644
        inlineDiffs: '인라인 변경사항',
        inlineDiffsHint: '코드 변경사항을 인라인으로 표시',
        bellOnComplete: '완료 알림음',
-@@ -2560,19 +2546,6 @@ export default {
+@@ -2569,19 +2555,6 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -1652,10 +1652,10 @@ index bdac228a1..8e01d66d9 100644
        apiKey: 'API Key',
        apiKeyPlaceholder: 'API Key 입력',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index c86c1bab9..5af65852b 100644
+index 27b81b279..a5b6981b2 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1893,20 +1893,6 @@ jobTriggered: 'Job acionado',
+@@ -1898,20 +1898,6 @@ jobTriggered: 'Job acionado',
      hasEnv: 'Tem .env',
      hasSoulMd: 'Tem soul.md',
      noProfiles: 'Nenhum perfil encontrado. Crie um para comecar.',
@@ -1676,7 +1676,7 @@ index c86c1bab9..5af65852b 100644
      runtime: {
        activeProfile: 'Atual: {name}',
        bridgeWorker: 'Status do Bridge',
-@@ -2062,8 +2048,8 @@ jobTriggered: 'Job acionado',
+@@ -2071,8 +2057,8 @@ jobTriggered: 'Job acionado',
        showReasoningHint: 'Mostrar processo de pensamento do modelo',
        showCost: 'Mostrar custo',
        showCostHint: 'Mostrar uso de tokens nas respostas',
@@ -1687,7 +1687,7 @@ index c86c1bab9..5af65852b 100644
        inlineDiffs: 'Diffs em linha',
        inlineDiffsHint: 'Mostrar alterações de código em linha',
        bellOnComplete: 'Som de conclusão',
-@@ -2560,19 +2546,6 @@ jobTriggered: 'Job acionado',
+@@ -2569,19 +2555,6 @@ jobTriggered: 'Job acionado',
          pairing: 'Device pairing',
        },
      },
@@ -1708,10 +1708,10 @@ index c86c1bab9..5af65852b 100644
        apiKey: 'API Key',
        apiKeyPlaceholder: 'Digite a API Key',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 11f6704dd..91fcd8b96 100644
+index b899dca80..fb50d5e76 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1891,20 +1891,6 @@ export default {
+@@ -1896,20 +1896,6 @@ export default {
      hasEnv: 'Есть .env',
      hasSoulMd: 'Есть soul.md',
      noProfiles: 'Нет профилей. Создайте первый.',
@@ -1732,7 +1732,7 @@ index 11f6704dd..91fcd8b96 100644
      runtime: {
        activeProfile: 'Текущий: {name}',
        bridgeWorker: 'Состояние моста',
-@@ -2067,8 +2053,8 @@ export default {
+@@ -2076,8 +2062,8 @@ export default {
        showReasoningHint: 'Отображать ход мыслей модели',
        showCost: 'Показывать стоимость',
        showCostHint: 'Отображать количество использованных токенов в ответе',
@@ -1743,7 +1743,7 @@ index 11f6704dd..91fcd8b96 100644
        inlineDiffs: 'Встроенные различия',
        inlineDiffsHint: 'Отображать изменения в коде внутри строки',
        bellOnComplete: 'Звук завершения',
-@@ -2258,19 +2244,6 @@ export default {
+@@ -2267,19 +2253,6 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -1764,10 +1764,10 @@ index 11f6704dd..91fcd8b96 100644
        activeTtsApi: 'Активная TTS API',
        activeSttApi: 'Активная STT API',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 41f94c36b..88b9b045a 100644
+index 0bf3481c3..4303dd5e5 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -2050,20 +2050,6 @@ export default {
+@@ -2055,20 +2055,6 @@ export default {
      hasEnv: '有 .env',
      hasSoulMd: '有 soul.md',
      noProfiles: '目前無設定檔，建立一個開始吧。',
@@ -1788,7 +1788,7 @@ index 41f94c36b..88b9b045a 100644
      runtime: {
        activeProfile: '目前：{name}',
        bridgeWorker: '橋接狀態',
-@@ -2227,8 +2213,8 @@ export default {
+@@ -2236,8 +2222,8 @@ export default {
        showReasoningHint: '展示模型思考過程',
        showCost: '顯示費用',
        showCostHint: '在回覆中顯示 token 使用量',
@@ -1799,7 +1799,7 @@ index 41f94c36b..88b9b045a 100644
        inlineDiffs: '內嵌差異',
        inlineDiffsHint: '程式碼變更以內嵌方式顯示',
        bellOnComplete: '完成提示音',
-@@ -2420,19 +2406,6 @@ export default {
+@@ -2429,19 +2415,6 @@ export default {
          pairing: '裝置配對',
        },
      },
@@ -1820,10 +1820,10 @@ index 41f94c36b..88b9b045a 100644
        activeTtsApi: '目前 TTS API',
        activeSttApi: '目前 STT API',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 2986e6f2b..b10845872 100644
+index ed309335c..6040c9889 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -2096,20 +2096,6 @@ export default {
+@@ -2101,20 +2101,6 @@ export default {
      hasEnv: '有 .env',
      hasSoulMd: '有 soul.md',
      noProfiles: '暂无配置，创建一个开始吧。',
@@ -1844,7 +1844,7 @@ index 2986e6f2b..b10845872 100644
      runtime: {
        activeProfile: '当前：{name}',
        bridgeWorker: '桥接状态',
-@@ -2316,8 +2302,8 @@ export default {
+@@ -2325,8 +2311,8 @@ export default {
        showReasoningHint: '展示模型思考过程',
        showCost: '显示费用',
        showCostHint: '在回复中显示 token 使用量',
@@ -1855,7 +1855,7 @@ index 2986e6f2b..b10845872 100644
        inlineDiffs: '内联差异',
        inlineDiffsHint: '代码变更以内联方式显示',
        bellOnComplete: '完成提示音',
-@@ -2509,19 +2495,6 @@ export default {
+@@ -2518,19 +2504,6 @@ export default {
          pairing: '设备配对',
        },
      },
@@ -1876,10 +1876,10 @@ index 2986e6f2b..b10845872 100644
        activeTtsApi: '当前 TTS API',
        activeSttApi: '当前 STT API',
 diff --git a/packages/client/src/stores/hermes/profiles.ts b/packages/client/src/stores/hermes/profiles.ts
-index 630bba1cb..f5a47e99c 100644
+index bc66b7668..a8334f378 100644
 --- a/packages/client/src/stores/hermes/profiles.ts
 +++ b/packages/client/src/stores/hermes/profiles.ts
-@@ -86,33 +86,6 @@ export const useProfilesStore = defineStore('profiles', () => {
+@@ -100,33 +100,6 @@ export const useProfilesStore = defineStore('profiles', () => {
      }
    }
  
@@ -1912,8 +1912,8 @@ index 630bba1cb..f5a47e99c 100644
 -
    async function createProfile(name: string, clone?: boolean) {
      const res = await profilesApi.createProfile(name, clone)
-     if (res.success) await fetchProfiles()
-@@ -202,8 +175,6 @@ export const useProfilesStore = defineStore('profiles', () => {
+     if (res.success) await refreshProfilesAfterMutation()
+@@ -216,8 +189,6 @@ export const useProfilesStore = defineStore('profiles', () => {
      switchHermesProfile,
      exportProfile,
      importProfile,
@@ -1924,7 +1924,7 @@ index 630bba1cb..f5a47e99c 100644
  })
 diff --git a/packages/client/src/utils/chat-agent-avatar.ts b/packages/client/src/utils/chat-agent-avatar.ts
 deleted file mode 100644
-index 2279a023b..000000000
+index f59687708..000000000
 --- a/packages/client/src/utils/chat-agent-avatar.ts
 +++ /dev/null
 @@ -1,37 +0,0 @@
@@ -1948,7 +1948,7 @@ index 2279a023b..000000000
 -  grok: { label: 'Grok', src: '/coding-agents/grok.svg' },
 -  opencode: { label: 'OpenCode', src: '/coding-agents/opencode.png' },
 -  dsh: { label: 'DeepSeek Harness', src: '/coding-agents/deepseek.svg' },
--  cursor: { label: 'Cursor', src: '/coding-agents/cursor.svg' },
+-  cursor: { label: 'Cursor', src: '/coding-agents/cursor-logo.png' },
 -} as const satisfies Record<string, ChatAgentAvatar>
 -
 -export function chatSessionAgentAvatar(session?: ChatAgentSessionIdentity | null): ChatAgentAvatar {
@@ -2006,10 +2006,10 @@ index 000000000..e6be4da15
 +  return AGENT_LABELS.hermes
 +}
 diff --git a/packages/client/src/views/hermes/KanbanView.vue b/packages/client/src/views/hermes/KanbanView.vue
-index cf6a167ae..6ad358224 100644
+index 55244013b..79ad47a09 100644
 --- a/packages/client/src/views/hermes/KanbanView.vue
 +++ b/packages/client/src/views/hermes/KanbanView.vue
-@@ -14,7 +14,6 @@ import { DEFAULT_KANBAN_BOARD, useKanbanStore } from '@/stores/hermes/kanban'
+@@ -17,7 +17,6 @@ import { DEFAULT_KANBAN_BOARD, useKanbanStore } from '@/stores/hermes/kanban'
  import { useProfilesStore } from '@/stores/hermes/profiles'
  import { withDefaultAssignee } from '@/utils/hermes/kanban-assignees'
  import type { KanbanTask, KanbanTaskStatus } from '@/api/hermes/kanban'
@@ -2017,7 +2017,7 @@ index cf6a167ae..6ad358224 100644
  
  import '@vue-flow/core/dist/style.css'
  import '@vue-flow/core/dist/theme-default.css'
-@@ -134,10 +133,6 @@ const kanbanCanvasKey = computed(() => `${kanbanStore.selectedBoard}:${kanbanSto
+@@ -137,10 +136,6 @@ const kanbanCanvasKey = computed(() => `${kanbanStore.selectedBoard}:${kanbanSto
  
  const visibleAssignees = computed(() => withDefaultAssignee(kanbanStore.assignees, kanbanStore.stats?.by_assignee || {}))
  
@@ -2028,7 +2028,7 @@ index cf6a167ae..6ad358224 100644
  const statusFilterOptions = computed(() => [
    { label: t('kanban.allStatuses'), value: '' },
    ...boardStatuses.map(s => ({ label: t(`kanban.columns.${s}`, s), value: s })),
-@@ -409,7 +404,6 @@ async function handleDispatch() {
+@@ -419,7 +414,6 @@ async function handleDispatch() {
                    v-for="task in data.tasks"
                    :key="task.id"
                    :task="task"

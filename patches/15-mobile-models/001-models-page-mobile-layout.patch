@@ -1,4 +1,4 @@
-From 327449c342c080de56160303cf672ab1198bd4e3 Mon Sep 17 00:00:00 2001
+From 793f69689d7688c3b8e976c263ee34fc843463ab Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 20 Sep 2026 07:39:48 +0800
 Subject: [PATCH] feat(mobile): card layout for auxiliary models panel on
@@ -21,10 +21,10 @@ $breakpoint-mobile variable.
  2 files changed, 87 insertions(+), 6 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/models/AuxiliaryModelsPanel.vue b/packages/client/src/components/hermes/models/AuxiliaryModelsPanel.vue
-index 9f0360afa..6e59aa190 100644
+index 073a9eaf9..caf44e709 100644
 --- a/packages/client/src/components/hermes/models/AuxiliaryModelsPanel.vue
 +++ b/packages/client/src/components/hermes/models/AuxiliaryModelsPanel.vue
-@@ -817,23 +817,95 @@ watch(() => delegationForm.value.provider, (provider) => {
+@@ -821,23 +821,95 @@ usePageLoadingTask(() => loading.value)
    gap: 8px;
  }
  
@@ -127,10 +127,10 @@ index 9f0360afa..6e59aa190 100644
  
    .auxiliary-form,
 diff --git a/packages/client/src/views/hermes/ModelsView.vue b/packages/client/src/views/hermes/ModelsView.vue
-index bd240611b..03e39c958 100644
+index f964d045b..eeaa61db2 100644
 --- a/packages/client/src/views/hermes/ModelsView.vue
 +++ b/packages/client/src/views/hermes/ModelsView.vue
-@@ -311,6 +311,15 @@ async function handleRefreshModelCache() {
+@@ -273,6 +273,15 @@ async function handleRefreshModelCache() {
    padding: 20px;
  }
  

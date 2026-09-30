@@ -1,4 +1,4 @@
-From af5a74e9bc494c82f93a140fb5bc1670ef55af92 Mon Sep 17 00:00:00 2001
+From 5204770f26a3fb97664a2a0f73235fd4a9864826 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 7 Jul 2026 10:47:15 +0800
 Subject: [PATCH] test: add getBaseUrlValue mock to all @/api/client test mocks
@@ -89,7 +89,7 @@ index 735746375..172a5e219 100644
    hasApiKey: () => false,
  }))
 diff --git a/tests/client/chat-store-session-command.test.ts b/tests/client/chat-store-session-command.test.ts
-index a3269166e..6dc8a0bf5 100644
+index fdc73f969..7d37fa992 100644
 --- a/tests/client/chat-store-session-command.test.ts
 +++ b/tests/client/chat-store-session-command.test.ts
 @@ -46,6 +46,7 @@ vi.mock('@/api/studio/chat', () => ({
@@ -113,10 +113,10 @@ index bf764fb48..77345b1a5 100644
    hasApiKey: () => false,
  }))
 diff --git a/tests/client/chat-view-tab-title.test.ts b/tests/client/chat-view-tab-title.test.ts
-index f250a86f5..36ad6ae60 100644
+index 2a4f51341..b5ae623ea 100644
 --- a/tests/client/chat-view-tab-title.test.ts
 +++ b/tests/client/chat-view-tab-title.test.ts
-@@ -55,6 +55,7 @@ vi.mock('@/api/studio/sessions', () => ({
+@@ -59,6 +59,7 @@ vi.mock('@/api/studio/sessions', () => ({
  }))
  
  vi.mock('@/api/client', () => ({
@@ -185,7 +185,7 @@ index f807f4ba0..6fb8c7503 100644
    getBaseUrlValue: vi.fn(() => ''),
    getActiveProfileName: vi.fn(() => 'research'),
 diff --git a/tests/client/group-message-list-scroll.test.ts b/tests/client/group-message-list-scroll.test.ts
-index 26a49c350..0033257d7 100644
+index a78a2a686..549dc809f 100644
 --- a/tests/client/group-message-list-scroll.test.ts
 +++ b/tests/client/group-message-list-scroll.test.ts
 @@ -23,6 +23,7 @@ vi.mock('@/composables/useToolTraceVisibility', () => ({

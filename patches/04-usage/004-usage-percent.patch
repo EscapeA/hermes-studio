@@ -1,4 +1,4 @@
-From 1125812d035af2bffa613fdb99e56ae59bc3f683 Mon Sep 17 00:00:00 2001
+From 9f2cd987c90ee6f42adc1f91c1aca60dbdc38e50 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 14:17:08 +0800
 Subject: [PATCH] feat(chat): show context usage percentage with warning colors
@@ -8,7 +8,7 @@ Subject: [PATCH] feat(chat): show context usage percentage with warning colors
  1 file changed, 21 insertions(+), 3 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 4ebd663ad..e6b5bb6a0 100644
+index 268639e7b..084e3079f 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -843,8 +843,6 @@ const totalTokens = computed(() => {
@@ -20,23 +20,23 @@ index 4ebd663ad..e6b5bb6a0 100644
  const usagePercent = computed(() =>
    Math.min((totalTokens.value / contextLength.value) * 100, 100),
  )
-@@ -1209,7 +1207,14 @@ function openAttachmentPreview(attachment: Attachment) {
-               </template>
-               <span>{{ t('chat.contextClickToEdit') }}</span>
-             </NTooltip>
--            · {{ t('chat.contextRemaining') }} {{ formatTokens(remainingTokens) }}
-+            · <span
-+              class="context-percent"
-+              :class="{
-+                'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
-+                'context-percent-danger': usagePercent > 80,
-+              }"
-+              >{{ usagePercent.toFixed(1) }}%</span
-+            >
-           </template>
-         </span>
-         <div v-if="showContextLimit" class="context-bar">
-@@ -1914,6 +1919,19 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1186,7 +1184,14 @@ function openAttachmentPreview(attachment: Attachment) {
+             </template>
+             <span>{{ t('chat.contextClickToEdit') }}</span>
+           </NTooltip>
+-          · {{ t('chat.contextRemaining') }} {{ formatTokens(remainingTokens) }}
++          · <span
++            class="context-percent"
++            :class="{
++              'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
++              'context-percent-danger': usagePercent > 80,
++            }"
++            >{{ usagePercent.toFixed(1) }}%</span
++          >
+         </template>
+       </span>
+       <div v-if="showContextLimit" class="context-bar">
+@@ -1935,6 +1940,19 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  

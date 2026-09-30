@@ -1,4 +1,4 @@
-From 75f0fb2f6a19de5c48aa2fb72fe4a413d055ff59 Mon Sep 17 00:00:00 2001
+From df040085e6e0b726b74b8ca2769143889692fdb3 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 12:56:11 +0800
 Subject: [PATCH] feat(web): graphite/warm styles, composer focus halo and
@@ -71,7 +71,7 @@ code in this fork and is rendered nowhere.
  create mode 100644 packages/client/src/composables/motion-presets.ts
 
 diff --git a/package-lock.json b/package-lock.json
-index ab99915e3..bcc1e8e21 100644
+index 43d5d831c..f3328d845 100644
 --- a/package-lock.json
 +++ b/package-lock.json
 @@ -26,6 +26,7 @@
@@ -172,7 +172,7 @@ index ab99915e3..bcc1e8e21 100644
      },
      "node_modules/tsoa": {
 diff --git a/package.json b/package.json
-index 1dc812fde..c6936c2d8 100644
+index b64c26d0a..31e7ceac9 100644
 --- a/package.json
 +++ b/package.json
 @@ -99,6 +99,7 @@
@@ -184,7 +184,7 @@ index 1dc812fde..c6936c2d8 100644
      "node-pty": "^1.1.0",
      "sharp": "^0.35.3",
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 8df3072d6..4fbfb3ca1 100644
+index cc5a3f678..cd398bad1 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -2255,6 +2255,15 @@ function openAttachmentPreview(attachment: Attachment) {
@@ -204,10 +204,10 @@ index 8df3072d6..4fbfb3ca1 100644
  
  .resize-handle {
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index d649d881d..6041d4181 100644
+index cc73f745f..7fb445670 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -4076,11 +4076,17 @@ async function handleSessionModelCustomSubmit() {
+@@ -3961,11 +3961,17 @@ async function handleSessionModelCustomSubmit() {
    overflow: hidden;
    pointer-events: none;
    will-change: width, min-width, opacity;
@@ -499,10 +499,10 @@ index 000000000..e51ae33a7
 +  }
 +}
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 01cb9192b..e99f7b694 100644
+index 7233cdb3c..d59327cb9 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -2143,6 +2143,8 @@ export default {
+@@ -2152,6 +2152,8 @@ export default {
      styleNeon: 'نيون',
      styleAurora: 'الشفق',
      styleBlueprint: 'مخطط',
@@ -512,10 +512,10 @@ index 01cb9192b..e99f7b694 100644
      fontSize: 'حجم النص',
      fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 46bde9817..6217c60db 100644
+index 2fa136c71..d4fe83200 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1946,6 +1946,8 @@ jobTriggered: 'Job ausgelost',
+@@ -1955,6 +1955,8 @@ jobTriggered: 'Job ausgelost',
      styleNeon: 'Neon',
      styleAurora: 'Polarlicht',
      styleBlueprint: 'Blaupause',
@@ -525,10 +525,10 @@ index 46bde9817..6217c60db 100644
      fontSize: 'Textgröße',
      fontSizeHint: 'Grundgröße für Oberfläche und Unterhaltungen',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 697fd5d2d..2a4f5d2e8 100644
+index e967708ab..0f3d84c55 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -2157,6 +2157,8 @@ export default {
+@@ -2166,6 +2166,8 @@ export default {
      styleNeon: 'Neon',
      styleAurora: 'Aurora',
      styleBlueprint: 'Blueprint',
@@ -538,10 +538,10 @@ index 697fd5d2d..2a4f5d2e8 100644
      fontSize: 'Text size',
      fontSizeHint: 'Base interface and conversation text size',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 2443c755a..43271e2bd 100644
+index 4e4f9c361..a85e35689 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1946,6 +1946,8 @@ jobTriggered: 'Job ejecutado',
+@@ -1955,6 +1955,8 @@ jobTriggered: 'Job ejecutado',
      styleNeon: 'Neón',
      styleAurora: 'Aurora',
      styleBlueprint: 'Plano',
@@ -551,10 +551,10 @@ index 2443c755a..43271e2bd 100644
      fontSize: 'Tamaño del texto',
      fontSizeHint: 'Tamaño base de la interfaz y las conversaciones',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 924cf42c7..439a3675b 100644
+index 3b2272f43..a8fa31080 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1946,6 +1946,8 @@ jobTriggered: 'Job declenche',
+@@ -1955,6 +1955,8 @@ jobTriggered: 'Job declenche',
      styleNeon: 'Néon',
      styleAurora: 'Aurore',
      styleBlueprint: 'Blueprint',
@@ -564,10 +564,10 @@ index 924cf42c7..439a3675b 100644
      fontSize: 'Taille du texte',
      fontSizeHint: 'Taille de base de l’interface et des conversations',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 00a44104c..74f61d004 100644
+index 104fd3023..8efabf7bc 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1946,6 +1946,8 @@ export default {
+@@ -1955,6 +1955,8 @@ export default {
      styleNeon: 'ネオン',
      styleAurora: 'オーロラ',
      styleBlueprint: 'ブループリント',
@@ -577,10 +577,10 @@ index 00a44104c..74f61d004 100644
      fontSize: '文字サイズ',
      fontSizeHint: '画面と会話テキストの基本サイズ',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index b7c347cd4..2155e61e7 100644
+index 38b2171cb..ba7049df8 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1946,6 +1946,8 @@ export default {
+@@ -1955,6 +1955,8 @@ export default {
      styleNeon: '네온',
      styleAurora: '오로라',
      styleBlueprint: '블루프린트',
@@ -590,10 +590,10 @@ index b7c347cd4..2155e61e7 100644
      fontSize: '텍스트 크기',
      fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 5adac07a4..82d09164f 100644
+index d0bc60cbf..99b0a151d 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1946,6 +1946,8 @@ jobTriggered: 'Job acionado',
+@@ -1955,6 +1955,8 @@ jobTriggered: 'Job acionado',
      styleNeon: 'Neon',
      styleAurora: 'Aurora',
      styleBlueprint: 'Blueprint',
@@ -603,10 +603,10 @@ index 5adac07a4..82d09164f 100644
      fontSize: 'Tamanho do texto',
      fontSizeHint: 'Tamanho base da interface e das conversas',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index e8418ee03..ba6e54959 100644
+index 78ed83f2c..152cb3eea 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1943,6 +1943,8 @@ export default {
+@@ -1952,6 +1952,8 @@ export default {
      styleNeon: 'Неон',
      styleAurora: 'Аврора',
      styleBlueprint: 'Чертёж',
@@ -616,10 +616,10 @@ index e8418ee03..ba6e54959 100644
      fontSize: 'Размер текста',
      fontSizeHint: 'Базовый размер текста интерфейса и диалогов',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index d15cb2646..69477687e 100644
+index d99a98690..d468efe6d 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -2103,6 +2103,8 @@ export default {
+@@ -2112,6 +2112,8 @@ export default {
      styleNeon: '霓虹賽博',
      styleAurora: '漸層空間艙',
      styleBlueprint: '藍圖',
@@ -629,10 +629,10 @@ index d15cb2646..69477687e 100644
      fontSize: '文字大小',
      fontSizeHint: '介面與對話內容的基礎字級',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 8f77e691e..0cf537121 100644
+index 605e2ad86..86af71b23 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -2149,6 +2149,8 @@ export default {
+@@ -2158,6 +2158,8 @@ export default {
      styleNeon: '霓虹赛博',
      styleAurora: '渐变空间舱',
      styleBlueprint: '蓝图',
@@ -887,7 +887,7 @@ index 7dd12ad2c..8b3d36826 100644
  
  /** Base overrides for a style, falling back to the original ink pair. */
 diff --git a/packages/client/src/styles/variables.scss b/packages/client/src/styles/variables.scss
-index bf360e1fd..03a824979 100644
+index 9d5d1cbab..ad61176d8 100644
 --- a/packages/client/src/styles/variables.scss
 +++ b/packages/client/src/styles/variables.scss
 @@ -3,6 +3,7 @@
@@ -898,7 +898,7 @@ index bf360e1fd..03a824979 100644
  // 以及浅色优先的 .blueprint（蓝图，同时带 .dark.blueprint 暗色变体）。
  // 这些风格表必须定义在 .dark 之后，且只能由 styles/theme-style.ts 的
  // STYLE_CLASS / STYLE_FORCES_DARK 对应的类触发（两者必须同步）。
-@@ -75,6 +76,14 @@
+@@ -81,6 +82,14 @@
    --text-on-overlay: #ffffff;
    --accent-info: #4a90d9;
  
@@ -913,7 +913,7 @@ index bf360e1fd..03a824979 100644
    // RGB components (for rgba() usage)
    --accent-primary-rgb: 51, 51, 51;
    --accent-hover-rgb: 26, 26, 26;
-@@ -144,6 +153,13 @@
+@@ -153,6 +162,13 @@
    --text-on-overlay: #ffffff;
    --accent-info: #6ba3d6;
  
@@ -927,7 +927,7 @@ index bf360e1fd..03a824979 100644
    // RGB components
    --accent-primary-rgb: 224, 224, 224;
    --accent-hover-rgb: 245, 245, 245;
-@@ -404,6 +420,11 @@
+@@ -413,6 +429,11 @@
  // both a light block (`.blueprint`) and a dark one (`.dark.blueprint`), so the
  // user's own light/dark choice still applies.
  .blueprint {
@@ -939,7 +939,7 @@ index bf360e1fd..03a824979 100644
    // Backgrounds — paper white with a faint blue cast
    --bg-primary: #f4f7fb;
    --bg-primary-rgb: 244, 247, 251;
-@@ -543,6 +564,158 @@
+@@ -552,6 +573,158 @@
    --accent-info-rgb: 34, 211, 238;
  }
  
@@ -1098,7 +1098,7 @@ index bf360e1fd..03a824979 100644
  // ─── 终端黑 (terminal) — dark-locked palette ────────────────────
  // Pure black surfaces with phosphor-green text and a monospace UI font.
  .dark.terminal {
-@@ -677,6 +850,15 @@ $mobile-topbar-padding: calc((#{$mobile-topbar-height} - #{$mobile-topbar-conten
+@@ -687,6 +860,15 @@ $mobile-topbar-padding: calc((#{$mobile-topbar-height} - #{$mobile-topbar-conten
  $breakpoint-mobile: 768px;
  
  // Radius

@@ -1,4 +1,4 @@
-From 33c3de249aaf756ac41c17cf3d48d4d323ffb1ab Mon Sep 17 00:00:00 2001
+From 878e881b9ebddbc08905905b8cb287dba4de8fad Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 11:30:19 +0800
 Subject: [PATCH] feat(web): make theme styles table-driven and add neon,
@@ -33,10 +33,11 @@ menus stay clean — combined with translucent `--bg-main-surface` /
 
 All 11 locales get the new style labels.
 ---
+ packages/client/index.html                    |   3 +-
  packages/client/src/App.vue                   |   4 +-
  .../src/components/hermes/chat/ChatInput.vue  |   6 +-
- .../src/components/layout/ThemeSwitch.vue     | 119 ++++-
- packages/client/src/composables/useTheme.ts   |  41 +-
+ .../src/components/layout/ThemeSwitch.vue     | 109 ++++-
+ packages/client/src/composables/useTheme.ts   |  45 +-
  packages/client/src/i18n/locales/ar.ts        |   6 +
  packages/client/src/i18n/locales/de.ts        |   6 +
  packages/client/src/i18n/locales/en.ts        |   6 +
@@ -48,7 +49,7 @@ All 11 locales get the new style labels.
  packages/client/src/i18n/locales/ru.ts        |   6 +
  packages/client/src/i18n/locales/zh-TW.ts     |   6 +
  packages/client/src/i18n/locales/zh.ts        |   6 +
- packages/client/src/main.ts                   |  19 +-
+ packages/client/src/main.ts                   |  20 +-
  packages/client/src/styles/code-block.scss    |  19 +
  packages/client/src/styles/global.scss        |   1 +
  packages/client/src/styles/style-layers.scss  | 269 +++++++++++
@@ -56,15 +57,29 @@ All 11 locales get the new style labels.
  packages/client/src/styles/theme.ts           | 295 +++++++++++-
  packages/client/src/styles/variables.scss     | 454 +++++++++++++++++-
  .../client/src/views/hermes/ThemeView.vue     |  33 +-
- 23 files changed, 1381 insertions(+), 52 deletions(-)
+ 24 files changed, 1384 insertions(+), 47 deletions(-)
  create mode 100644 packages/client/src/styles/style-layers.scss
  create mode 100644 packages/client/src/styles/theme-style.ts
 
+diff --git a/packages/client/index.html b/packages/client/index.html
+index 07546572a..07350e4e0 100644
+--- a/packages/client/index.html
++++ b/packages/client/index.html
+@@ -79,8 +79,7 @@
+     (function() {
+       try {
+         const brightness = localStorage.getItem('hermes_brightness') || 'system';
+-        // Match useTheme's default startup style, including for saved Comic preferences.
+-        const style = 'ink';
++        const style = localStorage.getItem('hermes_style') || 'ink';
+ 
+         // Resolve dark mode
+         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index f790bdd8f..af0945345 100644
+index de7d776f0..07febb662 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -78,7 +78,7 @@ const StudioAnnouncementPrompt = defineAsyncComponent(
+@@ -92,7 +92,7 @@ const StudioAnnouncementPrompt = defineAsyncComponent(
  
  const {
    isDark,
@@ -73,7 +88,7 @@ index f790bdd8f..af0945345 100644
    customization,
    hasBackgroundImage,
    syncThemeFromServer,
-@@ -92,7 +92,7 @@ const route = useRoute();
+@@ -106,7 +106,7 @@ const route = useRoute();
  const { sessionSearchOpen } = useSessionSearch();
  
  const themeOverrides = computed(() =>
@@ -83,14 +98,14 @@ index f790bdd8f..af0945345 100644
  const naiveTheme = computed(() => (isDark.value ? darkTheme : null));
  
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 33f19aae0..8df3072d6 100644
+index efb6c3c9b..cc5a3f678 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -2250,7 +2250,9 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  
    .dark & {
--    background-color: #333333;
+-    background-color: $bg-main-surface;
 +    // Raised above the chat surface — themed so tech/terminal keep their own
 +    // composer color instead of the ink gray.
 +    background-color: var(--bg-input-elevated);
@@ -107,10 +122,10 @@ index 33f19aae0..8df3072d6 100644
  }
  
 diff --git a/packages/client/src/components/layout/ThemeSwitch.vue b/packages/client/src/components/layout/ThemeSwitch.vue
-index 4eb67938c..520e14218 100644
+index 9bfa74e75..520e14218 100644
 --- a/packages/client/src/components/layout/ThemeSwitch.vue
 +++ b/packages/client/src/components/layout/ThemeSwitch.vue
-@@ -1,22 +1,104 @@
+@@ -1,12 +1,104 @@
  <script setup lang="ts">
 -import { useTheme } from '@/composables/useTheme'
 +import { computed, h } from 'vue'
@@ -119,7 +134,7 @@ index 4eb67938c..520e14218 100644
 +import { useTheme, type ThemeStyle } from '@/composables/useTheme'
 +import { STYLE_LABEL_KEYS, STYLE_SWATCH, THEME_STYLES } from '@/styles/theme-style'
  
--const { isDark, isComic, toggleBrightness, toggleStyle } = useTheme()
+-const { isDark, toggleBrightness } = useTheme()
 +const { t } = useI18n()
 +const { isDark, style, styleForcesDark, setStyle, toggleBrightness } = useTheme()
 +
@@ -195,16 +210,6 @@ index 4eb67938c..520e14218 100644
  
  <template>
    <div class="theme-switch-container" style="display: flex; gap: 4px; align-items: center;">
--    <button class="theme-switch" :title="isComic ? 'Ink style' : 'Comic style'" @click="toggleStyle">
--      <!-- Palette icon for comic toggle -->
--      <svg v-if="isComic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
--        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
--      </svg>
--      <!-- Sparkle icon for ink mode -->
--      <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
--        <path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z" />
--      </svg>
--    </button>
 -    <button class="theme-switch" :title="isDark ? 'Light mode' : 'Dark mode'" @click="toggleBrightness">
 +    <NDropdown
 +      trigger="click"
@@ -228,7 +233,7 @@ index 4eb67938c..520e14218 100644
        <!-- Sun icon (shown in dark mode) -->
        <svg v-if="isDark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
          <circle cx="12" cy="12" r="5" />
-@@ -55,5 +137,16 @@ const { isDark, isComic, toggleBrightness, toggleStyle } = useTheme()
+@@ -45,5 +137,16 @@ const { isDark, toggleBrightness } = useTheme()
      color: var(--text-primary);
      background: rgba(var(--accent-primary-rgb), 0.06);
    }
@@ -246,7 +251,7 @@ index 4eb67938c..520e14218 100644
  }
  </style>
 diff --git a/packages/client/src/composables/useTheme.ts b/packages/client/src/composables/useTheme.ts
-index d824af938..e3e01620e 100644
+index bad39e453..e3e01620e 100644
 --- a/packages/client/src/composables/useTheme.ts
 +++ b/packages/client/src/composables/useTheme.ts
 @@ -8,6 +8,15 @@ import {
@@ -285,15 +290,19 @@ index d824af938..e3e01620e 100644
    let meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]:not([media])')
    if (!meta) {
      meta = document.createElement('meta')
-@@ -106,7 +111,7 @@ const brightness = ref<BrightnessMode>(
+@@ -105,9 +110,9 @@ function loadCachedTheme(userId: number | null): UserThemeSettings {
+ const brightness = ref<BrightnessMode>(
    (localStorage.getItem(BRIGHTNESS_KEY) as BrightnessMode) || 'system',
  )
- const style = ref<ThemeStyle>(
--  (localStorage.getItem(STYLE_KEY) as ThemeStyle) || 'ink',
+-// Start in the default style while the quick style switch is unavailable.
+-// Keep this in sync with the pre-render theme in index.html.
+-const style = ref<ThemeStyle>('ink')
++const style = ref<ThemeStyle>(
 +  normalizeThemeStyle(localStorage.getItem(STYLE_KEY)),
- )
++)
  const isDark = ref(false)
  const isComic = ref(false)
+ const activeUserId = ref<number | null>(storedUserId())
 @@ -125,6 +130,11 @@ const customization = computed<ThemeCustomization>(() => ({
    accentColor: serverTheme.value.accentColor,
  }))
@@ -345,10 +354,10 @@ index d824af938..e3e01620e 100644
      customization,
      fontSize: computed(() => serverTheme.value.fontSize),
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 9b59d6f37..43c6293de 100644
+index 22dbfb5c4..1e1a1b059 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -2137,6 +2137,12 @@ export default {
+@@ -2146,6 +2146,12 @@ export default {
      styleHint: 'اختر طابع الواجهة',
      styleInk: 'حبري',
      styleComic: 'كوميك',
@@ -362,10 +371,10 @@ index 9b59d6f37..43c6293de 100644
      fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',
      textColor: 'لون النص',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 2adc93f5b..a1d270655 100644
+index 360330c87..31096770d 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1940,6 +1940,12 @@ jobTriggered: 'Job ausgelost',
+@@ -1949,6 +1949,12 @@ jobTriggered: 'Job ausgelost',
      styleHint: 'Charakter der Oberfläche wählen',
      styleInk: 'Tusche',
      styleComic: 'Comic',
@@ -379,10 +388,10 @@ index 2adc93f5b..a1d270655 100644
      fontSizeHint: 'Grundgröße für Oberfläche und Unterhaltungen',
      textColor: 'Textfarbe',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index eb4091d62..f00c188a3 100644
+index 0064a81ed..32759f62e 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -2151,6 +2151,12 @@ export default {
+@@ -2160,6 +2160,12 @@ export default {
      styleHint: 'Choose the interface character',
      styleInk: 'Ink',
      styleComic: 'Comic',
@@ -396,10 +405,10 @@ index eb4091d62..f00c188a3 100644
      fontSizeHint: 'Base interface and conversation text size',
      textColor: 'Text color',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 3f4cbd30b..6517f8734 100644
+index 51ceafd97..35a43fa57 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1940,6 +1940,12 @@ jobTriggered: 'Job ejecutado',
+@@ -1949,6 +1949,12 @@ jobTriggered: 'Job ejecutado',
      styleHint: 'Elige el carácter de la interfaz',
      styleInk: 'Tinta',
      styleComic: 'Cómic',
@@ -413,10 +422,10 @@ index 3f4cbd30b..6517f8734 100644
      fontSizeHint: 'Tamaño base de la interfaz y las conversaciones',
      textColor: 'Color del texto',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 4bbf5189e..8c248658b 100644
+index 54ff1f44a..7270320fe 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1940,6 +1940,12 @@ jobTriggered: 'Job declenche',
+@@ -1949,6 +1949,12 @@ jobTriggered: 'Job declenche',
      styleHint: 'Choisissez le caractère de l’interface',
      styleInk: 'Encre',
      styleComic: 'BD',
@@ -430,10 +439,10 @@ index 4bbf5189e..8c248658b 100644
      fontSizeHint: 'Taille de base de l’interface et des conversations',
      textColor: 'Couleur du texte',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 9062636ec..0690f4d4a 100644
+index 352415513..4802152ad 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1940,6 +1940,12 @@ export default {
+@@ -1949,6 +1949,12 @@ export default {
      styleHint: '画面の雰囲気を選択',
      styleInk: '墨',
      styleComic: 'コミック',
@@ -447,10 +456,10 @@ index 9062636ec..0690f4d4a 100644
      fontSizeHint: '画面と会話テキストの基本サイズ',
      textColor: '文字色',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 8e01d66d9..c735d606c 100644
+index b50c1cce2..8b48d164e 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1940,6 +1940,12 @@ export default {
+@@ -1949,6 +1949,12 @@ export default {
      styleHint: '인터페이스 분위기 선택',
      styleInk: '수묵',
      styleComic: '코믹',
@@ -464,10 +473,10 @@ index 8e01d66d9..c735d606c 100644
      fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',
      textColor: '텍스트 색상',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 5af65852b..94028fe6a 100644
+index a5b6981b2..882443931 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1940,6 +1940,12 @@ jobTriggered: 'Job acionado',
+@@ -1949,6 +1949,12 @@ jobTriggered: 'Job acionado',
      styleHint: 'Escolha o caráter da interface',
      styleInk: 'Tinta',
      styleComic: 'Quadrinhos',
@@ -481,10 +490,10 @@ index 5af65852b..94028fe6a 100644
      fontSizeHint: 'Tamanho base da interface e das conversas',
      textColor: 'Cor do texto',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 91fcd8b96..7801d898f 100644
+index fb50d5e76..04e70320b 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1937,6 +1937,12 @@ export default {
+@@ -1946,6 +1946,12 @@ export default {
      styleHint: 'Выберите характер интерфейса',
      styleInk: 'Тушь',
      styleComic: 'Комикс',
@@ -498,10 +507,10 @@ index 91fcd8b96..7801d898f 100644
      fontSizeHint: 'Базовый размер текста интерфейса и диалогов',
      textColor: 'Цвет текста',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 88b9b045a..e63ed0722 100644
+index 4303dd5e5..cd2688b27 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -2097,6 +2097,12 @@ export default {
+@@ -2106,6 +2106,12 @@ export default {
      styleHint: '選擇介面的視覺風格',
      styleInk: '水墨',
      styleComic: '漫畫',
@@ -515,10 +524,10 @@ index 88b9b045a..e63ed0722 100644
      fontSizeHint: '介面與對話內容的基礎字級',
      textColor: '文字顏色',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index b10845872..b7b67434e 100644
+index 6040c9889..97395e86e 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -2143,6 +2143,12 @@ export default {
+@@ -2152,6 +2152,12 @@ export default {
      styleHint: '选择界面的视觉风格',
      styleInk: '水墨',
      styleComic: '漫画',
@@ -532,22 +541,24 @@ index b10845872..b7b67434e 100644
      fontSizeHint: '界面和对话内容的基础字号',
      textColor: '文字颜色',
 diff --git a/packages/client/src/main.ts b/packages/client/src/main.ts
-index 7d4ee4fcc..a6e0bb8c6 100644
+index 5051786a1..a6e0bb8c6 100644
 --- a/packages/client/src/main.ts
 +++ b/packages/client/src/main.ts
-@@ -4,6 +4,7 @@ import router from './router'
+@@ -4,8 +4,8 @@ import router from './router'
  import { i18nReady } from './i18n'
  import App from './App.vue'
  import './styles/global.scss'
 +import { DEFAULT_THEME_STYLE, STYLE_CLASS, STYLE_FORCES_DARK, normalizeThemeStyle } from './styles/theme-style'
  import { desktopBridge } from '@/utils/desktop-bridge'
+-import { useTheme } from '@/composables/useTheme'
  
  // Apply theme classes before mount to prevent FOUC (Flash of Unstyled Content)
-@@ -16,14 +17,18 @@ function storedPreference(key: string, fallback: string): string {
+ function storedPreference(key: string, fallback: string): string {
+@@ -17,14 +17,18 @@ function storedPreference(key: string, fallback: string): string {
  }
  
  const savedBrightness = storedPreference('hermes_brightness', 'system')
--const savedStyle = storedPreference('hermes_style', 'ink')
+-const themeStyle = useTheme().style.value
 +const savedStyle = normalizeThemeStyle(storedPreference('hermes_style', DEFAULT_THEME_STYLE))
  
 -// Resolve dark mode
@@ -560,14 +571,14 @@ index 7d4ee4fcc..a6e0bb8c6 100644
 +  || (savedBrightness === 'system' && prefersDark)
  
 -// Resolve style
--const isComic = savedStyle === 'comic'
+-const isComic = themeStyle === 'comic'
 +// Resolve style — the style class is looked up from the shared table so a new
 +// style needs no edit here (see STYLE_CLASS in styles/theme-style.ts).
 +const styleClass = STYLE_CLASS[savedStyle]
  const bridge = desktopBridge()
  const isDesktopShell = bridge?.isDesktop === true
  const isDesktopPetWindow = bridge?.windowKind === 'pet' || window.location.hash.startsWith('#/desktop-pet')
-@@ -32,8 +37,8 @@ const isDesktopPetWindow = bridge?.windowKind === 'pet' || window.location.hash.
+@@ -33,8 +37,8 @@ const isDesktopPetWindow = bridge?.windowKind === 'pet' || window.location.hash.
  if (isDark) {
    document.documentElement.classList.add('dark')
  }
@@ -606,7 +617,7 @@ index a5d6c3862..d6de2dbab 100644
 +  }
 +}
 diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
-index 9a4e8a57b..945291bf9 100644
+index 6ca74f8c0..f3f9537dd 100644
 --- a/packages/client/src/styles/global.scss
 +++ b/packages/client/src/styles/global.scss
 @@ -1,5 +1,6 @@
@@ -1323,7 +1334,7 @@ index 319dd0fa9..7dd12ad2c 100644
        fontSize: `${custom.fontSize}px`,
        fontSizeMedium: `${custom.fontSize}px`,
 diff --git a/packages/client/src/styles/variables.scss b/packages/client/src/styles/variables.scss
-index ae4a3d6c6..bf360e1fd 100644
+index d6b010a20..9d5d1cbab 100644
 --- a/packages/client/src/styles/variables.scss
 +++ b/packages/client/src/styles/variables.scss
 @@ -1,6 +1,12 @@
@@ -1349,18 +1360,18 @@ index ae4a3d6c6..bf360e1fd 100644
 +  --bg-input-elevated: #ffffff;
 +  --bg-overlay-surface: #fafafa;
  
-   // Borders
-   --border-color: #e0e0e0;
-@@ -91,6 +101,8 @@
+   // Custom backgrounds: frame, contextual sidebar, then the foreground page.
+   --glass-chrome-bg: rgba(var(--bg-primary-rgb), 0.6);
+@@ -97,6 +107,8 @@
    --bg-sidebar-surface-rgb: var(--bg-primary-rgb);
    --bg-main-surface: var(--bg-primary);
    --bg-main-surface-rgb: var(--bg-primary-rgb);
 +  --bg-input-elevated: #333333;
 +  --bg-overlay-surface: #2a2a2a;
  
-   // Borders
-   --border-color: #3a3a3a;
-@@ -165,6 +177,446 @@
+   --glass-chrome-bg: rgba(var(--bg-primary-rgb), 0.9);
+   --glass-content-bg: rgba(var(--bg-card-rgb), 0.82);
+@@ -174,6 +186,446 @@
    --comic-shadow: 3px 3px 0px rgba(255, 255, 255, 0.08);
  }
  
@@ -1808,10 +1819,10 @@ index ae4a3d6c6..bf360e1fd 100644
  
  // Backgrounds
 diff --git a/packages/client/src/views/hermes/ThemeView.vue b/packages/client/src/views/hermes/ThemeView.vue
-index 1f26c3e5d..382afcfbf 100644
+index f63c7c630..e4876bd2f 100644
 --- a/packages/client/src/views/hermes/ThemeView.vue
 +++ b/packages/client/src/views/hermes/ThemeView.vue
-@@ -6,6 +6,7 @@ import {
+@@ -7,6 +7,7 @@ import {
    MAX_THEME_FONT_SIZE,
    MIN_THEME_FONT_SIZE,
  } from '@/styles/theme-customization'
@@ -1819,7 +1830,7 @@ index 1f26c3e5d..382afcfbf 100644
  import {
    useTheme,
    type BrightnessMode,
-@@ -28,6 +29,7 @@ const {
+@@ -29,6 +30,7 @@ const {
    brightness,
    style,
    isDark,
@@ -1827,7 +1838,7 @@ index 1f26c3e5d..382afcfbf 100644
    fontSize,
    textColor,
    accentColor,
-@@ -47,16 +49,26 @@ const brightnessOptions = computed(() => [
+@@ -48,16 +50,26 @@ const brightnessOptions = computed(() => [
    { label: t('theme.modeLight'), value: 'light' },
    { label: t('theme.modeDark'), value: 'dark' },
  ])
@@ -1863,7 +1874,7 @@ index 1f26c3e5d..382afcfbf 100644
  const previewStyle = computed(() => ({
    backgroundImage: backgroundImageUrl.value ? `url("${backgroundImageUrl.value}")` : undefined,
  }))
-@@ -168,11 +180,12 @@ async function handleReset() {
+@@ -171,11 +183,12 @@ async function handleReset() {
          <div class="theme-setting">
            <div>
              <label>{{ t('theme.mode') }}</label>

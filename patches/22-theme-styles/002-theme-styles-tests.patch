@@ -1,4 +1,4 @@
-From b1fe7f214e5ba66a0b71cd40d9918a06814105fa Mon Sep 17 00:00:00 2001
+From bbe6ba4a29b00fb30ed8aa4302e7cac41bf9755d Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 11:34:07 +0800
 Subject: [PATCH] test(web): cover the theme style tables and the material
@@ -32,7 +32,7 @@ app shell theme mock exposes the `style` ref the shell now reads.
  create mode 100644 tests/client/theme-styles.test.ts
 
 diff --git a/tests/client/app-web-pet.test.ts b/tests/client/app-web-pet.test.ts
-index 362eb682c..e9bf4e771 100644
+index 6671cb110..7b2b97817 100644
 --- a/tests/client/app-web-pet.test.ts
 +++ b/tests/client/app-web-pet.test.ts
 @@ -41,6 +41,10 @@ vi.mock('@/composables/useTheme', () => ({
@@ -47,14 +47,14 @@ index 362eb682c..e9bf4e771 100644
      hasBackgroundImage: false,
      syncThemeFromServer: vi.fn().mockResolvedValue(undefined),
 diff --git a/tests/client/style-system.test.ts b/tests/client/style-system.test.ts
-index 7f8140d28..aaed58e24 100644
+index b9e80c45a..f822d50d3 100644
 --- a/tests/client/style-system.test.ts
 +++ b/tests/client/style-system.test.ts
 @@ -31,7 +31,9 @@ describe('client style system', () => {
  
      expect(chatInput).toContain('background-color: $bg-main-surface;')
      expect(virtualMessageList).toContain('background-color: $bg-main-surface;')
--    expect(chatInput.match(/background-color: #333333;/g)).toHaveLength(1)
+-    expect(chatInput).not.toContain('background-color: #333333;')
 +    // The raised composer color is themed so tech/terminal keep their own.
 +    expect(chatInput).toContain('background-color: var(--bg-input-elevated);')
 +    expect(chatInput).not.toMatch(/background-color: #333333;/)
