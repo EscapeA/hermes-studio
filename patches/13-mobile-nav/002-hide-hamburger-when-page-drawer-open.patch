@@ -1,0 +1,45 @@
+From b85b0701b61319e5a691a9f67e7acbd4ee0ec7ed Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 24 Sep 2026 08:43:16 +0800
+Subject: [PATCH] fix(mobile): hide global hamburger when page drawer is open
+
+---
+ packages/client/src/App.vue            | 1 +
+ packages/client/src/styles/global.scss | 9 +++++++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
+index e07a2f1e8..223f6e6ef 100644
+--- a/packages/client/src/App.vue
++++ b/packages/client/src/App.vue
+@@ -298,6 +298,7 @@ usePwa();
+               <button
+                 v-if="showMobileMenuButton"
+                 class="hamburger-btn"
++                :class="{ 'hamburger-btn--hidden': !showAppSidebar && appStore.pageSidebarExpanded }"
+                 :aria-label="t('sidebar.expand')"
+                 @click="handleMobileMenuClick"
+               >
+diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
+index c6ec545da..b64f2f50f 100644
+--- a/packages/client/src/styles/global.scss
++++ b/packages/client/src/styles/global.scss
+@@ -322,6 +322,15 @@ a {
+     display: flex;
+   }
+ 
++  // 页面侧边栏（抽屉）打开时把 ☰ 收起来。
++  // 抽屉本身用 z-index 盖住它（ChatPanel/HistoryView/WorkflowView 的
++  // .session-list 移动端 z-index 1000 > ☰ 的 99），但个别 WebView/合成层
++  // 会把 fixed 的 ☰ 画到抽屉之上，导致它压在「新建对话」上方；
++  // 这里改用状态兜底：抽屉开着就不渲染 ☰（抽屉自带关闭按钮 + 背板点击可关）。
++  .hamburger-btn--hidden {
++    display: none;
++  }
++
+   .page-header {
+     min-height: $mobile-topbar-min-height;
+     padding: $mobile-topbar-padding !important;
+-- 
+2.53.0
+

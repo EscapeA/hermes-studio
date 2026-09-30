@@ -1,0 +1,58 @@
+From 3c81fae5a77d6cf202681e50c4df48839448217f Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Mon, 28 Sep 2026 23:07:20 +0800
+Subject: [PATCH] test(client): adapt two upstream suites to the fork's
+ composer behavior
+
+- search-navigation: a plain switch to another session fires the fork's
+  fast-first fetch, so a stopped search flow sees two page requests in total
+- chat-input-draft: the context row now shows the percent chip instead of
+  the remaining-token text, and the context progress bar is dropped
+---
+ tests/client/chat-input-draft.test.ts             | 8 +++++---
+ tests/client/chat-store-search-navigation.test.ts | 4 +++-
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/tests/client/chat-input-draft.test.ts b/tests/client/chat-input-draft.test.ts
+index 571957f5c..c413567b2 100644
+--- a/tests/client/chat-input-draft.test.ts
++++ b/tests/client/chat-input-draft.test.ts
+@@ -347,15 +347,17 @@ describe('ChatInput draft persistence', () => {
+ 
+     expect(wrapper.get('.context-info').text()).toMatch(/2\.0k\s+\//)
+     expect(wrapper.get('.context-limit-editable').text()).toBe('256.0k')
+-    expect(wrapper.get('.context-info').text()).toContain('chat.contextRemaining 254.0k')
+-    expect(wrapper.find('.context-bar').exists()).toBe(true)
++    // fork behavior: remaining-token text is replaced by the usage percent
++    // chip, and the context progress bar is dropped entirely
++    expect(wrapper.get('.context-info').text()).toContain('0.78%')
++    expect(wrapper.find('.context-bar').exists()).toBe(false)
+ 
+     Object.assign(chatStore.activeSession!, { source: 'cli', agent: 'hermes', codingAgentId: undefined })
+     await nextTick()
+ 
+     expect(wrapper.get('.context-info').text()).toMatch(/2\.0k\s+\//)
+     expect(wrapper.get('.context-limit-editable').text()).toBe('256.0k')
+-    expect(wrapper.find('.context-bar').exists()).toBe(true)
++    expect(wrapper.find('.context-bar').exists()).toBe(false)
+   })
+ 
+   it.each(['cursor', 'codex', 'claude-code', 'pi', 'grok', 'opencode', 'dsh'])('shows only this session cumulative usage for %s', async agent => {
+diff --git a/tests/client/chat-store-search-navigation.test.ts b/tests/client/chat-store-search-navigation.test.ts
+index 5a0c1cd56..9143dd4d7 100644
+--- a/tests/client/chat-store-search-navigation.test.ts
++++ b/tests/client/chat-store-search-navigation.test.ts
+@@ -143,7 +143,9 @@ describe('search message navigation', () => {
+     await expect(pending).resolves.toBe(false)
+     expect(store.activeSessionId).toBe('other')
+     expect(store.focusMessageId).toBeNull()
+-    expect(api.fetchSessionMessagesPage).toHaveBeenCalledTimes(1)
++    // one focus-paging fetch for the search session, plus the fast-first page
++    // that a plain switch to 'other' fires (fork fast-first behavior)
++    expect(api.fetchSessionMessagesPage).toHaveBeenCalledTimes(2)
+   })
+ 
+   it('preserves a search result outside the session list when the chat route mounts', async () => {
+-- 
+2.53.0
+
