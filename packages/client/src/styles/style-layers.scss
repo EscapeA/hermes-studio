@@ -223,6 +223,31 @@ html.warm {
 // screenshot showed no periodicity for the 32px grid, while the 3px scanline
 // barely leaked through). A fixed overlay above the app content but below
 // teleported overlays is the reliable hook — the wash then covers the cards,
+// ─── Navigation chrome (desktop rail + mobile drawer) ───────────────────────
+// Upstream 0.7.26 added these two components; without a rule here they keep the
+// plain palette surface and read as unthemed next to the styled cards. The
+// colour comes from the style's own accent variable, so one block covers every
+// style instead of one per style.
+html.tech,
+html.neon,
+html.aurora,
+html.blueprint,
+html.graphite,
+html.warm {
+  .studio-navigation-rail {
+    border-inline-end: 1px solid rgba(var(--accent-primary-rgb), 0.2);
+  }
+
+  .studio-mobile-navigation {
+    border-inline-end: 1px solid rgba(var(--accent-primary-rgb), 0.2);
+    box-shadow: 0 0 30px -16px rgba(var(--accent-primary-rgb), 0.5);
+  }
+
+  .studio-mobile-navigation__panel {
+    border-inline-start-color: rgba(var(--accent-primary-rgb), 0.2);
+  }
+}
+
 // which is what makes the texture read.
 // z-index 3 puts it above `.app-layout` (z-index 1) and below Naive UI's
 // teleported modals/dropdowns, so menus keep a clean surface.
