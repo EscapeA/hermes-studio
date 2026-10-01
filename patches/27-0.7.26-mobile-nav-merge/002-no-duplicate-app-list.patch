@@ -1,0 +1,46 @@
+From b3a4e147b55d135e2ebdab1fa98633e86f6bef54 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 1 Oct 2026 12:39:49 +0800
+Subject: [PATCH] fix(mobile-nav): stop rendering the app-level list twice
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+On the routes whose page sidebar IS AppSidebar (logs … settings) the drawer's panel
+would show the same nine destinations the rail now lists. Keep the panel closed
+there; the config-sidebar routes (journey/skills/memory/channels/mcp/plugins/jobs/
+kanban/petdex) are untouched because their panels list different things.
+---
+ packages/client/src/App.vue | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
+index 294a8ccb0..3070b5446 100644
+--- a/packages/client/src/App.vue
++++ b/packages/client/src/App.vue
+@@ -131,8 +131,21 @@ provide(mobileNavigationKey, {
+   open: mobileNavigationOpen,
+   target: computed(() => !isWideViewport.value && hasNavigationRail.value ? mobileSidebarHost.value : null),
+ });
++// Routes whose page sidebar IS the app-level destination list (AppSidebar). The
++// mobile drawer's rail lists those same destinations, so showing the panel here
++// would render the same list twice.
++const APP_SIDEBAR_ROUTES = [
++  'hermes.logs',
++  'hermes.usage',
++  'hermes.performance',
++  'hermes.skillsUsage',
++  'hermes.versionPreview',
++  'hermes.theme',
++  'hermes.profiles',
++  'hermes.settings',
++];
+ const hasMobileContextSidebar = computed(() =>
+-  !['hermes.connections', 'hermes.agentManager', 'hermes.models'].includes(String(route.name)),
++  !['hermes.connections', 'hermes.agentManager', 'hermes.models', ...APP_SIDEBAR_ROUTES].includes(String(route.name)),
+ );
+ watch([hasNavigationRail, isWideViewport], () => { mobileNavigationOpen.value = false; });
+ watch(sessionSearchOpen, (open) => { if (open) mobileNavigationOpen.value = false; });
+-- 
+2.53.0
+

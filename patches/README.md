@@ -36,6 +36,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 24-styles-and-motion | 两套克制向风格 + 交互打磨：`graphite`（冷峻工程：近黑 + 单一靛蓝 + 细边框，零渐变零发光，naive-ui 圆角收紧，聚焦只画锐环）、`warm`（暖调暗：暖黑 + 暖白正文 + 无彩色强调，暖色渐隐 + 表面半透明）；新增 `--input-focus-glow` 聚焦光晕（按各风格主色派生，顺带修掉深色下聚焦阴影被 `.dark &` 覆盖的宿疾）；引入 `motion-v@2.4.4`（独立 chunk ≈46KB gzip）+ 共享 `motion-presets.ts`（三档 spring + 尊重减少动效），工具卡展开/入场/按压、会话列表 capped stagger、工具面板弹簧缓动 | 001-002 |
 | 25-0.7.25-adapt | 0.7.25 升级适配（搜索命中导航跳过 fast-first 预取；vitest 补 `@locales` 兜底别名；上游搜索导航/输入草稿套件适配 fork 行为） | 001-003 |
 | 26-0.7.26-nav-chrome | 0.7.26 导航外壳适配：rail 清掉已删功能入口（群聊/工作流/设备互联）并把首个条目改用现存 `sidebar.chat`；抽屉去掉自带的 40px 关闭行（恢复页面侧栏自带关闭键）+ `--drawer-top-inset` 统一顶部安全区；移动端侧栏头部内边距收紧；导航外壳纳入各风格材质层与自定义背景玻璃组 | 001-002 |
+| 27-0.7.26-mobile-nav-merge | 手机抽屉一级菜单合并（Aries 定稿）：rail 新增 `labeled`（图标+文字、140px）与 `withAppEntries`（AppSidebar 的 9 个应用级目的地）两个可选 prop，左下三条横线＝文字开关（localStorage 持久）；对应的应用级页面不再重复渲染同一份列表；桌面端不传 prop ⇒ 保持 64px 图标栏 | 001-002 |
 
 **2026-09-27 新增 `24-styles-and-motion` 组（001 源码、002 测试）**：风格补到 **9 套**，并给交互补上状态反馈与物理手感。
 
@@ -294,6 +295,13 @@ NODE_ENV= npm run build && git push --force-with-lease escapea custom
     - 实测（390×844）：面板顶部到首条会话 **165px → 118px**（40px 关闭行 + 12px 内边距 + 3px 分组头）；Aries 手机实拍另有一条 **≈99px** 的空白带 = 该 WebView 壳报的 `env(safe-area-inset-top)`（Chrome 侧为 0，本地测不出）⇒ 统一收进 `--drawer-top-inset`，Aries 定为 **0**。
     - 主题层：`style-layers.scss` 只画 `.app-layout/.chat-main/.session-list`，新组件没人管 ⇒ 加一段「导航外壳」规则，用各风格自己的 `--accent-primary-rgb` 画细边 + 光晕；并把抽屉加进 `App.vue` 的 `.app-shell--custom-background` 玻璃组（注意：传送到抽屉里的 `.session-list` 不再匹配 `.chat-panel > .session-list`，需单列 `.studio-mobile-navigation__content > .session-list`）。
     - 遗留（未适配）：上游新增的 `tests/e2e/navigation-rail.spec.ts` 仍按上游入口清单断言（含 Workflow/群聊/设备互联）；custom 的 CI 只跑 build+deploy、不跑 e2e，故不影响流水线，待需要时并进 17/18 的测试补丁。
+  - **追加 3（Aries 2026-10-01 定稿）**：手机抽屉**一级菜单合并**，落为 **新补丁组 `27-0.7.26-mobile-nav-merge`**（001 带文字 rail + 应用级入口 + 文字开关、002 去重）。
+    - 动机（Aries）：抽屉已经是全高侧栏，日志~设置这 9 个应用级目的地却要「先进设置页再开抽屉」才看得到（多点一次），而一级只有 4 项、很空。
+    - 解法：`StudioNavigationRail` 加两个可选 prop —— `labeled`（图标+文字行、列宽 140px）与 `withAppEntries`（AppSidebar 的同一批 9 项，含 `requiresSuperAdmin`/桌面壳同款守卫），左下角三条横线＝**文字开关**（localStorage `hermes_mobile_drawer_labels` 持久；抽屉按同一份常量自行设定 NDrawer 宽度）。设置成为列表里的一行，故底部图标改为开关。
+    - 去重：日志/用量/性能/技能用量/版本预览/主题/配置/设置 这 8 个路由的页面侧栏**本来就是** AppSidebar ⇒ 抽屉面板不再打开（否则同一份 9 项出现两次）；配置类侧栏路由（journey/skills/memory/channels/mcp/plugins/jobs/kanban/petdex）不受影响。
+    - 桌面端零改动：App.vue 渲染 rail 时**不传**这两个 prop，实测 1280×800 仍 64px / 4 项 / 无文字 / 底部是设置链接。
+    - 实测（390×844）：展开 rail 140px + 面板 226px、收起 64px + 302px、抽屉 366px、13 项全在一级；从抽屉点应用页会**自动关闭**抽屉。
+    - 已知小瑕疵：英文界面下 `Agent Manager` / `Version Preview` 会截断（中文完整）；侧栏图文基线未验证过英文排版，需要时把 140px 再放宽。
 - 2026-08-25 升级 v0.6.46 → v0.6.47（main 8dc6d193 = tag v0.6.47 + #2730 run-scoped-tool-calls 等，14+ PR：社交消息推送工作区 / 图片模型可配置 / App resume 缓存 / Codex&Claude system 合并 / 上传上限 HERMES_MAX_UPLOAD_SIZE / GLM-5.3 回滚等）：
   62 补丁重放冲突 2 个 + 构建期修复 1 个。
   - 007-conn-upload-405：chat.ts import 行冲突，HEAD 侧上游已加 `setSessionPushEnabled`、删 `fetchWorkspaceRunChangesForSession`（0.6.47 paginated/resume 响应自带 workspaceRunChanges）→ 取并集保留上游新增，删已无调用的 fetch import。
