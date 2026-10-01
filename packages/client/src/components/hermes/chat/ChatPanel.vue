@@ -3296,6 +3296,19 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
   padding: 12px;
 }
 
+@media (max-width: $breakpoint-mobile) {
+  // Inside the mobile drawer the ☰ no longer floats over the sidebar, so the
+  // vertical padding the old overlay design needed is dead space above the
+  // session list. Tighten it (and the first group header) instead.
+  .page-sidebar-top {
+    padding: 10px 12px 6px;
+  }
+
+  .session-group-header {
+    padding: 4px 10px 3px;
+  }
+}
+
 .page-sidebar-tabs {
   display: flex;
   flex-direction: column;
