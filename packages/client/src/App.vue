@@ -803,6 +803,8 @@ useKeyboard();
   :deep(.ekko-config-sidebar),
   :deep(.coding-agent-config-sidebar),
   :deep(.plugin-config-sidebar),
+  :deep(.studio-mobile-navigation),
+  :deep(.studio-mobile-navigation__content > .session-list),
   :deep(.chat-panel > .session-list),
   :deep(.person-layout > .person-sidebar),
   :deep(.history-panel > .page-loading-content > .session-list) {
