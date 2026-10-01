@@ -1,25 +1,55 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { NDrawer } from 'naive-ui'
 import StudioNavigationRail from './StudioNavigationRail.vue'
 
-defineProps<{ show: boolean; hasSidebar: boolean }>()
+const props = defineProps<{ show: boolean; hasSidebar: boolean }>()
 const emit = defineEmits<{
   'update:show': [show: boolean]
   target: [element: HTMLElement | null]
 }>()
+
+/** Rail widths — keep in sync with $rail-labeled-width in StudioNavigationRail.vue. */
+const RAIL_WIDTH = { collapsed: 64, labeled: 140 } as const
+const LABELS_STORAGE_KEY = 'hermes_mobile_drawer_labels'
+
+function storedLabelsOpen(): boolean {
+  try {
+    return window.localStorage.getItem(LABELS_STORAGE_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+
+const labelsOpen = ref(storedLabelsOpen())
+
+function toggleLabels() {
+  labelsOpen.value = !labelsOpen.value
+  try {
+    window.localStorage.setItem(LABELS_STORAGE_KEY, labelsOpen.value ? '1' : '0')
+  } catch {
+    /* private mode: keep the session-only state */
+  }
+}
+
+const drawerWidth = computed(() =>
+  props.hasSidebar
+    ? `min(392px, calc(100vw - 24px))`
+    : `${labelsOpen.value ? RAIL_WIDTH.labeled : RAIL_WIDTH.collapsed}px`,
+)
 </script>
 
 <template>
   <NDrawer
     :show="show"
-    :width="hasSidebar ? 'min(360px, calc(100vw - 24px))' : 64"
+    :width="drawerWidth"
     placement="left"
     display-directive="show"
     class="studio-mobile-drawer"
     @update:show="emit('update:show', $event)"
   >
     <div class="studio-mobile-navigation">
-      <StudioNavigationRail />
+      <StudioNavigationRail :labeled="labelsOpen" with-app-entries @toggle-labels="toggleLabels" />
       <section v-show="hasSidebar" class="studio-mobile-navigation__panel">
         <div :ref="element => emit('target', element as HTMLElement | null)" class="studio-mobile-navigation__content" />
       </section>
