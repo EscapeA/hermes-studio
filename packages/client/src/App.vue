@@ -131,8 +131,21 @@ provide(mobileNavigationKey, {
   open: mobileNavigationOpen,
   target: computed(() => !isWideViewport.value && hasNavigationRail.value ? mobileSidebarHost.value : null),
 });
+// Routes whose page sidebar IS the app-level destination list (AppSidebar). The
+// mobile drawer's rail lists those same destinations, so showing the panel here
+// would render the same list twice.
+const APP_SIDEBAR_ROUTES = [
+  'hermes.logs',
+  'hermes.usage',
+  'hermes.performance',
+  'hermes.skillsUsage',
+  'hermes.versionPreview',
+  'hermes.theme',
+  'hermes.profiles',
+  'hermes.settings',
+];
 const hasMobileContextSidebar = computed(() =>
-  !['hermes.connections', 'hermes.agentManager', 'hermes.models'].includes(String(route.name)),
+  !['hermes.connections', 'hermes.agentManager', 'hermes.models', ...APP_SIDEBAR_ROUTES].includes(String(route.name)),
 );
 watch([hasNavigationRail, isWideViewport], () => { mobileNavigationOpen.value = false; });
 watch(sessionSearchOpen, (open) => { if (open) mobileNavigationOpen.value = false; });
