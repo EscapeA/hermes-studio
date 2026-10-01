@@ -745,6 +745,8 @@ useKeyboard();
   :deep(.hermes-config-sidebar),
   :deep(.ekko-config-sidebar),
   :deep(.coding-agent-config-sidebar),
+  :deep(.studio-mobile-navigation),
+  :deep(.studio-mobile-navigation__content > .session-list),
   :deep(.chat-panel > .session-list),
   :deep(.history-panel > .page-loading-content > .session-list) {
     background-color: var(--theme-sidebar-bg, var(--glass-sidebar-bg));
