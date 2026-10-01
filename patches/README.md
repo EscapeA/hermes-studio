@@ -35,6 +35,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 23-run-speed-latest | 本轮解码速度「当前/平均」双读数（run 态指示器在原有本轮平均旁补「最近一次已完成调用」的读数；server `usage.updated` 增加 `speedLatest`、client store 增加 `runSpeedLatest`、11 locale 的 `tokensPerSecond` 拆为 Current/Average） | 001-002 |
 | 24-styles-and-motion | 两套克制向风格 + 交互打磨：`graphite`（冷峻工程：近黑 + 单一靛蓝 + 细边框，零渐变零发光，naive-ui 圆角收紧，聚焦只画锐环）、`warm`（暖调暗：暖黑 + 暖白正文 + 无彩色强调，暖色渐隐 + 表面半透明）；新增 `--input-focus-glow` 聚焦光晕（按各风格主色派生，顺带修掉深色下聚焦阴影被 `.dark &` 覆盖的宿疾）；引入 `motion-v@2.4.4`（独立 chunk ≈46KB gzip）+ 共享 `motion-presets.ts`（三档 spring + 尊重减少动效），工具卡展开/入场/按压、会话列表 capped stagger、工具面板弹簧缓动 | 001-002 |
 | 25-0.7.25-adapt | 0.7.25 升级适配（搜索命中导航跳过 fast-first 预取；vitest 补 `@locales` 兜底别名；上游搜索导航/输入草稿套件适配 fork 行为） | 001-003 |
+| 26-0.7.26-nav-chrome | 0.7.26 导航外壳适配：rail 清掉已删功能入口（群聊/工作流/设备互联）并把首个条目改用现存 `sidebar.chat`；抽屉去掉自带的 40px 关闭行（恢复页面侧栏自带关闭键）+ `--drawer-top-inset` 统一顶部安全区；移动端侧栏头部内边距收紧；导航外壳纳入各风格材质层与自定义背景玻璃组 | 001-002 |
 
 **2026-09-27 新增 `24-styles-and-motion` 组（001 源码、002 测试）**：风格补到 **9 套**，并给交互补上状态反馈与物理手感。
 
@@ -288,6 +289,11 @@ NODE_ENV= npm run build && git push --force-with-lease escapea custom
   - 依赖面：`package.json` / `package-lock.json` **仅 version 变化**、`bin/` 零改动 ⇒ 无需 `npm ci`；部署 = `npm i -g hermes-web-ui@0.7.26` + 热替 dist。
   - 可复现性：verify-am **0 差异**；备份 tag `backup/custom-pre-0.7.26`（= 6ccfe9b7e）。
   - **追加（Aries 2026-10-01 定稿）**：上游把用量行做成贴在输入框上的带边框分栏（视觉上像两行表格）→ 去边框/底色/圆角与`.dark` 底色，用量行回归**纯文字一行**（`padding: 0 11px 6px`，左右 11px 与输入框内文字同轴），输入框恢复完整圆角；`App.vue` 的「自定义背景」半透明组同步移除该行。改动并入 `patches/04-usage/009-composer-align.patch`（故该补丁现在同时含 `ChatInput.vue` 与 `App.vue`）；另有 6 个补丁因父 blob 与行号位移仅重生成头部，无内容变化。
+  - **追加 2（Aries 2026-10-01 验收）**：手机端 ☰ 抽屉三项问题（入口失效/多余、会话列表上方大量留白、主题未覆盖）修完，落为 **新补丁组 `26-0.7.26-nav-chrome`**（001 导航外壳、002 主题层）。
+    - 根因：上游 #3232 新写的 `StudioNavigationRail` / `MobileNavigationDrawer` 是按**上游功能全集**写的 —— rail 仍列群聊/工作流/设备互联（fork 已删，路由不存在 ⇒ 条目根本不渲染），首个条目的 `sidebar.singleChat` 文案键已被 fork 删除 ⇒ 渲染原文；抽屉自己加了一行 40px 关闭按钮并把**页面侧栏自带的关闭键全压掉**（`:deep(.session-close-btn){display:none}`）。
+    - 实测（390×844）：面板顶部到首条会话 **165px → 118px**（40px 关闭行 + 12px 内边距 + 3px 分组头）；Aries 手机实拍另有一条 **≈99px** 的空白带 = 该 WebView 壳报的 `env(safe-area-inset-top)`（Chrome 侧为 0，本地测不出）⇒ 统一收进 `--drawer-top-inset`，Aries 定为 **0**。
+    - 主题层：`style-layers.scss` 只画 `.app-layout/.chat-main/.session-list`，新组件没人管 ⇒ 加一段「导航外壳」规则，用各风格自己的 `--accent-primary-rgb` 画细边 + 光晕；并把抽屉加进 `App.vue` 的 `.app-shell--custom-background` 玻璃组（注意：传送到抽屉里的 `.session-list` 不再匹配 `.chat-panel > .session-list`，需单列 `.studio-mobile-navigation__content > .session-list`）。
+    - 遗留（未适配）：上游新增的 `tests/e2e/navigation-rail.spec.ts` 仍按上游入口清单断言（含 Workflow/群聊/设备互联）；custom 的 CI 只跑 build+deploy、不跑 e2e，故不影响流水线，待需要时并进 17/18 的测试补丁。
 - 2026-08-25 升级 v0.6.46 → v0.6.47（main 8dc6d193 = tag v0.6.47 + #2730 run-scoped-tool-calls 等，14+ PR：社交消息推送工作区 / 图片模型可配置 / App resume 缓存 / Codex&Claude system 合并 / 上传上限 HERMES_MAX_UPLOAD_SIZE / GLM-5.3 回滚等）：
   62 补丁重放冲突 2 个 + 构建期修复 1 个。
   - 007-conn-upload-405：chat.ts import 行冲突，HEAD 侧上游已加 `setSessionPushEnabled`、删 `fetchWorkspaceRunChangesForSession`（0.6.47 paginated/resume 响应自带 workspaceRunChanges）→ 取并集保留上游新增，删已无调用的 fetch import。
