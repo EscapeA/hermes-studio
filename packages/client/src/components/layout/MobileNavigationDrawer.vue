@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { NDrawer } from 'naive-ui'
-import { useI18n } from 'vue-i18n'
 import StudioNavigationRail from './StudioNavigationRail.vue'
 
 defineProps<{ show: boolean; hasSidebar: boolean }>()
@@ -8,7 +7,6 @@ const emit = defineEmits<{
   'update:show': [show: boolean]
   target: [element: HTMLElement | null]
 }>()
-const { t } = useI18n()
 </script>
 
 <template>
@@ -23,9 +21,6 @@ const { t } = useI18n()
     <div class="studio-mobile-navigation">
       <StudioNavigationRail />
       <section v-show="hasSidebar" class="studio-mobile-navigation__panel">
-        <button class="studio-mobile-navigation__close" type="button" :aria-label="t('common.close')" @click="emit('update:show', false)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12" /></svg>
-        </button>
         <div :ref="element => emit('target', element as HTMLElement | null)" class="studio-mobile-navigation__content" />
       </section>
     </div>
@@ -36,6 +31,11 @@ const { t } = useI18n()
 @use '@/styles/variables' as *;
 
 .studio-mobile-navigation {
+  // Top inset shared by the drawer's two columns. The K60 WebView shell reports
+  // ~99px of top safe-area while drawing nothing in it, which read as a dead band
+  // above the session list; Aries settled on 0 (fully flush). Raise this single
+  // value if a device ever renders under the system bar / camera cutout.
+  --drawer-top-inset: 0px;
   display: flex;
   height: 100%;
   min-height: 0;
@@ -45,7 +45,7 @@ const { t } = useI18n()
   overflow: hidden;
 
   :deep(.studio-navigation-rail) {
-    padding-top: max(12px, env(safe-area-inset-top, 0px));
+    padding-top: var(--drawer-top-inset);
     padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
   }
 }
@@ -56,27 +56,13 @@ const { t } = useI18n()
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  padding-top: env(safe-area-inset-top, 0px);
+  // Same shared inset as the rail, so the search row and the rail's first icon
+  // stay on one axis.
+  padding-top: var(--drawer-top-inset);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   border-inline-start: 1px solid $border-color;
 }
-.studio-mobile-navigation__close {
-  display: grid;
-  place-items: center;
-  align-self: flex-end;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  margin: 8px 8px 0;
-  border: 0;
-  border-radius: $radius-sm;
-  color: $text-secondary;
-  background: transparent;
-  cursor: pointer;
 
-  &:hover { color: $text-primary; }
-  &:focus-visible { outline: 2px solid $accent-primary; }
-}
 .studio-mobile-navigation .studio-mobile-navigation__content {
   position: relative;
   display: flex;
@@ -104,7 +90,9 @@ const { t } = useI18n()
     pointer-events: auto;
   }
 
-  :deep(.session-close-btn),
+  // Keep each page sidebar's own close control working inside the drawer (it is
+  // the single close affordance now that the drawer's own X row is gone); only
+  // the desktop-only collapse toggles are suppressed.
   :deep(.workflow-sidebar-close),
   :deep(.collapse-btn),
   :deep(.hermes-config-collapse),
