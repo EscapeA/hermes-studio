@@ -1,4 +1,4 @@
-From 9925934ff3477fd880f850f7877c6ad4d10d0630 Mon Sep 17 00:00:00 2001
+From 06be72e5ee21f2e4b42eb9f8a955d493cbb4f91c Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Mon, 21 Sep 2026 23:26:11 +0800
 Subject: [PATCH] feat(settings): configurable Agent Management entry target
@@ -113,10 +113,10 @@ index 874084fb9..be2fbd388 100644
  
  function openModels() {
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 30249924d..341446b06 100644
+index b5f820c30..edc03a415 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -2624,6 +2624,9 @@ export default {
+@@ -2623,6 +2623,9 @@ export default {
        linkOpenTargetHint: 'اختر مكان فتح الروابط من الرسائل ومعاينات Markdown.',
        linkOpenTargetHermesStudio: 'Ekko Studio',
        linkOpenTargetDefaultBrowser: 'المتصفح الافتراضي',
@@ -127,10 +127,10 @@ index 30249924d..341446b06 100644
      agent: {
        maxTurns: 'الحد الأقصى للدورات',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index d4c77afe2..ef41f6dd0 100644
+index 855909dc5..3885d92de 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -2126,6 +2126,9 @@ jobTriggered: 'Job ausgelost',
+@@ -2125,6 +2125,9 @@ jobTriggered: 'Job ausgelost',
        linkOpenTargetHint: 'Wählen Sie, wo Links aus Nachrichten und Markdown-Vorschauen geöffnet werden.',
        linkOpenTargetHermesStudio: 'Ekko Studio',
        linkOpenTargetDefaultBrowser: 'Standardbrowser',
@@ -141,10 +141,10 @@ index d4c77afe2..ef41f6dd0 100644
      agent: {
        maxTurns: 'Maximale Runden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index ca339ede1..5e1464ec7 100644
+index 6d019d481..5c3218634 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -2640,6 +2640,9 @@ export default {
+@@ -2639,6 +2639,9 @@ export default {
        linkOpenTargetHint: 'Choose where links from messages and Markdown previews open.',
        linkOpenTargetHermesStudio: 'Ekko Studio',
        linkOpenTargetDefaultBrowser: 'Default browser',
@@ -155,10 +155,10 @@ index ca339ede1..5e1464ec7 100644
      agent: {
        maxTurns: 'Max Turns',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index b17b89e38..d55afe2de 100644
+index 13fad3a58..7bef2aa4d 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -2126,6 +2126,9 @@ jobTriggered: 'Job ejecutado',
+@@ -2125,6 +2125,9 @@ jobTriggered: 'Job ejecutado',
        linkOpenTargetHint: 'Elige dónde se abren los enlaces de mensajes y vistas previas de Markdown.',
        linkOpenTargetHermesStudio: 'Ekko Studio',
        linkOpenTargetDefaultBrowser: 'Navegador predeterminado',
@@ -169,10 +169,10 @@ index b17b89e38..d55afe2de 100644
      agent: {
        maxTurns: 'Turnos maximos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 778c3f90f..fc08050a1 100644
+index 55d927622..41877ba2f 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -2126,6 +2126,9 @@ jobTriggered: 'Job declenche',
+@@ -2125,6 +2125,9 @@ jobTriggered: 'Job declenche',
        linkOpenTargetHint: 'Choisissez où ouvrir les liens des messages et des aperçus Markdown.',
        linkOpenTargetHermesStudio: 'Ekko Studio',
        linkOpenTargetDefaultBrowser: 'Navigateur par défaut',
@@ -183,10 +183,10 @@ index 778c3f90f..fc08050a1 100644
      agent: {
        maxTurns: 'Tours maximum',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 867db5f0d..f54b268c1 100644
+index b3fa12d35..ef36d92ca 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -2126,6 +2126,9 @@ export default {
+@@ -2125,6 +2125,9 @@ export default {
        linkOpenTargetHint: 'メッセージと Markdown プレビュー内のリンクを開く場所を選択します。',
        linkOpenTargetHermesStudio: 'Ekko Studio',
        linkOpenTargetDefaultBrowser: '既定のブラウザ',
@@ -197,10 +197,10 @@ index 867db5f0d..f54b268c1 100644
      agent: {
        maxTurns: '最大ターン数',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 90630e311..b108b9907 100644
+index 5e6d5b7f9..aaf468aca 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -2126,6 +2126,9 @@ export default {
+@@ -2125,6 +2125,9 @@ export default {
        linkOpenTargetHint: '메시지와 Markdown 미리보기의 링크를 열 위치를 선택합니다.',
        linkOpenTargetHermesStudio: 'Ekko Studio',
        linkOpenTargetDefaultBrowser: '기본 브라우저',
@@ -211,10 +211,10 @@ index 90630e311..b108b9907 100644
      agent: {
        maxTurns: '최대 턴 수',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 6b884b1bd..b10957a63 100644
+index 298568008..c8086d186 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -2126,6 +2126,9 @@ jobTriggered: 'Job acionado',
+@@ -2125,6 +2125,9 @@ jobTriggered: 'Job acionado',
        linkOpenTargetHint: 'Escolha onde abrir links de mensagens e prévias de Markdown.',
        linkOpenTargetHermesStudio: 'Ekko Studio',
        linkOpenTargetDefaultBrowser: 'Navegador padrão',
@@ -225,10 +225,10 @@ index 6b884b1bd..b10957a63 100644
      agent: {
        maxTurns: 'Máximo de turnos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 1708d1ce2..8b737cb2d 100644
+index aa8f58470..4a4cebcd2 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -2397,6 +2397,9 @@ export default {
+@@ -2396,6 +2396,9 @@ export default {
        linkOpenTargetHint: 'Выберите, где открывать ссылки из сообщений и предпросмотров Markdown.',
        linkOpenTargetHermesStudio: 'Ekko Studio',
        linkOpenTargetDefaultBrowser: 'Браузер по умолчанию',
@@ -239,10 +239,10 @@ index 1708d1ce2..8b737cb2d 100644
      agent: {
        maxTurns: 'Максимум ходов',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index a425676ae..bcbb667a2 100644
+index 249ae70b2..3ac9296c4 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -2584,6 +2584,9 @@ export default {
+@@ -2583,6 +2583,9 @@ export default {
        linkOpenTargetHint: '選擇訊息與 Markdown 預覽中的網頁連結要在哪裡開啟。',
        linkOpenTargetHermesStudio: 'Ekko Studio',
        linkOpenTargetDefaultBrowser: '預設瀏覽器',
@@ -253,10 +253,10 @@ index a425676ae..bcbb667a2 100644
      agent: {
        maxTurns: '最大輪次',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 228422f89..3083ec362 100644
+index c1dfe81c2..e0640051d 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -2678,6 +2678,9 @@ export default {
+@@ -2677,6 +2677,9 @@ export default {
        linkOpenTargetHint: '选择消息和 Markdown 预览中的网页链接在哪里打开。',
        linkOpenTargetHermesStudio: 'Ekko Studio',
        linkOpenTargetDefaultBrowser: '默认浏览器',

@@ -1,4 +1,4 @@
-From b769cb41b0970742ec5966895be41b6cff47667a Mon Sep 17 00:00:00 2001
+From c90f1551993c96a45e6084678f316ebd3a64ce08 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 18:51:17 +0800
 Subject: [PATCH] feat(workflow): mobile runs panel as bottom sheet with
@@ -17,10 +17,10 @@ back control when viewing a run snapshot.
  6 files changed, 207 insertions(+), 25 deletions(-)
 
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 02a96c0a1..a1c57bb25 100644
+index 7bbc3feed..dd9a01c0b 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1357,6 +1357,7 @@ export default {
+@@ -1356,6 +1356,7 @@ export default {
        createWorkflowFirst: 'Please create a workflow first',
        reset: 'Reset',
        startExecution: 'Start Execution',
@@ -29,10 +29,10 @@ index 02a96c0a1..a1c57bb25 100644
        executionStarted: 'Workflow execution started',
        executionCompleted: 'Workflow execution completed',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 7a0845ac5..bcd74ce2a 100644
+index 86dec1347..b1cce2b40 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1236,6 +1236,7 @@ export default {
+@@ -1235,6 +1235,7 @@ export default {
        createWorkflowFirst: 'Сначала создайте workflow',
        reset: 'Сбросить',
        startExecution: 'Запустить выполнение',
@@ -41,10 +41,10 @@ index 7a0845ac5..bcd74ce2a 100644
        executionStarted: 'Выполнение workflow началось',
        executionCompleted: 'Выполнение workflow завершено',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 9c99e0be2..afecf3028 100644
+index 39587d3f9..a4b5d24f3 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1350,6 +1350,7 @@ export default {
+@@ -1349,6 +1349,7 @@ export default {
        createWorkflowFirst: '請先建立工作流',
        reset: '重置',
        startExecution: '開始執行',
@@ -53,10 +53,10 @@ index 9c99e0be2..afecf3028 100644
        executionStarted: '工作流已開始執行',
        executionCompleted: '工作流執行完成',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 7d6776730..43a08fd93 100644
+index de8a38bb7..a22fd4f46 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1357,6 +1357,7 @@ export default {
+@@ -1356,6 +1356,7 @@ export default {
        createWorkflowFirst: '请先创建工作流',
        reset: '重置',
        startExecution: '开始执行',

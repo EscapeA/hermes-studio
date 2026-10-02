@@ -1,4 +1,4 @@
-From a9c04262bee7576e1c8202343eed159b5aea6595 Mon Sep 17 00:00:00 2001
+From a5d728e552832a50f28b776f71fa6b63988ecc3f Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 22:01:07 +0800
 Subject: [PATCH] =?UTF-8?q?feat(chat):=20fast-first=20session=20open=20?=
@@ -23,7 +23,7 @@ Content-Transfer-Encoding: 8bit
  1 file changed, 39 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 1d1a33ccc..19a97e867 100644
+index 5680eb8e4..b77a785ba 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
 @@ -31,6 +31,11 @@ export type ContentBlock = ContentBlockImport
@@ -38,7 +38,7 @@ index 1d1a33ccc..19a97e867 100644
  const LEGACY_WORKSPACE_RUN_CHANGE_MESSAGE_PREFIX = 'workspace-run-change:'
  type ChatAgentId = 'hermes' | 'claude' | 'codex' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor' | 'ekko-agent'
  
-@@ -2208,8 +2213,15 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2112,8 +2117,15 @@ export const useChatStore = defineStore('chat', () => {
  
      let loaded = false
      try {
@@ -55,7 +55,7 @@ index 1d1a33ccc..19a97e867 100644
          const timeout = setTimeout(() => reject(new Error('resume timeout')), 15_000)
          resumeSession(sessionId, (data) => {
            clearTimeout(timeout)
-@@ -2270,6 +2282,7 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2174,6 +2186,7 @@ export const useChatStore = defineStore('chat', () => {
              target.messageTotal = data.messageTotal ?? target.messageCount ?? target.loadedMessageCount
              target.messageCount = target.messageTotal
              target.hasMoreBefore = data.hasMoreBefore ?? target.loadedMessageCount < target.messageTotal
@@ -63,7 +63,7 @@ index 1d1a33ccc..19a97e867 100644
            }
            if (!target.title) {
              const firstUser = target.messages.find(m => m.role === 'user')
-@@ -2360,6 +2373,31 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2264,6 +2277,31 @@ export const useChatStore = defineStore('chat', () => {
            resolve()
          }, activeSession.value?.profile, runtimeTransport())
        })

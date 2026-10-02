@@ -1,4 +1,4 @@
-From 9dfaf4a2126f85b44e93d016fe7321c687393ff0 Mon Sep 17 00:00:00 2001
+From 71d2641af27cc4c48edb026bab159d849b929091 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 12:33:27 +0800
 Subject: [PATCH] fix(chat): tighten run indicator and composer spacing
@@ -40,10 +40,10 @@ index 9209dc0b1..b70a6ab19 100644
  
  .thinking-status-copy {
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 21657099c..745623f82 100644
+index e3c476cab..9d1a6d2db 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -347,6 +347,10 @@ const virtualListPadding = computed(() => {
+@@ -346,6 +346,10 @@ const virtualListPadding = computed(() => {
    if (queuedMessages.value.length > 0 && hasFloatingPrompt.value) return "20px 20px 380px";
    if (queuedMessages.value.length > 0) return "20px 20px 260px";
    if (hasFloatingPrompt.value) return clarifyCompact.value ? "20px 20px 80px" : "20px 20px 260px";
@@ -54,7 +54,7 @@ index 21657099c..745623f82 100644
    return "20px";
  });
  
-@@ -1792,11 +1796,16 @@ defineExpose({
+@@ -1791,11 +1795,16 @@ defineExpose({
    display: flex;
    flex-direction: column;
    align-items: flex-start;

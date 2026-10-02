@@ -1,4 +1,4 @@
-From fca244b76dc90bb722cfe2448872a9ef1774b1fe Mon Sep 17 00:00:00 2001
+From a08542c3db43856493552e9b0d8454f69de593b1 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 20:37:37 +0800
 Subject: [PATCH] feat(settings): toggle session list agent/profile identity
@@ -86,10 +86,10 @@ index 2ac7980b0..48730bbf0 100644
        <NSwitch :value="settingsStore.display.inline_diffs" @update:value="v => save({ inline_diffs: v })" />
      </SettingRow>
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index fcf663816..93044c496 100644
+index 64ad8372e..f7fe9ff83 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -2084,6 +2084,8 @@ jobTriggered: 'Job ausgelost',
+@@ -2083,6 +2083,8 @@ jobTriggered: 'Job ausgelost',
        showReasoningHint: 'Denkprozess des Modells anzeigen',
        showCost: 'Kosten anzeigen',
        showCostHint: 'Token-Nutzung in Antworten anzeigen',
@@ -99,10 +99,10 @@ index fcf663816..93044c496 100644
        inlineDiffsHint: 'Codeanderungen inline anzeigen',
        bellOnComplete: 'Abschluss-Signalton',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 99432243f..e76dc8e97 100644
+index 1c19831f8..8b45751b4 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -2591,6 +2591,8 @@ export default {
+@@ -2590,6 +2590,8 @@ export default {
        showReasoningHint: 'Show model thinking process',
        showCost: 'Show Cost',
        showCostHint: 'Show token usage in replies',
@@ -112,10 +112,10 @@ index 99432243f..e76dc8e97 100644
        inlineDiffsHint: 'Show code changes inline',
        bellOnComplete: 'Completion Sound',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index f371a059d..a3c86a092 100644
+index 0ef245ed4..84227d9db 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -2084,6 +2084,8 @@ jobTriggered: 'Job ejecutado',
+@@ -2083,6 +2083,8 @@ jobTriggered: 'Job ejecutado',
        showReasoningHint: 'Mostrar el proceso de pensamiento del modelo',
        showCost: 'Mostrar costo',
        showCostHint: 'Mostrar uso de tokens en las respuestas',
@@ -125,10 +125,10 @@ index f371a059d..a3c86a092 100644
        inlineDiffsHint: 'Mostrar cambios de codigo en linea',
        bellOnComplete: 'Sonido de finalizacion',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index b56577f6d..06d2fff33 100644
+index e73aa65fc..1d37b7511 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -2084,6 +2084,8 @@ jobTriggered: 'Job declenche',
+@@ -2083,6 +2083,8 @@ jobTriggered: 'Job declenche',
        showReasoningHint: 'Afficher le processus de reflexion du modele',
        showCost: 'Afficher le cout',
        showCostHint: 'Afficher l\'utilisation des jetons dans les reponses',
@@ -138,10 +138,10 @@ index b56577f6d..06d2fff33 100644
        inlineDiffsHint: 'Afficher les changements de code en ligne',
        bellOnComplete: 'Son de fin',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index fedaa4dab..a098786ac 100644
+index 032f5a276..af687f74b 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -2084,6 +2084,8 @@ export default {
+@@ -2083,6 +2083,8 @@ export default {
        showReasoningHint: 'モデルの思考プロセスを表示',
        showCost: 'コストを表示',
        showCostHint: '返信にトークン使用量を表示',
@@ -151,10 +151,10 @@ index fedaa4dab..a098786ac 100644
        inlineDiffsHint: 'コード変更をインラインで表示',
        bellOnComplete: '完了通知音',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 35c7a237f..e02424926 100644
+index 14b54178f..5021340e8 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -2084,6 +2084,8 @@ export default {
+@@ -2083,6 +2083,8 @@ export default {
        showReasoningHint: '모델의 생각 과정 표시',
        showCost: '비용 표시',
        showCostHint: '응답에 토큰 사용량 표시',
@@ -164,10 +164,10 @@ index 35c7a237f..e02424926 100644
        inlineDiffsHint: '코드 변경사항을 인라인으로 표시',
        bellOnComplete: '완료 알림음',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index a97a95a35..8d4c79ded 100644
+index a611688c0..035584cb0 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -2084,6 +2084,8 @@ jobTriggered: 'Job acionado',
+@@ -2083,6 +2083,8 @@ jobTriggered: 'Job acionado',
        showReasoningHint: 'Mostrar processo de pensamento do modelo',
        showCost: 'Mostrar custo',
        showCostHint: 'Mostrar uso de tokens nas respostas',
@@ -177,10 +177,10 @@ index a97a95a35..8d4c79ded 100644
        inlineDiffsHint: 'Mostrar alterações de código em linha',
        bellOnComplete: 'Som de conclusão',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index ef2afc04a..5a8cc10b5 100644
+index d60942ecf..0d33e47a7 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -2355,6 +2355,8 @@ export default {
+@@ -2354,6 +2354,8 @@ export default {
        showReasoningHint: 'Отображать ход мыслей модели',
        showCost: 'Показывать стоимость',
        showCostHint: 'Отображать количество использованных токенов в ответе',
@@ -190,10 +190,10 @@ index ef2afc04a..5a8cc10b5 100644
        inlineDiffsHint: 'Отображать изменения в коде внутри строки',
        bellOnComplete: 'Звук завершения',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 10ca0bc2a..26e045b27 100644
+index ff1f01ee5..bddeb4a35 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -2535,6 +2535,8 @@ export default {
+@@ -2534,6 +2534,8 @@ export default {
        showReasoningHint: '展示模型思考過程',
        showCost: '顯示費用',
        showCostHint: '在回覆中顯示 token 使用量',
@@ -203,10 +203,10 @@ index 10ca0bc2a..26e045b27 100644
        inlineDiffsHint: '程式碼變更以內嵌方式顯示',
        bellOnComplete: '完成提示音',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 734c63405..1c7564bb6 100644
+index 24aa61855..5588baa9e 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -2629,6 +2629,8 @@ export default {
+@@ -2628,6 +2628,8 @@ export default {
        showReasoningHint: '展示模型思考过程',
        showCost: '显示费用',
        showCostHint: '在回复中显示 token 使用量',

@@ -1,4 +1,4 @@
-From 05f7aaa4b536e26874c43f30e851882ee36a2a0d Mon Sep 17 00:00:00 2001
+From d511fc4bc192654f18c0f7f7901151c5164dde57 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 01:53:06 +0800
 Subject: [PATCH] perf(web): strip avatar payloads and open last session first
@@ -168,10 +168,10 @@ index bae25a294..806f7ef8e 100644
            />
          </div>
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index fa970ce4d..b3c893b56 100644
+index 6f6d23f82..fa07cae20 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -1984,10 +1984,20 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1888,10 +1888,20 @@ export const useChatStore = defineStore('chat', () => {
            : storedId && sessions.value.some(s => s.id === storedId)
              ? storedId
              : sessions.value[0]?.id
@@ -196,7 +196,7 @@ index fa970ce4d..b3c893b56 100644
        }
      } catch (err) {
        if (requestSequence === loadSessionsRequestSequence) {
-@@ -2001,6 +2011,19 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1905,6 +1915,19 @@ export const useChatStore = defineStore('chat', () => {
      }
    }
  
@@ -216,7 +216,7 @@ index fa970ce4d..b3c893b56 100644
    // Refresh ONLY the session list metadata (titles, ordering, new/removed
    // sessions) without switching the active session or reloading its messages.
    // Used for live sync so sessions created elsewhere (CLI, Telegram, another
-@@ -2203,11 +2226,23 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2107,11 +2130,23 @@ export const useChatStore = defineStore('chat', () => {
      setItemBestEffort(storageKey(), sessionId)
      const legacyActiveKey = legacyStorageKey()
      if (legacyActiveKey) removeItem(legacyActiveKey)
@@ -243,7 +243,7 @@ index fa970ce4d..b3c893b56 100644
      beginMessageLoad(sessionId, requestSequence)
      let backgroundPendingOnResume = 0
  
-@@ -5797,6 +5832,7 @@ export const useChatStore = defineStore('chat', () => {
+@@ -5701,6 +5736,7 @@ export const useChatStore = defineStore('chat', () => {
      loadSessions,
      refreshSessionListOnly,
      refreshActiveSession,

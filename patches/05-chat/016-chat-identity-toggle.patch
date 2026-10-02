@@ -1,4 +1,4 @@
-From 7ba4e295ed37371e258375583b60a50130aa3de3 Mon Sep 17 00:00:00 2001
+From dd8a2d1ca5134bbb7d2ee2d91e0c4eabaa542cb3 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 30 Aug 2026 07:56:54 +0800
 Subject: [PATCH] feat(chat): hide chat message identities behind session
@@ -26,10 +26,10 @@ Default remains on. Hint text updated in all locales.
  create mode 100644 tests/client/message-item-identity-toggle.test.ts
 
 diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
-index 642bb804b..f96975d55 100644
+index a2841da93..9e03a7098 100644
 --- a/packages/client/src/components/hermes/chat/MessageItem.vue
 +++ b/packages/client/src/components/hermes/chat/MessageItem.vue
-@@ -251,6 +251,7 @@ const isCodingAgentSession = computed(() => {
+@@ -250,6 +250,7 @@ const isCodingAgentSession = computed(() => {
      || runtime === "ekko-agent" || runtime === "ekko" || runtime === "claude"
      || runtime === "claude-code" || runtime === "codex" || runtime === "pi";
  });
@@ -37,7 +37,7 @@ index 642bb804b..f96975d55 100644
  const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
  
  // Copy entire bubble content
-@@ -1048,21 +1049,21 @@ onBeforeUnmount(() => {
+@@ -1035,21 +1036,21 @@ onBeforeUnmount(() => {
      <template v-else>
        <div class="msg-body">
          <ProfileAvatar
@@ -62,7 +62,7 @@ index 642bb804b..f96975d55 100644
              <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
              <ProfileAvatar
                class="user-profile-avatar"
-@@ -1071,7 +1072,7 @@ onBeforeUnmount(() => {
+@@ -1058,7 +1059,7 @@ onBeforeUnmount(() => {
                :size="22"
              />
            </div>
@@ -72,10 +72,10 @@ index 642bb804b..f96975d55 100644
                class="msg-avatar"
                :src="assistantAgent.src"
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 8c18a827e..a000578af 100644
+index ff425481f..97e9440a0 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -2086,7 +2086,7 @@ jobTriggered: 'Job ausgelost',
+@@ -2085,7 +2085,7 @@ jobTriggered: 'Job ausgelost',
        showCost: 'Kosten anzeigen',
        showCostHint: 'Token-Nutzung in Antworten anzeigen',
        showSessionIdentity: 'Avatare & Profil in Sitzungsliste',
@@ -85,10 +85,10 @@ index 8c18a827e..a000578af 100644
        inlineDiffsHint: 'Codeanderungen inline anzeigen',
        bellOnComplete: 'Abschluss-Signalton',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 881181e6a..57c6134f3 100644
+index e8264ce4c..99bc52aac 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -2593,7 +2593,7 @@ export default {
+@@ -2592,7 +2592,7 @@ export default {
        showCost: 'Show Cost',
        showCostHint: 'Show token usage in replies',
        showSessionIdentity: 'Session list avatars & profile',
@@ -98,10 +98,10 @@ index 881181e6a..57c6134f3 100644
        inlineDiffsHint: 'Show code changes inline',
        bellOnComplete: 'Completion Sound',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 958445f59..bb27f8f90 100644
+index 467e690f5..e73329a74 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -2086,7 +2086,7 @@ jobTriggered: 'Job ejecutado',
+@@ -2085,7 +2085,7 @@ jobTriggered: 'Job ejecutado',
        showCost: 'Mostrar costo',
        showCostHint: 'Mostrar uso de tokens en las respuestas',
        showSessionIdentity: 'Avatares y perfil en la lista de sesiones',
@@ -111,10 +111,10 @@ index 958445f59..bb27f8f90 100644
        inlineDiffsHint: 'Mostrar cambios de codigo en linea',
        bellOnComplete: 'Sonido de finalizacion',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 0021c50af..cdeb98839 100644
+index 8e701f724..76eebd4eb 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -2086,7 +2086,7 @@ jobTriggered: 'Job declenche',
+@@ -2085,7 +2085,7 @@ jobTriggered: 'Job declenche',
        showCost: 'Afficher le cout',
        showCostHint: 'Afficher l\'utilisation des jetons dans les reponses',
        showSessionIdentity: 'Avatars et profil dans la liste',
@@ -124,10 +124,10 @@ index 0021c50af..cdeb98839 100644
        inlineDiffsHint: 'Afficher les changements de code en ligne',
        bellOnComplete: 'Son de fin',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index bb575e210..610db1630 100644
+index f14c40ff7..0c0fc261c 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -2086,7 +2086,7 @@ export default {
+@@ -2085,7 +2085,7 @@ export default {
        showCost: 'コストを表示',
        showCostHint: '返信にトークン使用量を表示',
        showSessionIdentity: 'セッション一覧のアバターとプロファイル',
@@ -137,10 +137,10 @@ index bb575e210..610db1630 100644
        inlineDiffsHint: 'コード変更をインラインで表示',
        bellOnComplete: '完了通知音',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 160b0319c..8f5d8e4db 100644
+index c02d873ec..1c073a067 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -2086,7 +2086,7 @@ export default {
+@@ -2085,7 +2085,7 @@ export default {
        showCost: '비용 표시',
        showCostHint: '응답에 토큰 사용량 표시',
        showSessionIdentity: '세션 목록 아바타 및 프로필',
@@ -150,10 +150,10 @@ index 160b0319c..8f5d8e4db 100644
        inlineDiffsHint: '코드 변경사항을 인라인으로 표시',
        bellOnComplete: '완료 알림음',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 485035cf9..1993e5e2c 100644
+index d218cc541..db51ddda5 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -2086,7 +2086,7 @@ jobTriggered: 'Job acionado',
+@@ -2085,7 +2085,7 @@ jobTriggered: 'Job acionado',
        showCost: 'Mostrar custo',
        showCostHint: 'Mostrar uso de tokens nas respostas',
        showSessionIdentity: 'Avatares e perfil na lista de sessoes',
@@ -163,10 +163,10 @@ index 485035cf9..1993e5e2c 100644
        inlineDiffsHint: 'Mostrar alterações de código em linha',
        bellOnComplete: 'Som de conclusão',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index b253e67d4..5169c63d5 100644
+index 95ec40a24..58d22d267 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -2357,7 +2357,7 @@ export default {
+@@ -2356,7 +2356,7 @@ export default {
        showCost: 'Показывать стоимость',
        showCostHint: 'Отображать количество использованных токенов в ответе',
        showSessionIdentity: 'Аватары и профиль в списке сессий',
@@ -176,10 +176,10 @@ index b253e67d4..5169c63d5 100644
        inlineDiffsHint: 'Отображать изменения в коде внутри строки',
        bellOnComplete: 'Звук завершения',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index a9bfc56b3..9832e7555 100644
+index ec65fc668..b941d1438 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -2537,7 +2537,7 @@ export default {
+@@ -2536,7 +2536,7 @@ export default {
        showCost: '顯示費用',
        showCostHint: '在回覆中顯示 token 使用量',
        showSessionIdentity: '會話列表頭像與 Profile',
@@ -189,10 +189,10 @@ index a9bfc56b3..9832e7555 100644
        inlineDiffsHint: '程式碼變更以內嵌方式顯示',
        bellOnComplete: '完成提示音',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index dd4299774..bc3348cd0 100644
+index 5582a1d79..c53c88f22 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -2631,7 +2631,7 @@ export default {
+@@ -2630,7 +2630,7 @@ export default {
        showCost: '显示费用',
        showCostHint: '在回复中显示 token 使用量',
        showSessionIdentity: '会话列表头像与 Profile',

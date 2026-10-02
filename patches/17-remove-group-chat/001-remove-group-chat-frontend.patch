@@ -1,4 +1,4 @@
-From fcbe13ae84405c112c64b0666011600a3ab8fc59 Mon Sep 17 00:00:00 2001
+From e4568e2c582fcdb9033a3566fd8a141b440e4fc5 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:23 +0800
 Subject: [PATCH] feat(web): remove group chat from the frontend
@@ -12131,7 +12131,7 @@ index be2fbd388..f10e17a19 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 341446b06..0ea898844 100644
+index edc03a415..bc82413df 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -507,7 +507,6 @@ export default {
@@ -12142,7 +12142,7 @@ index 341446b06..0ea898844 100644
      files: 'الملفات',
      devices: 'الأجهزة',
      connections: 'ترابط الأجهزة',
-@@ -3328,238 +3327,6 @@ export default {
+@@ -3327,238 +3326,6 @@ export default {
      connectionClosed: 'تم إغلاق اتصال الطرفية',
      connectionError: 'خطأ في اتصال الطرفية',
    },
@@ -12382,7 +12382,7 @@ index 341446b06..0ea898844 100644
    usage: {
      costStates: {
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index ef41f6dd0..1135eee54 100644
+index 3885d92de..64fe53b82 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -520,7 +520,6 @@ export default {
@@ -12393,7 +12393,7 @@ index ef41f6dd0..1135eee54 100644
      groupConversation: 'Konversation',
      groupConversationShort: 'Konv',
      groupAgent: 'Agent',
-@@ -3074,238 +3073,6 @@ jobTriggered: 'Job ausgelost',
+@@ -3073,238 +3072,6 @@ jobTriggered: 'Job ausgelost',
        idle: 'Inaktiv', queued: 'In Warteschlange', running: 'Wird ausgeführt', pending_approval: 'Wartet auf Freigabe', completed: 'Abgeschlossen', skipped: 'Übersprungen', failed: 'Fehlgeschlagen', approval_rejected: 'Freigabe abgelehnt', canceled: 'Abgebrochen',
      },
    },
@@ -12633,7 +12633,7 @@ index ef41f6dd0..1135eee54 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 5e1464ec7..ae0ce1040 100644
+index 5c3218634..a92757e90 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -507,7 +507,6 @@ export default {
@@ -12644,7 +12644,7 @@ index 5e1464ec7..ae0ce1040 100644
      files: 'Files',
      devices: 'Devices',
      connections: 'Device connections',
-@@ -3357,238 +3356,6 @@ export default {
+@@ -3356,238 +3355,6 @@ export default {
      connectionClosed: 'Terminal connection closed',
      connectionError: 'Terminal connection error',
    },
@@ -12884,7 +12884,7 @@ index 5e1464ec7..ae0ce1040 100644
    usage: {
      costStates: {
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index d55afe2de..35bc39a89 100644
+index 7bef2aa4d..a3fcc4160 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -520,7 +520,6 @@ export default {
@@ -12895,7 +12895,7 @@ index d55afe2de..35bc39a89 100644
      groupConversation: 'Conversación',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3074,238 +3073,6 @@ jobTriggered: 'Job ejecutado',
+@@ -3073,238 +3072,6 @@ jobTriggered: 'Job ejecutado',
        idle: 'Inactivo', queued: 'En cola', running: 'En ejecución', pending_approval: 'Pendiente de aprobación', completed: 'Completado', skipped: 'Omitido', failed: 'Fallido', approval_rejected: 'Aprobación rechazada', canceled: 'Cancelado',
      },
    },
@@ -13135,7 +13135,7 @@ index d55afe2de..35bc39a89 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index fc08050a1..6e047d4b2 100644
+index 41877ba2f..b9aa81b63 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -520,7 +520,6 @@ export default {
@@ -13146,7 +13146,7 @@ index fc08050a1..6e047d4b2 100644
      groupConversation: 'Conversation',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agent',
-@@ -3074,238 +3073,6 @@ jobTriggered: 'Job declenche',
+@@ -3073,238 +3072,6 @@ jobTriggered: 'Job declenche',
        idle: 'Inactif', queued: 'En attente', running: 'En cours', pending_approval: 'En attente d\'approbation', completed: 'Terminé', skipped: 'Ignoré', failed: 'Échec', approval_rejected: 'Approbation refusée', canceled: 'Annulé',
      },
    },
@@ -13386,7 +13386,7 @@ index fc08050a1..6e047d4b2 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index f54b268c1..ff856d26b 100644
+index ef36d92ca..6fef029e6 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -520,7 +520,6 @@ export default {
@@ -13397,7 +13397,7 @@ index f54b268c1..ff856d26b 100644
      groupConversation: '会話',
      groupConversationShort: '会話',
      groupAgent: 'エージェント',
-@@ -3073,238 +3072,6 @@ export default {
+@@ -3072,238 +3071,6 @@ export default {
        idle: '待機中', queued: '待機列', running: '実行中', pending_approval: '承認待ち', completed: '完了', skipped: 'スキップ', failed: '失敗', approval_rejected: '承認拒否', canceled: 'キャンセル済み',
      },
    },
@@ -13637,7 +13637,7 @@ index f54b268c1..ff856d26b 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index b108b9907..0f1acf406 100644
+index aaf468aca..526eb0ab2 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -520,7 +520,6 @@ export default {
@@ -13648,7 +13648,7 @@ index b108b9907..0f1acf406 100644
      groupConversation: '대화',
      groupConversationShort: '대화',
      groupAgent: '에이전트',
-@@ -3073,238 +3072,6 @@ export default {
+@@ -3072,238 +3071,6 @@ export default {
        idle: '대기', queued: '대기열', running: '실행 중', pending_approval: '승인 대기', completed: '완료', skipped: '건너뜀', failed: '실패', approval_rejected: '승인 거부', canceled: '취소됨',
      },
    },
@@ -13888,7 +13888,7 @@ index b108b9907..0f1acf406 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index b10957a63..3d170b3c7 100644
+index c8086d186..b4c28ceec 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -520,7 +520,6 @@ export default {
@@ -13899,7 +13899,7 @@ index b10957a63..3d170b3c7 100644
      groupConversation: 'Conversa',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3074,238 +3073,6 @@ jobTriggered: 'Job acionado',
+@@ -3073,238 +3072,6 @@ jobTriggered: 'Job acionado',
        idle: 'Inativo', queued: 'Na fila', running: 'Em execução', pending_approval: 'Aguardando aprovação', completed: 'Concluído', skipped: 'Ignorado', failed: 'Falhou', approval_rejected: 'Aprovação rejeitada', canceled: 'Cancelado',
      },
    },
@@ -14139,7 +14139,7 @@ index b10957a63..3d170b3c7 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 8b737cb2d..04b94098f 100644
+index 4a4cebcd2..664fa7d08 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -432,7 +432,6 @@ export default {
@@ -14150,7 +14150,7 @@ index 8b737cb2d..04b94098f 100644
      files: 'Файлы',
      devices: 'Устройства',
      connections: 'Подключение устройств',
-@@ -2990,237 +2989,6 @@ export default {
+@@ -2989,237 +2988,6 @@ export default {
    },
  
  
@@ -14389,7 +14389,7 @@ index 8b737cb2d..04b94098f 100644
      costStates: {
        unknown: "Не записано",
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index bcbb667a2..a89105608 100644
+index 3ac9296c4..05e7f2688 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -507,7 +507,6 @@ export default {
@@ -14400,7 +14400,7 @@ index bcbb667a2..a89105608 100644
      files: '檔案',
      devices: '裝置',
      connections: '裝置互聯',
-@@ -3299,238 +3298,6 @@ export default {
+@@ -3298,238 +3297,6 @@ export default {
      connectionClosed: '終端機連線已關閉',
      connectionError: '終端機連線錯誤',
    },
@@ -14640,7 +14640,7 @@ index bcbb667a2..a89105608 100644
    usage: {
      costStates: {
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 3083ec362..6ab4e8c10 100644
+index e0640051d..2b51c5812 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -507,7 +507,6 @@ export default {
@@ -14651,7 +14651,7 @@ index 3083ec362..6ab4e8c10 100644
      files: '文件',
      devices: '设备',
      connections: '设备互联',
-@@ -3405,238 +3404,6 @@ export default {
+@@ -3404,238 +3403,6 @@ export default {
      connectionClosed: '终端连接已关闭',
      connectionError: '终端连接错误',
    },

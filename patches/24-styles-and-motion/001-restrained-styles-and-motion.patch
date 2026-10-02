@@ -1,4 +1,4 @@
-From bb284586dab10d70f830a2e7295fad409d8fc751 Mon Sep 17 00:00:00 2001
+From f10d05db37f237155bc6d91fd332226e2e9207c0 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 12:56:11 +0800
 Subject: [PATCH] feat(web): graphite/warm styles, composer focus halo and
@@ -499,10 +499,10 @@ index 000000000..e51ae33a7
 +  }
 +}
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 99a2ecf76..a2af5b672 100644
+index 50c73e886..4bf75585f 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -2165,6 +2165,8 @@ export default {
+@@ -2164,6 +2164,8 @@ export default {
      styleNeon: 'نيون',
      styleAurora: 'الشفق',
      styleBlueprint: 'مخطط',
@@ -512,10 +512,10 @@ index 99a2ecf76..a2af5b672 100644
      fontSize: 'حجم النص',
      fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 624801ed4..da1a3092e 100644
+index 33924d7a2..e4ab922fa 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1968,6 +1968,8 @@ jobTriggered: 'Job ausgelost',
+@@ -1967,6 +1967,8 @@ jobTriggered: 'Job ausgelost',
      styleNeon: 'Neon',
      styleAurora: 'Polarlicht',
      styleBlueprint: 'Blaupause',
@@ -525,10 +525,10 @@ index 624801ed4..da1a3092e 100644
      fontSize: 'Textgröße',
      fontSizeHint: 'Grundgröße für Oberfläche und Unterhaltungen',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index b657cad60..3611cce00 100644
+index c02a0f2f3..9c10f7c6c 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -2179,6 +2179,8 @@ export default {
+@@ -2178,6 +2178,8 @@ export default {
      styleNeon: 'Neon',
      styleAurora: 'Aurora',
      styleBlueprint: 'Blueprint',
@@ -538,10 +538,10 @@ index b657cad60..3611cce00 100644
      fontSize: 'Text size',
      fontSizeHint: 'Base interface and conversation text size',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index eb638616b..36a91fb9a 100644
+index 93d585ca8..90c1b5aff 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1968,6 +1968,8 @@ jobTriggered: 'Job ejecutado',
+@@ -1967,6 +1967,8 @@ jobTriggered: 'Job ejecutado',
      styleNeon: 'Neón',
      styleAurora: 'Aurora',
      styleBlueprint: 'Plano',
@@ -551,10 +551,10 @@ index eb638616b..36a91fb9a 100644
      fontSize: 'Tamaño del texto',
      fontSizeHint: 'Tamaño base de la interfaz y las conversaciones',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 384a359a9..7cb24d8f2 100644
+index 74efdf705..30e78fff5 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1968,6 +1968,8 @@ jobTriggered: 'Job declenche',
+@@ -1967,6 +1967,8 @@ jobTriggered: 'Job declenche',
      styleNeon: 'Néon',
      styleAurora: 'Aurore',
      styleBlueprint: 'Blueprint',
@@ -564,10 +564,10 @@ index 384a359a9..7cb24d8f2 100644
      fontSize: 'Taille du texte',
      fontSizeHint: 'Taille de base de l’interface et des conversations',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 3d30faacd..57f66a793 100644
+index 7a4cc6f1e..0af2cbd83 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1968,6 +1968,8 @@ export default {
+@@ -1967,6 +1967,8 @@ export default {
      styleNeon: 'ネオン',
      styleAurora: 'オーロラ',
      styleBlueprint: 'ブループリント',
@@ -577,10 +577,10 @@ index 3d30faacd..57f66a793 100644
      fontSize: '文字サイズ',
      fontSizeHint: '画面と会話テキストの基本サイズ',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 3ed3624ff..ff46c5886 100644
+index 6f942665e..97c37fd89 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1968,6 +1968,8 @@ export default {
+@@ -1967,6 +1967,8 @@ export default {
      styleNeon: '네온',
      styleAurora: '오로라',
      styleBlueprint: '블루프린트',
@@ -590,10 +590,10 @@ index 3ed3624ff..ff46c5886 100644
      fontSize: '텍스트 크기',
      fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index b9218736b..2171c875b 100644
+index 93c1f960d..a90079e40 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1968,6 +1968,8 @@ jobTriggered: 'Job acionado',
+@@ -1967,6 +1967,8 @@ jobTriggered: 'Job acionado',
      styleNeon: 'Neon',
      styleAurora: 'Aurora',
      styleBlueprint: 'Blueprint',
@@ -603,10 +603,10 @@ index b9218736b..2171c875b 100644
      fontSize: 'Tamanho do texto',
      fontSizeHint: 'Tamanho base da interface e das conversas',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index f9b4d80db..edc90233c 100644
+index 2892f710b..cad405bd5 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1965,6 +1965,8 @@ export default {
+@@ -1964,6 +1964,8 @@ export default {
      styleNeon: 'Неон',
      styleAurora: 'Аврора',
      styleBlueprint: 'Чертёж',
@@ -616,10 +616,10 @@ index f9b4d80db..edc90233c 100644
      fontSize: 'Размер текста',
      fontSizeHint: 'Базовый размер текста интерфейса и диалогов',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 634da1f26..ed1766c38 100644
+index d42b810b4..5d1169433 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -2125,6 +2125,8 @@ export default {
+@@ -2124,6 +2124,8 @@ export default {
      styleNeon: '霓虹賽博',
      styleAurora: '漸層空間艙',
      styleBlueprint: '藍圖',
@@ -629,10 +629,10 @@ index 634da1f26..ed1766c38 100644
      fontSize: '文字大小',
      fontSizeHint: '介面與對話內容的基礎字級',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index a53ca7319..1b8792be6 100644
+index 97168fe58..9c16d7e3a 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -2171,6 +2171,8 @@ export default {
+@@ -2170,6 +2170,8 @@ export default {
      styleNeon: '霓虹赛博',
      styleAurora: '渐变空间舱',
      styleBlueprint: '蓝图',

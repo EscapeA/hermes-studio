@@ -1,4 +1,4 @@
-From 14cd8a5a340985a321b5615e5545984e21d828ae Mon Sep 17 00:00:00 2001
+From 10cea3b1bcc6723d3414edd113cc689a08968a79 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 20:14:05 +0800
 Subject: [PATCH] feat(chat): expandable detail for live running tool items
@@ -23,7 +23,7 @@ transcript).
  1 file changed, 137 insertions(+), 6 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 1e626cb5e..b691372e7 100644
+index 6555fd0b1..d0a5c09b5 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
 @@ -81,9 +81,50 @@ function isSubagentToolCall(message: Message): boolean {
@@ -79,7 +79,7 @@ index 1e626cb5e..b691372e7 100644
  }
  
  function formatElapsed(ms: number): string {
-@@ -926,15 +967,33 @@ defineExpose({
+@@ -925,15 +966,33 @@ defineExpose({
                v-for="tc in visibleToolCalls"
                :key="tc.id"
                class="tool-call-item"
@@ -116,7 +116,7 @@ index 1e626cb5e..b691372e7 100644
                  width="12"
                  height="12"
                  viewBox="0 0 24 24"
-@@ -949,7 +1008,7 @@ defineExpose({
+@@ -948,7 +1007,7 @@ defineExpose({
                </svg>
                <span class="tool-call-name">{{ tc.toolName }}</span>
                <span
@@ -125,7 +125,7 @@ index 1e626cb5e..b691372e7 100644
                  class="tool-call-preview"
                  :title="tc.toolPreview"
                >{{ toolPreviewText(tc.toolPreview) }}</span>
-@@ -999,6 +1058,15 @@ defineExpose({
+@@ -998,6 +1057,15 @@ defineExpose({
                    fill="none"
                  />
                </svg>
@@ -141,7 +141,7 @@ index 1e626cb5e..b691372e7 100644
              </div>
              <div
                v-if="visibleToolCalls.length === 0"
-@@ -2005,6 +2073,16 @@ defineExpose({
+@@ -2004,6 +2072,16 @@ defineExpose({
    background: rgba(0, 0, 0, 0.03);
    border-radius: $radius-sm;
  
@@ -158,7 +158,7 @@ index 1e626cb5e..b691372e7 100644
    &.subagent-entry {
      cursor: pointer;
  
-@@ -2019,6 +2097,20 @@ defineExpose({
+@@ -2018,6 +2096,20 @@ defineExpose({
      background: rgba(255, 255, 255, 0.06);
    }
  
@@ -179,7 +179,7 @@ index 1e626cb5e..b691372e7 100644
    &.compression-item {
      color: $text-muted;
      font-size: 10px;
-@@ -2032,6 +2124,16 @@ defineExpose({
+@@ -2031,6 +2123,16 @@ defineExpose({
      }
    }
  
@@ -196,7 +196,7 @@ index 1e626cb5e..b691372e7 100644
    .tool-call-icon {
      flex-shrink: 0;
      color: $text-muted;
-@@ -2057,6 +2159,35 @@ defineExpose({
+@@ -2056,6 +2158,35 @@ defineExpose({
      max-width: none;
      color: $text-muted;
    }

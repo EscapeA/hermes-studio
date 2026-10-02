@@ -1,4 +1,4 @@
-From aefe02a52278037436471a4948c3e8aa3474aa72 Mon Sep 17 00:00:00 2001
+From 1bba4c8cd6edf44633092083de5873f53d5b00e8 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 11:30:19 +0800
 Subject: [PATCH] feat(web): make theme styles table-driven and add neon,
@@ -354,10 +354,10 @@ index bad39e453..e3e01620e 100644
      customization,
      fontSize: computed(() => serverTheme.value.fontSize),
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 938809333..47c4ea1af 100644
+index ab84db635..a83be4d58 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -2159,6 +2159,12 @@ export default {
+@@ -2158,6 +2158,12 @@ export default {
      styleHint: 'اختر طابع الواجهة',
      styleInk: 'حبري',
      styleComic: 'كوميك',
@@ -371,10 +371,10 @@ index 938809333..47c4ea1af 100644
      fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',
      textColor: 'لون النص',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index c01ed82fa..fcb037a10 100644
+index c1f1ecdf0..8680d5e0a 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1962,6 +1962,12 @@ jobTriggered: 'Job ausgelost',
+@@ -1961,6 +1961,12 @@ jobTriggered: 'Job ausgelost',
      styleHint: 'Charakter der Oberfläche wählen',
      styleInk: 'Tusche',
      styleComic: 'Comic',
@@ -388,10 +388,10 @@ index c01ed82fa..fcb037a10 100644
      fontSizeHint: 'Grundgröße für Oberfläche und Unterhaltungen',
      textColor: 'Textfarbe',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index a749cd230..d0d39c1be 100644
+index 37ff7f4c4..372ee051d 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -2173,6 +2173,12 @@ export default {
+@@ -2172,6 +2172,12 @@ export default {
      styleHint: 'Choose the interface character',
      styleInk: 'Ink',
      styleComic: 'Comic',
@@ -405,10 +405,10 @@ index a749cd230..d0d39c1be 100644
      fontSizeHint: 'Base interface and conversation text size',
      textColor: 'Text color',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 593206288..45f467615 100644
+index 5d5cac776..f85cf507a 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1962,6 +1962,12 @@ jobTriggered: 'Job ejecutado',
+@@ -1961,6 +1961,12 @@ jobTriggered: 'Job ejecutado',
      styleHint: 'Elige el carácter de la interfaz',
      styleInk: 'Tinta',
      styleComic: 'Cómic',
@@ -422,10 +422,10 @@ index 593206288..45f467615 100644
      fontSizeHint: 'Tamaño base de la interfaz y las conversaciones',
      textColor: 'Color del texto',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 377391d7d..18bdbdc2a 100644
+index 06eff1cec..bd600b1de 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1962,6 +1962,12 @@ jobTriggered: 'Job declenche',
+@@ -1961,6 +1961,12 @@ jobTriggered: 'Job declenche',
      styleHint: 'Choisissez le caractère de l’interface',
      styleInk: 'Encre',
      styleComic: 'BD',
@@ -439,10 +439,10 @@ index 377391d7d..18bdbdc2a 100644
      fontSizeHint: 'Taille de base de l’interface et des conversations',
      textColor: 'Couleur du texte',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 613b87c14..7792bd6f5 100644
+index 85e01c85d..c001ebd94 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1962,6 +1962,12 @@ export default {
+@@ -1961,6 +1961,12 @@ export default {
      styleHint: '画面の雰囲気を選択',
      styleInk: '墨',
      styleComic: 'コミック',
@@ -456,10 +456,10 @@ index 613b87c14..7792bd6f5 100644
      fontSizeHint: '画面と会話テキストの基本サイズ',
      textColor: '文字色',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index a28298ac6..68bb0c771 100644
+index fb28d11ee..e62499c3a 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1962,6 +1962,12 @@ export default {
+@@ -1961,6 +1961,12 @@ export default {
      styleHint: '인터페이스 분위기 선택',
      styleInk: '수묵',
      styleComic: '코믹',
@@ -473,10 +473,10 @@ index a28298ac6..68bb0c771 100644
      fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',
      textColor: '텍스트 색상',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 091982f82..9eb98679b 100644
+index be3cc106b..d9223d662 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1962,6 +1962,12 @@ jobTriggered: 'Job acionado',
+@@ -1961,6 +1961,12 @@ jobTriggered: 'Job acionado',
      styleHint: 'Escolha o caráter da interface',
      styleInk: 'Tinta',
      styleComic: 'Quadrinhos',
@@ -490,10 +490,10 @@ index 091982f82..9eb98679b 100644
      fontSizeHint: 'Tamanho base da interface e das conversas',
      textColor: 'Cor do texto',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index a1790202c..c9c910ac6 100644
+index 65a2912f9..7f443aa6c 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1959,6 +1959,12 @@ export default {
+@@ -1958,6 +1958,12 @@ export default {
      styleHint: 'Выберите характер интерфейса',
      styleInk: 'Тушь',
      styleComic: 'Комикс',
@@ -507,10 +507,10 @@ index a1790202c..c9c910ac6 100644
      fontSizeHint: 'Базовый размер текста интерфейса и диалогов',
      textColor: 'Цвет текста',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index fb5f9b4a5..5d5cc7137 100644
+index 61057ac8d..ae1cbe085 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -2119,6 +2119,12 @@ export default {
+@@ -2118,6 +2118,12 @@ export default {
      styleHint: '選擇介面的視覺風格',
      styleInk: '水墨',
      styleComic: '漫畫',
@@ -524,10 +524,10 @@ index fb5f9b4a5..5d5cc7137 100644
      fontSizeHint: '介面與對話內容的基礎字級',
      textColor: '文字顏色',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 7b3cc657e..63c67ac38 100644
+index f0e9574ae..20486f2c7 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -2165,6 +2165,12 @@ export default {
+@@ -2164,6 +2164,12 @@ export default {
      styleHint: '选择界面的视觉风格',
      styleInk: '水墨',
      styleComic: '漫画',

@@ -1,4 +1,4 @@
-From 827b9df9432773ecbec3939131821f8d6ba99ef8 Mon Sep 17 00:00:00 2001
+From a5d37e68570fa04823afd735b3f6882f8877dedb Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 20:21:35 +0800
 Subject: [PATCH] fix(chat): stack tool strip toggle above tool list, drop
@@ -21,10 +21,10 @@ squeezed.
  1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index b691372e7..973e26713 100644
+index d0a5c09b5..9a5a8712e 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -1965,9 +1965,9 @@ defineExpose({
+@@ -1964,9 +1964,9 @@ defineExpose({
  
  .tool-calls-panel {
    display: flex;
@@ -36,7 +36,7 @@ index b691372e7..973e26713 100644
    align-items: stretch;
    gap: 4px;
    width: 520px;
-@@ -2037,6 +2037,7 @@ defineExpose({
+@@ -2036,6 +2036,7 @@ defineExpose({
  
  .tool-strip-body {
    display: flex;
