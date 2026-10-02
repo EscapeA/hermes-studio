@@ -980,10 +980,7 @@ export default {
   chat: {
     runUsageOutput: "出力 token",
     runUsageInput: "入力 token",
-    runUsageCacheRate: "キャッシュ命中率",
-    runUsageCacheRateHint: "キャッシュ読み取り token ÷ この実行の全入力 token（キャッシュの読み書きを含む）。",
     runUsageCache: "キャッシュヒット",
-    runUsageCost: "推定費用",
     runUsageSpeed: "Token 速度",
     runUsageSpeedHint: "実行の出力 token ÷ モデル要求の合計時間。最初の token の待機を含み、ツール実行を除きます。",
     runUsageAverageSpeed: "平均速度",
