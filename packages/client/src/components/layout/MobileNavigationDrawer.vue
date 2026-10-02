@@ -32,9 +32,12 @@ function toggleLabels() {
   }
 }
 
+/** The drawer column plus a ≥70px strip of mask that stays tappable on the right:
+ *  tapping that strip is the only close affordance now (the panel's × is gone), so
+ *  the width must leave enough mask visible to hit on a phone. */
 const drawerWidth = computed(() =>
   props.hasSidebar
-    ? `min(392px, calc(100vw - 24px))`
+    ? `min(320px, calc(100vw - 70px))`
     : `${labelsOpen.value ? RAIL_WIDTH.labeled : RAIL_WIDTH.collapsed}px`,
 )
 </script>
