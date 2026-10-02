@@ -979,10 +979,7 @@ export default {
   chat: {
     runUsageOutput: "Tokens de saída",
     runUsageInput: "Tokens de entrada",
-    runUsageCacheRate: "Taxa de cache",
-    runUsageCacheRateHint: "Tokens lidos do cache / todos os tokens de entrada da execução, incluindo leituras e gravações em cache.",
     runUsageCache: "Cache",
-    runUsageCost: "Custo estimado",
     runUsageSpeed: "Velocidade",
     runUsageSpeedHint: "Tokens de saída / tempo total das requisições ao modelo, incluindo a espera inicial e excluindo ferramentas.",
     runUsageAverageSpeed: "Velocidade média",
