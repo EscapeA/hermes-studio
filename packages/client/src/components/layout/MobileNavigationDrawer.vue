@@ -72,9 +72,17 @@ const drawerWidth = computed(() =>
   display: flex;
   height: 100%;
   min-height: 0;
-  background: $bg-sidebar-surface;
+  // Frosted drawer surface. This container is the only glass layer: the rail and
+  // the page column inside are transparent (below), because two translucent
+  // columns would double-tint the backdrop. Same recipe as the app's other glass
+  // sidebars so the strength follows the theme (`--glass-sidebar-bg`).
+  background-color: var(--glass-sidebar-bg);
+  -webkit-backdrop-filter: blur(12px) saturate(110%);
+  backdrop-filter: blur(12px) saturate(110%);
 
   :deep(.studio-navigation-rail) {
+    // Drop the rail's own opaque column so the container's glass shows through.
+    background-color: transparent;
     padding-top: var(--drawer-top-inset);
     padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
   }
@@ -113,6 +121,9 @@ const drawerWidth = computed(() =>
     border: 0;
     border-radius: 0;
     box-shadow: none;
+    // Transparent so the drawer's frosted surface (on the container) is the one
+    // visible layer instead of an opaque panel sitting on it.
+    background-color: transparent;
     transform: none;
     transition: none;
     opacity: 1;
@@ -127,5 +138,28 @@ const drawerWidth = computed(() =>
   :deep(.hermes-config-collapse),
   :deep(.ekko-config-collapse),
   :deep(.coding-agent-config-collapse) { display: none; }
+}
+</style>
+
+<!-- Unscoped on purpose: naive-ui renders the drawer root and its mask as siblings
+     outside this component's DOM subtree (the mask is not a descendant of the
+     root), so a scoped selector cannot reach either. `:has()` keeps the override
+     tied to THIS drawer — the app's other NDrawers (new chat, voice, kanban) keep
+     naive's defaults. -->
+<style lang="scss">
+.n-drawer-container:has(.studio-mobile-drawer) {
+  // naive's drawer paints the modal colour opaque; left in place it covers the
+  // frosted surface inside it.
+  .studio-mobile-drawer {
+    --n-color: transparent;
+    background-color: transparent;
+  }
+
+  // Lighter scrim than naive's 0.3: a heavy mask under a translucent panel reads
+  // as dirty grey, and the strip right of the drawer is the close target, so what
+  // shows through it stays legible.
+  > .n-drawer-mask {
+    background-color: rgba(0, 0, 0, 0.18);
+  }
 }
 </style>
