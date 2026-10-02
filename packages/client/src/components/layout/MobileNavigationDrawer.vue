@@ -12,8 +12,9 @@ const emit = defineEmits<{
 const { t } = useI18n()
 ||||||| constructed fake ancestor
 
-/** Rail widths — keep in sync with $rail-labeled-width in StudioNavigationRail.vue. */
-const RAIL_WIDTH = { collapsed: 64, labeled: 140 } as const
+/** Rail widths — keep in sync with $rail-labeled-width in StudioNavigationRail.vue
+ *  and $navigation-rail-width (styles/variables.scss) for the collapsed rail. */
+const RAIL_WIDTH = { collapsed: 52, labeled: 140 } as const
 const LABELS_STORAGE_KEY = 'hermes_mobile_drawer_labels'
 
 function storedLabelsOpen(): boolean {
