@@ -37,6 +37,18 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 25-0.7.25-adapt | 0.7.25 升级适配（搜索命中导航跳过 fast-first 预取；vitest 补 `@locales` 兜底别名；上游搜索导航/输入草稿套件适配 fork 行为） | 001-003 |
 | 26-0.7.26-nav-chrome | 0.7.26 导航外壳适配：rail 清掉已删功能入口（群聊/工作流/设备互联）并把首个条目改用现存 `sidebar.chat`；抽屉去掉自带的 40px 关闭行（恢复页面侧栏自带关闭键）+ `--drawer-top-inset` 统一顶部安全区；移动端侧栏头部内边距收紧；导航外壳纳入各风格材质层与自定义背景玻璃组 | 001-002 |
 | 27-0.7.26-mobile-nav-merge | 手机抽屉一级菜单合并（Aries 定稿）：rail 新增 `labeled`（图标+文字、140px）与 `withAppEntries`（AppSidebar 的 9 个应用级目的地）两个可选 prop，左下三条横线＝文字开关（localStorage 持久）；对应的应用级页面不再重复渲染同一份列表；桌面端不传 prop ⇒ 保持 64px 图标栏 | 001-002 |
+| 28-sidebar-drawer-ux | 侧边栏/抽屉四轮验收打磨：新建会话入口改通栏带文字行（有导航栏时不再重复渲染「历史」）；抽屉宽度 `min(320px, 100vw-70px)` + 去掉移动端 × 关闭键（点遮罩关闭）；抽屉玻璃面（容器 `--glass-sidebar-bg` + blur12、rail/页面列透明、naive 抽屉根透明、遮罩 0.3→0.18，非 scoped + `:has` 限定到本抽屉）；图标导航栏图标 22→18px、单项 44×44→36×36、栏宽 64→52 | 001-004 |
+
+**2026-10-02 新增 `28-sidebar-drawer-ux` 组（001-004，Aries 手机端逐轮验收，一条一补丁便于单独回滚）**：
+
+- **001 新建会话入口**：原来是 32×34、15px 图标、`#666`、无文字的小按钮，挤在搜索框右侧（Aries：「太小了，甚至注意不到」）→ 改为**通栏带文字行**，位置在搜索行**上方**，样式与其它条目**完全同款**（34px / 灰字 / 无填充，仅 hover 出 6% 底纹）。首版做成主色实心按钮被否，理由「风格不统一」——统一优先于强调。
+- **001 顺带**：导航栏一级已有「历史」⇒ 面板不再渲染同名行（`hasNavigationRail` 时隐藏，与既有的 Agent 管理/模型同规则），消除抽屉里两处「历史」；历史页那行是回「会话」的跳转（`active === 'history'` 分支），保留。
+- **002 抽屉宽度与关闭**：原 `min(392px, 100vw - 24px)` 在 390 视口只剩 **24px** 遮罩可点（实测点得中、但落在系统手势区，实际按不到）⇒ 只有点面板 × 才能关；改 `min(320px, 100vw - 70px)`（任何视口都留 ≥70px），并删掉移动端 × 关闭键（`ChatPanel`/`HistoryView` 各一处 + 两处因此变死的 CSS）。关闭改由点遮罩承担，CDP 真点实测：按下 + 抬起 ⇒ 抽屉宽度 0、遮罩消失；360 视口回落 290px（仍留 70px）。
+- **003 抽屉玻璃**：容器改 `var(--glass-sidebar-bg)` + `backdrop-filter: blur(12px) saturate(110%)`（复用带自定义背景时既有的玻璃配方，强度随主题走），rail 与页面列设 `transparent`（只留**一层**玻璃，两列各透一次会把背景叠浑）；naive 抽屉根自身的模态白底（`--n-color`）必须透明化，否则玻璃被它盖住；遮罩 0.3 → **0.18**（重遮罩 + 半透面板读起来发脏）。
+  naive 把抽屉根与遮罩渲染在**本组件子树之外**（两者是兄弟节点）⇒ 这段用**非 scoped 样式块 + `:has(.studio-mobile-drawer)`** 限定；实测其它 NDrawer（新建会话/语音/看板）遮罩仍是 naive 默认 0.3。
+  像素实测（同坐标）：抽屉内空白 **255 → 226**（背后内容确实透出）、遮罩区 **83 → 98**（遮罩确实减淡）。
+- **004 图标栏尺寸**：仅图标模式渲染 svg 写死的 **22px 属性**，而带文字模式是 CSS 强制 **18px** ⇒ 两模式不一致、仅图标偏大；统一 18px（CSS 覆盖属性），单项 44×44 → **36×36**，`$navigation-rail-width` 64 → **52**（`MobileNavigationDrawer` 的 `RAIL_WIDTH.collapsed` 同步，页头 `--studio-header-inset` 自动跟随）。实测：桌面 52 / 36×36 / 18；抽屉纯图标 52 / 36×36 / 18（面板得 268）；带文字模式仍 140 / 124×38、18px 图标，不受影响。
+- 验证：`vue-tsc -b`、`vite build` 通过；`tests/client` 相关 3 个套件 5 用例全绿；**verify-am 全串重放 101/101 落位、零冲突、与 custom 源码树 0 差异**。
 
 **2026-09-27 新增 `24-styles-and-motion` 组（001 源码、002 测试）**：风格补到 **9 套**，并给交互补上状态反馈与物理手感。
 
@@ -302,6 +314,7 @@ NODE_ENV= npm run build && git push --force-with-lease escapea custom
     - 桌面端零改动：App.vue 渲染 rail 时**不传**这两个 prop，实测 1280×800 仍 64px / 4 项 / 无文字 / 底部是设置链接。
     - 实测（390×844）：展开 rail 140px + 面板 226px、收起 64px + 302px、抽屉 366px、13 项全在一级；从抽屉点应用页会**自动关闭**抽屉。
     - 已知小瑕疵：英文界面下 `Agent Manager` / `Version Preview` 会截断（中文完整）；侧栏图文基线未验证过英文排版，需要时把 140px 再放宽。
+  - **追加 4（Aries 2026-10-02 验收）**：手机端四条侧边栏/抽屉打磨（新建会话入口、抽屉宽度与关闭、抽屉玻璃、图标栏尺寸），落为 **新补丁组 `28-sidebar-drawer-ux`**（001-004，一条一补丁）。要点与像素实测见上文该组段落；verify-am **101/101 落位、零冲突、0 差异**。
 - 2026-08-25 升级 v0.6.46 → v0.6.47（main 8dc6d193 = tag v0.6.47 + #2730 run-scoped-tool-calls 等，14+ PR：社交消息推送工作区 / 图片模型可配置 / App resume 缓存 / Codex&Claude system 合并 / 上传上限 HERMES_MAX_UPLOAD_SIZE / GLM-5.3 回滚等）：
   62 补丁重放冲突 2 个 + 构建期修复 1 个。
   - 007-conn-upload-405：chat.ts import 行冲突，HEAD 侧上游已加 `setSessionPushEnabled`、删 `fetchWorkspaceRunChangesForSession`（0.6.47 paginated/resume 响应自带 workspaceRunChanges）→ 取并集保留上游新增，删已无调用的 fetch import。
