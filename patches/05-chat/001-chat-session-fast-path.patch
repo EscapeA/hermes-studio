@@ -1,4 +1,4 @@
-From 64a88010202251a8f795c4578acd0506e46dfcfc Mon Sep 17 00:00:00 2001
+From a9c04262bee7576e1c8202343eed159b5aea6595 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 22:01:07 +0800
 Subject: [PATCH] =?UTF-8?q?feat(chat):=20fast-first=20session=20open=20?=
@@ -23,10 +23,10 @@ Content-Transfer-Encoding: 8bit
  1 file changed, 39 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 040c81995..06874b38a 100644
+index 1d1a33ccc..19a97e867 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -30,6 +30,11 @@ export type ContentBlock = ContentBlockImport
+@@ -31,6 +31,11 @@ export type ContentBlock = ContentBlockImport
  
  export const LIVE_CHAT_MESSAGE_PAGE_SIZE = 150
  export const LIVE_CHAT_MAX_LOADED_MESSAGES = 300
@@ -38,7 +38,7 @@ index 040c81995..06874b38a 100644
  const LEGACY_WORKSPACE_RUN_CHANGE_MESSAGE_PREFIX = 'workspace-run-change:'
  type ChatAgentId = 'hermes' | 'claude' | 'codex' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor' | 'ekko-agent'
  
-@@ -2184,8 +2189,15 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2208,8 +2213,15 @@ export const useChatStore = defineStore('chat', () => {
  
      let loaded = false
      try {
@@ -55,7 +55,7 @@ index 040c81995..06874b38a 100644
          const timeout = setTimeout(() => reject(new Error('resume timeout')), 15_000)
          resumeSession(sessionId, (data) => {
            clearTimeout(timeout)
-@@ -2246,6 +2258,7 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2270,6 +2282,7 @@ export const useChatStore = defineStore('chat', () => {
              target.messageTotal = data.messageTotal ?? target.messageCount ?? target.loadedMessageCount
              target.messageCount = target.messageTotal
              target.hasMoreBefore = data.hasMoreBefore ?? target.loadedMessageCount < target.messageTotal
@@ -63,7 +63,7 @@ index 040c81995..06874b38a 100644
            }
            if (!target.title) {
              const firstUser = target.messages.find(m => m.role === 'user')
-@@ -2336,6 +2349,31 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2360,6 +2373,31 @@ export const useChatStore = defineStore('chat', () => {
            resolve()
          }, activeSession.value?.profile, runtimeTransport())
        })

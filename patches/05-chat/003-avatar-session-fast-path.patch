@@ -1,4 +1,4 @@
-From bcd4d12e59e1953b4bbee60d98dbf930a6d29009 Mon Sep 17 00:00:00 2001
+From 05f7aaa4b536e26874c43f30e851882ee36a2a0d Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 01:53:06 +0800
 Subject: [PATCH] perf(web): strip avatar payloads and open last session first
@@ -168,10 +168,10 @@ index bae25a294..806f7ef8e 100644
            />
          </div>
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index bbe500b0d..5adb6e4d2 100644
+index fa970ce4d..b3c893b56 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -1960,10 +1960,20 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1984,10 +1984,20 @@ export const useChatStore = defineStore('chat', () => {
            : storedId && sessions.value.some(s => s.id === storedId)
              ? storedId
              : sessions.value[0]?.id
@@ -196,7 +196,7 @@ index bbe500b0d..5adb6e4d2 100644
        }
      } catch (err) {
        if (requestSequence === loadSessionsRequestSequence) {
-@@ -1977,6 +1987,19 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2001,6 +2011,19 @@ export const useChatStore = defineStore('chat', () => {
      }
    }
  
@@ -216,7 +216,7 @@ index bbe500b0d..5adb6e4d2 100644
    // Refresh ONLY the session list metadata (titles, ordering, new/removed
    // sessions) without switching the active session or reloading its messages.
    // Used for live sync so sessions created elsewhere (CLI, Telegram, another
-@@ -2179,11 +2202,23 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2203,11 +2226,23 @@ export const useChatStore = defineStore('chat', () => {
      setItemBestEffort(storageKey(), sessionId)
      const legacyActiveKey = legacyStorageKey()
      if (legacyActiveKey) removeItem(legacyActiveKey)
@@ -243,7 +243,7 @@ index bbe500b0d..5adb6e4d2 100644
      beginMessageLoad(sessionId, requestSequence)
      let backgroundPendingOnResume = 0
  
-@@ -5747,6 +5782,7 @@ export const useChatStore = defineStore('chat', () => {
+@@ -5797,6 +5832,7 @@ export const useChatStore = defineStore('chat', () => {
      loadSessions,
      refreshSessionListOnly,
      refreshActiveSession,
@@ -252,10 +252,10 @@ index bbe500b0d..5adb6e4d2 100644
      noteThinkingDelta,
      noteReasoningStart,
 diff --git a/packages/client/src/stores/hermes/group-chat.ts b/packages/client/src/stores/hermes/group-chat.ts
-index 5d179cbfa..d30d6d363 100644
+index bcdfb3efa..2ab20e0af 100644
 --- a/packages/client/src/stores/hermes/group-chat.ts
 +++ b/packages/client/src/stores/hermes/group-chat.ts
-@@ -950,7 +950,8 @@ export const useGroupChatStore = defineStore('groupChat', () => {
+@@ -951,7 +951,8 @@ export const useGroupChatStore = defineStore('groupChat', () => {
                  authUserId = user.id
                  userId.value = authenticatedGroupUserId(user.id)
                  if (!connectionName) userName.value = user.username
@@ -523,10 +523,10 @@ index ed9d2a1a2..07d1e42fd 100644
  authProtectedRoutes.delete('/api/auth/password', ctrl.removePassword)
  authProtectedRoutes.get('/api/auth/users', requireSuperAdmin, ctrl.listManagedUsers)
 diff --git a/tests/client/chat-store-compression-state.test.ts b/tests/client/chat-store-compression-state.test.ts
-index 17d49aad7..c49287e70 100644
+index 82a89811b..5aa29810f 100644
 --- a/tests/client/chat-store-compression-state.test.ts
 +++ b/tests/client/chat-store-compression-state.test.ts
-@@ -38,6 +38,7 @@ vi.mock('@/api/studio/sessions', () => ({
+@@ -39,6 +39,7 @@ vi.mock('@/api/studio/sessions', () => ({
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
    fetchSessions: vi.fn(),
@@ -535,10 +535,10 @@ index 17d49aad7..c49287e70 100644
    fetchWorkspaceRunChangeFile: vi.fn(async () => null),
    setSessionModel: vi.fn(),
 diff --git a/tests/client/chat-store-error-handling.test.ts b/tests/client/chat-store-error-handling.test.ts
-index 42be87993..bb03c25f4 100644
+index 161d4dcbb..ba2a00cba 100644
 --- a/tests/client/chat-store-error-handling.test.ts
 +++ b/tests/client/chat-store-error-handling.test.ts
-@@ -45,6 +45,7 @@ vi.mock('@/api/studio/sessions', () => ({
+@@ -46,6 +46,7 @@ vi.mock('@/api/studio/sessions', () => ({
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
    fetchSessions: vi.fn(),
@@ -547,10 +547,10 @@ index 42be87993..bb03c25f4 100644
    fetchWorkspaceRunChangeFile: vi.fn(async () => null),
    setSessionModel: vi.fn(),
 diff --git a/tests/client/chat-store-reasoning-effort.test.ts b/tests/client/chat-store-reasoning-effort.test.ts
-index b349d00cc..6636d753c 100644
+index e23c6349c..dd6a18b8d 100644
 --- a/tests/client/chat-store-reasoning-effort.test.ts
 +++ b/tests/client/chat-store-reasoning-effort.test.ts
-@@ -42,7 +42,8 @@ vi.mock('@/api/studio/sessions', () => ({
+@@ -43,7 +43,8 @@ vi.mock('@/api/studio/sessions', () => ({
    archiveSession: vi.fn(),
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
@@ -561,10 +561,10 @@ index b349d00cc..6636d753c 100644
    fetchWorkspaceRunChangeFile: vi.fn(async () => null),
    setSessionModel: sessionsApi.setSessionModel,
 diff --git a/tests/client/chat-store-session-command.test.ts b/tests/client/chat-store-session-command.test.ts
-index 7d37fa992..eca57191f 100644
+index 7522dc649..e8bec3822 100644
 --- a/tests/client/chat-store-session-command.test.ts
 +++ b/tests/client/chat-store-session-command.test.ts
-@@ -56,6 +56,7 @@ vi.mock('@/api/studio/sessions', () => ({
+@@ -57,6 +57,7 @@ vi.mock('@/api/studio/sessions', () => ({
    deleteSession: vi.fn(),
    fetchSession: vi.fn(),
    fetchSessions: vi.fn(),

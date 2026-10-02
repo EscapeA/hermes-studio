@@ -1,4 +1,4 @@
-From 3fb8bb5b0ec53b6fa1a6d4d536cd4842c1048d97 Mon Sep 17 00:00:00 2001
+From 4feebff40e13cf519dc7cb552e92a8b24c7f5872 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:29 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after group chat
@@ -28,23 +28,23 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  tests/client/group-agent-avatar.test.ts       |   53 -
  .../client/group-agent-presets-source.test.ts |   36 -
  tests/client/group-agent-presets.test.ts      |   37 -
- .../client/group-agent-run-tool-list.test.ts  |  181 --
+ .../client/group-agent-run-tool-list.test.ts  |  199 --
  .../client/group-chat-handoff-locales.test.ts |   16 -
  ...up-chat-handoff-presentation-model.test.ts |   61 -
  ...oup-chat-handoff-stop-presentation.test.ts |   51 -
  .../group-chat-history-entry-removal.test.ts  |   27 -
- .../client/group-chat-input-mentions.test.ts  |  501 -----
+ .../client/group-chat-input-mentions.test.ts  |  501 ----
  .../group-chat-invite-attachments.test.ts     |   72 -
  tests/client/group-chat-invite-code.test.ts   |   18 -
  .../client/group-chat-mention-options.test.ts |   48 -
- .../group-chat-panel-workspace-source.test.ts |  585 ------
+ .../group-chat-panel-workspace-source.test.ts |  585 -----
  tests/client/group-chat-remote-rooms.test.ts  |   74 -
  tests/client/group-chat-room-drafts.test.ts   |  104 -
- .../client/group-chat-store-baseline.test.ts  | 1456 -------------
- .../client/group-chat-store-streaming.test.ts | 1203 -----------
+ .../client/group-chat-store-baseline.test.ts  | 1471 ------------
+ .../client/group-chat-store-streaming.test.ts | 1203 ----------
  .../client/group-chat-store-workspace.test.ts |  131 --
  tests/client/group-chat-view-settings.test.ts |   65 -
- .../client/group-chat-workspace-diff.test.ts  |  416 ----
+ .../client/group-chat-workspace-diff.test.ts  |  449 ----
  .../group-message-item-highlight.test.ts      |  292 ---
  .../client/group-message-list-scroll.test.ts  |  315 ---
  tests/client/group-room-agent-avatar.test.ts  |  151 --
@@ -58,11 +58,11 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  tests/desktop/group-chat-agent-popup.test.ts  |   63 -
  tests/e2e/desktop-window-chrome.spec.ts       |    6 -
  tests/e2e/fixtures.ts                         |   10 -
- tests/e2e/group-chat-room-deeplink.spec.ts    | 1855 -----------------
- tests/e2e/group-chat-share.spec.ts            |  388 ----
+ tests/e2e/group-chat-room-deeplink.spec.ts    | 2051 -----------------
+ tests/e2e/group-chat-share.spec.ts            |  448 ----
  tests/e2e/history-session-deeplink.spec.ts    |   42 +-
  tests/e2e/theme.spec.ts                       |   18 -
- 48 files changed, 33 insertions(+), 8665 deletions(-)
+ 48 files changed, 33 insertions(+), 8987 deletions(-)
  delete mode 100644 tests/client/group-agent-avatar.test.ts
  delete mode 100644 tests/client/group-agent-presets-source.test.ts
  delete mode 100644 tests/client/group-agent-presets.test.ts
@@ -731,10 +731,10 @@ index 0a229e5f1..000000000
 -})
 diff --git a/tests/client/group-agent-run-tool-list.test.ts b/tests/client/group-agent-run-tool-list.test.ts
 deleted file mode 100644
-index 56df6b757..000000000
+index cad7ebf95..000000000
 --- a/tests/client/group-agent-run-tool-list.test.ts
 +++ /dev/null
-@@ -1,181 +0,0 @@
+@@ -1,199 +0,0 @@
 -// @vitest-environment jsdom
 -import { describe, expect, it, vi } from 'vitest'
 -import { mount } from '@vue/test-utils'
@@ -802,7 +802,7 @@ index 56df6b757..000000000
 -  props: {
 -    message: { type: Object, required: true },
 -  },
--  template: '<div class="message-stub" :data-message-id="message.id">{{ message.toolName || message.content }}</div>',
+-  template: '<div class="message-stub" :data-message-id="message.id">{{ message.toolName || message.content }}<slot name="before-workspace-changes" /></div>',
 -})
 -
 -function mountCard(message: ChatMessage) {
@@ -826,6 +826,24 @@ index 56df6b757..000000000
 -}
 -
 -describe('GroupAgentRunCard tool list', () => {
+-  it('shows one shared usage card inside the completed reply bubble without a blank transcript row', async () => {
+-    const usage = { runId: 'run-current', assistantMessageId: 'reply', inputTokens: 1200, outputTokens: 200,
+-      cacheReadTokens: 300, cacheHitRate: 0.25, costUsd: 0.0123, tokensPerSecond: 50, isEstimated: false }
+-    const items = [runItem({ id: 'reply', content: 'Done' }), runItem({ id: 'usage', runUsage: usage })]
+-    const wrapper = mountCard(runMessage(items, true))
+-    expect(wrapper.find('.run-usage-card').exists()).toBe(false)
+-    await wrapper.setProps({ message: runMessage(items, false) })
+-    expect(wrapper.findAll('.run-usage-card')).toHaveLength(1)
+-    expect(wrapper.findAll('.run-transcript-item')).toHaveLength(1)
+-    expect(wrapper.find('.run-card .run-transcript-item .run-usage-card').exists()).toBe(true)
+-    expect(wrapper.get('.run-usage-card').text()).toContain('25.0%')
+-    expect(wrapper.get('.run-usage-card').text()).toContain('$0.0123')
+-    expect(wrapper.get('.run-usage-card').text()).toContain('50.0 tok/s')
+-    await wrapper.setProps({ message: runMessage([items[1]], false) })
+-    expect(wrapper.findAll('.run-usage-card')).toHaveLength(1)
+-    expect(wrapper.find('.run-card .run-usage-only .run-usage-card').exists()).toBe(true)
+-    expect(wrapper.find('.run-transcript').exists()).toBe(false)
+-  })
 -  it('places the current Agent/Run tool calls newest-first before its transcript', () => {
 -    const wrapper = mountCard(runMessage([
 -      runItem({ id: 'current-tool-1', role: 'tool', toolName: 'read_file', toolStatus: 'done' }),
@@ -2542,10 +2560,10 @@ index ea4077d69..000000000
 -})
 diff --git a/tests/client/group-chat-store-baseline.test.ts b/tests/client/group-chat-store-baseline.test.ts
 deleted file mode 100644
-index 96f0959bd..000000000
+index e5e79dbad..000000000
 --- a/tests/client/group-chat-store-baseline.test.ts
 +++ /dev/null
-@@ -1,1456 +0,0 @@
+@@ -1,1471 +0,0 @@
 -// @vitest-environment jsdom
 -import { beforeEach, describe, expect, it, vi } from 'vitest'
 -import { createPinia, setActivePinia } from 'pinia'
@@ -2731,6 +2749,21 @@ index 96f0959bd..000000000
 -      return groupChatApiMock.socket
 -    })
 -    groupChatApiMock.socket.disconnect.mockClear()
+-  })
+-
+-  it('keeps group usage cards visible when tool traces are hidden and updates their existing identity', async () => {
+-    const store = await loadStore()
+-    await store.connect()
+-    store.currentRoomId = 'room-1'
+-    const usage = { runId: 'group-run', assistantMessageId: 'reply', inputTokens: 1200, outputTokens: 200,
+-      cacheReadTokens: 300, cacheHitRate: 0.25, costUsd: 0.0123, tokensPerSecond: 50, isEstimated: false }
+-    const message = { id: 'usage', roomId: 'room-1', senderId: 'agent-1', senderName: 'Worker', role: 'tool',
+-      tool_name: 'run_usage', tool_call_id: 'usage', run_id: 'group-run', timestamp: 2, content: JSON.stringify(usage) }
+-    emitSocket('message', message)
+-    expect(store.sortedMessages[0]).toMatchObject({ role: 'assistant', content: '', runUsage: { outputTokens: 200 } })
+-    emitSocket('message', { ...message, content: JSON.stringify({ ...usage, outputTokens: 250 }) })
+-    expect(store.sortedMessages).toHaveLength(1)
+-    expect(store.sortedMessages[0].runUsage?.outputTokens).toBe(250)
 -  })
 -
 -  it('connects with stored user data and registers realtime handlers', async () => {
@@ -5421,16 +5454,17 @@ index 39d7b8b87..000000000
 -})
 diff --git a/tests/client/group-chat-workspace-diff.test.ts b/tests/client/group-chat-workspace-diff.test.ts
 deleted file mode 100644
-index a41958009..000000000
+index 7b033687a..000000000
 --- a/tests/client/group-chat-workspace-diff.test.ts
 +++ /dev/null
-@@ -1,416 +0,0 @@
+@@ -1,449 +0,0 @@
 -// @vitest-environment jsdom
 -import { beforeEach, describe, expect, it, vi } from 'vitest'
 -import { mount } from '@vue/test-utils'
 -import { createPinia, setActivePinia } from 'pinia'
 -import GroupMessageItem from '@/components/hermes/group-chat/GroupMessageItem.vue'
 -import GroupMessageList from '@/components/hermes/group-chat/GroupMessageList.vue'
+-import GroupAgentRunCard from '@/components/hermes/group-chat/GroupAgentRunCard.vue'
 -import type { ChatMessage, GroupWorkspaceDiffPayload } from '@/api/studio/group-chat'
 -
 -const toolTraceVisibleState = vi.hoisted(() => ({ value: true }))
@@ -5625,6 +5659,38 @@ index a41958009..000000000
 -
 -    await wrapper.find('.tool-change-card-header').trigger('click')
 -    expect(wrapper.find('.tool-change-file-row').text()).toContain('a.ts')
+-  })
+-
+-  it('places one run usage card inside the exact reply bubble before its workspace diff', async () => {
+-    toolTraceVisibleState.value = false
+-    const { useGroupChatStore, groupAgentRunMessages } = await import('@/stores/hermes/group-chat')
+-    const store = useGroupChatStore()
+-    store.currentRoomId = 'room-1'
+-    store.messages = [
+-      { ...assistantMessage(), id: 'progress', run_id: 'group-run', content: 'Checking the files.' },
+-      { ...assistantMessage(), run_id: 'group-run', timestamp: 2 },
+-      workspaceDiffMessage({ run_id: 'group-run', timestamp: 3,
+-        content: JSON.stringify({ ...payload, run_id: 'group-run', parent_message_id: 'assistant-1' }) }),
+-      { ...assistantMessage(), id: 'usage', role: 'tool', tool_name: 'run_usage', run_id: 'group-run', timestamp: 4,
+-        content: JSON.stringify({ runId: 'group-run', assistantMessageId: 'assistant-1', inputTokens: 1200,
+-          outputTokens: 200, cacheReadTokens: 300, cacheHitRate: 0.25, costUsd: 0.0123, tokensPerSecond: 50, isEstimated: false }) },
+-    ]
+-    const wrapper = mount(GroupAgentRunCard, {
+-      props: {
+-        message: groupAgentRunMessages(store.sortedMessages)[0],
+-        agents: [{ id: 'a1', roomId: 'room-1', agentId: 'agent-1', profile: 'default', name: 'Worker', description: '', invited: 0 }],
+-        currentUserId: 'user-1',
+-      },
+-      global: { stubs: { MarkdownRenderer: true, ProfileAvatar: true, GroupAgentMessageAvatar: true } },
+-    })
+-    const bubble = wrapper.get('.run-card .run-transcript-item[data-message-id="assistant-1"] .msg-content')
+-    const usage = bubble.get('.run-usage-card')
+-    const diff = bubble.get('.assistant-workspace-change')
+-    expect(usage.element.compareDocumentPosition(diff.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+-    expect(wrapper.findAll('.run-usage-card')).toHaveLength(1)
+-    expect(wrapper.find('.run-transcript-item[data-message-id="progress"] .run-usage-card').exists()).toBe(false)
+-    expect(wrapper.find('.run-tools').exists()).toBe(false)
+-    wrapper.unmount()
 -  })
 -
 -  it('hides realtime workspace diffs until their parent assistant arrives', async () => {
@@ -7093,10 +7159,10 @@ index c46a3406f..62abc9e58 100644
        return
 diff --git a/tests/e2e/group-chat-room-deeplink.spec.ts b/tests/e2e/group-chat-room-deeplink.spec.ts
 deleted file mode 100644
-index 70b9e02fd..000000000
+index c38fbafc4..000000000
 --- a/tests/e2e/group-chat-room-deeplink.spec.ts
 +++ /dev/null
-@@ -1,1855 +0,0 @@
+@@ -1,2051 +0,0 @@
 -import { expect, test, type Page, type Route } from '@playwright/test'
 -import { authenticate, TEST_MODEL_GROUP } from './fixtures'
 -
@@ -7726,6 +7792,197 @@ index 70b9e02fd..000000000
 -  }
 -})
 -
+-for (const { label, platform, width } of [
+-  { label: 'browser', width: 1280 },
+-  { label: 'macOS', platform: 'darwin' as const, width: 1280 },
+-  { label: 'Windows', platform: 'win32' as const, width: 1280 },
+-  { label: 'mobile', width: 390 },
+-]) {
+-  test(`keeps the Agent drawer header above the application header on ${label}`, async ({ page }) => {
+-    await page.setViewportSize({ width, height: 844 })
+-    await setup(page, '/#/hermes/group-chat/room/room-alpha', platform)
+-
+-    for (const editing of [false, true]) {
+-      await page.locator(editing ? '.agent-avatar-rail-agent' : '.agent-avatar-rail-add').first().click()
+-      const drawer = page.locator('.n-drawer').filter({ hasText: editing ? 'Edit Worker' : 'Add Agent' })
+-      await expect(drawer).toBeVisible()
+-      await expect(drawer).toHaveCSS('width', `${width < 769 ? width : 520}px`)
+-      await expect(drawer).toHaveCSS('border-top-left-radius', '5px')
+-      for (const selector of ['.n-drawer-header__main', '.n-drawer-header__close']) {
+-        await expect.poll(() => drawer.locator(selector).evaluate(element => {
+-          const box = element.getBoundingClientRect()
+-          const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
+-          return hit !== null && element.contains(hit)
+-        })).toBe(true)
+-      }
+-
+-      await drawer.getByRole('button', { name: editing ? 'Manage presets' : 'Choose preset' }).click()
+-      const presetDialog = page.locator('.agent-preset-dialog')
+-      await expect(presetDialog).toBeVisible()
+-      await presetDialog.getByPlaceholder('Search presets').fill('Reviewer')
+-      await presetDialog.getByRole('button', { name: /Preset Reviewer/ }).click()
+-      await presetDialog.getByRole('button', { name: 'Cancel', exact: true }).click()
+-      await expect(presetDialog).toBeHidden()
+-      await expect(drawer).toBeVisible()
+-      await expect.poll(() => drawer.evaluate(element => Math.round(element.getBoundingClientRect().right))).toBe(width)
+-      if (!editing && label === 'browser') {
+-        await page.screenshot({ path: test.info().outputPath('agent-drawer-header.png'), animations: 'disabled' })
+-      }
+-      await drawer.locator('.n-drawer-header__close').click()
+-      await expect(drawer).toBeHidden()
+-    }
+-  })
+-}
+-
+-for (const editing of [false, true]) {
+-  for (const width of [1280, 390]) {
+-    test(`keeps the Agent drawer mounted when ${editing ? 'managing' : 'choosing'} presets at ${width}px`, async ({ page }) => {
+-      await page.setViewportSize({ width, height: 844 })
+-      await setup(page, '/#/hermes/group-chat/room/room-alpha')
+-      await page.locator(editing ? '.agent-avatar-rail-agent' : '.agent-avatar-rail-add').first().click()
+-      const drawer = page.locator('.n-drawer').filter({ hasText: editing ? 'Edit Worker' : 'Add Agent' })
+-      await expect(drawer).toBeVisible()
+-      await expect(drawer.locator('.agent-form-loading')).toBeHidden()
+-      const nameInput = drawer.getByPlaceholder('Custom name (leave empty to use profile name)')
+-      await nameInput.fill('Keep this draft')
+-      await drawer.evaluate(element => { (window as any).__PW_AGENT_DRAWER_NODE__ = element })
+-      const presetTrigger = drawer.getByRole('button', { name: editing ? 'Manage presets' : 'Choose preset' })
+-      await presetTrigger.click()
+-      const presetDialog = page.locator('.agent-preset-dialog')
+-      await expect(presetDialog).toBeVisible()
+-      expect(await drawer.evaluate(element => element === (window as any).__PW_AGENT_DRAWER_NODE__)).toBe(true)
+-
+-      const searchInput = presetDialog.getByPlaceholder('Search presets')
+-      await searchInput.fill('Reviewer')
+-      await expect(searchInput).toBeFocused()
+-      await page.keyboard.press('Tab')
+-      expect(await presetDialog.evaluate(element => element.contains(document.activeElement))).toBe(true)
+-      await page.keyboard.press('Escape')
+-      await expect(presetDialog).toBeHidden()
+-      await expect(drawer).toBeVisible()
+-      expect(await drawer.evaluate(element => element === (window as any).__PW_AGENT_DRAWER_NODE__)).toBe(true)
+-      await expect(nameInput).toHaveValue('Keep this draft')
+-      await expect(presetTrigger).toBeFocused()
+-
+-      await presetTrigger.click()
+-      await expect(presetDialog).toBeVisible()
+-      await presetDialog.getByRole('button', { name: 'Cancel', exact: true }).click()
+-      await expect(presetDialog).toBeHidden()
+-      expect(await drawer.evaluate(element => element === (window as any).__PW_AGENT_DRAWER_NODE__)).toBe(true)
+-      await expect(nameInput).toHaveValue('Keep this draft')
+-      await page.keyboard.press('Escape')
+-      await expect(drawer).toBeHidden()
+-    })
+-  }
+-}
+-
+-for (const endpoint of ['/api/hermes/profiles', '/api/hermes/available-models', '/api/agents/status']) {
+-  test(`opens the Agent drawer before ${endpoint} finishes and preserves a reopened edit`, async ({ page }) => {
+-    await setup(page, '/#/hermes/group-chat/room/room-alpha')
+-    await page.locator('.agent-avatar-rail-add').click()
+-    const addDrawer = page.locator('.n-drawer').filter({ hasText: 'Add Agent' })
+-    await expect(addDrawer).toBeVisible()
+-    await expect(addDrawer.locator('.agent-form-loading')).toBeHidden()
+-    await addDrawer.getByRole('button', { name: 'Cancel', exact: true }).click()
+-    await expect(addDrawer).toBeHidden()
+-    await page.clock.setFixedTime(Date.now() + 31_000)
+-
+-    let releaseRequest!: () => void
+-    const responseGate = new Promise<void>(resolve => { releaseRequest = resolve })
+-    let requests = 0
+-    await page.route(`**${endpoint}`, async route => {
+-      requests++
+-      await responseGate
+-      await route.fallback()
+-    })
+-    try {
+-      await page.locator('.agent-avatar-rail-add').click()
+-      await expect.poll(() => requests).toBe(1)
+-      await expect(addDrawer).toBeVisible({ timeout: 1000 })
+-      await expect(addDrawer.locator('.agent-form-loading')).toBeVisible()
+-      await expect(addDrawer.getByRole('button', { name: 'Add', exact: true })).toBeDisabled()
+-      await addDrawer.getByPlaceholder('Custom name (leave empty to use profile name)').fill('Draft while loading')
+-      if (endpoint === '/api/hermes/profiles') {
+-        await page.screenshot({ path: test.info().outputPath('agent-drawer-loading.png'), animations: 'disabled' })
+-      }
+-      await addDrawer.getByRole('button', { name: 'Cancel', exact: true }).click()
+-      await expect(addDrawer).toBeHidden()
+-
+-      await page.getByRole('button', { name: 'Worker', exact: true }).click()
+-      const editDrawer = page.locator('.n-drawer').filter({ hasText: 'Edit Worker' })
+-      await expect(editDrawer).toBeVisible({ timeout: 1000 })
+-      await expect(editDrawer.locator('.agent-form-loading')).toBeVisible()
+-      const nameInput = editDrawer.getByPlaceholder('Custom name (leave empty to use profile name)')
+-      await expect(nameInput).toHaveValue('Worker')
+-      await nameInput.fill('Edited while loading')
+-      releaseRequest()
+-      await expect(editDrawer.locator('.agent-form-loading')).toBeHidden()
+-      await expect(nameInput).toHaveValue('Edited while loading')
+-      await expect(editDrawer.getByRole('button', { name: 'Update', exact: true })).toBeEnabled()
+-      expect(requests).toBe(1)
+-      await editDrawer.locator('.n-drawer-header__close').click()
+-      await expect(editDrawer).toBeHidden()
+-      await expect(addDrawer).toBeHidden()
+-    } finally {
+-      releaseRequest()
+-    }
+-  })
+-}
+-
+-test('loads Agent presets only when the preset dialog is opened', async ({ page }) => {
+-  await setup(page, '/#/hermes/group-chat/room/room-alpha')
+-  let releaseRequest!: () => void
+-  const responseGate = new Promise<void>(resolve => { releaseRequest = resolve })
+-  let requests = 0
+-  await page.route('**/api/studio/group-chat/agent-presets', async route => {
+-    requests++
+-    await responseGate
+-    await route.fallback()
+-  })
+-  try {
+-    await page.locator('.agent-avatar-rail-add').click()
+-    const drawer = page.locator('.n-drawer').filter({ hasText: 'Add Agent' })
+-    await expect(drawer).toBeVisible({ timeout: 1000 })
+-    await expect(drawer.locator('.agent-form-loading')).toBeHidden()
+-    expect(requests).toBe(0)
+-    const nameInput = drawer.getByPlaceholder('Custom name (leave empty to use profile name)')
+-    await nameInput.fill('Draft Agent')
+-    await drawer.getByRole('button', { name: 'Choose preset' }).click()
+-    const presetDialog = page.locator('.agent-preset-dialog')
+-    await expect.poll(() => requests).toBe(1)
+-    await expect(presetDialog.getByText('Loading presets…', { exact: true })).toBeVisible()
+-    await presetDialog.getByRole('button', { name: 'Cancel', exact: true }).click()
+-    await expect(nameInput).toHaveValue('Draft Agent')
+-    await drawer.getByRole('button', { name: 'Choose preset' }).click()
+-    await expect(presetDialog.getByRole('button', { name: 'Apply', exact: true })).toBeDisabled()
+-    releaseRequest()
+-    await presetDialog.getByRole('button', { name: /Preset Reviewer/ }).click()
+-    await presetDialog.getByRole('button', { name: 'Apply', exact: true }).click()
+-    await expect(nameInput).toHaveValue('Preset Reviewer')
+-    expect(requests).toBe(1)
+-  } finally {
+-    releaseRequest()
+-  }
+-})
+-
+-test('keeps the Agent drawer closable when Agent status fails to load', async ({ page }) => {
+-  await setup(page, '/#/hermes/group-chat/room/room-alpha')
+-  await page.locator('.agent-avatar-rail-add').click()
+-  const drawer = page.locator('.n-drawer').filter({ hasText: 'Add Agent' })
+-  await expect(drawer).toBeVisible()
+-  await expect(drawer.locator('.agent-form-loading')).toBeHidden()
+-  await drawer.getByRole('button', { name: 'Cancel', exact: true }).click()
+-  await expect(drawer).toBeHidden()
+-  await page.route('**/api/agents/status', route => route.fulfill({ status: 500, json: { error: 'Status unavailable' } }))
+-  await page.locator('.agent-avatar-rail-add').click()
+-  await expect(drawer).toBeVisible()
+-  await expect(drawer.locator('.agent-form-loading')).toBeHidden()
+-  await expect(drawer.getByRole('button', { name: 'Add', exact: true })).toBeDisabled()
+-  await drawer.getByPlaceholder('Custom name (leave empty to use profile name)').fill('Draft Agent')
+-  await drawer.locator('.n-drawer-header__close').click()
+-  await expect(drawer).toBeHidden()
+-})
+-
 -test.describe('group chat room deep links', () => {
 -  // This file already covers multi-tab behavior explicitly; keeping the deep-link/socket fixture serial
 -  // avoids local fullyParallel races where early tests see the room list before route-room selection settles.
@@ -8299,7 +8556,10 @@ index 70b9e02fd..000000000
 -    await expect(folderButton).toHaveAttribute('title', '/tmp/alpha-new')
 -    await folderButton.click()
 -    await expect(pathInput).toHaveValue('/tmp/alpha-new')
+-    await expect(picker).toHaveCSS('transform', 'none')
+-    await expect(picker).toHaveCSS('width', '520px')
 -    await picker.getByRole('button', { name: 'Cancel', exact: true }).click()
+-    await expect(picker).toBeHidden()
 -
 -    const workspaceButton = toolbar.locator('.workspace-panel-toggle')
 -    const settingsButton = toolbar.locator('.compression-settings-button')
@@ -8371,6 +8631,7 @@ index 70b9e02fd..000000000
 -    const api = await setup(page, '/#/hermes/group-chat/room/room-alpha')
 -    await page.locator('.agent-avatar-rail-add').click()
 -    const modal = page.locator('.n-drawer').filter({ hasText: 'Add Agent' })
+-    await expect(modal.locator('.agent-form-loading')).toBeHidden()
 -    await modal.locator('.n-select').first().click()
 -    await page.getByText('DeepSeek Harness', { exact: true }).last().click()
 -    await expect(modal.locator('img[src="/coding-agents/deepseek.svg"]')).toBeVisible()
@@ -8948,16 +9209,17 @@ index 70b9e02fd..000000000
 -  await setup(page, '/#/hermes/group-chat/room/room-alpha')
 -  await page.locator('.agent-avatar-rail-add').click()
 -  const drawer = page.locator('.n-drawer').filter({ hasText: 'Add Agent' })
+-  await expect(drawer.locator('.agent-form-loading')).toBeHidden()
 -  await drawer.locator('.n-select').first().click()
 -  await expect.poll(async () => (await page.locator('.n-base-select-option__content:visible').allTextContents())
 -    .map(label => label.split(' · ')[0])).toEqual(['Hermes', 'Ekko', 'Claude', 'Codex', 'Pi', 'Grok', 'OpenCode', 'DeepSeek Harness', 'Cursor'])
 -})
 diff --git a/tests/e2e/group-chat-share.spec.ts b/tests/e2e/group-chat-share.spec.ts
 deleted file mode 100644
-index a86c64d75..000000000
+index 83cd30f88..000000000
 --- a/tests/e2e/group-chat-share.spec.ts
 +++ /dev/null
-@@ -1,388 +0,0 @@
+@@ -1,448 +0,0 @@
 -import { expect, test, type Page, type Route } from '@playwright/test'
 -
 -const sharedRoom = {
@@ -9295,6 +9557,66 @@ index a86c64d75..000000000
 -      { id: 'b', step: 'Verify results', status: 'pending' }] }),
 -})
 -
+-const groupUsage = (agent = 'worker', outputTokens: number | null = 200) => ({
+-  id: `usage-${agent}`, roomId: 'room-shared', senderId: `agent-${agent}`, senderName: agent,
+-  role: 'tool', tool_name: 'run_usage', tool_call_id: `usage-${agent}`, run_id: 'shared-run', timestamp: 4,
+-  content: JSON.stringify({ runId: 'shared-run', assistantMessageId: 'shared-message-2', inputTokens: 1200,
+-    outputTokens, cacheReadTokens: 300, cacheHitRate: 0.25, costUsd: 0.0123, tokensPerSecond: 50,
+-    speedSource: 'model', isEstimated: false }),
+-})
+-
+-const usageWorkspaceDiff = {
+-  id: 'usage-diff', roomId: 'room-shared', senderId: 'agent-worker', senderName: 'Worker',
+-  role: 'tool', tool_name: 'workspace_diff', tool_call_id: 'workspace_diff:shared-run', run_id: 'shared-run', timestamp: 4,
+-  content: JSON.stringify({ kind: 'workspace_diff', version: 1, room_id: 'room-shared', session_id: 'session-worker',
+-    run_id: 'shared-run', parent_message_id: 'shared-message-2', status: 'completed', change_id: 'usage-change',
+-    workspace_basename: 'studio', files_changed: 1, additions: 2, deletions: 1, truncated: false,
+-    files: [{ id: 1, path: 'src/chat.ts', change_type: 'modified', additions: 2, deletions: 1,
+-      patch: 'diff --git a/src/chat.ts b/src/chat.ts\n-old\n+new\n', binary: false, truncated: false }] }),
+-}
+-
+-for (const theme of ['light', 'dark']) {
+-  test(`group usage cards restore and update independently in ${theme} mode`, async ({ page }) => {
+-    await page.addInitScript(theme => {
+-      localStorage.setItem('hermes_brightness', theme)
+-      localStorage.setItem('hermes_show_tool_calls', 'false')
+-    }, theme)
+-    await mockInviteSocket(page, null, 'Task output', false, [groupUsage(), usageWorkspaceDiff])
+-    await mockInviteApi(page)
+-    await page.goto('/#/share/group-chat/ROOM1')
+-    await page.locator('#group-chat-guest-name input').fill('Visitor')
+-    await page.getByRole('button', { name: 'Enter room' }).click()
+-    const cards = page.locator('.run-usage-card')
+-    const worker = page.locator('.group-agent-run').filter({ hasText: 'Task output' })
+-    await expect(cards).toHaveCount(1)
+-    await expect(cards).toContainText('1,200')
+-    await expect(cards).toContainText('25.0%')
+-    await expect(cards).toContainText('$0.0123')
+-    await expect(cards).toContainText('50.0 tok/s')
+-    await expect(worker.locator('.run-transcript-item')).toHaveCount(1)
+-    await expect(worker.locator('.run-tools')).toHaveCount(0)
+-    await expect(worker.locator('.run-card .msg-content .run-usage-card')).toHaveCount(1)
+-    await expect(worker.locator('.run-card .msg-content .assistant-workspace-change')).toHaveCount(1)
+-    await expect.poll(() => worker.locator('.run-usage-card').evaluate(element =>
+-      element.nextElementSibling?.classList.contains('assistant-workspace-change'))).toBe(true)
+-    await page.evaluate(message => (window as any).__PW_SHARED_GROUP_SOCKET__.socket.__trigger('message', message), groupUsage('worker', 250))
+-    await expect(worker.locator('.run-usage-card .run-usage-value').first()).toHaveText('250')
+-    await page.evaluate(message => (window as any).__PW_SHARED_GROUP_SOCKET__.socket.__trigger('message', message), groupUsage('reviewer', null))
+-    await expect(cards).toHaveCount(2)
+-    await expect(page.locator('.group-agent-run').filter({ hasText: 'reviewer' }).locator('.run-usage-value').first()).toHaveText('—')
+-    for (const width of [1440, 390, 320]) {
+-      await page.setViewportSize({ width, height: 900 })
+-      await expect.poll(() => cards.evaluateAll(elements => elements.every(element => element.scrollWidth <= element.clientWidth))).toBe(true)
+-      if (width === 390) await worker.locator('.run-column').screenshot({ path: `/tmp/studio-group-token-card-${theme}.png` })
+-    }
+-    await page.reload()
+-    await page.locator('#group-chat-guest-name input').fill('Visitor')
+-    await page.getByRole('button', { name: 'Enter room' }).click()
+-    await expect(cards).toHaveCount(1)
+-    await expect(cards.locator('.run-usage-value').first()).toHaveText('200')
+-  })
+-}
+-
 -test('group task cards survive history reload and live stale updates with tool traces hidden', async ({ page }) => {
 -  await page.addInitScript(() => localStorage.setItem('hermes_show_tool_calls', 'false'))
 -  await mockInviteSocket(page, null, 'Task output', false, [groupPlan(2)])
@@ -9347,7 +9669,7 @@ index a86c64d75..000000000
 -  await expect(cards).toContainText('1/2 completed')
 -})
 diff --git a/tests/e2e/history-session-deeplink.spec.ts b/tests/e2e/history-session-deeplink.spec.ts
-index 5602bf295..b3bcff329 100644
+index f188df703..8f418c99b 100644
 --- a/tests/e2e/history-session-deeplink.spec.ts
 +++ b/tests/e2e/history-session-deeplink.spec.ts
 @@ -132,12 +132,7 @@ function detailFor(id: string, sessions = historySessions) {

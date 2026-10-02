@@ -1,4 +1,4 @@
-From b7f01d6b973d1f0e648c95cd9ebb3fcc522a09c3 Mon Sep 17 00:00:00 2001
+From 4e7465219d9b5ef1ec4c7bd9cce6424e275758d5 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 18:28:26 +0800
 Subject: [PATCH] feat(chat): dual-select session model picker and mobile
@@ -35,7 +35,7 @@ index 0cfc54940..8df94af05 100644
  
    .input-settings-button {
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index a067efb2a..d1406b159 100644
+index 1b1b64de9..375fe5e6b 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
 @@ -68,7 +68,6 @@ import PageSidebarNav from "@/components/layout/PageSidebarNav.vue";
@@ -203,7 +203,7 @@ index a067efb2a..d1406b159 100644
    await selectSessionModel(model, provider);
  }
  </script>
-@@ -2725,152 +2742,74 @@ async function handleSessionModelCustomSubmit() {
+@@ -2724,152 +2741,74 @@ async function handleSessionModelCustomSubmit() {
        v-model:show="showSessionModelModal"
        preset="card"
        :title="t('chat.setModelTitle')"
@@ -410,7 +410,7 @@ index a067efb2a..d1406b159 100644
            </div>
          </div>
        </NSpin>
-@@ -3407,187 +3346,30 @@ async function handleSessionModelCustomSubmit() {
+@@ -3406,187 +3345,30 @@ async function handleSessionModelCustomSubmit() {
    background-color: $bg-card;
  }
  
@@ -607,7 +607,7 @@ index a067efb2a..d1406b159 100644
    padding-top: 12px;
    border-top: 1px solid $border-color;
  }
-@@ -3597,11 +3379,6 @@ async function handleSessionModelCustomSubmit() {
+@@ -3596,11 +3378,6 @@ async function handleSessionModelCustomSubmit() {
    gap: 8px;
  }
  
@@ -619,7 +619,7 @@ index a067efb2a..d1406b159 100644
  .session-model-custom-input {
    flex: 1;
  }
-@@ -3612,6 +3389,13 @@ async function handleSessionModelCustomSubmit() {
+@@ -3611,6 +3388,13 @@ async function handleSessionModelCustomSubmit() {
    color: $text-muted;
  }
  
@@ -633,7 +633,7 @@ index a067efb2a..d1406b159 100644
  .session-list {
    width: $sidebar-width;
    min-height: 0;
-@@ -3643,14 +3427,17 @@ async function handleSessionModelCustomSubmit() {
+@@ -3642,14 +3426,17 @@ async function handleSessionModelCustomSubmit() {
    }
  
    @media (max-width: $breakpoint-mobile) {
@@ -652,7 +652,7 @@ index a067efb2a..d1406b159 100644
  
      &.collapsed {
        transform: translateX(-100%);
-@@ -3661,10 +3448,10 @@ async function handleSessionModelCustomSubmit() {
+@@ -3660,10 +3447,10 @@ async function handleSessionModelCustomSubmit() {
  
  @media (max-width: $breakpoint-mobile) {
    .session-backdrop {

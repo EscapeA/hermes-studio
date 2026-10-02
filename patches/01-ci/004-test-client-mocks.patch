@@ -1,4 +1,4 @@
-From 5204770f26a3fb97664a2a0f73235fd4a9864826 Mon Sep 17 00:00:00 2001
+From 579c46247892cb1bd71f3085c9afc5d9816ce6b7 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 7 Jul 2026 10:47:15 +0800
 Subject: [PATCH] test: add getBaseUrlValue mock to all @/api/client test mocks
@@ -41,10 +41,10 @@ index c1807eec2..861010b6c 100644
  import { useAppStore } from '@/stores/hermes/app'
  
 diff --git a/tests/client/chat-store-compression-state.test.ts b/tests/client/chat-store-compression-state.test.ts
-index 8c20afd4b..17d49aad7 100644
+index 2f9346e81..82a89811b 100644
 --- a/tests/client/chat-store-compression-state.test.ts
 +++ b/tests/client/chat-store-compression-state.test.ts
-@@ -28,6 +28,7 @@ vi.mock('@/api/studio/chat', () => ({
+@@ -29,6 +29,7 @@ vi.mock('@/api/studio/chat', () => ({
  }))
  
  vi.mock('@/api/client', () => ({
@@ -53,10 +53,10 @@ index 8c20afd4b..17d49aad7 100644
    hasApiKey: () => false,
  }))
 diff --git a/tests/client/chat-store-error-handling.test.ts b/tests/client/chat-store-error-handling.test.ts
-index 2dae304e0..42be87993 100644
+index a78f51e16..161d4dcbb 100644
 --- a/tests/client/chat-store-error-handling.test.ts
 +++ b/tests/client/chat-store-error-handling.test.ts
-@@ -35,6 +35,7 @@ vi.mock('@/api/studio/chat', () => ({
+@@ -36,6 +36,7 @@ vi.mock('@/api/studio/chat', () => ({
  }))
  
  vi.mock('@/api/client', () => ({
@@ -65,10 +65,10 @@ index 2dae304e0..42be87993 100644
    hasApiKey: () => false,
  }))
 diff --git a/tests/client/chat-store-reasoning-effort.test.ts b/tests/client/chat-store-reasoning-effort.test.ts
-index 51ac232cb..b349d00cc 100644
+index ad16a6252..e23c6349c 100644
 --- a/tests/client/chat-store-reasoning-effort.test.ts
 +++ b/tests/client/chat-store-reasoning-effort.test.ts
-@@ -33,6 +33,7 @@ vi.mock('@/api/studio/chat', () => ({
+@@ -34,6 +34,7 @@ vi.mock('@/api/studio/chat', () => ({
  }))
  
  vi.mock('@/api/client', () => ({
@@ -77,10 +77,10 @@ index 51ac232cb..b349d00cc 100644
    hasApiKey: () => false,
  }))
 diff --git a/tests/client/chat-store-reasoning-tool-boundary.test.ts b/tests/client/chat-store-reasoning-tool-boundary.test.ts
-index 735746375..172a5e219 100644
+index 0679d0139..bb08a6e18 100644
 --- a/tests/client/chat-store-reasoning-tool-boundary.test.ts
 +++ b/tests/client/chat-store-reasoning-tool-boundary.test.ts
-@@ -30,6 +30,7 @@ vi.mock('@/api/studio/chat', () => ({
+@@ -31,6 +31,7 @@ vi.mock('@/api/studio/chat', () => ({
  }))
  
  vi.mock('@/api/client', () => ({
@@ -89,10 +89,10 @@ index 735746375..172a5e219 100644
    hasApiKey: () => false,
  }))
 diff --git a/tests/client/chat-store-session-command.test.ts b/tests/client/chat-store-session-command.test.ts
-index fdc73f969..7d37fa992 100644
+index 3eab8b1ef..7522dc649 100644
 --- a/tests/client/chat-store-session-command.test.ts
 +++ b/tests/client/chat-store-session-command.test.ts
-@@ -46,6 +46,7 @@ vi.mock('@/api/studio/chat', () => ({
+@@ -47,6 +47,7 @@ vi.mock('@/api/studio/chat', () => ({
  }))
  
  vi.mock('@/api/client', () => ({
@@ -101,10 +101,10 @@ index fdc73f969..7d37fa992 100644
    hasApiKey: () => false,
  }))
 diff --git a/tests/client/chat-store-session-order.test.ts b/tests/client/chat-store-session-order.test.ts
-index bf764fb48..77345b1a5 100644
+index f6677be8e..125d28498 100644
 --- a/tests/client/chat-store-session-order.test.ts
 +++ b/tests/client/chat-store-session-order.test.ts
-@@ -33,6 +33,7 @@ vi.mock('@/api/studio/chat', () => ({
+@@ -34,6 +34,7 @@ vi.mock('@/api/studio/chat', () => ({
  }))
  
  vi.mock('@/api/client', () => ({
@@ -113,10 +113,10 @@ index bf764fb48..77345b1a5 100644
    hasApiKey: () => false,
  }))
 diff --git a/tests/client/chat-view-tab-title.test.ts b/tests/client/chat-view-tab-title.test.ts
-index 2a4f51341..b5ae623ea 100644
+index f3c48237e..391ba44c3 100644
 --- a/tests/client/chat-view-tab-title.test.ts
 +++ b/tests/client/chat-view-tab-title.test.ts
-@@ -59,6 +59,7 @@ vi.mock('@/api/studio/sessions', () => ({
+@@ -60,6 +60,7 @@ vi.mock('@/api/studio/sessions', () => ({
  }))
  
  vi.mock('@/api/client', () => ({
@@ -161,7 +161,7 @@ index 334d0d32e..70f32b9de 100644
  }))
  
 diff --git a/tests/client/group-chat-store-baseline.test.ts b/tests/client/group-chat-store-baseline.test.ts
-index 4e1ce3a76..96f0959bd 100644
+index df175356b..e5e79dbad 100644
 --- a/tests/client/group-chat-store-baseline.test.ts
 +++ b/tests/client/group-chat-store-baseline.test.ts
 @@ -63,6 +63,7 @@ const groupChatApiMock = vi.hoisted(() => {

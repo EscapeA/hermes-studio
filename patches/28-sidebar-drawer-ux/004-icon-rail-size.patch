@@ -1,4 +1,4 @@
-From 1b383428f740a49b57f31127841710c45d1f851d Mon Sep 17 00:00:00 2001
+From ca23326f3dedafedd36806f7379dffcdca8b09c4 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 2 Oct 2026 12:40:05 +0800
 Subject: [PATCH] refactor(nav): icon rail shrinks to the labelled glyph size
@@ -14,7 +14,7 @@ RAIL_WIDTH collapses with it).
  3 files changed, 17 insertions(+), 9 deletions(-)
 
 diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
-index a6b81ccb0..82207e0c5 100644
+index a6d4752e9..a1e6608f3 100644
 --- a/packages/client/src/components/layout/MobileNavigationDrawer.vue
 +++ b/packages/client/src/components/layout/MobileNavigationDrawer.vue
 @@ -9,8 +9,9 @@ const emit = defineEmits<{
@@ -87,10 +87,10 @@ index 1b6d53878..b0980e9dc 100644
  .studio-navigation-rail--labeled {
    flex: 0 0 $rail-labeled-width;
 diff --git a/packages/client/src/styles/variables.scss b/packages/client/src/styles/variables.scss
-index ad61176d8..f9f50f575 100644
+index f8e3f233a..80d3be1d6 100644
 --- a/packages/client/src/styles/variables.scss
 +++ b/packages/client/src/styles/variables.scss
-@@ -844,7 +844,7 @@ $font-ui: var(--font-ui, 'Inter', system-ui, -apple-system, sans-serif);
+@@ -846,7 +846,7 @@ $font-ui: var(--font-ui, 'Inter', system-ui, -apple-system, sans-serif);
  $font-code: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
  
  // Layout

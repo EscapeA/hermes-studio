@@ -1,4 +1,4 @@
-From d1dc9a90b7ab0299d1dfac37e95ad9bac3ef688a Mon Sep 17 00:00:00 2001
+From c5a36a2e0b96f8ec633cf2766f7d8aa9c490aa30 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 08:47:48 +0800
 Subject: [PATCH] fix(chat-run): accept first message with attachments in a
@@ -11,10 +11,10 @@ Upstream #3144 added a session-upload guard to the run handler that required the
  2 files changed, 53 insertions(+)
 
 diff --git a/packages/server/src/modules/studio/sockets/chat-run.ts b/packages/server/src/modules/studio/sockets/chat-run.ts
-index 88f93cb33..63198014b 100644
+index fbe3eac76..7d51b4973 100644
 --- a/packages/server/src/modules/studio/sockets/chat-run.ts
 +++ b/packages/server/src/modules/studio/sockets/chat-run.ts
-@@ -953,6 +953,7 @@ export class ChatRunSocket {
+@@ -989,6 +989,7 @@ export class ChatRunSocket {
            await recordSessionUploadAttachments(data.session_id, runProfile, data.input, { allowPendingSession: true })
          }
        } catch (err) {
@@ -23,7 +23,7 @@ index 88f93cb33..63198014b 100644
            event: 'run.failed',
            session_id: data.session_id,
 diff --git a/tests/server/chat-run-bridge-readiness.test.ts b/tests/server/chat-run-bridge-readiness.test.ts
-index 943c6e0f9..60bda6e28 100644
+index 4c90707bd..58dc438c7 100644
 --- a/tests/server/chat-run-bridge-readiness.test.ts
 +++ b/tests/server/chat-run-bridge-readiness.test.ts
 @@ -480,6 +480,58 @@ describe('ChatRunSocket bridge readiness gating', () => {

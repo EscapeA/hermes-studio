@@ -1,4 +1,4 @@
-From fd2645556dd7ce658b03b8bc3aed05f1072d4b3e Mon Sep 17 00:00:00 2001
+From e1df8b4c3825df9ee769b73d3553b477911d91cb Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 23:12:24 +0800
 Subject: [PATCH] fix(chat): restore profile avatar for regular sessions in
@@ -14,10 +14,10 @@ the runtime agent icon. Update pi-chat-avatar source assertions.
  2 files changed, 34 insertions(+), 5 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
-index 0eb5244d0..805da64f8 100644
+index d17401855..642bb804b 100644
 --- a/packages/client/src/components/hermes/chat/MessageItem.vue
 +++ b/packages/client/src/components/hermes/chat/MessageItem.vue
-@@ -15,6 +15,8 @@ import { useChatStore } from "@/stores/hermes/chat";
+@@ -16,6 +16,8 @@ import { useChatStore } from "@/stores/hermes/chat";
  import { useFilesStore } from "@/stores/hermes/files";
  import { useToolPanelStore } from "@/stores/hermes/tool-panel";
  import { useSettingsStore } from "@/stores/hermes/settings";
@@ -26,7 +26,7 @@ index 0eb5244d0..805da64f8 100644
  import { chatSessionAgentAvatar, type ChatAgentAvatar } from "@/utils/chat-agent-avatar";
  import TaskPlanCard from './TaskPlanCard.vue';
  import ToolChangeCard from "./ToolChangeCard.vue";
-@@ -34,7 +36,6 @@ import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subag
+@@ -35,7 +37,6 @@ import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subag
  import type { WorkspaceRunChangeSummary } from "@/api/studio/sessions";
  import { isServerTtsProvider } from "@/api/studio/tts";
  import type { ProfileAvatar as ProfileAvatarData } from "@/api/hermes/profiles";
@@ -34,7 +34,7 @@ index 0eb5244d0..805da64f8 100644
  import ImagePreviewOverlay from "./ImagePreviewOverlay.vue";
  import MarkdownRenderer from "./MarkdownRenderer.vue";
  
-@@ -236,8 +237,19 @@ const chatStore = useChatStore();
+@@ -237,8 +238,19 @@ const chatStore = useChatStore();
  const filesStore = useFilesStore();
  const toolPanelStore = useToolPanelStore();
  const settingsStore = useSettingsStore();
@@ -54,7 +54,7 @@ index 0eb5244d0..805da64f8 100644
  const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
  
  // Copy entire bubble content
-@@ -1034,6 +1046,20 @@ onBeforeUnmount(() => {
+@@ -1035,6 +1047,20 @@ onBeforeUnmount(() => {
      </template>
      <template v-else>
        <div class="msg-body">

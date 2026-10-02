@@ -1,4 +1,4 @@
-From 34f4dbbbdf76aa0b2ea38a8b23866e7db995ac0c Mon Sep 17 00:00:00 2001
+From 38254292a8b3becc3e60faa8378e178015b9ee67 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Mon, 28 Sep 2026 23:07:20 +0800
 Subject: [PATCH] test(client): adapt two upstream suites to the fork's
@@ -39,10 +39,10 @@ index 29fd7f612..539e8528e 100644
  
    it.each(['cursor', 'codex', 'claude-code', 'pi', 'grok', 'opencode', 'dsh'])('shows only this session cumulative usage for %s', async agent => {
 diff --git a/tests/client/chat-store-search-navigation.test.ts b/tests/client/chat-store-search-navigation.test.ts
-index 5a0c1cd56..9143dd4d7 100644
+index 5d447343f..fd25155bc 100644
 --- a/tests/client/chat-store-search-navigation.test.ts
 +++ b/tests/client/chat-store-search-navigation.test.ts
-@@ -143,7 +143,9 @@ describe('search message navigation', () => {
+@@ -144,7 +144,9 @@ describe('search message navigation', () => {
      await expect(pending).resolves.toBe(false)
      expect(store.activeSessionId).toBe('other')
      expect(store.focusMessageId).toBeNull()

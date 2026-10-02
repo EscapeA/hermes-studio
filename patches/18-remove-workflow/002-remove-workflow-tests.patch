@@ -1,4 +1,4 @@
-From 540a61fb74727f8d0e4a5ec923db3a69c8a38243 Mon Sep 17 00:00:00 2001
+From b1d969f9dd7cf99514cb001414a68d65b24beb54 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
@@ -42,8 +42,8 @@ Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
  tests/e2e/desktop-window-chrome.spec.ts       |   10 -
  tests/e2e/fixtures.ts                         |  126 +-
  tests/e2e/workflow-cursor-mode.spec.ts        |   62 -
- tests/e2e/workflow-ui.spec.ts                 | 1613 -----------------
- 29 files changed, 15 insertions(+), 3625 deletions(-)
+ tests/e2e/workflow-ui.spec.ts                 | 1618 -----------------
+ 29 files changed, 15 insertions(+), 3630 deletions(-)
  delete mode 100644 tests/client/workflow-approval-key.test.ts
  delete mode 100644 tests/client/workflow-canvas.test.ts
  delete mode 100644 tests/client/workflow-edge-authoring.test.ts
@@ -486,7 +486,7 @@ index b6fad18e2..d03b125e3 100644
 -  })
  })
 diff --git a/tests/client/style-system.test.ts b/tests/client/style-system.test.ts
-index 4b6954369..b9538a455 100644
+index 0e5c3fca0..0308de1c2 100644
 --- a/tests/client/style-system.test.ts
 +++ b/tests/client/style-system.test.ts
 @@ -47,14 +47,10 @@ describe('client style system', () => {
@@ -2424,10 +2424,10 @@ index a5bbb103b..000000000
 -}
 diff --git a/tests/e2e/workflow-ui.spec.ts b/tests/e2e/workflow-ui.spec.ts
 deleted file mode 100644
-index e79d7354c..000000000
+index 1850cd5da..000000000
 --- a/tests/e2e/workflow-ui.spec.ts
 +++ /dev/null
-@@ -1,1613 +0,0 @@
+@@ -1,1618 +0,0 @@
 -import { readFile } from 'fs/promises'
 -import { expect, test, type Locator, type Page } from '@playwright/test'
 -import { authenticate, mockChatSocket, mockHermesApi, TEST_ACCESS_KEY, TEST_MODEL_GROUP } from './fixtures'
@@ -3684,7 +3684,12 @@ index e79d7354c..000000000
 -  await expect(workspaceButton).toHaveAttribute('title', '/tmp/mobile-workspace')
 -  await expect(page.locator('.workspace-badge')).toHaveCount(0)
 -  await workspaceButton.click()
--  await expect(page.getByRole('dialog')).toBeVisible()
+-  const dialog = page.getByRole('dialog')
+-  await expect(dialog).toHaveCSS('width', '358px')
+-  await expect(dialog.locator('.folder-picker')).toBeVisible()
+-  await page.setViewportSize({ width: 1280, height: 844 })
+-  await expect(dialog).toHaveCSS('width', '520px')
+-  await expect(dialog.locator('.folder-picker').getByRole('textbox')).toHaveValue('/tmp/mobile-workspace')
 -})
 -
 -test('workflow schedules can be created, edited, disabled, and deleted from the Workflow page', async ({ page }) => {

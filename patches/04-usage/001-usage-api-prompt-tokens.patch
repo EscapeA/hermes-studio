@@ -1,4 +1,4 @@
-From 736813ca75d70b90df9cd91b1cf0042f6cd568ed Mon Sep 17 00:00:00 2001
+From e4539ec74345715c2c673194f3e0d9a412ed8d20 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:05:12 +0800
 Subject: [PATCH] feat(chat): use latest API prompt_tokens for context usage UI
@@ -11,18 +11,19 @@ clear it after compression so post-compact local estimates can resume until
 the next real API usage event.
 ---
  .../modules/studio/contracts/runs/session.ts  |   2 +
- .../services/chat-run/handle-bridge-run.ts    |  45 ++++++-
+ .../services/chat-run/handle-bridge-run.ts    |  20 ++-
  .../modules/studio/services/chat-run/usage.ts |  29 +++++
+ .../services/usage/bridge-model-usage.ts      |  27 +++-
  .../run-chat-api-prompt-context.test.ts       |  72 +++++++++++
  .../run-chat-bridge-final-context.test.ts     | 118 +++++++++++++++++-
- 5 files changed, 260 insertions(+), 6 deletions(-)
+ 6 files changed, 262 insertions(+), 6 deletions(-)
  create mode 100644 tests/server/run-chat-api-prompt-context.test.ts
 
 diff --git a/packages/server/src/modules/studio/contracts/runs/session.ts b/packages/server/src/modules/studio/contracts/runs/session.ts
-index 321a21e75..e1d5e14de 100644
+index 83825b795..c1fdbf762 100644
 --- a/packages/server/src/modules/studio/contracts/runs/session.ts
 +++ b/packages/server/src/modules/studio/contracts/runs/session.ts
-@@ -157,6 +157,8 @@ export interface SessionState {
+@@ -161,6 +161,8 @@ export interface SessionState {
    cacheReadTokens?: number
    cacheWriteTokens?: number
    contextTokens?: number
@@ -32,10 +33,10 @@ index 321a21e75..e1d5e14de 100644
    isAborting?: boolean
    queue: QueuedRun[]
 diff --git a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
-index 63ec0a92a..d86cb4f41 100644
+index fd640fbc7..c2a13c89a 100644
 --- a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
 +++ b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
-@@ -19,10 +19,13 @@ import type {
+@@ -20,10 +20,13 @@ import type {
  import { contentBlocksToString, convertContentBlocksForAgent, extractTextForPreview, isContentBlockArray } from './content-blocks'
  import { buildCompressedHistory, buildDbSnapshotAwareHistory, forceCompressBridgeHistory, pushState, replaceState } from './compression'
  import {
@@ -49,7 +50,7 @@ index 63ec0a92a..d86cb4f41 100644
    updateMessageContextTokenUsage,
  } from './usage'
  import {
-@@ -1061,7 +1064,7 @@ export async function resumeBridgeRun(
+@@ -1064,7 +1067,7 @@ export async function resumeBridgeRun(
          recordBridgeModelUsage(sessionId, runId, bridgeEvent, profile, {
            model: args.model,
            provider: args.provider,
@@ -58,7 +59,7 @@ index 63ec0a92a..d86cb4f41 100644
        }
      }
      const output = typeof snapshot.output === 'string' ? snapshot.output : deltas.join('')
-@@ -1186,6 +1189,17 @@ async function refreshFinalContextUsage(args: {
+@@ -1189,6 +1192,17 @@ async function refreshFinalContextUsage(args: {
        { excludeLastUser: false },
        { model: args.model, provider: args.provider },
      )
@@ -76,60 +77,7 @@ index 63ec0a92a..d86cb4f41 100644
      const finalMessageUsage = estimateUsageTokensFromMessages(finalHistory)
      const finalMessageTokens = finalMessageUsage.inputTokens + finalMessageUsage.outputTokens
      await ensureBridgeFixedContext({
-@@ -1256,7 +1270,11 @@ function recordBridgeModelUsage(
-   event: Record<string, unknown>,
-   profile: string,
-   modelContext: { model?: string | null; provider?: string | null },
--): void {
-+  live?: {
-+    state: SessionState
-+    emit: (event: string, payload: any) => void
-+  },
-+): number | undefined {
-   const usage = normalizeTokenUsage(event.usage)
-   if (usage.isEstimated) {
-     bridgeLogger.warn({
-@@ -1264,7 +1282,7 @@ function recordBridgeModelUsage(
-       bridgeRunId,
-       apiRequestId: event.api_request_id,
-     }, '[chat-run-socket] ignoring incomplete Hermes model usage event')
--    return
-+    return live?.state.contextTokens
-   }
- 
-   const apiRequestId = stringValue(event.api_request_id)
-@@ -1276,7 +1294,7 @@ function recordBridgeModelUsage(
-   const requestKey = apiRequestId || fallbackId
-   if (!requestKey) {
-     bridgeLogger.warn({ sessionId, bridgeRunId }, '[chat-run-socket] ignoring Hermes model usage event without request identity')
--    return
-+    return live?.state.contextTokens
-   }
- 
-   recordSessionUsage({
-@@ -1292,6 +1310,21 @@ function recordBridgeModelUsage(
-     profile,
-     isEstimated: false,
-   })
-+
-+  // Context-window UI: use the latest real API prompt_tokens (log "in="), not in+out total.
-+  if (live) {
-+    return applyApiPromptContextTokens(
-+      sessionId,
-+      live.state,
-+      live.emit,
-+      usage.inputTokens,
-+      {
-+        inputTokens: live.state.inputTokens ?? 0,
-+        outputTokens: live.state.outputTokens ?? 0,
-+      },
-+    )
-+  }
-+  return undefined
- }
- 
- async function applyBridgeChunkAsync(
-@@ -1354,7 +1387,7 @@ async function applyBridgeChunkAsync(
+@@ -1313,7 +1327,7 @@ async function applyBridgeChunkAsync(
          emit,
        )
      } else if (evType === 'model.usage') {
@@ -138,7 +86,7 @@ index 63ec0a92a..d86cb4f41 100644
      } else if (evType === 'session.title.updated') {
        syncBridgeGeneratedTitle(sessionId, (ev as any).title, emit)
      } else if (evType === 'bridge.context.ready') {
-@@ -1675,6 +1708,8 @@ async function applyBridgeChunkAsync(
+@@ -1634,6 +1648,8 @@ async function applyBridgeChunkAsync(
        emit('compression.completed', payload)
        const usage = await calcAndUpdateUsage(sessionId, state, emit)
        if (messageAfterTokensWithInput != null) {
@@ -194,6 +142,68 @@ index 0f513ab8e..94a9b4c37 100644
    if (typeof messageTokens !== 'number' || !Number.isFinite(messageTokens) || messageTokens < 0) {
      return state.contextTokens
    }
+diff --git a/packages/server/src/modules/studio/services/usage/bridge-model-usage.ts b/packages/server/src/modules/studio/services/usage/bridge-model-usage.ts
+index b1a2028e9..1d2992bd9 100644
+--- a/packages/server/src/modules/studio/services/usage/bridge-model-usage.ts
++++ b/packages/server/src/modules/studio/services/usage/bridge-model-usage.ts
+@@ -1,4 +1,6 @@
+ import { bridgeLogger } from '../../public/logging'
++import type { SessionState } from '../chat-run/types'
++import { applyApiPromptContextTokens } from '../chat-run/usage'
+ import { normalizeTokenUsage, recordSessionUsage } from './usage-recorder'
+ 
+ function stringValue(value: unknown): string {
+@@ -11,7 +13,11 @@ export function recordBridgeModelUsage(
+   event: Record<string, unknown>,
+   profile: string,
+   modelContext: { model?: string | null; provider?: string | null },
+-): void {
++  live?: {
++    state: SessionState
++    emit: (event: string, payload: any) => void
++  },
++): number | undefined {
+   const usage = normalizeTokenUsage(event.usage)
+   if (usage.isEstimated) {
+     bridgeLogger.warn({
+@@ -19,7 +25,7 @@ export function recordBridgeModelUsage(
+       bridgeRunId,
+       apiRequestId: event.api_request_id,
+     }, '[chat-run-socket] ignoring incomplete Hermes model usage event')
+-    return
++    return live?.state.contextTokens
+   }
+ 
+   const apiRequestId = stringValue(event.api_request_id)
+@@ -31,7 +37,7 @@ export function recordBridgeModelUsage(
+   const requestKey = apiRequestId || fallbackId
+   if (!requestKey) {
+     bridgeLogger.warn({ sessionId, bridgeRunId }, '[chat-run-socket] ignoring Hermes model usage event without request identity')
+-    return
++    return live?.state.contextTokens
+   }
+ 
+   recordSessionUsage({
+@@ -49,4 +55,19 @@ export function recordBridgeModelUsage(
+     profile,
+     isEstimated: false,
+   })
++
++  // Context-window UI: use the latest real API prompt_tokens (log "in="), not in+out total.
++  if (live) {
++    return applyApiPromptContextTokens(
++      sessionId,
++      live.state,
++      live.emit,
++      usage.inputTokens,
++      {
++        inputTokens: live.state.inputTokens ?? 0,
++        outputTokens: live.state.outputTokens ?? 0,
++      },
++    )
++  }
++  return undefined
+ }
 diff --git a/tests/server/run-chat-api-prompt-context.test.ts b/tests/server/run-chat-api-prompt-context.test.ts
 new file mode 100644
 index 000000000..090a92578
@@ -273,7 +283,7 @@ index 000000000..090a92578
 +  })
 +})
 diff --git a/tests/server/run-chat-bridge-final-context.test.ts b/tests/server/run-chat-bridge-final-context.test.ts
-index 9764a2dce..da16dde7d 100644
+index 771348fa5..9091e7a72 100644
 --- a/tests/server/run-chat-bridge-final-context.test.ts
 +++ b/tests/server/run-chat-bridge-final-context.test.ts
 @@ -46,7 +46,24 @@ const updateContextTokenUsageMock = vi.fn((sid: string, state: any, emit: any, c
@@ -337,7 +347,7 @@ index 9764a2dce..da16dde7d 100644
    })
  
    it('refreshes Studio Claude OAuth before creating the Anthropic bridge agent', async () => {
-@@ -1432,6 +1467,87 @@ describe('bridge run final context usage', () => {
+@@ -1435,6 +1470,87 @@ describe('bridge run final context usage', () => {
      }))
    })
  

@@ -1,4 +1,4 @@
-From 830738ee1bff7703515331473588ad9320ce9271 Mon Sep 17 00:00:00 2001
+From 38fd9e3c43c9a490cea22cf7bc7b72626566d821 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 11:58:02 +0800
 Subject: [PATCH] feat(usage): show the current decode speed beside the run
@@ -67,7 +67,7 @@ index 5e923bfa1..308f565ac 100644
      </div>
      <div
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 4ab9a2849..05075d045 100644
+index 9db2be196..8d1a623d4 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
 @@ -148,17 +148,31 @@ const isRunIndicatorActive = computed(() => chatStore.isRunActive || !!chatStore
@@ -106,7 +106,7 @@ index 4ab9a2849..05075d045 100644
  });
  
  const currentToolCalls = computed(() => {
-@@ -850,6 +864,7 @@ defineExpose({
+@@ -851,6 +865,7 @@ defineExpose({
              :reasoning-id="liveReasoningDetail?.messageId"
              :elapsed="formattedThinkingElapsed"
              :speed="liveSpeedLabel"
@@ -115,10 +115,10 @@ index 4ab9a2849..05075d045 100644
            <div v-if="visibleToolCalls.length > 0 || chatStore.compressionState || chatStore.abortState" class="tool-calls-panel">
              <!-- Abort indicator -->
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 1e1a1b059..7233cdb3c 100644
+index 47c4ea1af..99a2ecf76 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -1294,7 +1294,8 @@ export default {
+@@ -1307,7 +1307,8 @@ export default {
      executionDuration: 'وقت التنفيذ',
      thinkingLabel: 'التفكير',
      thinkingInProgress: 'التفكير',
@@ -129,10 +129,10 @@ index 1e1a1b059..7233cdb3c 100644
      thinkingShow: 'إظهار التفكير',
      thinkingHide: 'إخفاء التفكير',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 31096770d..2fa136c71 100644
+index fcb037a10..624801ed4 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1215,7 +1215,8 @@ export default {
+@@ -1228,7 +1228,8 @@ export default {
      unchangedLines: '{count} unveränderte Zeilen',
      executionDuration: 'Ausführungszeit',    thinkingLabel: 'Denkprozess',
      thinkingInProgress: 'Denkt',
@@ -143,10 +143,10 @@ index 31096770d..2fa136c71 100644
      thinkingShow: 'Denkprozess anzeigen',
      thinkingHide: 'Denkprozess ausblenden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 32759f62e..e967708ab 100644
+index d0d39c1be..b657cad60 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1304,7 +1304,8 @@ export default {
+@@ -1317,7 +1317,8 @@ export default {
      executionDuration: 'Execution time',
      thinkingLabel: 'Thinking',
      thinkingInProgress: 'Thinking',
@@ -157,10 +157,10 @@ index 32759f62e..e967708ab 100644
      thinkingShow: 'Show thinking',
      thinkingHide: 'Hide thinking',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 35a43fa57..4e4f9c361 100644
+index 45f467615..eb638616b 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1215,7 +1215,8 @@ export default {
+@@ -1228,7 +1228,8 @@ export default {
      unchangedLines: '{count} líneas sin cambios',
      executionDuration: 'Tiempo de ejecución',    thinkingLabel: 'Pensamiento',
      thinkingInProgress: 'Pensando',
@@ -171,10 +171,10 @@ index 35a43fa57..4e4f9c361 100644
      thinkingShow: 'Mostrar pensamiento',
      thinkingHide: 'Ocultar pensamiento',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 7270320fe..3b2272f43 100644
+index 18bdbdc2a..384a359a9 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1215,7 +1215,8 @@ export default {
+@@ -1228,7 +1228,8 @@ export default {
      unchangedLines: '{count} lignes inchangées',
      executionDuration: 'Temps d’exécution',    thinkingLabel: 'Raisonnement',
      thinkingInProgress: 'En réflexion',
@@ -185,10 +185,10 @@ index 7270320fe..3b2272f43 100644
      thinkingShow: 'Afficher le raisonnement',
      thinkingHide: 'Masquer le raisonnement',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 4802152ad..104fd3023 100644
+index 7792bd6f5..3d30faacd 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1215,7 +1215,8 @@ export default {
+@@ -1228,7 +1228,8 @@ export default {
      unchangedLines: '変更なし {count} 行',
      executionDuration: '実行時間',    thinkingLabel: '思考過程',
      thinkingInProgress: '思考中',
@@ -199,10 +199,10 @@ index 4802152ad..104fd3023 100644
      thinkingShow: '思考過程を表示',
      thinkingHide: '思考過程を隠す',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 8b48d164e..38b2171cb 100644
+index 68bb0c771..3ed3624ff 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1215,7 +1215,8 @@ export default {
+@@ -1228,7 +1228,8 @@ export default {
      unchangedLines: '변경 없음 {count}줄',
      executionDuration: '실행 시간',    thinkingLabel: '사고 과정',
      thinkingInProgress: '사고 중',
@@ -213,10 +213,10 @@ index 8b48d164e..38b2171cb 100644
      thinkingShow: '사고 과정 펼치기',
      thinkingHide: '사고 과정 접기',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 882443931..d0bc60cbf 100644
+index 9eb98679b..b9218736b 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1215,7 +1215,8 @@ export default {
+@@ -1228,7 +1228,8 @@ export default {
      unchangedLines: '{count} linhas inalteradas',
      executionDuration: 'Tempo de execução',    thinkingLabel: 'Raciocínio',
      thinkingInProgress: 'Pensando',
@@ -227,10 +227,10 @@ index 882443931..d0bc60cbf 100644
      thinkingShow: 'Mostrar raciocínio',
      thinkingHide: 'Ocultar raciocínio',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 04e70320b..78ed83f2c 100644
+index c9c910ac6..f9b4d80db 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1182,7 +1182,8 @@ export default {
+@@ -1195,7 +1195,8 @@ export default {
      executionDuration: 'Длительность выполнения',
      thinkingLabel: 'Процесс размышления',
      thinkingInProgress: 'Размышление',
@@ -241,10 +241,10 @@ index 04e70320b..78ed83f2c 100644
      thinkingShow: 'Развернуть процесс размышления',
      thinkingHide: 'Свернуть процесс размышления',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index cd2688b27..d99a98690 100644
+index 5d5cc7137..634da1f26 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1286,7 +1286,8 @@ export default {
+@@ -1299,7 +1299,8 @@ export default {
      executionDuration: '執行時長',
      thinkingLabel: '思考過程',
      thinkingInProgress: '正在思考',
@@ -255,10 +255,10 @@ index cd2688b27..d99a98690 100644
      thinkingShow: '展開思考過程',
      thinkingHide: '收起思考過程',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 97395e86e..605e2ad86 100644
+index 63c67ac38..a53ca7319 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1304,7 +1304,8 @@ export default {
+@@ -1317,7 +1317,8 @@ export default {
      executionDuration: '执行时长',
      thinkingLabel: '思考过程',
      thinkingInProgress: '正在思考',
@@ -269,10 +269,10 @@ index 97395e86e..605e2ad86 100644
      thinkingShow: '展开思考过程',
      thinkingHide: '收起思考过程',
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 685fc2f4f..89dc6db0c 100644
+index 11a4d3929..6e91cf08a 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -1461,11 +1461,27 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1464,11 +1464,27 @@ export const useChatStore = defineStore('chat', () => {
     */
    const runSpeed = ref<Map<string, RunSpeedReading>>(new Map())
  
@@ -300,7 +300,7 @@ index 685fc2f4f..89dc6db0c 100644
      if (!runSpeed.value.has(sessionId)) return
      const next = new Map(runSpeed.value)
      next.delete(sessionId)
-@@ -1528,13 +1544,18 @@ export const useChatStore = defineStore('chat', () => {
+@@ -1531,13 +1547,18 @@ export const useChatStore = defineStore('chat', () => {
     * @param evt - Run event carrying an optional `speed` reading.
     */
    function applyRunSpeedEvent(sessionId: string, evt: unknown) {
@@ -323,7 +323,7 @@ index 685fc2f4f..89dc6db0c 100644
    }
  
    function setRunStartedAt(sessionId: string, startedAt: number) {
-@@ -5764,6 +5785,7 @@ export const useChatStore = defineStore('chat', () => {
+@@ -5814,6 +5835,7 @@ export const useChatStore = defineStore('chat', () => {
      isSessionWorking,
      runStartedAt,
      runSpeed,
@@ -332,10 +332,10 @@ index 685fc2f4f..89dc6db0c 100644
      clearSessionCompletedUnread,
      sessionProfileFilter,
 diff --git a/packages/server/src/modules/studio/contracts/runs/session.ts b/packages/server/src/modules/studio/contracts/runs/session.ts
-index afba7d8c0..4030b0fbe 100644
+index 7b5c09b69..11c025c62 100644
 --- a/packages/server/src/modules/studio/contracts/runs/session.ts
 +++ b/packages/server/src/modules/studio/contracts/runs/session.ts
-@@ -153,6 +153,10 @@ export interface SessionState {
+@@ -157,6 +157,10 @@ export interface SessionState {
     */
    decodeMsTotal?: number
    decodeTokensTotal?: number

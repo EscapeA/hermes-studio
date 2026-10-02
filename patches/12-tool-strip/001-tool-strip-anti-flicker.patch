@@ -1,4 +1,4 @@
-From e0c69e33bc0abaa79860ab2ea481cf0d8eb4a0d9 Mon Sep 17 00:00:00 2001
+From f94e4e0691ed4d3cdcd7fe5c12e4e8de40c41230 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Wed, 19 Aug 2026 23:13:59 +0800
 Subject: [PATCH] feat(chat): anti-flicker collapsible tool strip
@@ -20,7 +20,7 @@ unmount so session switches never leak stale tools into the new panel.
  4 files changed, 173 insertions(+), 5 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 9d0ea31ac..3131042d5 100644
+index 745623f82..1e626cb5e 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
 @@ -140,10 +140,64 @@ const currentToolCalls = computed(() => {
@@ -89,7 +89,7 @@ index 9d0ea31ac..3131042d5 100644
  const liveReasoningDetail = computed<{
    messageId: Message["id"]
    reasoning: string
-@@ -667,6 +721,8 @@ watch(
+@@ -668,6 +722,8 @@ watch(
  onBeforeUnmount(() => {
    stopThinkingTimer();
    saveSessionScrollPosition(activeSessionScrollKey.value);
@@ -98,7 +98,7 @@ index 9d0ea31ac..3131042d5 100644
  });
  
  onMounted(() => {
-@@ -842,7 +898,29 @@ defineExpose({
+@@ -843,7 +899,29 @@ defineExpose({
                  class="tool-call-spinner"
                ></span>
              </div>
@@ -129,7 +129,7 @@ index 9d0ea31ac..3131042d5 100644
              <div
                v-for="tc in visibleToolCalls"
                :key="tc.id"
-@@ -921,6 +999,14 @@ defineExpose({
+@@ -922,6 +1000,14 @@ defineExpose({
                  />
                </svg>
              </div>
@@ -144,7 +144,7 @@ index 9d0ea31ac..3131042d5 100644
            </div>
          </div>
          </Transition>
-@@ -1818,10 +1904,76 @@ defineExpose({
+@@ -1819,10 +1905,76 @@ defineExpose({
    width: 520px;
    min-width: 0;
    max-width: 100%;
@@ -224,7 +224,7 @@ index 9d0ea31ac..3131042d5 100644
    scrollbar-width: none;
    -ms-overflow-style: none;
    &::-webkit-scrollbar {
-@@ -1829,6 +1981,10 @@ defineExpose({
+@@ -1830,6 +1982,10 @@ defineExpose({
    }
  }
  
@@ -236,10 +236,10 @@ index 9d0ea31ac..3131042d5 100644
    display: flex;
    flex: 1 1 0;
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index b1b96bd08..c9ab34193 100644
+index a3c1b2f13..ca339ede1 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1313,6 +1313,10 @@ export default {
+@@ -1326,6 +1326,10 @@ export default {
      thinkingHide: 'Hide thinking',
      thinkingDuration: 'Observed {duration}',
      thinkingChars: '{count} chars',
@@ -251,10 +251,10 @@ index b1b96bd08..c9ab34193 100644
      copiedBubble: 'Message copied',
      copyFailed: 'Copy failed',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 907419caf..d4f89f398 100644
+index a41caf2df..a425676ae 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1295,6 +1295,10 @@ export default {
+@@ -1308,6 +1308,10 @@ export default {
      thinkingHide: '收起思考過程',
      thinkingDuration: '已觀察 {duration}',
      thinkingChars: '{count} 字',
@@ -266,10 +266,10 @@ index 907419caf..d4f89f398 100644
      copiedBubble: '已複製',
      copyFailed: '複製失敗',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 7af963913..10e9c5702 100644
+index 68ff57435..228422f89 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1313,6 +1313,10 @@ export default {
+@@ -1326,6 +1326,10 @@ export default {
      thinkingHide: '收起思考过程',
      thinkingDuration: '已观察 {duration}',
      thinkingChars: '{count} 字',

@@ -1,4 +1,4 @@
-From 886fc347d19795a6413700e42e2d544837c2ac4e Mon Sep 17 00:00:00 2001
+From 8306f050d882dee519aeb398f83b1062626bfe8a Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
 Subject: [PATCH] perf(i18n): merge en fallback at build time, one locale chunk
@@ -18,7 +18,7 @@ wire for zh users).
  create mode 100644 packages/client/src/i18n/locales.d.ts
 
 diff --git a/packages/client/src/i18n/index.ts b/packages/client/src/i18n/index.ts
-index bf52f6cd4..233b98af1 100644
+index d3ea2745e..b3a9a7bd5 100644
 --- a/packages/client/src/i18n/index.ts
 +++ b/packages/client/src/i18n/index.ts
 @@ -1,5 +1,5 @@
@@ -53,7 +53,7 @@ index bf52f6cd4..233b98af1 100644
  
    return createI18n({
      legacy: false,
-@@ -80,12 +70,7 @@ export async function switchLocale(newLocale: string): Promise<void> {
+@@ -105,12 +95,7 @@ export async function switchLocale(newLocale: string): Promise<void> {
    if (!(globalI18n.availableLocales as readonly string[]).includes(nextLocale)) {
      const nextMessages = await loadLocaleMessages(nextLocale)
      if (sequence !== localeSwitchSequence) return

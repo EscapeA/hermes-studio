@@ -1,4 +1,4 @@
-From 0a9fda541e306f630103d8f48f1aca212db5dcaf Mon Sep 17 00:00:00 2001
+From 83a3515432c5ab52c7eef7b53f85c04b165dc1ec Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 2 Oct 2026 12:40:05 +0800
 Subject: [PATCH] feat(mobile-nav): frosted drawer surface
@@ -16,10 +16,10 @@ subtree, so that part lives in an unscoped block scoped back to this drawer with
  1 file changed, 35 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
-index 0b1994b68..a6b81ccb0 100644
+index ca43273da..a6d4752e9 100644
 --- a/packages/client/src/components/layout/MobileNavigationDrawer.vue
 +++ b/packages/client/src/components/layout/MobileNavigationDrawer.vue
-@@ -72,9 +72,17 @@ const drawerWidth = computed(() =>
+@@ -73,12 +73,20 @@ const drawerWidth = computed(() =>
    display: flex;
    height: 100%;
    min-height: 0;
@@ -31,6 +31,9 @@ index 0b1994b68..a6b81ccb0 100644
 +  background-color: var(--glass-sidebar-bg);
 +  -webkit-backdrop-filter: blur(12px) saturate(110%);
 +  backdrop-filter: blur(12px) saturate(110%);
+   border-top-right-radius: 5px;
+   border-bottom-right-radius: 5px;
+   overflow: hidden;
  
    :deep(.studio-navigation-rail) {
 +    // Drop the rail's own opaque column so the container's glass shows through.
@@ -38,7 +41,7 @@ index 0b1994b68..a6b81ccb0 100644
      padding-top: var(--drawer-top-inset);
      padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
    }
-@@ -113,6 +121,9 @@ const drawerWidth = computed(() =>
+@@ -118,6 +126,9 @@ const drawerWidth = computed(() =>
      border: 0;
      border-radius: 0;
      box-shadow: none;
@@ -48,7 +51,7 @@ index 0b1994b68..a6b81ccb0 100644
      transform: none;
      transition: none;
      opacity: 1;
-@@ -129,3 +140,26 @@ const drawerWidth = computed(() =>
+@@ -134,3 +145,26 @@ const drawerWidth = computed(() =>
    :deep(.coding-agent-config-collapse) { display: none; }
  }
  </style>

@@ -1,4 +1,4 @@
-From c22e9f21087d2ddbdcc7d786568b6581d4af058b Mon Sep 17 00:00:00 2001
+From cd0cfcc234bd5252c399365023e7d2b82c9a778b Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 1 Oct 2026 12:39:49 +0800
 Subject: [PATCH] feat(mobile-nav): one labelled rail with the app-level
@@ -17,15 +17,15 @@ same constants). Settings is a row now, so the bottom icon becomes the toggle.
 Desktop is untouched: App.vue renders the rail without either prop, so it stays the
 64px icon column with the Settings link at the bottom.
 ---
- .../layout/MobileNavigationDrawer.vue         |  36 +++-
+ .../layout/MobileNavigationDrawer.vue         |  37 +++-
  .../layout/StudioNavigationRail.vue           | 160 +++++++++++++++++-
- 2 files changed, 185 insertions(+), 11 deletions(-)
+ 2 files changed, 186 insertions(+), 11 deletions(-)
 
 diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
-index 02f8e353f..554b01378 100644
+index 512ed205b..bf39dceb2 100644
 --- a/packages/client/src/components/layout/MobileNavigationDrawer.vue
 +++ b/packages/client/src/components/layout/MobileNavigationDrawer.vue
-@@ -1,25 +1,55 @@
+@@ -1,25 +1,56 @@
  <script setup lang="ts">
 +import { computed, ref } from 'vue'
  import { NDrawer } from 'naive-ui'
@@ -71,7 +71,8 @@ index 02f8e353f..554b01378 100644
  <template>
    <NDrawer
      :show="show"
--    :width="hasSidebar ? 'min(360px, calc(100vw - 24px))' : 64"
+-    :width="hasSidebar ? 'var(--studio-drawer-width)' : 64"
++
 +    :width="drawerWidth"
      placement="left"
      display-directive="show"

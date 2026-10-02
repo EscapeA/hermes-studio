@@ -1,4 +1,4 @@
-From 6d69773fcd87bc6eeb0b7ff5be8f6271f6ec200d Mon Sep 17 00:00:00 2001
+From d3d8d35621b2de82f2e450ef962600d1bc570f95 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 11:59:49 +0800
 Subject: [PATCH] feat(mobile): compact top bar and single hamburger sidebar
@@ -24,7 +24,7 @@ Subject: [PATCH] feat(mobile): compact top bar and single hamburger sidebar
  9 files changed, 50 insertions(+), 16 deletions(-)
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index 3d53d49f8..0d4f41158 100644
+index 092b9086d..c4e875144 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
 @@ -367,13 +367,24 @@ usePwa();
@@ -58,10 +58,10 @@ index 3d53d49f8..0d4f41158 100644
                  <AppSidebar v-if="!isLoginPage && showAppSidebar" />
                  <HermesConfigSidebar
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index 8b1d7d4f7..61f7109e0 100644
+index 6d036fd89..166c0b5c8 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -3925,7 +3925,8 @@ async function handleSessionModelCustomSubmit() {
+@@ -3924,7 +3924,8 @@ async function handleSessionModelCustomSubmit() {
  
  @media (max-width: $breakpoint-mobile) {
    .chat-header {
@@ -72,10 +72,10 @@ index 8b1d7d4f7..61f7109e0 100644
  
    .header-sidebar-toggle {
 diff --git a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
-index 5360a2b98..ccfca4c0c 100644
+index b8e64f3fd..399ea4c4f 100644
 --- a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 +++ b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
-@@ -5251,7 +5251,8 @@ export default defineComponent({ components: { CreateRoomForm } })
+@@ -5291,7 +5291,8 @@ export default defineComponent({ components: { CreateRoomForm } })
      }
  
      .chat-header {
@@ -86,10 +86,10 @@ index 5360a2b98..ccfca4c0c 100644
  
      .group-summary-inline-status {
 diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
-index aae866dde..d84078005 100644
+index fc28b3d03..5e9163351 100644
 --- a/packages/client/src/styles/global.scss
 +++ b/packages/client/src/styles/global.scss
-@@ -294,21 +294,22 @@ a {
+@@ -299,21 +299,22 @@ a {
  }
  
  // Hamburger button (mobile only)
@@ -116,7 +116,7 @@ index aae866dde..d84078005 100644
  }
  
  // Mobile responsive
-@@ -322,7 +323,8 @@ a {
+@@ -327,7 +328,8 @@ a {
    }
  
    .page-header {
@@ -127,10 +127,10 @@ index aae866dde..d84078005 100644
    }
  
 diff --git a/packages/client/src/styles/variables.scss b/packages/client/src/styles/variables.scss
-index 7e9becef2..d6b010a20 100644
+index 4a8db281c..6e1de25f3 100644
 --- a/packages/client/src/styles/variables.scss
 +++ b/packages/client/src/styles/variables.scss
-@@ -223,6 +223,15 @@ $navigation-rail-width: 64px;
+@@ -225,6 +225,15 @@ $navigation-rail-width: 64px;
  $sidebar-width: 240px;
  $sidebar-collapsed-width: 64px;
  $header-height: 60px;
@@ -192,7 +192,7 @@ index 65858bf7d..a08e6a7ae 100644
  
    .terminal-container {
 diff --git a/packages/client/src/views/hermes/WorkflowView.vue b/packages/client/src/views/hermes/WorkflowView.vue
-index 3864241b3..8fbf56046 100644
+index fbe318028..a27483025 100644
 --- a/packages/client/src/views/hermes/WorkflowView.vue
 +++ b/packages/client/src/views/hermes/WorkflowView.vue
 @@ -5372,7 +5372,11 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {

@@ -1,4 +1,4 @@
-From 14226fa85d04cacfdd02b74f8e280f900832b56f Mon Sep 17 00:00:00 2001
+From fcbe13ae84405c112c64b0666011600a3ab8fc59 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:23 +0800
 Subject: [PATCH] feat(web): remove group chat from the frontend
@@ -26,7 +26,7 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  packages/client/src/App.vue                   |   43 +-
  .../src/api/studio/group-chat-agent-link.ts   |  208 -
  .../src/api/studio/group-chat-attachments.ts  |   58 -
- packages/client/src/api/studio/group-chat.ts  |  660 --
+ packages/client/src/api/studio/group-chat.ts  |  661 --
  .../src/components/hermes/chat/FilesPanel.vue |   36 +-
  .../hermes/files/FileContextMenu.vue          |    4 +-
  .../src/components/hermes/files/FileList.vue  |    2 +-
@@ -36,10 +36,10 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  .../hermes/group-chat/CreateRoomForm.vue      |  252 -
  .../group-chat/GroupAgentMessageAvatar.vue    |  257 -
  .../hermes/group-chat/GroupAgentRobotIcon.vue |   62 -
- .../hermes/group-chat/GroupAgentRunCard.vue   |  367 --
+ .../hermes/group-chat/GroupAgentRunCard.vue   |  383 --
  .../hermes/group-chat/GroupChatInput.vue      | 1386 -----
- .../hermes/group-chat/GroupChatPanel.vue      | 5301 -----------------
- .../hermes/group-chat/GroupMessageItem.vue    | 1542 -----
+ .../hermes/group-chat/GroupChatPanel.vue      | 5341 -----------------
+ .../hermes/group-chat/GroupMessageItem.vue    | 1543 -----
  .../hermes/group-chat/GroupMessageList.vue    |  552 --
  .../group-chat/GroupRoomAgentAvatar.vue       |  299 -
  .../group-chat/group-chat-room-drafts.ts      |  140 -
@@ -60,7 +60,7 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  packages/client/src/i18n/locales/zh.ts        |  233 -
  packages/client/src/router/index.ts           |   36 -
  packages/client/src/stores/hermes/files.ts    |  142 +-
- .../client/src/stores/hermes/group-chat.ts    | 2354 --------
+ .../client/src/stores/hermes/group-chat.ts    | 2360 --------
  .../client/src/utils/group-agent-avatar.ts    |   81 -
  .../src/utils/group-chat-invite-code.ts       |    8 -
  .../src/utils/group-chat-remote-rooms.ts      |   69 -
@@ -70,7 +70,7 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  .../src/views/hermes/SharedGroupChatView.vue  |  887 ---
  .../src/main/group-chat-agent-popup.ts        |   44 -
  packages/desktop/src/main/index.ts            |    9 +-
- 47 files changed, 89 insertions(+), 18589 deletions(-)
+ 47 files changed, 89 insertions(+), 18653 deletions(-)
  delete mode 100644 packages/client/src/api/studio/group-chat-agent-link.ts
  delete mode 100644 packages/client/src/api/studio/group-chat-attachments.ts
  delete mode 100644 packages/client/src/api/studio/group-chat.ts
@@ -524,10 +524,10 @@ index 2b7212a95..000000000
 -}
 diff --git a/packages/client/src/api/studio/group-chat.ts b/packages/client/src/api/studio/group-chat.ts
 deleted file mode 100644
-index 0d67135be..000000000
+index e0ef91423..000000000
 --- a/packages/client/src/api/studio/group-chat.ts
 +++ /dev/null
-@@ -1,660 +0,0 @@
+@@ -1,661 +0,0 @@
 -import { io } from 'socket.io-client'
 -import { request, getApiKey } from '../client'
 -import { fetchAuthenticatedBlob, saveBlob } from './binary-content'
@@ -733,6 +733,7 @@ index 0d67135be..000000000
 -
 -export interface ChatMessage {
 -    taskPlan?: import('@/utils/task-plan').TaskPlanSnapshot
+-    runUsage?: import('@/utils/run-usage').RunUsageSummary
 -    id: string
 -    roomId: string
 -    senderId: string
@@ -2049,10 +2050,10 @@ index 8b9fd0d32..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupAgentRunCard.vue b/packages/client/src/components/hermes/group-chat/GroupAgentRunCard.vue
 deleted file mode 100644
-index 1a672d4d4..000000000
+index c95bff73a..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupAgentRunCard.vue
 +++ /dev/null
-@@ -1,367 +0,0 @@
+@@ -1,383 +0,0 @@
 -<script setup lang="ts">
 -import { computed } from 'vue'
 -import { useI18n } from 'vue-i18n'
@@ -2062,6 +2063,7 @@ index 1a672d4d4..000000000
 -import { groupMessageAgent, parseStoredAvatar } from '@/utils/group-agent-avatar'
 -import GroupMessageItem from './GroupMessageItem.vue'
 -import ToolRunSummary from '../chat/ToolRunSummary.vue'
+-import RunUsageCard from '../chat/RunUsageCard.vue'
 -import GroupAgentMessageAvatar from './GroupAgentMessageAvatar.vue'
 -import GroupAgentRobotIcon from './GroupAgentRobotIcon.vue'
 -
@@ -2090,10 +2092,13 @@ index 1a672d4d4..000000000
 -)
 -const toolsActive = computed(() => !!props.message.isStreaming || runToolItems.value.some(item => item.toolStatus === 'running'))
 -const transcriptItems = computed(() =>
--    runToolItems.value.length > 0
--        ? items.value.filter(item => item.role !== 'tool')
--        : items.value
+-    items.value.filter(item => !item.runUsage && (runToolItems.value.length === 0 || item.role !== 'tool'))
 -)
+-const runUsage = computed(() => [...items.value].reverse().find(item => item.runUsage)?.runUsage)
+-const runUsageMessageId = computed(() => {
+-    const replies = transcriptItems.value.filter(item => item.role === 'assistant' && !item.taskPlan)
+-    return replies.find(item => item.id === runUsage.value?.assistantMessageId)?.id || replies.at(-1)?.id
+-})
 -const stableAgentId = computed(() =>
 -    props.message.senderAgentRecordId || props.message.senderId
 -)
@@ -2161,7 +2166,7 @@ index 1a672d4d4..000000000
 -                <span class="run-agent-name">{{ message.senderName }}</span>
 -                <GroupAgentRobotIcon v-if="agentInfo" class="run-agent-icon" />
 -            </div>
--            <div class="run-card" :class="{ streaming: message.isStreaming }">
+-            <div v-if="transcriptItems.length || runToolItems.length || (runUsage && !message.isStreaming)" class="run-card" :class="{ streaming: message.isStreaming }">
 -                <ToolRunSummary
 -                    v-if="runToolItems.length"
 -                    class="run-tools"
@@ -2209,8 +2214,15 @@ index 1a672d4d4..000000000
 -                            :current-user-id="currentUserId"
 -                            :allow-speech="props.allowSpeech"
 -                            embedded
--                        />
+-                        >
+-                            <template v-if="runUsage && !message.isStreaming && item.id === runUsageMessageId" #before-workspace-changes>
+-                                <RunUsageCard :usage="runUsage" />
+-                            </template>
+-                        </GroupMessageItem>
 -                    </div>
+-                </div>
+-                <div v-if="runUsage && !message.isStreaming && !runUsageMessageId" class="run-usage-only">
+-                    <RunUsageCard :usage="runUsage" />
 -                </div>
 -            </div>
 -            <span class="run-time">{{ timeText }}</span>
@@ -2404,6 +2416,11 @@ index 1a672d4d4..000000000
 -    font-size: 12px;
 -    opacity: 0.6;
 -    user-select: none;
+-}
+-
+-.run-usage-only {
+-    min-width: 0;
+-    padding: 0 14px 10px;
 -}
 -
 -:global(html.theme-has-custom-background .run-card) {
@@ -3814,10 +3831,10 @@ index e88f518a7..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 deleted file mode 100644
-index ccfca4c0c..000000000
+index 399ea4c4f..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 +++ /dev/null
-@@ -1,5301 +0,0 @@
+@@ -1,5341 +0,0 @@
 -<script setup lang="ts">
 -import PageSidebar from "@/components/layout/PageSidebar.vue"
 -import { usePageSidebarState } from "@/composables/usePageSidebar"
@@ -3952,7 +3969,10 @@ index ccfca4c0c..000000000
 -const showMemberRail = ref(true)
 -const editingAgent = ref<RoomAgent | null>(null)
 -const isSavingAgent = ref(false)
+-const isLoadingAgentForm = ref(false)
+-let agentDrawerLoadSequence = 0
 -const agentStatusSnapshot = ref<AgentStatusSnapshot | null>(null)
+-let agentStatusRequest: Promise<void> | null = null
 -const showRoomSettingsModal = ref(false)
 -const showUserProfileModal = ref(false)
 -const userProfileName = ref('')
@@ -4103,12 +4123,16 @@ index ccfca4c0c..000000000
 -    message.warning(t('codingAgents.installRequired', { agent: groupAgentDisplayName(agent) }))
 -}
 -
--async function refreshAgentAvailability() {
--    try {
--        agentStatusSnapshot.value = await fetchAgentStatusSnapshot()
--    } catch {
--        agentStatusSnapshot.value = null
--    }
+-function refreshAgentAvailability(): Promise<void> {
+-    if (agentStatusRequest) return agentStatusRequest
+-    agentStatusRequest = (async () => {
+-        try {
+-            agentStatusSnapshot.value = await fetchAgentStatusSnapshot()
+-        } catch {
+-            agentStatusSnapshot.value = null
+-        }
+-    })().finally(() => { agentStatusRequest = null })
+-    return agentStatusRequest
 -}
 -
 -function getAgentModelGroups(profile: string) {
@@ -4320,6 +4344,7 @@ index ccfca4c0c..000000000
 -
 -const canConfirmAddAgent = computed(() =>
 -    Boolean(
+-        !isLoadingAgentForm.value &&
 -        isGroupAgentAvailable(selectedAgentType.value) &&
 -        (selectedAgentType.value !== 'dsh' || (selectedRuntimePreset.value && selectedRuntimePresetReady.value)) &&
 -        selectedProfile.value &&
@@ -5185,6 +5210,7 @@ index ccfca4c0c..000000000
 -}
 -
 -async function loadAgentPresets() {
+-    if (isLoadingAgentPresets.value) return
 -    isLoadingAgentPresets.value = true
 -    agentPresetLoadError.value = ''
 -    try {
@@ -5202,6 +5228,7 @@ index ccfca4c0c..000000000
 -    pendingAgentPresetId.value = selectedAgentPresetId.value
 -    agentPresetSearch.value = ''
 -    showAgentPresetDialog.value = true
+-    void loadAgentPresets()
 -}
 -
 -function openAgentPresetManager() {
@@ -5209,6 +5236,7 @@ index ccfca4c0c..000000000
 -    pendingAgentPresetId.value = null
 -    agentPresetSearch.value = ''
 -    showAgentPresetDialog.value = true
+-    void loadAgentPresets()
 -}
 -
 -function closeAgentPresetDialog() {
@@ -5223,6 +5251,7 @@ index ccfca4c0c..000000000
 -}
 -
 -function confirmAgentPresetSelection() {
+-    if (isLoadingAgentForm.value || isLoadingAgentPresets.value) return
 -    const preset = pendingAgentPreset.value
 -    if (!preset?.available) return
 -    applyAgentPreset(preset.id)
@@ -5307,24 +5336,15 @@ index ccfca4c0c..000000000
 -}
 -
 -function closeAgentDrawer() {
+-    agentDrawerLoadSequence++
+-    isLoadingAgentForm.value = false
 -    closeAgentPresetDialog()
 -    showAddAgentDrawer.value = false
 -    editingAgent.value = null
 -    resetAgentForm()
 -}
 -
--async function handleAddAgent() {
--    if (!currentRoomCanManage.value) return
--    await Promise.all([
--        profilesStore.fetchProfiles(),
--        appStore.loadModels(),
--        loadAgentPresets(),
--        refreshAgentAvailability(),
--    ])
--    editingAgent.value = null
--    resetAgentForm()
--    selectedRuntimePreset.value = undefined
--    selectedRuntimePresetReady.value = false
+-function initializeNewAgentSelection() {
 -    selectedAgentType.value = firstAvailableGroupAgentType.value || 'hermes'
 -    selectedProfile.value =
 -        profilesStore.activeProfileName ||
@@ -5332,8 +5352,32 @@ index ccfca4c0c..000000000
 -        profilesStore.profiles[0]?.name ||
 -        'default'
 -    syncAgentModelSelection(selectedProfile.value)
--    selectedAgentReasoningEffort.value = ''
+-}
+-
+-async function loadAgentFormOptions() {
+-    const sequence = ++agentDrawerLoadSequence
+-    const roomId = store.currentRoomId
+-    isLoadingAgentForm.value = true
+-    try {
+-        await Promise.all([
+-            profilesStore.fetchProfiles(),
+-            appStore.loadModels(),
+-            refreshAgentAvailability(),
+-        ])
+-        if (sequence !== agentDrawerLoadSequence || !showAddAgentDrawer.value || roomId !== store.currentRoomId) return
+-        if (!editingAgent.value) initializeNewAgentSelection()
+-    } finally {
+-        if (sequence === agentDrawerLoadSequence) isLoadingAgentForm.value = false
+-    }
+-}
+-
+-function handleAddAgent() {
+-    if (!currentRoomCanManage.value || showAddAgentDrawer.value) return
+-    editingAgent.value = null
+-    resetAgentForm()
+-    initializeNewAgentSelection()
 -    showAddAgentDrawer.value = true
+-    void loadAgentFormOptions()
 -}
 -
 -function randomAgentAvatarSeed() {
@@ -5378,15 +5422,9 @@ index ccfca4c0c..000000000
 -    }
 -}
 -
--async function handleEditAgent(agent: RoomAgent) {
--    if (!currentRoomCanManage.value) return
--    await Promise.all([
--        profilesStore.fetchProfiles(),
--        appStore.loadModels(),
--        loadAgentPresets(),
--        refreshAgentAvailability(),
--    ])
--    selectedAgentPresetId.value = null
+-function handleEditAgent(agent: RoomAgent) {
+-    if (!currentRoomCanManage.value || showAddAgentDrawer.value) return
+-    resetAgentForm()
 -    editingAgent.value = agent
 -    selectedAgentType.value = agent.agent || 'hermes'
 -    selectedAgentMode.value = agent.agentMode === 'global' ? 'global' : 'scoped'
@@ -5404,6 +5442,7 @@ index ccfca4c0c..000000000
 -    agentDescription.value = agent.description || ''
 -    agentAvatar.value = parseStoredAvatar(agent.avatar)
 -    showAddAgentDrawer.value = true
+-    void loadAgentFormOptions()
 -}
 -
 -onMounted(() => {
@@ -5433,6 +5472,7 @@ index ccfca4c0c..000000000
 -})
 -
 -onUnmounted(() => {
+-    agentDrawerLoadSequence++
 -    hideInlineSummaryStatus()
 -    window.removeEventListener('hermes:preview-workspace-file', handleWorkspaceFilePreviewRequest)
 -    window.removeEventListener('hermes:preview-group-attachment', handleGroupAttachmentPreviewRequest)
@@ -5467,6 +5507,7 @@ index ccfca4c0c..000000000
 -
 -watch(() => store.currentRoomId, (roomId, previousRoomId) => {
 -    if (roomId === previousRoomId) return
+-    if (showAddAgentDrawer.value) closeAgentDrawer()
 -    if (inlineSummaryStatus.value?.roomId !== roomId) hideInlineSummaryStatus()
 -    roomSummaryState.value = null
 -    roomSummaryAnchor.value = null
@@ -6619,7 +6660,7 @@ index ccfca4c0c..000000000
 -            </div>
 -        </div>
 -
--        <NDrawer v-model:show="showCreateModal" placement="right" :width="workspacePanelMobile ? '100%' : 520">
+-        <NDrawer v-model:show="showCreateModal" placement="right" width="var(--studio-drawer-width)">
 -            <NDrawerContent :title="t('groupChat.createRoom')" closable>
 -                <CreateRoomForm @submit="handleCreateRoom" @cancel="showCreateModal = false" />
 -            </NDrawerContent>
@@ -6628,17 +6669,19 @@ index ccfca4c0c..000000000
 -        <NDrawer
 -            :show="showAddAgentDrawer"
 -            placement="right"
--            :width="workspacePanelMobile ? '100%' : 520"
--            :z-index="1000"
+-            width="var(--studio-drawer-width)"
+-            :z-index="1100"
 -            :mask-closable="!isSavingAgent"
 -            :close-on-esc="!isSavingAgent && !showAgentPresetDialog"
--            :trap-focus="!showAgentPresetDialog"
 -            @update:show="!$event && closeAgentDrawer()"
 -        >
 -            <NDrawerContent
 -                :title="editingAgent ? t('groupChat.editAgentTitle', { name: editingAgent.name }) : t('groupChat.addAgent')"
 -                :closable="!isSavingAgent"
 -            >
+-                    <div v-if="isLoadingAgentForm" class="agent-form-loading" role="status">
+-                        <NSpin size="small" :description="t('common.loading')" />
+-                    </div>
 -                    <div v-if="!editingAgent" class="agent-preset-entry">
 -                        <NButton secondary block @click="openAgentPresetSelection">
 -                            {{ t('groupChat.chooseAgentPreset') }}
@@ -6685,6 +6728,8 @@ index ccfca4c0c..000000000
 -                        <NSelect
 -                            :value="selectedAgentType"
 -                            :options="groupAgentTypeOptions"
+-                            :loading="isLoadingAgentForm"
+-                            :disabled="isLoadingAgentForm"
 -                            @update:value="handleAgentTypeChange"
 -                        />
 -                    </div>
@@ -6694,18 +6739,21 @@ index ccfca4c0c..000000000
 -                            :value="selectedProfile"
 -                            :options="profileOptions"
 -                            :placeholder="t('groupChat.selectProfile')"
+-                            :loading="isLoadingAgentForm"
+-                            :disabled="isLoadingAgentForm"
 -                            filterable
 -                            @update:value="handleAgentProfileChange"
 -                        />
 -                    </div>
 -                    <DshSessionPresetSelect v-if="selectedAgentType === 'dsh'" class="form-group"
--                        v-model="selectedRuntimePreset" :disabled="isSavingAgent"
+-                        v-model="selectedRuntimePreset" :disabled="isSavingAgent || isLoadingAgentForm"
 -                        @valid="selectedRuntimePresetReady = $event" />
 -                    <div v-if="supportsGlobalAgentMode && selectedAgentType !== 'cursor'" class="form-group">
 -                        <label class="form-label">{{ t('codingAgents.launchModeScope') }}</label>
 -                        <NSelect
 -                            :value="selectedAgentMode"
 -                            :options="agentModeOptions"
+-                            :disabled="isLoadingAgentForm"
 -                            @update:value="handleAgentModeChange"
 -                        />
 -                    </div>
@@ -6715,6 +6763,8 @@ index ccfca4c0c..000000000
 -                            :value="selectedAgentProvider"
 -                            :options="agentProviderOptions"
 -                            :placeholder="t('models.selectProvider')"
+-                            :loading="isLoadingAgentForm"
+-                            :disabled="isLoadingAgentForm"
 -                            filterable
 -                            @update:value="handleAgentProviderChange"
 -                        />
@@ -6725,7 +6775,8 @@ index ccfca4c0c..000000000
 -                            :value="selectedAgentModel"
 -                            :options="agentModelOptions"
 -                            :placeholder="t('models.selectModel')"
--                            :disabled="!selectedAgentProvider"
+-                            :loading="isLoadingAgentForm"
+-                            :disabled="isLoadingAgentForm || !selectedAgentProvider"
 -                            filterable
 -                            @update:value="handleAgentModelChange"
 -                        />
@@ -6735,6 +6786,7 @@ index ccfca4c0c..000000000
 -                        <NSelect
 -                            v-model:value="selectedAgentApiMode"
 -                            :options="agentApiModeOptions"
+-                            :disabled="isLoadingAgentForm"
 -                        />
 -                    </div>
 -                    <div v-if="!usesGlobalAgentMode" class="form-group">
@@ -6743,6 +6795,7 @@ index ccfca4c0c..000000000
 -                            v-model:value="selectedAgentReasoningEffort"
 -                            :options="agentReasoningEffortOptions"
 -                            :placeholder="t('chat.reasoningEffort.tooltip')"
+-                            :disabled="isLoadingAgentForm"
 -                        />
 -                    </div>
 -                    <div class="form-group">
@@ -6788,13 +6841,19 @@ index ccfca4c0c..000000000
 -            </NDrawerContent>
 -        </NDrawer>
 -
--        <Teleport to="body">
--            <div
--                v-if="showAgentPresetDialog"
--                class="modal-backdrop agent-preset-dialog-backdrop"
--                @click.self="closeAgentPresetDialog"
--            >
--                <div class="modal agent-preset-dialog">
+-        <NModal
+-            :show="showAgentPresetDialog"
+-            :z-index="1110"
+-            @update:show="!$event && closeAgentPresetDialog()"
+-        >
+-                <div
+-                    class="modal agent-preset-dialog"
+-                    role="dialog"
+-                    aria-modal="true"
+-                    :aria-label="agentPresetDialogMode === 'select'
+-                        ? t('groupChat.chooseAgentPreset')
+-                        : t('groupChat.manageAgentPresets')"
+-                >
 -                    <h3>
 -                        {{ agentPresetDialogMode === 'select'
 -                            ? t('groupChat.chooseAgentPreset')
@@ -6849,7 +6908,7 @@ index ccfca4c0c..000000000
 -                    <div v-if="agentPresetDialogMode === 'manage'" class="agent-preset-management-actions">
 -                        <NButton
 -                            secondary
--                            :disabled="!canConfirmAddAgent || isSavingAgentPreset"
+-                            :disabled="!canConfirmAddAgent || isSavingAgentPreset || isLoadingAgentPresets"
 -                            :loading="isSavingAgentPreset && !pendingAgentPresetId"
 -                            @click="createAgentPresetFromCurrent"
 -                        >
@@ -6882,14 +6941,15 @@ index ccfca4c0c..000000000
 -                        <NButton
 -                            v-if="agentPresetDialogMode === 'select'"
 -                            type="primary"
--                            :disabled="!pendingAgentPreset?.available"
+-                            :disabled="isLoadingAgentForm || isLoadingAgentPresets || !pendingAgentPreset?.available"
 -                            @click="confirmAgentPresetSelection"
 -                        >
 -                            {{ t('groupChat.applyAgentPreset') }}
 -                        </NButton>
 -                    </div>
 -                </div>
--            </div>
+-        </NModal>
+-        <Teleport to="body">
 -            <div v-if="showCloneModal" class="modal-backdrop" @click.self="showCloneModal = false">
 -                <div class="modal">
 -                    <h3>{{ t('groupChat.cloneRoom') }}</h3>
@@ -7025,7 +7085,7 @@ index ccfca4c0c..000000000
 -                preset="dialog"
 -                :title="t('chat.setWorkspaceTitle')"
 -                class="workspace-modal"
--                style="width: 520px; max-width: 92vw"
+-                style="width: var(--studio-workspace-picker-width)"
 -            >
 -                <FolderPicker v-model="workspaceValue" />
 -                <template #action>
@@ -7078,7 +7138,7 @@ index ccfca4c0c..000000000
 -            <NDrawer
 -                v-model:show="showRoomSettingsModal"
 -                placement="right"
--                :width="workspacePanelMobile ? '100%' : 520"
+-                width="var(--studio-drawer-width)"
 -            >
 -                <NDrawerContent :title="t('groupChat.roomSettings')" closable>
 -                    <div class="room-settings-drawer">
@@ -8627,12 +8687,9 @@ index ccfca4c0c..000000000
 -    }
 -}
 -
+-.agent-form-loading,
 -.agent-preset-entry {
 -    margin-bottom: 18px;
--}
--
--.agent-preset-dialog-backdrop {
--    z-index: 1010;
 -}
 -
 -.agent-preset-dialog {
@@ -9121,10 +9178,10 @@ index ccfca4c0c..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupMessageItem.vue b/packages/client/src/components/hermes/group-chat/GroupMessageItem.vue
 deleted file mode 100644
-index 75e513568..000000000
+index 807200506..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupMessageItem.vue
 +++ /dev/null
-@@ -1,1542 +0,0 @@
+@@ -1,1543 +0,0 @@
 -<script setup lang="ts">
 -import TaskPlanCard from '../chat/TaskPlanCard.vue'
 -import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -9956,6 +10013,7 @@ index 75e513568..000000000
 -                    <MarkdownRenderer v-if="parsedMessageReference.reply" :content="parsedMessageReference.reply" :mention-names="mentionNames" :resolve-image-url="resolveGroupImageUrl" />
 -                </template>
 -                <MarkdownRenderer v-else-if="renderedDisplayBody" :content="renderedDisplayBody" :mention-names="mentionNames" :resolve-image-url="resolveGroupImageUrl" :defer-images="!!message.isStreaming" />
+-                <slot name="before-workspace-changes" />
 -                <ToolChangeCard
 -                    v-for="change in assistantWorkspaceChanges"
 -                    :key="change.change_id"
@@ -12073,7 +12131,7 @@ index be2fbd388..f10e17a19 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 15587c613..419f13d04 100644
+index 341446b06..0ea898844 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -507,7 +507,6 @@ export default {
@@ -12084,7 +12142,7 @@ index 15587c613..419f13d04 100644
      files: 'الملفات',
      devices: 'الأجهزة',
      connections: 'ترابط الأجهزة',
-@@ -3315,238 +3314,6 @@ export default {
+@@ -3328,238 +3327,6 @@ export default {
      connectionClosed: 'تم إغلاق اتصال الطرفية',
      connectionError: 'خطأ في اتصال الطرفية',
    },
@@ -12324,7 +12382,7 @@ index 15587c613..419f13d04 100644
    usage: {
      costStates: {
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index f41cf62da..34f0fd359 100644
+index ef41f6dd0..1135eee54 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -520,7 +520,6 @@ export default {
@@ -12335,7 +12393,7 @@ index f41cf62da..34f0fd359 100644
      groupConversation: 'Konversation',
      groupConversationShort: 'Konv',
      groupAgent: 'Agent',
-@@ -3059,238 +3058,6 @@ jobTriggered: 'Job ausgelost',
+@@ -3074,238 +3073,6 @@ jobTriggered: 'Job ausgelost',
        idle: 'Inaktiv', queued: 'In Warteschlange', running: 'Wird ausgeführt', pending_approval: 'Wartet auf Freigabe', completed: 'Abgeschlossen', skipped: 'Übersprungen', failed: 'Fehlgeschlagen', approval_rejected: 'Freigabe abgelehnt', canceled: 'Abgebrochen',
      },
    },
@@ -12575,7 +12633,7 @@ index f41cf62da..34f0fd359 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 327145c9c..a2b8e9190 100644
+index 5e1464ec7..ae0ce1040 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -507,7 +507,6 @@ export default {
@@ -12586,7 +12644,7 @@ index 327145c9c..a2b8e9190 100644
      files: 'Files',
      devices: 'Devices',
      connections: 'Device connections',
-@@ -3344,238 +3343,6 @@ export default {
+@@ -3357,238 +3356,6 @@ export default {
      connectionClosed: 'Terminal connection closed',
      connectionError: 'Terminal connection error',
    },
@@ -12826,7 +12884,7 @@ index 327145c9c..a2b8e9190 100644
    usage: {
      costStates: {
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index d5581aa57..118767a52 100644
+index d55afe2de..35bc39a89 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -520,7 +520,6 @@ export default {
@@ -12837,7 +12895,7 @@ index d5581aa57..118767a52 100644
      groupConversation: 'Conversación',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3059,238 +3058,6 @@ jobTriggered: 'Job ejecutado',
+@@ -3074,238 +3073,6 @@ jobTriggered: 'Job ejecutado',
        idle: 'Inactivo', queued: 'En cola', running: 'En ejecución', pending_approval: 'Pendiente de aprobación', completed: 'Completado', skipped: 'Omitido', failed: 'Fallido', approval_rejected: 'Aprobación rechazada', canceled: 'Cancelado',
      },
    },
@@ -13077,7 +13135,7 @@ index d5581aa57..118767a52 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 843e9dd97..caabd2e0d 100644
+index fc08050a1..6e047d4b2 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -520,7 +520,6 @@ export default {
@@ -13088,7 +13146,7 @@ index 843e9dd97..caabd2e0d 100644
      groupConversation: 'Conversation',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agent',
-@@ -3059,238 +3058,6 @@ jobTriggered: 'Job declenche',
+@@ -3074,238 +3073,6 @@ jobTriggered: 'Job declenche',
        idle: 'Inactif', queued: 'En attente', running: 'En cours', pending_approval: 'En attente d\'approbation', completed: 'Terminé', skipped: 'Ignoré', failed: 'Échec', approval_rejected: 'Approbation refusée', canceled: 'Annulé',
      },
    },
@@ -13328,7 +13386,7 @@ index 843e9dd97..caabd2e0d 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 96c5858a8..37b70ca32 100644
+index f54b268c1..ff856d26b 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -520,7 +520,6 @@ export default {
@@ -13339,7 +13397,7 @@ index 96c5858a8..37b70ca32 100644
      groupConversation: '会話',
      groupConversationShort: '会話',
      groupAgent: 'エージェント',
-@@ -3058,238 +3057,6 @@ export default {
+@@ -3073,238 +3072,6 @@ export default {
        idle: '待機中', queued: '待機列', running: '実行中', pending_approval: '承認待ち', completed: '完了', skipped: 'スキップ', failed: '失敗', approval_rejected: '承認拒否', canceled: 'キャンセル済み',
      },
    },
@@ -13579,7 +13637,7 @@ index 96c5858a8..37b70ca32 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index cb718cf67..b9f9a3f06 100644
+index b108b9907..0f1acf406 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -520,7 +520,6 @@ export default {
@@ -13590,7 +13648,7 @@ index cb718cf67..b9f9a3f06 100644
      groupConversation: '대화',
      groupConversationShort: '대화',
      groupAgent: '에이전트',
-@@ -3058,238 +3057,6 @@ export default {
+@@ -3073,238 +3072,6 @@ export default {
        idle: '대기', queued: '대기열', running: '실행 중', pending_approval: '승인 대기', completed: '완료', skipped: '건너뜀', failed: '실패', approval_rejected: '승인 거부', canceled: '취소됨',
      },
    },
@@ -13830,7 +13888,7 @@ index cb718cf67..b9f9a3f06 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 0774f8233..7e75d7ee8 100644
+index b10957a63..3d170b3c7 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -520,7 +520,6 @@ export default {
@@ -13841,7 +13899,7 @@ index 0774f8233..7e75d7ee8 100644
      groupConversation: 'Conversa',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3059,238 +3058,6 @@ jobTriggered: 'Job acionado',
+@@ -3074,238 +3073,6 @@ jobTriggered: 'Job acionado',
        idle: 'Inativo', queued: 'Na fila', running: 'Em execução', pending_approval: 'Aguardando aprovação', completed: 'Concluído', skipped: 'Ignorado', failed: 'Falhou', approval_rejected: 'Aprovação rejeitada', canceled: 'Cancelado',
      },
    },
@@ -14081,7 +14139,7 @@ index 0774f8233..7e75d7ee8 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 7a5ec22ba..fa9b3fcf2 100644
+index 8b737cb2d..04b94098f 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -432,7 +432,6 @@ export default {
@@ -14092,7 +14150,7 @@ index 7a5ec22ba..fa9b3fcf2 100644
      files: 'Файлы',
      devices: 'Устройства',
      connections: 'Подключение устройств',
-@@ -2977,237 +2976,6 @@ export default {
+@@ -2990,237 +2989,6 @@ export default {
    },
  
  
@@ -14331,7 +14389,7 @@ index 7a5ec22ba..fa9b3fcf2 100644
      costStates: {
        unknown: "Не записано",
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index ff7f51fcc..194ea1675 100644
+index bcbb667a2..a89105608 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -507,7 +507,6 @@ export default {
@@ -14342,7 +14400,7 @@ index ff7f51fcc..194ea1675 100644
      files: '檔案',
      devices: '裝置',
      connections: '裝置互聯',
-@@ -3286,238 +3285,6 @@ export default {
+@@ -3299,238 +3298,6 @@ export default {
      connectionClosed: '終端機連線已關閉',
      connectionError: '終端機連線錯誤',
    },
@@ -14582,7 +14640,7 @@ index ff7f51fcc..194ea1675 100644
    usage: {
      costStates: {
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index f08f75562..e1b34b2e2 100644
+index 3083ec362..6ab4e8c10 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -507,7 +507,6 @@ export default {
@@ -14593,7 +14651,7 @@ index f08f75562..e1b34b2e2 100644
      files: '文件',
      devices: '设备',
      connections: '设备互联',
-@@ -3392,238 +3391,6 @@ export default {
+@@ -3405,238 +3404,6 @@ export default {
      connectionClosed: '终端连接已关闭',
      connectionError: '终端连接错误',
    },
@@ -15204,11 +15262,12 @@ index ba86eaffb..5f1828ed1 100644
    }
 diff --git a/packages/client/src/stores/hermes/group-chat.ts b/packages/client/src/stores/hermes/group-chat.ts
 deleted file mode 100644
-index d30d6d363..000000000
+index 2ab20e0af..000000000
 --- a/packages/client/src/stores/hermes/group-chat.ts
 +++ /dev/null
-@@ -1,2354 +0,0 @@
+@@ -1,2360 +0,0 @@
 -import { parseGroupTaskPlanMessage, isOlderGroupTaskPlan } from '@/utils/task-plan'
+-import { parseGroupRunUsageMessage } from '@/utils/run-usage'
 -import { defineStore } from 'pinia'
 -import { ref, computed } from 'vue'
 -import { useSettingsStore } from './settings'
@@ -17463,6 +17522,11 @@ index d30d6d363..000000000
 -        const taskPlan = parseGroupTaskPlanMessage(msg)
 -        if (taskPlan) {
 -            result.push({ ...msg, role: 'assistant', content: '', taskPlan })
+-            continue
+-        }
+-        const runUsage = parseGroupRunUsageMessage(msg)
+-        if (runUsage) {
+-            result.push({ ...msg, role: 'assistant', content: '', runUsage })
 -            continue
 -        }
 -        if (msg.role === 'tool') {

@@ -1,4 +1,4 @@
-From a347a390e31b24b1492aef7955bb16436b52dd21 Mon Sep 17 00:00:00 2001
+From 58b573064b06682102d2b32078ea5933deef4b3e Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 1 Oct 2026 12:05:54 +0800
 Subject: [PATCH] fix(mobile-nav): adapt the 0.7.26 nav chrome to the fork's
@@ -19,15 +19,15 @@ Content-Transfer-Encoding: 8bit
   longer floats over it.
 ---
  .../src/components/hermes/chat/ChatPanel.vue  | 13 +++++++
- .../layout/MobileNavigationDrawer.vue         | 37 ++++++-------------
- .../layout/StudioNavigationRail.vue           |  8 +---
- 3 files changed, 27 insertions(+), 31 deletions(-)
+ .../layout/MobileNavigationDrawer.vue         | 36 +++++++------------
+ .../layout/StudioNavigationRail.vue           |  8 ++---
+ 3 files changed, 27 insertions(+), 30 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index 7fb445670..bde4a2e43 100644
+index cbe6c72f9..b4b48842b 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -3466,6 +3466,19 @@ async function handleSessionModelCustomSubmit() {
+@@ -3465,6 +3465,19 @@ async function handleSessionModelCustomSubmit() {
    padding: 12px;
  }
  
@@ -48,7 +48,7 @@ index 7fb445670..bde4a2e43 100644
    display: flex;
    flex-direction: column;
 diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
-index 430c50a06..02f8e353f 100644
+index 46ce2aaf3..512ed205b 100644
 --- a/packages/client/src/components/layout/MobileNavigationDrawer.vue
 +++ b/packages/client/src/components/layout/MobileNavigationDrawer.vue
 @@ -1,6 +1,5 @@
@@ -76,7 +76,7 @@ index 430c50a06..02f8e353f 100644
          <div :ref="element => emit('target', element as HTMLElement | null)" class="studio-mobile-navigation__content" />
        </section>
      </div>
-@@ -36,13 +31,18 @@ const { t } = useI18n()
+@@ -36,6 +31,11 @@ const { t } = useI18n()
  @use '@/styles/variables' as *;
  
  .studio-mobile-navigation {
@@ -88,7 +88,8 @@ index 430c50a06..02f8e353f 100644
    display: flex;
    height: 100%;
    min-height: 0;
-   background: $bg-sidebar-surface;
+@@ -45,7 +45,7 @@ const { t } = useI18n()
+   overflow: hidden;
  
    :deep(.studio-navigation-rail) {
 -    padding-top: max(12px, env(safe-area-inset-top, 0px));
@@ -96,7 +97,7 @@ index 430c50a06..02f8e353f 100644
      padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
    }
  }
-@@ -53,27 +53,12 @@ const { t } = useI18n()
+@@ -56,27 +56,13 @@ const { t } = useI18n()
    flex-direction: column;
    min-width: 0;
    min-height: 0;
@@ -120,14 +121,14 @@ index 430c50a06..02f8e353f 100644
 -  color: $text-secondary;
 -  background: transparent;
 -  cursor: pointer;
--
--  &:hover { background: rgba(var(--accent-primary-rgb), 0.08); }
+ 
+-  &:hover { color: $text-primary; }
 -  &:focus-visible { outline: 2px solid $accent-primary; }
 -}
  .studio-mobile-navigation .studio-mobile-navigation__content {
    position: relative;
    display: flex;
-@@ -101,7 +86,9 @@ const { t } = useI18n()
+@@ -104,7 +90,9 @@ const { t } = useI18n()
      pointer-events: auto;
    }
  
