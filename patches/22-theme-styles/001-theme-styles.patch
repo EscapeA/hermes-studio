@@ -1,0 +1,1893 @@
+From 878e881b9ebddbc08905905b8cb287dba4de8fad Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 27 Sep 2026 11:30:19 +0800
+Subject: [PATCH] feat(web): make theme styles table-driven and add neon,
+ aurora, blueprint
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Promotes the theme system from four hand-wired styles to a table-driven one and
+adds three new looks beside an upgraded `tech`:
+
+- tech (upgraded): deep-space HUD — near-black navy, cyan accent, 128px/32px
+  grid and a cyan wash down from the top.
+- neon: near-black canvas, cyan/magenta pair, 3px scanlines plus neon card edges.
+- aurora: deep indigo with three drifting aurora lights behind frosted cards.
+- blueprint: light-first drafting grid — the first light tech look, so it ships
+  both a `.blueprint` and a `.dark.blueprint` palette.
+
+`styles/theme-style.ts` is now the single source (style list, `<html>` class
+table, brightness lock, label keys, status-bar colour and picker swatch), so
+`main.ts` and `useTheme.ts` no longer carry an `if` per style and
+`getThemeOverrides` reads a `STYLE_PALETTES` registry instead of a ternary
+chain. Material that colour variables cannot express — ambient background,
+glass, glows — moves into the new `styles/style-layers.scss`.
+
+The ambient layer has to sit above the cards. This is a floating-card layout,
+so a page-background texture is covered by the cards and measures as flat
+colour (verified by spectral analysis of a card screenshot). Hence a fixed
+`body::after` at z-index 3 — above `.app-layout`, below naive-ui teleports so
+menus stay clean — combined with translucent `--bg-main-surface` /
+`--bg-sidebar-surface`; both halves are required for the texture to read.
+
+All 11 locales get the new style labels.
+---
+ packages/client/index.html                    |   3 +-
+ packages/client/src/App.vue                   |   4 +-
+ .../src/components/hermes/chat/ChatInput.vue  |   6 +-
+ .../src/components/layout/ThemeSwitch.vue     | 109 ++++-
+ packages/client/src/composables/useTheme.ts   |  45 +-
+ packages/client/src/i18n/locales/ar.ts        |   6 +
+ packages/client/src/i18n/locales/de.ts        |   6 +
+ packages/client/src/i18n/locales/en.ts        |   6 +
+ packages/client/src/i18n/locales/es.ts        |   6 +
+ packages/client/src/i18n/locales/fr.ts        |   6 +
+ packages/client/src/i18n/locales/ja.ts        |   6 +
+ packages/client/src/i18n/locales/ko.ts        |   6 +
+ packages/client/src/i18n/locales/pt.ts        |   6 +
+ packages/client/src/i18n/locales/ru.ts        |   6 +
+ packages/client/src/i18n/locales/zh-TW.ts     |   6 +
+ packages/client/src/i18n/locales/zh.ts        |   6 +
+ packages/client/src/main.ts                   |  20 +-
+ packages/client/src/styles/code-block.scss    |  19 +
+ packages/client/src/styles/global.scss        |   1 +
+ packages/client/src/styles/style-layers.scss  | 269 +++++++++++
+ packages/client/src/styles/theme-style.ts     | 107 +++++
+ packages/client/src/styles/theme.ts           | 295 +++++++++++-
+ packages/client/src/styles/variables.scss     | 454 +++++++++++++++++-
+ .../client/src/views/hermes/ThemeView.vue     |  33 +-
+ 24 files changed, 1384 insertions(+), 47 deletions(-)
+ create mode 100644 packages/client/src/styles/style-layers.scss
+ create mode 100644 packages/client/src/styles/theme-style.ts
+
+diff --git a/packages/client/index.html b/packages/client/index.html
+index 07546572a..07350e4e0 100644
+--- a/packages/client/index.html
++++ b/packages/client/index.html
+@@ -79,8 +79,7 @@
+     (function() {
+       try {
+         const brightness = localStorage.getItem('hermes_brightness') || 'system';
+-        // Match useTheme's default startup style, including for saved Comic preferences.
+-        const style = 'ink';
++        const style = localStorage.getItem('hermes_style') || 'ink';
+ 
+         // Resolve dark mode
+         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
+index de7d776f0..07febb662 100644
+--- a/packages/client/src/App.vue
++++ b/packages/client/src/App.vue
+@@ -92,7 +92,7 @@ const StudioAnnouncementPrompt = defineAsyncComponent(
+ 
+ const {
+   isDark,
+-  isComic,
++  style,
+   customization,
+   hasBackgroundImage,
+   syncThemeFromServer,
+@@ -106,7 +106,7 @@ const route = useRoute();
+ const { sessionSearchOpen } = useSessionSearch();
+ 
+ const themeOverrides = computed(() =>
+-  getThemeOverrides(isDark.value, isComic.value, customization.value),
++  getThemeOverrides(isDark.value, style.value, customization.value),
+ );
+ const naiveTheme = computed(() => (isDark.value ? darkTheme : null));
+ 
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index efb6c3c9b..cc5a3f678 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -2250,7 +2250,9 @@ function openAttachmentPreview(attachment: Attachment) {
+   }
+ 
+   .dark & {
+-    background-color: $bg-main-surface;
++    // Raised above the chat surface — themed so tech/terminal keep their own
++    // composer color instead of the ink gray.
++    background-color: var(--bg-input-elevated);
+     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
+   }
+ }
+@@ -2420,7 +2422,7 @@ function openAttachmentPreview(attachment: Attachment) {
+   padding: 4px;
+ 
+   .dark & {
+-    background: #2a2a2a;
++    background: var(--bg-overlay-surface);
+   }
+ }
+ 
+diff --git a/packages/client/src/components/layout/ThemeSwitch.vue b/packages/client/src/components/layout/ThemeSwitch.vue
+index 9bfa74e75..520e14218 100644
+--- a/packages/client/src/components/layout/ThemeSwitch.vue
++++ b/packages/client/src/components/layout/ThemeSwitch.vue
+@@ -1,12 +1,104 @@
+ <script setup lang="ts">
+-import { useTheme } from '@/composables/useTheme'
++import { computed, h } from 'vue'
++import { NDropdown, type DropdownOption } from 'naive-ui'
++import { useI18n } from 'vue-i18n'
++import { useTheme, type ThemeStyle } from '@/composables/useTheme'
++import { STYLE_LABEL_KEYS, STYLE_SWATCH, THEME_STYLES } from '@/styles/theme-style'
+ 
+-const { isDark, toggleBrightness } = useTheme()
++const { t } = useI18n()
++const { isDark, style, styleForcesDark, setStyle, toggleBrightness } = useTheme()
++
++function checkIcon() {
++  return h(
++    'svg',
++    {
++      width: 14,
++      height: 14,
++      viewBox: '0 0 24 24',
++      fill: 'none',
++      stroke: 'currentColor',
++      'stroke-width': 2.4,
++      'stroke-linecap': 'round',
++      'stroke-linejoin': 'round',
++    },
++    [h('polyline', { points: '20 6 9 17 4 12' })],
++  )
++}
++
++// Seven styles no longer fit a two-state toggle, so the palette button opens
++// the full list and marks the active one instead of cycling through them.
++// Each row carries a swatch (the style's accent on its own surface) so the
++// list stays scannable on a phone without previewing every style in turn.
++// Inline styles on purpose: the dropdown menu is teleported out of this
++// component's scoped-style scope.
++function swatch(value: ThemeStyle) {
++  const { accent, surface } = STYLE_SWATCH[value]
++  return h(
++    'span',
++    {
++      style: {
++        display: 'inline-flex',
++        alignItems: 'center',
++        justifyContent: 'center',
++        width: '14px',
++        height: '14px',
++        borderRadius: '4px',
++        backgroundColor: surface,
++        border: `1px solid ${accent}`,
++        marginRight: '8px',
++        verticalAlign: '-2px',
++        flexShrink: '0',
++      },
++    },
++    [h('span', {
++      style: {
++        width: '6px',
++        height: '6px',
++        borderRadius: '50%',
++        backgroundColor: accent,
++      },
++    })],
++  )
++}
++
++const styleOptions = computed<DropdownOption[]>(() =>
++  THEME_STYLES.map(value => ({
++    key: value,
++    label: () => h(
++      'span',
++      { style: { display: 'inline-flex', alignItems: 'center' } },
++      [swatch(value), t(STYLE_LABEL_KEYS[value])],
++    ),
++    icon: value === style.value ? checkIcon : undefined,
++  })),
++)
++
++function selectStyle(key: string) {
++  setStyle(key as ThemeStyle)
++}
+ </script>
+ 
+ <template>
+   <div class="theme-switch-container" style="display: flex; gap: 4px; align-items: center;">
+-    <button class="theme-switch" :title="isDark ? 'Light mode' : 'Dark mode'" @click="toggleBrightness">
++    <NDropdown
++      trigger="click"
++      placement="top-start"
++      :options="styleOptions"
++      @select="selectStyle"
++    >
++      <button class="theme-switch" :title="t(STYLE_LABEL_KEYS[style])">
++        <!-- Palette icon -->
++        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
++          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
++        </svg>
++      </button>
++    </NDropdown>
++    <button
++      class="theme-switch"
++      :disabled="styleForcesDark"
++      :title="isDark ? 'Light mode' : 'Dark mode'"
++      @click="toggleBrightness"
++    >
+       <!-- Sun icon (shown in dark mode) -->
+       <svg v-if="isDark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+         <circle cx="12" cy="12" r="5" />
+@@ -45,5 +137,16 @@ const { isDark, toggleBrightness } = useTheme()
+     color: var(--text-primary);
+     background: rgba(var(--accent-primary-rgb), 0.06);
+   }
++
++  // Brightness is pinned by dark-locked styles (tech / terminal).
++  &:disabled {
++    cursor: default;
++    opacity: 0.35;
++
++    &:hover {
++      color: var(--text-muted);
++      background: transparent;
++    }
++  }
+ }
+ </style>
+diff --git a/packages/client/src/composables/useTheme.ts b/packages/client/src/composables/useTheme.ts
+index bad39e453..e3e01620e 100644
+--- a/packages/client/src/composables/useTheme.ts
++++ b/packages/client/src/composables/useTheme.ts
+@@ -8,6 +8,15 @@ import {
+   uploadThemeBackground as uploadThemeBackgroundApi,
+   type UserThemeSettings,
+ } from '@/api/studio/theme'
++import {
++  DEFAULT_THEME_STYLE,
++  STYLE_CLASS,
++  STYLE_CLASSES,
++  STYLE_FORCES_DARK,
++  STYLE_THEME_COLOR,
++  normalizeThemeStyle,
++  type ThemeStyle,
++} from '@/styles/theme-style'
+ import {
+   DEFAULT_THEME_FONT_SIZE,
+   normalizeHexColor,
+@@ -17,16 +26,12 @@ import {
+   type ThemeCustomization,
+ } from '@/styles/theme-customization'
+ 
+-export type BrightnessMode = 'light' | 'dark' | 'system'
+-export type ThemeStyle = 'ink' | 'comic'
++export type { ThemeStyle } from '@/styles/theme-style'
+ 
+-// Status bar / browser chrome theme color — mirrors manifest.theme_color so
+-// standalone PWA chrome follows the in-app brightness setting.
+-const THEME_COLOR_LIGHT = '#f7f7f4'
+-const THEME_COLOR_DARK = '#1a1a1a'
++export type BrightnessMode = 'light' | 'dark' | 'system'
+ 
+ function applyThemeColorMeta() {
+-  const color = isDark.value ? THEME_COLOR_DARK : THEME_COLOR_LIGHT
++  const color = STYLE_THEME_COLOR[style.value][isDark.value ? 'dark' : 'light']
+   let meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]:not([media])')
+   if (!meta) {
+     meta = document.createElement('meta')
+@@ -105,9 +110,9 @@ function loadCachedTheme(userId: number | null): UserThemeSettings {
+ const brightness = ref<BrightnessMode>(
+   (localStorage.getItem(BRIGHTNESS_KEY) as BrightnessMode) || 'system',
+ )
+-// Start in the default style while the quick style switch is unavailable.
+-// Keep this in sync with the pre-render theme in index.html.
+-const style = ref<ThemeStyle>('ink')
++const style = ref<ThemeStyle>(
++  normalizeThemeStyle(localStorage.getItem(STYLE_KEY)),
++)
+ const isDark = ref(false)
+ const isComic = ref(false)
+ const activeUserId = ref<number | null>(storedUserId())
+@@ -125,6 +130,11 @@ const customization = computed<ThemeCustomization>(() => ({
+   accentColor: serverTheme.value.accentColor,
+ }))
+ 
++// Styles like tech/terminal only ship a dark palette, so they pin the
++// resolved brightness to dark while the user's own light/dark/system choice
++// stays stored and comes back when another style is selected.
++const styleForcesDark = computed(() => STYLE_FORCES_DARK[style.value])
++
+ function resolveDark(mode: BrightnessMode): boolean {
+   if (mode === 'system') {
+     return window.matchMedia('(prefers-color-scheme: dark)').matches
+@@ -156,11 +166,17 @@ function applyCustomization() {
+ }
+ 
+ function applyClasses() {
+-  const dark = resolveDark(brightness.value)
++  const dark = styleForcesDark.value || resolveDark(brightness.value)
+   isDark.value = dark
+   isComic.value = style.value === 'comic'
+-  document.documentElement.classList.toggle('dark', dark)
+-  document.documentElement.classList.toggle('comic', isComic.value)
++  const root = document.documentElement
++  root.classList.toggle('dark', dark)
++  // One toggle per style class, driven by the shared table — a new style needs
++  // no edit here (see STYLE_CLASS / STYLE_CLASSES in styles/theme-style.ts).
++  const activeStyleClass = STYLE_CLASS[style.value]
++  for (const className of STYLE_CLASSES) {
++    root.classList.toggle(className, className === activeStyleClass)
++  }
+   // Sync CSS color-scheme so the browser/WebView knows the page supports
+   // dark mode (mirrors next-themes' enableColorScheme). Without it, Android
+   // WebView's FORCE_DARK falls back to UA algorithmic darkening (inverts
+@@ -326,7 +342,7 @@ watch(hasBackgroundImage, (active) => {
+ export function useTheme() {
+   const themeName = computed(() => {
+     const mode = isDark.value ? 'dark' : 'light'
+-    return isComic.value ? `comic-${mode}` : mode
++    return style.value === DEFAULT_THEME_STYLE ? mode : `${style.value}-${mode}`
+   })
+ 
+   function setBrightness(mode: BrightnessMode) {
+@@ -350,6 +366,7 @@ export function useTheme() {
+     style,
+     isDark,
+     isComic,
++    styleForcesDark,
+     themeName,
+     customization,
+     fontSize: computed(() => serverTheme.value.fontSize),
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index 22dbfb5c4..1e1a1b059 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -2146,6 +2146,12 @@ export default {
+     styleHint: 'اختر طابع الواجهة',
+     styleInk: 'حبري',
+     styleComic: 'كوميك',
++    styleTech: 'أزرق تقني',
++    styleTerminal: 'الطرفية',
++    styleNeon: 'نيون',
++    styleAurora: 'الشفق',
++    styleBlueprint: 'مخطط',
++    modeLockedHint: 'هذا النمط داكن دائمًا، ولا يُطبَّق إعداد السطوع',
+     fontSize: 'حجم النص',
+     fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',
+     textColor: 'لون النص',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 360330c87..31096770d 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1949,6 +1949,12 @@ jobTriggered: 'Job ausgelost',
+     styleHint: 'Charakter der Oberfläche wählen',
+     styleInk: 'Tusche',
+     styleComic: 'Comic',
++    styleTech: 'Tech-Blau',
++    styleTerminal: 'Terminal',
++    styleNeon: 'Neon',
++    styleAurora: 'Polarlicht',
++    styleBlueprint: 'Blaupause',
++    modeLockedHint: 'Dieser Stil ist immer dunkel – die Helligkeitseinstellung wird ignoriert',
+     fontSize: 'Textgröße',
+     fontSizeHint: 'Grundgröße für Oberfläche und Unterhaltungen',
+     textColor: 'Textfarbe',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 0064a81ed..32759f62e 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -2160,6 +2160,12 @@ export default {
+     styleHint: 'Choose the interface character',
+     styleInk: 'Ink',
+     styleComic: 'Comic',
++    styleTech: 'Tech Blue',
++    styleTerminal: 'Terminal',
++    styleNeon: 'Neon',
++    styleAurora: 'Aurora',
++    styleBlueprint: 'Blueprint',
++    modeLockedHint: 'This style is always dark; the brightness setting is ignored',
+     fontSize: 'Text size',
+     fontSizeHint: 'Base interface and conversation text size',
+     textColor: 'Text color',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 51ceafd97..35a43fa57 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1949,6 +1949,12 @@ jobTriggered: 'Job ejecutado',
+     styleHint: 'Elige el carácter de la interfaz',
+     styleInk: 'Tinta',
+     styleComic: 'Cómic',
++    styleTech: 'Azul tech',
++    styleTerminal: 'Terminal',
++    styleNeon: 'Neón',
++    styleAurora: 'Aurora',
++    styleBlueprint: 'Plano',
++    modeLockedHint: 'Este estilo siempre es oscuro: el ajuste de brillo no se aplica',
+     fontSize: 'Tamaño del texto',
+     fontSizeHint: 'Tamaño base de la interfaz y las conversaciones',
+     textColor: 'Color del texto',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 54ff1f44a..7270320fe 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1949,6 +1949,12 @@ jobTriggered: 'Job declenche',
+     styleHint: 'Choisissez le caractère de l’interface',
+     styleInk: 'Encre',
+     styleComic: 'BD',
++    styleTech: 'Bleu tech',
++    styleTerminal: 'Terminal',
++    styleNeon: 'Néon',
++    styleAurora: 'Aurore',
++    styleBlueprint: 'Blueprint',
++    modeLockedHint: 'Ce style reste toujours sombre : le réglage de luminosité est ignoré',
+     fontSize: 'Taille du texte',
+     fontSizeHint: 'Taille de base de l’interface et des conversations',
+     textColor: 'Couleur du texte',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 352415513..4802152ad 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1949,6 +1949,12 @@ export default {
+     styleHint: '画面の雰囲気を選択',
+     styleInk: '墨',
+     styleComic: 'コミック',
++    styleTech: 'テックブルー',
++    styleTerminal: 'ターミナル',
++    styleNeon: 'ネオン',
++    styleAurora: 'オーロラ',
++    styleBlueprint: 'ブループリント',
++    modeLockedHint: 'このスタイルは常にダーク固定のため、明暗の設定は反映されません',
+     fontSize: '文字サイズ',
+     fontSizeHint: '画面と会話テキストの基本サイズ',
+     textColor: '文字色',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index b50c1cce2..8b48d164e 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1949,6 +1949,12 @@ export default {
+     styleHint: '인터페이스 분위기 선택',
+     styleInk: '수묵',
+     styleComic: '코믹',
++    styleTech: '테크 블루',
++    styleTerminal: '터미널',
++    styleNeon: '네온',
++    styleAurora: '오로라',
++    styleBlueprint: '블루프린트',
++    modeLockedHint: '이 스타일은 항상 어둡게 고정되어 밝기 설정이 적용되지 않습니다',
+     fontSize: '텍스트 크기',
+     fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',
+     textColor: '텍스트 색상',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index a5b6981b2..882443931 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1949,6 +1949,12 @@ jobTriggered: 'Job acionado',
+     styleHint: 'Escolha o caráter da interface',
+     styleInk: 'Tinta',
+     styleComic: 'Quadrinhos',
++    styleTech: 'Azul tech',
++    styleTerminal: 'Terminal',
++    styleNeon: 'Neon',
++    styleAurora: 'Aurora',
++    styleBlueprint: 'Blueprint',
++    modeLockedHint: 'Este estilo é sempre escuro: o ajuste de brilho é ignorado',
+     fontSize: 'Tamanho do texto',
+     fontSizeHint: 'Tamanho base da interface e das conversas',
+     textColor: 'Cor do texto',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index fb50d5e76..04e70320b 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -1946,6 +1946,12 @@ export default {
+     styleHint: 'Выберите характер интерфейса',
+     styleInk: 'Тушь',
+     styleComic: 'Комикс',
++    styleTech: 'Техно-синий',
++    styleTerminal: 'Терминал',
++    styleNeon: 'Неон',
++    styleAurora: 'Аврора',
++    styleBlueprint: 'Чертёж',
++    modeLockedHint: 'Этот стиль всегда тёмный — настройка яркости не применяется',
+     fontSize: 'Размер текста',
+     fontSizeHint: 'Базовый размер текста интерфейса и диалогов',
+     textColor: 'Цвет текста',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 4303dd5e5..cd2688b27 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -2106,6 +2106,12 @@ export default {
+     styleHint: '選擇介面的視覺風格',
+     styleInk: '水墨',
+     styleComic: '漫畫',
++    styleTech: '科技藍',
++    styleTerminal: '終端黑',
++    styleNeon: '霓虹賽博',
++    styleAurora: '漸層空間艙',
++    styleBlueprint: '藍圖',
++    modeLockedHint: '該風格固定為深色，明暗設定暫不生效',
+     fontSize: '文字大小',
+     fontSizeHint: '介面與對話內容的基礎字級',
+     textColor: '文字顏色',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 6040c9889..97395e86e 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -2152,6 +2152,12 @@ export default {
+     styleHint: '选择界面的视觉风格',
+     styleInk: '水墨',
+     styleComic: '漫画',
++    styleTech: '科技蓝',
++    styleTerminal: '终端黑',
++    styleNeon: '霓虹赛博',
++    styleAurora: '渐变空间舱',
++    styleBlueprint: '蓝图',
++    modeLockedHint: '该风格固定为深色，明暗设置暂不生效',
+     fontSize: '文字大小',
+     fontSizeHint: '界面和对话内容的基础字号',
+     textColor: '文字颜色',
+diff --git a/packages/client/src/main.ts b/packages/client/src/main.ts
+index 5051786a1..a6e0bb8c6 100644
+--- a/packages/client/src/main.ts
++++ b/packages/client/src/main.ts
+@@ -4,8 +4,8 @@ import router from './router'
+ import { i18nReady } from './i18n'
+ import App from './App.vue'
+ import './styles/global.scss'
++import { DEFAULT_THEME_STYLE, STYLE_CLASS, STYLE_FORCES_DARK, normalizeThemeStyle } from './styles/theme-style'
+ import { desktopBridge } from '@/utils/desktop-bridge'
+-import { useTheme } from '@/composables/useTheme'
+ 
+ // Apply theme classes before mount to prevent FOUC (Flash of Unstyled Content)
+ function storedPreference(key: string, fallback: string): string {
+@@ -17,14 +17,18 @@ function storedPreference(key: string, fallback: string): string {
+ }
+ 
+ const savedBrightness = storedPreference('hermes_brightness', 'system')
+-const themeStyle = useTheme().style.value
++const savedStyle = normalizeThemeStyle(storedPreference('hermes_style', DEFAULT_THEME_STYLE))
+ 
+-// Resolve dark mode
++// Resolve dark mode — styles that only ship a dark palette pin it (see
++// STYLE_FORCES_DARK; useTheme repeats this once the app is mounted).
+ const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+-const isDark = savedBrightness === 'dark' || (savedBrightness === 'system' && prefersDark)
++const isDark = STYLE_FORCES_DARK[savedStyle]
++  || savedBrightness === 'dark'
++  || (savedBrightness === 'system' && prefersDark)
+ 
+-// Resolve style
+-const isComic = themeStyle === 'comic'
++// Resolve style — the style class is looked up from the shared table so a new
++// style needs no edit here (see STYLE_CLASS in styles/theme-style.ts).
++const styleClass = STYLE_CLASS[savedStyle]
+ const bridge = desktopBridge()
+ const isDesktopShell = bridge?.isDesktop === true
+ const isDesktopPetWindow = bridge?.windowKind === 'pet' || window.location.hash.startsWith('#/desktop-pet')
+@@ -33,8 +37,8 @@ const isDesktopPetWindow = bridge?.windowKind === 'pet' || window.location.hash.
+ if (isDark) {
+   document.documentElement.classList.add('dark')
+ }
+-if (isComic) {
+-  document.documentElement.classList.add('comic')
++if (styleClass) {
++  document.documentElement.classList.add(styleClass)
+ }
+ if (isDesktopShell) {
+   document.documentElement.classList.add('hermes-desktop-shell')
+diff --git a/packages/client/src/styles/code-block.scss b/packages/client/src/styles/code-block.scss
+index a5d6c3862..d6de2dbab 100644
+--- a/packages/client/src/styles/code-block.scss
++++ b/packages/client/src/styles/code-block.scss
+@@ -288,3 +288,22 @@
+     color: #94a3b8;
+   }
+ }
++
++// 终端黑 — keep the dark syntax colors (they stay legible on black) but pull
++// the neutral text, comments and meta onto the phosphor ramp, so code reads
++// green-on-black instead of gray-on-black. Top-level so it wins over the
++// equally specific `.dark .hljs-code-block` rules above.
++.dark.terminal .hljs-code-block {
++  .hljs {
++    color: #63d96b;
++  }
++
++  .hljs-comment,
++  .hljs-quote {
++    color: #3f9d47;
++  }
++
++  .hljs-meta {
++    color: #55c95d;
++  }
++}
+diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
+index 6ca74f8c0..f3f9537dd 100644
+--- a/packages/client/src/styles/global.scss
++++ b/packages/client/src/styles/global.scss
+@@ -1,5 +1,6 @@
+ @use 'variables' as *;
+ @use 'code-block';
++@use 'style-layers';
+ 
+ @font-face {
+   font-family: 'Comic Neue';
+diff --git a/packages/client/src/styles/style-layers.scss b/packages/client/src/styles/style-layers.scss
+new file mode 100644
+index 000000000..378a6f838
+--- /dev/null
++++ b/packages/client/src/styles/style-layers.scss
+@@ -0,0 +1,269 @@
++// Style material layers — the part of a theme that cannot be expressed as
++// colour variables: ambient backgrounds, glass surfaces and accent glows.
++//
++// Why a separate file: a style's look is added by editing this file plus the
++// palette block in variables.scss, never a component. Every rule is scoped by
++// the <html> style class and reuses selectors that already exist in the app,
++// so if upstream renames one the override silently stops applying instead of
++// conflicting during a patch replay.
++//
++// ── The layout constraint that shapes all of this ───────────────────────────
++// hermes-studio is a FLOATING-CARD layout: `.app-layout` paints the page
++// background and the session list / chat panel are rounded cards sitting on
++// top of it with ~10px margins. An ambient layer on the page background alone
++// is therefore invisible — the first build of these styles measured as flat
++// colour because the cards covered everything except those gutters.
++// The material only reads because the matching palette block in
++// variables.scss makes the surfaces TRANSLUCENT
++// (`--bg-main-surface` / `--bg-sidebar-surface`, e.g. rgba(12, 17, 28, 0.80)):
++// the page ambient then shows through the cards. Both halves are required —
++// atmosphere without translucent surfaces does nothing.
++//
++// Hooks used here (all pre-existing):
++//   .app-layout  — page background; `background-image` paints above its own
++//                  `background-color`. `.app-shell::after` cannot be used: it
++//                  sits below `.app-layout` and is fully covered.
++//   .app-main    — opaque page surface on list routes; cleared here so the
++//                  ambient layer shows through on those routes too.
++//   .chat-main / .session-list — the two top-level floating cards.
++//
++// Cost control: `backdrop-filter` is expensive in Android WebView, so blur is
++// limited to those two cards and softened on narrow viewports; the aurora
++// drift is dropped under `prefers-reduced-motion`.
++
++// ─── 科技蓝 · 深空 HUD (tech) ───────────────────────────────────
++// 32px blue grid over near-black navy with a cyan glow washing down from the
++// top; cards keep a hairline cyan edge.
++html.tech {
++  .app-layout {
++    background-image:
++      radial-gradient(120% 70% at 50% -10%, rgba(34, 211, 238, 0.22), transparent 60%),
++      radial-gradient(90% 60% at 100% 100%, rgba(99, 102, 241, 0.16), transparent 65%),
++      linear-gradient(rgba(148, 190, 255, 0.10) 1px, transparent 1px),
++      linear-gradient(90deg, rgba(148, 190, 255, 0.10) 1px, transparent 1px);
++    background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
++    background-attachment: fixed, fixed, fixed, fixed;
++  }
++
++  .app-main {
++    background-color: transparent;
++  }
++
++  .chat-main,
++  .session-list {
++    border-color: rgba(34, 211, 238, 0.28);
++    box-shadow:
++      0 0 0 1px rgba(34, 211, 238, 0.10),
++      0 0 34px -14px rgba(34, 211, 238, 0.55),
++      0 18px 44px -26px rgba(0, 0, 0, 0.95);
++  }
++}
++
++// ─── 霓虹赛博 (neon) ────────────────────────────────────────────
++// 3px scanlines over near-black with a magenta bloom top-right and a cyan one
++// bottom-left, and neon card outlines. Outlines only: a magenta fill would
++// fight the markdown tables and syntax highlighting inside the chat surface.
++html.neon {
++  .app-layout {
++    background-image:
++      radial-gradient(90% 60% at 100% 0%, rgba(255, 45, 149, 0.22), transparent 58%),
++      radial-gradient(90% 60% at 0% 100%, rgba(0, 229, 255, 0.18), transparent 60%),
++      repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.085) 0 1px, transparent 1px 3px);
++    background-size: 100% 100%, 100% 100%, 100% 3px;
++    background-attachment: fixed, fixed, fixed;
++  }
++
++  .app-main {
++    background-color: transparent;
++  }
++
++  .chat-main,
++  .session-list {
++    border-color: rgba(0, 229, 255, 0.45);
++    box-shadow:
++      0 0 0 1px rgba(0, 229, 255, 0.12),
++      0 0 26px -4px rgba(0, 229, 255, 0.55),
++      0 18px 44px -26px rgba(0, 0, 0, 0.95);
++  }
++
++  .chat-main {
++    border-color: rgba(0, 229, 255, 0.55);
++    box-shadow:
++      0 0 0 1px rgba(0, 229, 255, 0.16),
++      0 0 30px -2px rgba(0, 229, 255, 0.6),
++      0 18px 44px -26px rgba(0, 0, 0, 0.95);
++  }
++
++  // Title-ish chrome picks up the neon glow; body copy deliberately does not.
++  .app-sidebar-header,
++  .page-header-title {
++    text-shadow: 0 0 12px rgba(0, 229, 255, 0.45);
++  }
++}
++
++// ─── 渐变空间舱 (aurora) ────────────────────────────────────────
++// Three drifting aurora lights behind frosted cards. This style leans hardest
++// on translucent surfaces (0.60–0.62 in variables.scss); the blur only softens
++// what already shows through.
++html.aurora {
++  .app-layout {
++    background-image:
++      radial-gradient(40% 26% at 16% 10%, rgba(34, 211, 238, 0.34), transparent 70%),
++      radial-gradient(44% 30% at 86% 6%, rgba(139, 92, 246, 0.38), transparent 72%),
++      radial-gradient(52% 34% at 50% 98%, rgba(59, 130, 246, 0.30), transparent 74%);
++    background-size: 140% 120%, 150% 130%, 160% 140%;
++    background-repeat: no-repeat;
++    background-position: 0% 0%, 100% 0%, 50% 100%;
++    animation: aurora-drift 42s ease-in-out infinite alternate;
++  }
++
++  .app-main {
++    background-color: transparent;
++  }
++
++  .chat-main,
++  .session-list {
++    -webkit-backdrop-filter: blur(12px) saturate(135%);
++    backdrop-filter: blur(12px) saturate(135%);
++    border-color: rgba(255, 255, 255, 0.14);
++    box-shadow:
++      0 0 0 1px rgba(255, 255, 255, 0.06),
++      0 22px 52px -26px rgba(139, 92, 246, 0.85);
++  }
++}
++
++@keyframes aurora-drift {
++  0% { background-position: 0% 0%, 100% 0%, 50% 100%; }
++  100% { background-position: 8% 6%, 92% 10%, 46% 94%; }
++}
++
++// ─── 蓝图 (blueprint) ───────────────────────────────────────────
++// Drafting grid: a fine 16px mesh plus a heavier 80px module grid in ink blue.
++// Light and dark variants differ only in line alpha.
++html.blueprint {
++  .app-layout {
++    background-image:
++      linear-gradient(rgba(11, 107, 203, 0.10) 1px, transparent 1px),
++      linear-gradient(90deg, rgba(11, 107, 203, 0.10) 1px, transparent 1px),
++      linear-gradient(rgba(11, 107, 203, 0.20) 1px, transparent 1px),
++      linear-gradient(90deg, rgba(11, 107, 203, 0.20) 1px, transparent 1px);
++    background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
++    background-attachment: fixed, fixed, fixed, fixed;
++  }
++
++  .app-main {
++    background-color: transparent;
++  }
++
++  .chat-main,
++  .session-list {
++    border-color: rgba(11, 107, 203, 0.28);
++    box-shadow: 0 10px 28px -20px rgba(16, 35, 58, 0.35);
++  }
++}
++
++html.dark.blueprint .app-layout {
++  background-image:
++    linear-gradient(rgba(125, 200, 255, 0.09) 1px, transparent 1px),
++    linear-gradient(90deg, rgba(125, 200, 255, 0.09) 1px, transparent 1px),
++    linear-gradient(rgba(125, 200, 255, 0.18) 1px, transparent 1px),
++    linear-gradient(90deg, rgba(125, 200, 255, 0.18) 1px, transparent 1px);
++}
++
++html.dark.blueprint {
++  .chat-main,
++  .session-list {
++    border-color: rgba(56, 189, 248, 0.26);
++  }
++}
++
++// ─── Full-viewport texture overlay ──────────────────────────────
++// Why this exists: the card layout only exposes the page background in ~10px
++// gutters, and the inner surfaces are not all themed variables, so a page-level
++// ambient layer measures as flat colour (verified: autocorrelation of a card
++// screenshot showed no periodicity for the 32px grid, while the 3px scanline
++// barely leaked through). A fixed overlay above the app content but below
++// teleported overlays is the reliable hook — the wash then covers the cards,
++// which is what makes the texture read.
++// z-index 3 puts it above `.app-layout` (z-index 1) and below Naive UI's
++// teleported modals/dropdowns, so menus keep a clean surface.
++body::after {
++  content: '';
++  position: fixed;
++  inset: 0;
++  z-index: 3;
++  pointer-events: none;
++  background-repeat: repeat;
++}
++
++html.tech body::after {
++  background-image:
++    radial-gradient(130% 60% at 50% -10%, rgba(34, 211, 238, 0.16), transparent 58%),
++    linear-gradient(rgba(148, 190, 255, 0.13) 1px, transparent 1px),
++    linear-gradient(90deg, rgba(148, 190, 255, 0.13) 1px, transparent 1px),
++    linear-gradient(rgba(148, 190, 255, 0.07) 1px, transparent 1px),
++    linear-gradient(90deg, rgba(148, 190, 255, 0.07) 1px, transparent 1px);
++  background-size: 100% 100%, 128px 128px, 128px 128px, 32px 32px, 32px 32px;
++}
++
++html.neon body::after {
++  background-image:
++    radial-gradient(80% 50% at 100% 0%, rgba(255, 45, 149, 0.14), transparent 56%),
++    radial-gradient(80% 50% at 0% 100%, rgba(0, 229, 255, 0.12), transparent 58%),
++    repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.055) 0 1px, transparent 1px 3px);
++  background-size: 100% 100%, 100% 100%, 100% 3px;
++}
++
++html.aurora body::after {
++  background-image:
++    radial-gradient(46% 30% at 14% 8%, rgba(34, 211, 238, 0.18), transparent 68%),
++    radial-gradient(50% 34% at 88% 4%, rgba(139, 92, 246, 0.20), transparent 70%),
++    radial-gradient(58% 38% at 50% 100%, rgba(59, 130, 246, 0.16), transparent 72%);
++  background-repeat: no-repeat;
++  background-size: 100% 100%;
++}
++
++html.blueprint body::after {
++  background-image:
++    linear-gradient(rgba(11, 107, 203, 0.07) 1px, transparent 1px),
++    linear-gradient(90deg, rgba(11, 107, 203, 0.07) 1px, transparent 1px),
++    linear-gradient(rgba(11, 107, 203, 0.14) 1px, transparent 1px),
++    linear-gradient(90deg, rgba(11, 107, 203, 0.14) 1px, transparent 1px);
++  background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
++}
++
++html.dark.blueprint body::after {
++  background-image:
++    linear-gradient(rgba(125, 200, 255, 0.07) 1px, transparent 1px),
++    linear-gradient(90deg, rgba(125, 200, 255, 0.07) 1px, transparent 1px),
++    linear-gradient(rgba(125, 200, 255, 0.13) 1px, transparent 1px),
++    linear-gradient(90deg, rgba(125, 200, 255, 0.13) 1px, transparent 1px);
++}
++
++// ─── Shared guards ──────────────────────────────────────────────
++
++// An account-level background image owns the page background: drop every
++// ambient layer so the photo is not muddied by a grid or aurora on top of it.
++html.theme-has-custom-background .app-layout,
++html.theme-has-custom-background body::after {
++  background-image: none;
++  animation: none;
++}
++
++// Blur is the expensive part on phones; soften it on narrow viewports.
++@media (max-width: 640px) {
++  html.aurora {
++    .chat-main,
++    .session-list {
++      -webkit-backdrop-filter: blur(8px) saturate(125%);
++      backdrop-filter: blur(8px) saturate(125%);
++    }
++  }
++}
++
++// Respect the OS "reduce motion" setting: keep the colours, drop the drift.
++@media (prefers-reduced-motion: reduce) {
++  html.aurora .app-layout {
++    animation: none;
++  }
++}
+diff --git a/packages/client/src/styles/theme-style.ts b/packages/client/src/styles/theme-style.ts
+new file mode 100644
+index 000000000..a81cf4704
+--- /dev/null
++++ b/packages/client/src/styles/theme-style.ts
+@@ -0,0 +1,107 @@
++// Theme style metadata shared by the first-paint bootstrap (main.ts), the
++// theme composable and the settings page.
++//
++// A style is applied as a class on <html> next to the brightness class
++// (`light` / `dark`), exactly like the original ink/comic pair. This file is
++// the single source of truth: every other module reads the tables below, so
++// adding a style means one entry per table here plus its palette in
++// variables.scss / styles/theme.ts — never another `if` in main.ts or
++// useTheme.ts (see STYLE_CLASS / STYLE_CLASSES).
++//
++// Styles listed as forced-dark ship a dark-only palette: their CSS variables
++// live under `.dark.<style>` in styles/variables.scss, so STYLE_FORCES_DARK has
++// to stay in sync with those selectors — a style listed here as forced-dark
++// must always be rendered with the `dark` class.
++// `blueprint` is the opposite case: it is light-first and therefore ships both
++// a `.blueprint` (light) and a `.dark.blueprint` (dark) block.
++
++export const THEME_STYLES = [
++  'ink',
++  'comic',
++  'tech',
++  'terminal',
++  'neon',
++  'aurora',
++  'blueprint',
++] as const
++
++export type ThemeStyle = typeof THEME_STYLES[number]
++
++export const DEFAULT_THEME_STYLE: ThemeStyle = 'ink'
++
++/** `<html>` class per style. `ink` is the classless default — every other
++ *  style carries a class named after itself. */
++export const STYLE_CLASS: Record<ThemeStyle, string | null> = {
++  ink: null,
++  comic: 'comic',
++  tech: 'tech',
++  terminal: 'terminal',
++  neon: 'neon',
++  aurora: 'aurora',
++  blueprint: 'blueprint',
++}
++
++/** Every style class that can appear on `<html>`. The first-paint bootstrap
++ *  and the theme composable both iterate this list, so a new style needs no
++ *  edit in either of them. */
++export const STYLE_CLASSES: string[] = THEME_STYLES
++  .map((style) => STYLE_CLASS[style])
++  .filter((className): className is string => className !== null)
++
++/** Styles whose palette is only legible on a dark background. */
++export const STYLE_FORCES_DARK: Record<ThemeStyle, boolean> = {
++  ink: false,
++  comic: false,
++  tech: true,
++  terminal: true,
++  neon: true,
++  aurora: true,
++  blueprint: false,
++}
++
++/** I18n keys for the style labels — kept next to the style list so a new
++ *  style cannot be added without its label. */
++export const STYLE_LABEL_KEYS: Record<ThemeStyle, string> = {
++  ink: 'theme.styleInk',
++  comic: 'theme.styleComic',
++  tech: 'theme.styleTech',
++  terminal: 'theme.styleTerminal',
++  neon: 'theme.styleNeon',
++  aurora: 'theme.styleAurora',
++  blueprint: 'theme.styleBlueprint',
++}
++
++// Status bar / browser chrome color per style, mirroring the static
++// <meta name="theme-color"> tags in index.html so standalone PWA chrome
++// follows the style as well as the brightness setting.
++export const STYLE_THEME_COLOR: Record<ThemeStyle, { light: string; dark: string }> = {
++  ink: { light: '#f7f7f4', dark: '#1a1a1a' },
++  comic: { light: '#f7f7f4', dark: '#1a1a1a' },
++  tech: { light: '#070a12', dark: '#070a12' },
++  terminal: { light: '#000000', dark: '#000000' },
++  neon: { light: '#05060a', dark: '#05060a' },
++  aurora: { light: '#0a0a14', dark: '#0a0a14' },
++  blueprint: { light: '#f4f7fb', dark: '#0d1b2a' },
++}
++
++/** Preview chip shown next to each option in the style picker: the style's
++ *  signature accent plus the surface it sits on. Kept here so a new style
++ *  cannot ship without a pickable preview. */
++export const STYLE_SWATCH: Record<ThemeStyle, { accent: string; surface: string }> = {
++  ink: { accent: '#c9c9c9', surface: '#1a1a1a' },
++  comic: { accent: '#1a1a1a', surface: '#fbf6e9' },
++  tech: { accent: '#22d3ee', surface: '#070a12' },
++  terminal: { accent: '#63d96b', surface: '#000000' },
++  neon: { accent: '#00e5ff', surface: '#05060a' },
++  aurora: { accent: '#8b5cf6', surface: '#0a0a14' },
++  blueprint: { accent: '#0b6bcb', surface: '#f4f7fb' },
++}
++
++export function isThemeStyle(value: unknown): value is ThemeStyle {
++  return typeof value === 'string' && (THEME_STYLES as readonly string[]).includes(value)
++}
++
++/** Any persisted value that is not a known style falls back to ink. */
++export function normalizeThemeStyle(value: unknown): ThemeStyle {
++  return isThemeStyle(value) ? value : DEFAULT_THEME_STYLE
++}
+diff --git a/packages/client/src/styles/theme.ts b/packages/client/src/styles/theme.ts
+index 319dd0fa9..7dd12ad2c 100644
+--- a/packages/client/src/styles/theme.ts
++++ b/packages/client/src/styles/theme.ts
+@@ -1,4 +1,5 @@
+ import type { GlobalThemeOverrides } from 'naive-ui'
++import { DEFAULT_THEME_STYLE, type ThemeStyle } from './theme-style'
+ import {
+   resolveThemeCustomization,
+   type ThemeCustomization,
+@@ -166,18 +167,302 @@ export const darkThemeOverrides: GlobalThemeOverrides = {
+   },
+ }
+ 
++const COMIC_FONT_FAMILY = "'Comic Neue', 'ZCOOL KuaiLe', 'Zen Maru Gothic', 'Gaegu', cursive, sans-serif"
++const MONO_FONT_FAMILY = "'JetBrains Mono', 'Fira Code', 'Consolas', monospace"
++const DEFAULT_FONT_FAMILY = 'Inter, system-ui, -apple-system, sans-serif'
++
++/**
++ * Styles share one override shape and differ only in color, so they are
++ * described by one palette instead of a hand-written override tree per style
++ * (those drift apart). A palette is brightness-agnostic: forced-dark styles
++ * use a single palette, `blueprint` pairs a light and a dark one.
++ * Keep every value in sync with the matching block in variables.scss.
++ */
++interface StylePalette {
++  /** Accent ramp — buttons, switches, focused borders, active menu items. */
++  primary: string
++  primaryHover: string
++  primaryPressed: string
++  /** Text that sits on top of an accent fill. */
++  textOnPrimary: string
++  /** Page background. */
++  body: string
++  /** Raised surfaces: cards, modals, popovers, tables, inputs. */
++  surface: string
++  /** Muted surface behind menus/actions. */
++  action: string
++  sider: string
++  /** Body text ramp. */
++  text1: string
++  text2: string
++  text3: string
++  border: string
++  /** Input/selection outlines, one step brighter than `border`. */
++  borderStrong: string
++  borderHover: string
++  hover: string
++  menuActive: string
++  menuActiveHover: string
++  fontFamily?: string
++}
++
++function styleOverrides(palette: StylePalette): GlobalThemeOverrides {
++  return {
++    common: {
++      primaryColor: palette.primary,
++      primaryColorHover: palette.primaryHover,
++      primaryColorPressed: palette.primaryPressed,
++      primaryColorSuppl: palette.primary,
++      bodyColor: palette.body,
++      cardColor: palette.surface,
++      modalColor: palette.surface,
++      popoverColor: palette.surface,
++      tableColor: palette.surface,
++      inputColor: palette.surface,
++      actionColor: palette.action,
++      textColorBase: palette.text1,
++      textColor1: palette.text1,
++      textColor2: palette.text2,
++      textColor3: palette.text3,
++      dividerColor: palette.border,
++      borderColor: palette.border,
++      hoverColor: palette.hover,
++      borderRadius: '8px',
++      borderRadiusSmall: '6px',
++      fontSize: '14px',
++      fontSizeMedium: '14px',
++      heightMedium: '36px',
++      fontFamily: palette.fontFamily ?? DEFAULT_FONT_FAMILY,
++      fontFamilyMono: MONO_FONT_FAMILY,
++    },
++    Layout: {
++      color: palette.body,
++      siderColor: palette.sider,
++      headerColor: palette.body,
++    },
++    Menu: {
++      itemTextColorActive: palette.text1,
++      itemTextColorActiveHover: palette.text1,
++      itemTextColorChildActive: palette.text1,
++      itemIconColorActive: palette.text1,
++      itemIconColorActiveHover: palette.primaryHover,
++      itemColorActive: palette.menuActive,
++      itemColorActiveHover: palette.menuActiveHover,
++      arrowColorActive: palette.text1,
++    },
++    Button: {
++      textColorPrimary: palette.textOnPrimary,
++      colorPrimary: palette.primary,
++      colorHoverPrimary: palette.primaryHover,
++      colorPressedPrimary: palette.primaryPressed,
++    },
++    Input: {
++      color: palette.surface,
++      colorFocus: palette.surface,
++      border: `1px solid ${palette.borderStrong}`,
++      borderHover: `1px solid ${palette.borderHover}`,
++      borderFocus: `1px solid ${palette.primary}`,
++      borderDisabled: `1px solid ${palette.border}`,
++      groupLabelBorder: `1px solid ${palette.borderStrong}`,
++      placeholderColor: palette.text3,
++      caretColor: palette.primary,
++    },
++    InternalSelection: {
++      border: `1px solid ${palette.borderStrong}`,
++      borderHover: `1px solid ${palette.borderHover}`,
++      borderActive: `1px solid ${palette.primary}`,
++      borderFocus: `1px solid ${palette.primary}`,
++    },
++    Card: {
++      color: palette.surface,
++      borderColor: palette.border,
++    },
++    Modal: {
++      color: palette.surface,
++    },
++    Tag: {
++      borderRadius: '6px',
++    },
++    Switch: {
++      railColor: palette.border,
++      railColorActive: palette.primary,
++      loadingColor: palette.primary,
++      opacityDisabled: 0.4,
++    },
++  }
++}
++
++// 科技蓝 · 深空 HUD — near-black navy surfaces, a cyan accent and glassy
++// raised panels. Paired with the `.dark.tech` block and the tech layers in
++// styles/style-layers.scss.
++const TECH_PALETTE: StylePalette = {
++  primary: '#22d3ee',
++  primaryHover: '#67e8f9',
++  primaryPressed: '#0ea5c4',
++  textOnPrimary: '#04121a',
++  body: '#070a12',
++  surface: '#0c111c',
++  action: '#121a29',
++  sider: '#0a0f1a',
++  text1: '#e6edf7',
++  text2: '#9fb0c9',
++  text3: '#64748b',
++  border: '#1a2438',
++  borderStrong: '#22304a',
++  borderHover: '#2f4a6b',
++  hover: 'rgba(148, 190, 255, 0.08)',
++  menuActive: 'rgba(34, 211, 238, 0.14)',
++  menuActiveHover: 'rgba(34, 211, 238, 0.24)',
++}
++
++// 霓虹赛博 — near-black canvas with a cyan/magenta neon pair and scanlines.
++const NEON_PALETTE: StylePalette = {
++  primary: '#00e5ff',
++  primaryHover: '#5cf0ff',
++  primaryPressed: '#00b8cc',
++  textOnPrimary: '#04121a',
++  body: '#05060a',
++  surface: '#0a0d14',
++  action: '#080b11',
++  sider: '#04050a',
++  text1: '#d7f7ff',
++  text2: '#90c7d4',
++  text3: '#5f8894',
++  border: '#10333d',
++  borderStrong: '#1a4d5c',
++  borderHover: '#2a7a90',
++  hover: 'rgba(0, 229, 255, 0.09)',
++  menuActive: 'rgba(0, 229, 255, 0.14)',
++  menuActiveHover: 'rgba(0, 229, 255, 0.24)',
++}
++
++// 渐变空间舱 — deep indigo with aurora light behind glass panels.
++const AURORA_PALETTE: StylePalette = {
++  primary: '#8b5cf6',
++  primaryHover: '#a78bfa',
++  primaryPressed: '#7c3aed',
++  textOnPrimary: '#ffffff',
++  body: '#0a0a14',
++  surface: '#14142a',
++  action: '#101024',
++  sider: '#0c0c1a',
++  text1: '#eceaff',
++  text2: '#a9a3cc',
++  text3: '#6f6a8f',
++  border: '#23233d',
++  borderStrong: '#33335a',
++  borderHover: '#4a4a7a',
++  hover: 'rgba(139, 92, 246, 0.10)',
++  menuActive: 'rgba(139, 92, 246, 0.16)',
++  menuActiveHover: 'rgba(139, 92, 246, 0.26)',
++}
++
++// 蓝图 — light-first: grid paper with ink-blue line work. Unlike the other
++// styled themes this one follows the user's brightness, so it ships a pair.
++const BLUEPRINT_LIGHT_PALETTE: StylePalette = {
++  primary: '#0b6bcb',
++  primaryHover: '#0f82f0',
++  primaryPressed: '#0955a3',
++  textOnPrimary: '#ffffff',
++  body: '#f4f7fb',
++  surface: '#ffffff',
++  action: '#eaf1f9',
++  sider: '#eaf0f7',
++  text1: '#10233a',
++  text2: '#46617f',
++  text3: '#7c93ab',
++  border: '#cfdcea',
++  borderStrong: '#b3c8dc',
++  borderHover: '#8fadc9',
++  hover: 'rgba(11, 107, 203, 0.06)',
++  menuActive: 'rgba(11, 107, 203, 0.10)',
++  menuActiveHover: 'rgba(11, 107, 203, 0.16)',
++}
++
++const BLUEPRINT_DARK_PALETTE: StylePalette = {
++  primary: '#38bdf8',
++  primaryHover: '#7dd3fc',
++  primaryPressed: '#0ea5e9',
++  textOnPrimary: '#04141f',
++  body: '#0d1b2a',
++  surface: '#122436',
++  action: '#0f1f2f',
++  sider: '#0b1725',
++  text1: '#d7e6f5',
++  text2: '#93aec7',
++  text3: '#62809b',
++  border: '#1e3448',
++  borderStrong: '#2a4761',
++  borderHover: '#3a5f80',
++  hover: 'rgba(120, 180, 240, 0.08)',
++  menuActive: 'rgba(56, 189, 248, 0.14)',
++  menuActiveHover: 'rgba(56, 189, 248, 0.24)',
++}
++
++// 终端黑 — pure black with phosphor-green text and a monospace UI font.
++const TERMINAL_PALETTE: StylePalette = {
++  primary: '#63d96b',
++  primaryHover: '#7fe585',
++  primaryPressed: '#4dbd55',
++  textOnPrimary: '#000000',
++  body: '#000000',
++  surface: '#0a0f0a',
++  action: '#070b07',
++  sider: '#040604',
++  text1: '#63d96b',
++  text2: '#55c95d',
++  text3: '#3f9d47',
++  border: '#1f4d1f',
++  borderStrong: '#2a6b2a',
++  borderHover: '#3d8f3d',
++  hover: 'rgba(99, 217, 107, 0.1)',
++  menuActive: 'rgba(99, 217, 107, 0.14)',
++  menuActiveHover: 'rgba(99, 217, 107, 0.22)',
++  fontFamily: MONO_FONT_FAMILY,
++}
++
++export const techThemeOverrides: GlobalThemeOverrides = styleOverrides(TECH_PALETTE)
++export const terminalThemeOverrides: GlobalThemeOverrides = styleOverrides(TERMINAL_PALETTE)
++export const neonThemeOverrides: GlobalThemeOverrides = styleOverrides(NEON_PALETTE)
++export const auroraThemeOverrides: GlobalThemeOverrides = styleOverrides(AURORA_PALETTE)
++export const blueprintLightThemeOverrides: GlobalThemeOverrides = styleOverrides(BLUEPRINT_LIGHT_PALETTE)
++export const blueprintDarkThemeOverrides: GlobalThemeOverrides = styleOverrides(BLUEPRINT_DARK_PALETTE)
++
++/**
++ * One entry per styled theme. Adding a style is a single line here plus its
++ * palette above — `getThemeOverrides` never needs a new branch.
++ * Forced-dark styles repeat the same palette for both brightnesses because
++ * they are only ever rendered with the `dark` class (STYLE_FORCES_DARK).
++ */
++const STYLE_PALETTES: Partial<Record<ThemeStyle, { light: StylePalette; dark: StylePalette }>> = {
++  tech: { light: TECH_PALETTE, dark: TECH_PALETTE },
++  terminal: { light: TERMINAL_PALETTE, dark: TERMINAL_PALETTE },
++  neon: { light: NEON_PALETTE, dark: NEON_PALETTE },
++  aurora: { light: AURORA_PALETTE, dark: AURORA_PALETTE },
++  blueprint: { light: BLUEPRINT_LIGHT_PALETTE, dark: BLUEPRINT_DARK_PALETTE },
++}
++
++/** Base overrides for a style, falling back to the original ink pair. */
++export function styleBaseOverrides(isDark: boolean, style: ThemeStyle): GlobalThemeOverrides {
++  const pair = STYLE_PALETTES[style]
++  if (pair) return styleOverrides(isDark ? pair.dark : pair.light)
++  return isDark ? darkThemeOverrides : lightThemeOverrides
++}
++
+ export function getThemeOverrides(
+   isDark: boolean,
+-  isComic?: boolean,
++  style: ThemeStyle = DEFAULT_THEME_STYLE,
+   customization?: ThemeCustomization,
+ ): GlobalThemeOverrides {
+-  const base = isDark ? darkThemeOverrides : lightThemeOverrides
+-  if (!isComic && !customization) return base
+-  const comicFont = "'Comic Neue', 'ZCOOL KuaiLe', 'Zen Maru Gothic', 'Gaegu', cursive, sans-serif"
++  const base = styleBaseOverrides(isDark, style)
++  // Comic swaps in a hand-drawn font family; the terminal palette already
++  // carries its monospace font through `common.fontFamily`.
++  const comicFont = style === 'comic' ? COMIC_FONT_FAMILY : undefined
++  if (!comicFont && !customization) return base
+   const custom = customization ? resolveThemeCustomization(customization, isDark) : null
+   const common = {
+     ...base.common!,
+-    ...(isComic ? { fontFamily: comicFont } : {}),
++    ...(comicFont ? { fontFamily: comicFont } : {}),
+     ...(custom ? {
+       fontSize: `${custom.fontSize}px`,
+       fontSizeMedium: `${custom.fontSize}px`,
+diff --git a/packages/client/src/styles/variables.scss b/packages/client/src/styles/variables.scss
+index d6b010a20..9d5d1cbab 100644
+--- a/packages/client/src/styles/variables.scss
++++ b/packages/client/src/styles/variables.scss
+@@ -1,6 +1,12 @@
+ // 黑白水墨 — Pure Ink
+ // 纯黑白灰，无彩色
+-// 支持 light / dark / comic 三主题
++// 支持 light / dark / comic 三主题，另加锁定深色的风格：
++//   .dark.tech（科技蓝·深空 HUD）、.dark.terminal（终端黑）
++//   .dark.neon（霓虹赛博）、.dark.aurora（渐变空间舱）
++// 以及浅色优先的 .blueprint（蓝图，同时带 .dark.blueprint 暗色变体）。
++// 这些风格表必须定义在 .dark 之后，且只能由 styles/theme-style.ts 的
++// STYLE_CLASS / STYLE_FORCES_DARK 对应的类触发（两者必须同步）。
++// 材质层（网格底纹、极光、扫描线、玻璃）在 styles/style-layers.scss。
+ 
+ // ─── CSS Custom Properties ─────────────────────────────────────
+ 
+@@ -20,6 +26,10 @@
+   --bg-sidebar-surface-rgb: var(--bg-card-rgb);
+   --bg-main-surface: var(--bg-card);
+   --bg-main-surface-rgb: var(--bg-card-rgb);
++  // Raised surfaces that used to be hardcoded in components: the composer
++  // wrapper (kept above the chat surface) and the slash-command popover.
++  --bg-input-elevated: #ffffff;
++  --bg-overlay-surface: #fafafa;
+ 
+   // Custom backgrounds: frame, contextual sidebar, then the foreground page.
+   --glass-chrome-bg: rgba(var(--bg-primary-rgb), 0.6);
+@@ -97,6 +107,8 @@
+   --bg-sidebar-surface-rgb: var(--bg-primary-rgb);
+   --bg-main-surface: var(--bg-primary);
+   --bg-main-surface-rgb: var(--bg-primary-rgb);
++  --bg-input-elevated: #333333;
++  --bg-overlay-surface: #2a2a2a;
+ 
+   --glass-chrome-bg: rgba(var(--bg-primary-rgb), 0.9);
+   --glass-content-bg: rgba(var(--bg-card-rgb), 0.82);
+@@ -174,6 +186,446 @@
+   --comic-shadow: 3px 3px 0px rgba(255, 255, 255, 0.08);
+ }
+ 
++// ─── 科技蓝 · 深空 HUD (tech) — dark-locked palette ──────────────
++// Near-black navy surfaces, a cyan accent and glassy raised panels.
++// Applied with the `dark` class (see STYLE_FORCES_DARK in theme-style.ts).
++// Defined after `.dark` so it wins the same-specificity cascade.
++.dark.tech {
++  // Backgrounds — near-black navy; every surface lifted one step
++  --bg-primary: #070a12;
++  --bg-primary-rgb: 7, 10, 18;
++  --bg-secondary: #0c111c;
++  --bg-sidebar: #0a0f1a;
++  --bg-card: #0c111c;
++  --bg-card-rgb: 12, 17, 28;
++  --bg-card-hover: #121a29;
++  --bg-input: #0e1522;
++  // Surfaces are deliberately translucent so the page ambient layer (grid +
++  // top glow, see styles/style-layers.scss) reads through the floating cards.
++  // The app is a card layout whose page background is only visible in ~10px
++  // gutters — an opaque surface would hide the material entirely.
++  --bg-sidebar-surface: rgba(10, 15, 26, 0.82);
++  --bg-sidebar-surface-rgb: 10, 15, 26;
++  --bg-main-surface: rgba(12, 17, 28, 0.80);
++  --bg-main-surface-rgb: 12, 17, 28;
++  --bg-input-elevated: #121a29;
++  --bg-overlay-surface: #0c111c;
++
++  // Borders — blue-shifted hairlines
++  --border-color: #1a2438;
++  --border-light: #141c2c;
++
++  // Accent — cyan
++  --accent-primary: #22d3ee;
++  --accent-hover: #67e8f9;
++  --accent-muted: #0e7490;
++
++  // Text
++  --text-primary: #e6edf7;
++  --text-secondary: #9fb0c9;
++  --text-muted: #64748b;
++
++  // Status
++  --success: #34d399;
++  --error: #f87171;
++  --warning: #fbbf24;
++
++  // Git explorer decorations
++  --git-decoration-added: #7dd3a0;
++  --git-decoration-modified: #e2c08d;
++  --git-decoration-deleted: #f87171;
++  --git-decoration-renamed: #7dd3fc;
++  --git-decoration-untracked: #7dd3fc;
++  --git-decoration-conflicting: #fb7185;
++
++  // Message bubbles
++  --msg-user-bg: #12233d;
++  --msg-assistant-bg: #0c111c;
++  --msg-system-border: #22304a;
++
++  // Code
++  --code-bg: #05080f;
++
++  // Utility — dark text on the cyan accent; white stays on dark overlays
++  --text-on-accent: #04121a;
++  --text-on-overlay: #ffffff;
++  --accent-info: #38bdf8;
++
++  // RGB components
++  --accent-primary-rgb: 34, 211, 238;
++  --accent-hover-rgb: 103, 232, 249;
++  --text-primary-rgb: 230, 237, 247;
++  --text-secondary-rgb: 159, 176, 201;
++  --text-muted-rgb: 100, 116, 139;
++  --success-rgb: 52, 211, 153;
++  --error-rgb: 248, 113, 113;
++  --warning-rgb: 251, 191, 36;
++  --accent-info-rgb: 56, 189, 248;
++}
++
++// ─── 霓虹赛博 (neon) — dark-locked palette ──────────────────────
++// Near-black canvas, cyan/magenta neon pair, scanlines from style-layers.scss.
++.dark.neon {
++  // Backgrounds
++  --bg-primary: #05060a;
++  --bg-primary-rgb: 5, 6, 10;
++  --bg-secondary: #0a0d14;
++  --bg-sidebar: #04050a;
++  --bg-card: #0a0d14;
++  --bg-card-rgb: 10, 13, 20;
++  --bg-card-hover: #101520;
++  --bg-input: #080b10;
++  // Translucent so the scanlines + neon blooms behind the cards read through.
++  --bg-sidebar-surface: rgba(4, 5, 10, 0.82);
++  --bg-sidebar-surface-rgb: 4, 5, 10;
++  --bg-main-surface: rgba(10, 13, 20, 0.78);
++  --bg-main-surface-rgb: 10, 13, 20;
++  --bg-input-elevated: #0f131c;
++  --bg-overlay-surface: #0a0d14;
++
++  // Borders — neon-tinted
++  --border-color: #10333d;
++  --border-light: #0b242c;
++
++  // Accent — electric cyan
++  --accent-primary: #00e5ff;
++  --accent-hover: #5cf0ff;
++  --accent-muted: #0e7490;
++
++  // Text
++  --text-primary: #d7f7ff;
++  --text-secondary: #90c7d4;
++  --text-muted: #5f8894;
++
++  // Status
++  --success: #22d3a0;
++  --error: #ff4d6d;
++  --warning: #ffb020;
++
++  // Git explorer decorations
++  --git-decoration-added: #3ddc97;
++  --git-decoration-modified: #ffd166;
++  --git-decoration-deleted: #ff4d6d;
++  --git-decoration-renamed: #00e5ff;
++  --git-decoration-untracked: #00e5ff;
++  --git-decoration-conflicting: #ff2d95;
++
++  // Message bubbles
++  --msg-user-bg: #12212b;
++  --msg-assistant-bg: #0a0d14;
++  --msg-system-border: #1a4d5c;
++
++  // Code
++  --code-bg: #020304;
++
++  // Utility — magenta carries the "second neon" as the info accent
++  --text-on-accent: #04121a;
++  --text-on-overlay: #ffffff;
++  --accent-info: #ff2d95;
++
++  // RGB components
++  --accent-primary-rgb: 0, 229, 255;
++  --accent-hover-rgb: 92, 240, 255;
++  --text-primary-rgb: 215, 247, 255;
++  --text-secondary-rgb: 144, 199, 212;
++  --text-muted-rgb: 95, 136, 148;
++  --success-rgb: 34, 211, 160;
++  --error-rgb: 255, 77, 109;
++  --warning-rgb: 255, 176, 32;
++  --accent-info-rgb: 255, 45, 149;
++}
++
++// ─── 渐变空间舱 (aurora) — dark-locked palette ──────────────────
++// Deep indigo with violet accent; the aurora light lives in style-layers.scss.
++.dark.aurora {
++  // Backgrounds
++  --bg-primary: #0a0a14;
++  --bg-primary-rgb: 10, 10, 20;
++  --bg-secondary: #101024;
++  --bg-sidebar: #0c0c1a;
++  --bg-card: #14142a;
++  --bg-card-rgb: 20, 20, 42;
++  --bg-card-hover: #1c1c38;
++  --bg-input: #121228;
++  // Frosted: translucent surfaces are what turn the aurora behind the cards
++  // into the glass look (paired with backdrop-filter in style-layers.scss).
++  --bg-sidebar-surface: rgba(12, 12, 26, 0.62);
++  --bg-sidebar-surface-rgb: 12, 12, 26;
++  --bg-main-surface: rgba(20, 20, 42, 0.60);
++  --bg-main-surface-rgb: 20, 20, 42;
++  --bg-input-elevated: #1c1c38;
++  --bg-overlay-surface: #14142a;
++
++  // Borders
++  --border-color: #23233d;
++  --border-light: #1b1b30;
++
++  // Accent — violet
++  --accent-primary: #8b5cf6;
++  --accent-hover: #a78bfa;
++  --accent-muted: #6d28d9;
++
++  // Text
++  --text-primary: #eceaff;
++  --text-secondary: #a9a3cc;
++  --text-muted: #6f6a8f;
++
++  // Status
++  --success: #34d399;
++  --error: #fb7185;
++  --warning: #fbbf24;
++
++  // Git explorer decorations
++  --git-decoration-added: #7dd3a0;
++  --git-decoration-modified: #e2c08d;
++  --git-decoration-deleted: #fb7185;
++  --git-decoration-renamed: #7dd3fc;
++  --git-decoration-untracked: #7dd3fc;
++  --git-decoration-conflicting: #f472b6;
++
++  // Message bubbles
++  --msg-user-bg: #221a45;
++  --msg-assistant-bg: #14142a;
++  --msg-system-border: #33335a;
++
++  // Code
++  --code-bg: #08080f;
++
++  // Utility — cyan carries the second aurora hue
++  --text-on-accent: #ffffff;
++  --text-on-overlay: #ffffff;
++  --accent-info: #22d3ee;
++
++  // RGB components
++  --accent-primary-rgb: 139, 92, 246;
++  --accent-hover-rgb: 167, 139, 250;
++  --text-primary-rgb: 236, 234, 255;
++  --text-secondary-rgb: 169, 163, 204;
++  --text-muted-rgb: 111, 106, 143;
++  --success-rgb: 52, 211, 153;
++  --error-rgb: 251, 113, 133;
++  --warning-rgb: 251, 191, 36;
++  --accent-info-rgb: 34, 211, 238;
++}
++
++// ─── 蓝图 (blueprint) — light-first, follows the brightness setting ────
++// Grid paper with ink-blue line work. Unlike the styles above this one ships
++// both a light block (`.blueprint`) and a dark one (`.dark.blueprint`), so the
++// user's own light/dark choice still applies.
++.blueprint {
++  // Backgrounds — paper white with a faint blue cast
++  --bg-primary: #f4f7fb;
++  --bg-primary-rgb: 244, 247, 251;
++  --bg-secondary: #eaf1f9;
++  --bg-sidebar: #eaf0f7;
++  --bg-card: #ffffff;
++  --bg-card-rgb: 255, 255, 255;
++  --bg-card-hover: #f7fafd;
++  --bg-input: #ffffff;
++  // Paper is translucent so the drafting grid behind the cards shows through.
++  --bg-sidebar-surface: rgba(255, 255, 255, 0.78);
++  --bg-sidebar-surface-rgb: 255, 255, 255;
++  --bg-main-surface: rgba(255, 255, 255, 0.82);
++  --bg-main-surface-rgb: 255, 255, 255;
++  --bg-input-elevated: #ffffff;
++  --bg-overlay-surface: #f7fafd;
++
++  // Borders — blueprint line work
++  --border-color: #cfdcea;
++  --border-light: #dde7f2;
++
++  // Accent — ink blue
++  --accent-primary: #0b6bcb;
++  --accent-hover: #0f82f0;
++  --accent-muted: #7fa6cd;
++
++  // Text
++  --text-primary: #10233a;
++  --text-secondary: #46617f;
++  --text-muted: #7c93ab;
++
++  // Status
++  --success: #1a7f4b;
++  --error: #c0392b;
++  --warning: #b7791f;
++
++  // Git explorer decorations (light values)
++  --git-decoration-added: #587c0c;
++  --git-decoration-modified: #895503;
++  --git-decoration-deleted: #ad0707;
++  --git-decoration-renamed: #007100;
++  --git-decoration-untracked: #007100;
++  --git-decoration-conflicting: #ad0707;
++
++  // Message bubbles
++  --msg-user-bg: #e4eefb;
++  --msg-assistant-bg: #f2f6fb;
++  --msg-system-border: #b3c8dc;
++
++  // Code
++  --code-bg: #eef3f9;
++
++  // Utility
++  --text-on-accent: #ffffff;
++  --text-on-overlay: #ffffff;
++  --accent-info: #0b6bcb;
++
++  // RGB components
++  --accent-primary-rgb: 11, 107, 203;
++  --accent-hover-rgb: 15, 130, 240;
++  --text-primary-rgb: 16, 35, 58;
++  --text-secondary-rgb: 70, 97, 127;
++  --text-muted-rgb: 124, 147, 171;
++  --success-rgb: 26, 127, 75;
++  --error-rgb: 192, 57, 43;
++  --warning-rgb: 183, 121, 31;
++  --accent-info-rgb: 11, 107, 203;
++}
++
++.dark.blueprint {
++  // Backgrounds — blueprint sheet at night
++  --bg-primary: #0d1b2a;
++  --bg-primary-rgb: 13, 27, 42;
++  --bg-secondary: #0f1f2f;
++  --bg-sidebar: #0b1725;
++  --bg-card: #122436;
++  --bg-card-rgb: 18, 36, 54;
++  --bg-card-hover: #17304a;
++  --bg-input: #101f30;
++  // Translucent navy sheet so the drafting grid reads through the cards.
++  --bg-sidebar-surface: rgba(11, 23, 37, 0.80);
++  --bg-sidebar-surface-rgb: 11, 23, 37;
++  --bg-main-surface: rgba(18, 36, 54, 0.78);
++  --bg-main-surface-rgb: 18, 36, 54;
++  --bg-input-elevated: #17304a;
++  --bg-overlay-surface: #122436;
++
++  // Borders
++  --border-color: #1e3448;
++  --border-light: #17293a;
++
++  // Accent — brighter cyan-blue reads on the navy sheet
++  --accent-primary: #38bdf8;
++  --accent-hover: #7dd3fc;
++  --accent-muted: #0e7490;
++
++  // Text
++  --text-primary: #d7e6f5;
++  --text-secondary: #93aec7;
++  --text-muted: #62809b;
++
++  // Status
++  --success: #34d399;
++  --error: #f87171;
++  --warning: #fbbf24;
++
++  // Git explorer decorations
++  --git-decoration-added: #7dd3a0;
++  --git-decoration-modified: #e2c08d;
++  --git-decoration-deleted: #f87171;
++  --git-decoration-renamed: #7dd3fc;
++  --git-decoration-untracked: #7dd3fc;
++  --git-decoration-conflicting: #fb7185;
++
++  // Message bubbles
++  --msg-user-bg: #14304a;
++  --msg-assistant-bg: #122436;
++  --msg-system-border: #2a4761;
++
++  // Code
++  --code-bg: #0a1520;
++
++  // Utility
++  --text-on-accent: #04141f;
++  --text-on-overlay: #ffffff;
++  --accent-info: #22d3ee;
++
++  // RGB components
++  --accent-primary-rgb: 56, 189, 248;
++  --accent-hover-rgb: 125, 211, 252;
++  --text-primary-rgb: 215, 230, 245;
++  --text-secondary-rgb: 147, 174, 199;
++  --text-muted-rgb: 98, 128, 155;
++  --success-rgb: 52, 211, 153;
++  --error-rgb: 248, 113, 113;
++  --warning-rgb: 251, 191, 36;
++  --accent-info-rgb: 34, 211, 238;
++}
++
++// ─── 终端黑 (terminal) — dark-locked palette ────────────────────
++// Pure black surfaces with phosphor-green text and a monospace UI font.
++.dark.terminal {
++  // Global UI font — everything except code blocks follows this
++  --font-ui: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
++
++  // Backgrounds — #000 base, surfaces barely lifted off it
++  --bg-primary: #000000;
++  --bg-primary-rgb: 0, 0, 0;
++  --bg-secondary: #070b07;
++  --bg-sidebar: #040604;
++  --bg-card: #0a0f0a;
++  --bg-card-rgb: 10, 15, 10;
++  --bg-card-hover: #111a11;
++  --bg-input: #060906;
++  --bg-sidebar-surface: var(--bg-primary);
++  --bg-sidebar-surface-rgb: var(--bg-primary-rgb);
++  --bg-main-surface: var(--bg-primary);
++  --bg-main-surface-rgb: var(--bg-primary-rgb);
++  --bg-input-elevated: #0d130d;
++  --bg-overlay-surface: #0a0f0a;
++
++  // Borders — dim green out of the black
++  --border-color: #1f4d1f;
++  --border-light: #143014;
++
++  // Accent — phosphor green
++  --accent-primary: #63d96b;
++  --accent-hover: #7fe585;
++  --accent-muted: #2f7a3a;
++
++  // Text
++  --text-primary: #63d96b;
++  --text-secondary: #55c95d;
++  --text-muted: #3f9d47;
++
++  // Status
++  --success: #63d96b;
++  --error: #ff5555;
++  --warning: #ffcc33;
++
++  // Git explorer decorations
++  --git-decoration-added: #63d96b;
++  --git-decoration-modified: #ffcc33;
++  --git-decoration-deleted: #ff5555;
++  --git-decoration-renamed: #5fcfae;
++  --git-decoration-untracked: #5fcfae;
++  --git-decoration-conflicting: #ff5555;
++
++  // Message bubbles
++  --msg-user-bg: #06140a;
++  --msg-assistant-bg: #070b07;
++  --msg-system-border: #2f7a3a;
++
++  // Code
++  --code-bg: #050805;
++
++  // Utility — black text on the green accent; white stays on dark overlays
++  --text-on-accent: #000000;
++  --text-on-overlay: #ffffff;
++  --accent-info: #5fcfae;
++
++  // RGB components
++  --accent-primary-rgb: 99, 217, 107;
++  --accent-hover-rgb: 127, 229, 133;
++  --text-primary-rgb: 99, 217, 107;
++  --text-secondary-rgb: 85, 201, 93;
++  --text-muted-rgb: 63, 157, 71;
++  --success-rgb: 99, 217, 107;
++  --error-rgb: 255, 85, 85;
++  --warning-rgb: 255, 204, 51;
++  --accent-info-rgb: 95, 207, 174;
++}
++
+ // ─── SCSS Variables (delegate to CSS custom properties) ────────
+ 
+ // Backgrounds
+diff --git a/packages/client/src/views/hermes/ThemeView.vue b/packages/client/src/views/hermes/ThemeView.vue
+index f63c7c630..e4876bd2f 100644
+--- a/packages/client/src/views/hermes/ThemeView.vue
++++ b/packages/client/src/views/hermes/ThemeView.vue
+@@ -7,6 +7,7 @@ import {
+   MAX_THEME_FONT_SIZE,
+   MIN_THEME_FONT_SIZE,
+ } from '@/styles/theme-customization'
++import { STYLE_LABEL_KEYS, THEME_STYLES } from '@/styles/theme-style'
+ import {
+   useTheme,
+   type BrightnessMode,
+@@ -29,6 +30,7 @@ const {
+   brightness,
+   style,
+   isDark,
++  styleForcesDark,
+   fontSize,
+   textColor,
+   accentColor,
+@@ -48,16 +50,26 @@ const brightnessOptions = computed(() => [
+   { label: t('theme.modeLight'), value: 'light' },
+   { label: t('theme.modeDark'), value: 'dark' },
+ ])
+-const styleOptions = computed(() => [
+-  { label: t('theme.styleInk'), value: 'ink' },
+-  { label: t('theme.styleComic'), value: 'comic' },
+-])
+-const resolvedTextColor = computed(() =>
+-  textColor.value || (isDark.value ? '#e0e0e0' : '#1a1a1a'),
+-)
+-const resolvedAccentColor = computed(() =>
+-  accentColor.value || (isDark.value ? '#e0e0e0' : '#333333'),
++const styleOptions = computed(() =>
++  THEME_STYLES.map(value => ({ label: t(STYLE_LABEL_KEYS[value]), value })),
+ )
++
++// Fall back to the palette the active style actually ships (read off the live
++// CSS variable) rather than the ink defaults, so the swatches stay truthful
++// in tech / terminal.
++function currentPaletteColor(name: string, fallback: string): string {
++  if (typeof window === 'undefined') return fallback
++  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
++}
++const resolvedTextColor = computed(() => {
++  // Read `style` so the swatch re-reads the palette when the style changes.
++  void style.value
++  return textColor.value || currentPaletteColor('--text-primary', isDark.value ? '#e0e0e0' : '#1a1a1a')
++})
++const resolvedAccentColor = computed(() => {
++  void style.value
++  return accentColor.value || currentPaletteColor('--accent-primary', isDark.value ? '#e0e0e0' : '#333333')
++})
+ const previewStyle = computed(() => ({
+   backgroundImage: backgroundImageUrl.value ? `url("${backgroundImageUrl.value}")` : undefined,
+ }))
+@@ -171,11 +183,12 @@ async function handleReset() {
+         <div class="theme-setting">
+           <div>
+             <label>{{ t('theme.mode') }}</label>
+-            <p>{{ t('theme.modeHint') }}</p>
++            <p>{{ styleForcesDark ? t('theme.modeLockedHint') : t('theme.modeHint') }}</p>
+           </div>
+           <NSelect
+             :value="brightness"
+             :options="brightnessOptions"
++            :disabled="styleForcesDark"
+             size="small"
+             class="theme-select"
+             @update:value="value => setBrightness(value as BrightnessMode)"
+-- 
+2.53.0
+

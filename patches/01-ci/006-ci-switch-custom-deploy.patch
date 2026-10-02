@@ -1,0 +1,36 @@
+From 8e155ee24ce1aaf6ed65e44e35a3827c5ce31690 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 07:54:53 +0800
+Subject: [PATCH] ci: switch CI build+deploy trigger from dev/main to custom
+
+Patch-based branch model migration: custom is now the single integration
+branch carrying the 52-patch stack; dev/main is retired (kept as archive).
+---
+ .github/workflows/build.yml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
+index f7a3918c3..4dc3f3e70 100644
+--- a/.github/workflows/build.yml
++++ b/.github/workflows/build.yml
+@@ -4,7 +4,7 @@ on:
+   push:
+     branches:
+       - main
+-      - dev/main
++      - custom
+   pull_request:
+     branches:
+       - main
+@@ -51,7 +51,7 @@ jobs:
+ 
+   deploy:
+     needs: build
+-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev/main'
++    if: github.event_name == 'push' && github.ref == 'refs/heads/custom'
+     runs-on: ubuntu-latest
+     permissions:
+       contents: read
+-- 
+2.53.0
+
