@@ -38,6 +38,16 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 26-0.7.26-nav-chrome | 0.7.26 导航外壳适配：rail 清掉已删功能入口（群聊/工作流/设备互联）并把首个条目改用现存 `sidebar.chat`；抽屉去掉自带的 40px 关闭行（恢复页面侧栏自带关闭键）+ `--drawer-top-inset` 统一顶部安全区；移动端侧栏头部内边距收紧；导航外壳纳入各风格材质层与自定义背景玻璃组 | 001-002 |
 | 27-0.7.26-mobile-nav-merge | 手机抽屉一级菜单合并（Aries 定稿）：rail 新增 `labeled`（图标+文字、140px）与 `withAppEntries`（AppSidebar 的 9 个应用级目的地）两个可选 prop，左下三条横线＝文字开关（localStorage 持久）；对应的应用级页面不再重复渲染同一份列表；桌面端不传 prop ⇒ 保持 64px 图标栏 | 001-002 |
 | 28-sidebar-drawer-ux | 侧边栏/抽屉四轮验收打磨：新建会话入口改通栏带文字行（有导航栏时不再重复渲染「历史」）；抽屉宽度 `min(320px, 100vw-70px)` + 去掉移动端 × 关闭键（点遮罩关闭）；抽屉玻璃面（容器 `--glass-sidebar-bg` + blur12、rail/页面列透明、naive 抽屉根透明、遮罩 0.3→0.18，非 scoped + `:has` 限定到本抽屉）；图标导航栏图标 22→18px、单项 44×44→36×36、栏宽 64→52 | 001-004 |
+| 29-usage-card-trim | 0.7.27 用量卡瘦身（上游新组件 `RunUsageCard`，本 fork 首个直接改上游新 UI 的组）：去掉「缓存命中率」与「预估费用」两格，只留 输出/输入/缓存/速度；栅格 6→4 列、窄栏 2×2 / ≥440px 一行四格；11 locale 删 `runUsageCacheRate(+Hint)`/`runUsageCost` 三键；e2e 断言同步（summary 载荷字段不动，用量页照旧） | 001-002 |
+
+**2026-10-03 新增 `29-usage-card-trim` 组（001 源码、002 测试）**：用量卡从 6 格减到 4 格。
+起因是 Aries 实测发现「预估费用」恒为 `—`：账本 `session_usage` 里 **69,631 行全部** `cost_usd=NULL` / `cost_source='unknown'`，原因是
+**价格表的 provider 键与账本上报的 provider 不是同一个字符串** —— 定价面板存的是配置里的 provider id（`custom:octopus`，agent 日志里 31 次的少数派），
+而 Hermes 往账本上报的是裸族名（`custom`，同一份日志 9783 次），`usage-recorder.ts` 的匹配是精确相等，永远不成立；且面板的 provider 是**下拉**（只列已配置 id），
+手工也建不出能命中的条目。上游该匹配函数只对 `custom` 做特例，没做「命名块 ↔ 族名」归一化。
+处置：**直接把这两格从卡片上拿掉**（命中率那格本来也只是把旁边的缓存读取数换个说法），保留 输出/输入/缓存/速度；
+`run_usage` 表与 summary 载荷里的 `costUsd`/`cacheHitRate` **字段不动**（用量页、导出仍在用）。
+复现与判据：`sqlite3` 读 `session_usage` 的 `cost_source` 分布 + `usage_pricing` 的键 + agent 日志的 `provider=` 计数，三者一比即定位。
 
 **2026-10-02 升级 0.7.27（main `ef9409601`；9 提交 / 145 文件 / +4948 −493）**：101 补丁重放 **10 处冲突**全部解毕并回写（**53 个补丁文件重写 / 48 个逐字节未变；无新增补丁组**）：
 
@@ -46,6 +56,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - **`26-0.7.26-nav-chrome` / `27-0.7.26-mobile-nav-merge` / `28-sidebar-drawer-ux`（同一文件 `MobileNavigationDrawer.vue`）**：上游 #3247 引入**全局 `--studio-drawer-width`**（桌面 `min(520px,100vw)`、移动 `100vw`）统一所有 `NDrawer`，并给移动导航抽屉加了 5px 圆角、`overflow:hidden` 和自带关闭行的 CSS。裁决：**保留 fork 的 `drawerWidth`**（`min(320px, calc(100vw - 70px))`，与「点遮罩关闭、任何视口留 ≥70px」配套；上游的移动端 `100vw` 恰好是当初被否的形态）、保留玻璃面与「删掉自带关闭行」，**采纳上游的圆角/overflow**。
 - **重合点的处置（Aries 2026-10-02 定）**：上游 0.7.27 新增 **`RunUsageCard.vue`**（每条 assistant 消息下方一格：输出 / 输入 / 缓存 / 命中率 / 费用 / **tok/s**，服务端按 assistant 消息落库 `run_usage`）与我们既有的消息下 `本轮平均速度：N tok/s`（`04-usage/010`）**会在同一条消息上重复出现 tok/s** ⇒ 决定**移除 fork 那条消息行**，**保留上游用量卡 + run 态「当前/平均」**。
   落法（折叠，不留「加了又删」的补丁）：把移除折回引入它的 `04-usage/010`（该补丁现在只做 run 态读数与参考解算，`MessageItem.vue` 不再被它碰），并回写受上下文影响的 `23-run-speed-latest/001`、`24-styles-and-motion/001` 等 → 共重写 27 个补丁文件、verify-am 101/101 零冲突零差异。
+  **同日后续**：卡上门再去掉「缓存命中率」与「预估费用」两格（新组 `29-usage-card-trim`，见上）。
 - 部署：`bin/` 与依赖**零变化**（`package.json` 仅版本号）⇒ **不需要 `npm i -g`**，直接 dist 热替即可（client + `server/index.js`±map + `server/openapi.json` + `ekko-skills` + `agent-bridge/python`）；跑 `npm i -g` 前仍须清 socks5 代理变量（0.7.24 坑，否则 node-pty 编译失败）。
 - 验证：本机 `npm run build`（`openapi:generate` + `vue-tsc -b` + vite + server tsc + esbuild）**exit 0**；**双树对比**受影响的 158 个测试文件：新树 1449 例 / 16 失败 vs 基线（0.7.26 custom）1327 例 / 13 失败，**新增 3 例全是 `tests/server/coding-agent-run-manager-windows.test.ts` 的 `no such table: messages`，纯净上游树同样复现 ⇒ 0 fork 回归**；行存活审计只剩「被本 fork 自己删除的文件」与已移植项；verify-am **101/101 落位、零冲突、与 custom 源码树 0 差异**；`i18n-coverage` 16 例全绿、无被删功能的 i18n key 回归（`sidebar.apiRelay`/`workflow`/`groupChat`/`connections` 全 0）。
 

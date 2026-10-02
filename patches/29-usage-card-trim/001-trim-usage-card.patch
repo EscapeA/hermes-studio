@@ -1,0 +1,253 @@
+From 587e4e853829acd901d5719db4c2c99be755eb1b Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 3 Oct 2026 01:01:19 +0800
+Subject: [PATCH 1/2] feat(usage): keep four metrics on the run usage card
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The per-turn card carried six cells. Cache hit rate and cost are dropped:
+the hit-rate cell only restated the cache-read number beside it, and the
+estimated cost never resolved for relay/custom providers — the pricing table
+is keyed by the configured provider id (`custom:octopus`) while the usage
+ledger records the bare family name (`custom`), and the panel's provider
+picker only offers the configured id, so that cell read `—` on every run.
+
+The card now shows output / input / cache-read / token speed: 2x2 in a narrow
+message column, one row of four once the card is wider than 440px. The
+summary payload keeps both fields — the usage dashboard still uses them.
+---
+ .../components/hermes/chat/RunUsageCard.vue   | 19 ++++---------------
+ packages/client/src/i18n/locales/ar.ts        |  3 ---
+ packages/client/src/i18n/locales/de.ts        |  3 ---
+ packages/client/src/i18n/locales/en.ts        |  3 ---
+ packages/client/src/i18n/locales/es.ts        |  3 ---
+ packages/client/src/i18n/locales/fr.ts        |  3 ---
+ packages/client/src/i18n/locales/ja.ts        |  3 ---
+ packages/client/src/i18n/locales/ko.ts        |  3 ---
+ packages/client/src/i18n/locales/pt.ts        |  3 ---
+ packages/client/src/i18n/locales/ru.ts        |  3 ---
+ packages/client/src/i18n/locales/zh-TW.ts     |  3 ---
+ packages/client/src/i18n/locales/zh.ts        |  3 ---
+ 12 files changed, 4 insertions(+), 48 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/RunUsageCard.vue b/packages/client/src/components/hermes/chat/RunUsageCard.vue
+index 0a21a3dc6..e72ebbc8b 100644
+--- a/packages/client/src/components/hermes/chat/RunUsageCard.vue
++++ b/packages/client/src/components/hermes/chat/RunUsageCard.vue
+@@ -1,6 +1,6 @@
+ <script setup lang="ts">
+ import { useI18n } from 'vue-i18n'
+-import { formatRunCost, formatRunTokens, formatCacheHitRate, type RunUsageSummary } from '@/utils/run-usage'
++import { formatRunTokens, type RunUsageSummary } from '@/utils/run-usage'
+ 
+ defineProps<{ usage: RunUsageSummary }>()
+ const { t } = useI18n()
+@@ -20,14 +20,6 @@ const { t } = useI18n()
+       <span class="run-usage-label">{{ t('chat.runUsageCache') }}</span>
+       <span class="run-usage-value" :title="String(usage.cacheReadTokens ?? '')">{{ formatRunTokens(usage.cacheReadTokens) }}</span>
+     </div>
+-    <div class="run-usage-metric" :title="t('chat.runUsageCacheRateHint')">
+-      <span class="run-usage-label">{{ t('chat.runUsageCacheRate') }}</span>
+-      <span class="run-usage-value run-usage-cache-rate">{{ formatCacheHitRate(usage.cacheHitRate) }}</span>
+-    </div>
+-    <div class="run-usage-metric">
+-      <span class="run-usage-label">{{ t('chat.runUsageCost') }}</span>
+-      <span class="run-usage-value">{{ formatRunCost(usage.costUsd) }}</span>
+-    </div>
+     <div class="run-usage-metric" :title="t(usage.speedSource === 'estimated' ? 'chat.runUsageEstimatedSpeedHint' : usage.speedSource === 'run' ? 'chat.runUsageAverageSpeedHint' : 'chat.runUsageSpeedHint')">
+       <span class="run-usage-label">{{ t(usage.speedSource === 'estimated' ? 'chat.runUsageEstimatedSpeed' : usage.speedSource === 'run' ? 'chat.runUsageAverageSpeed' : 'chat.runUsageSpeed') }}</span>
+       <span class="run-usage-value">{{ usage.tokensPerSecond == null ? '—' : `${usage.speedSource === 'run' || usage.speedSource === 'estimated' ? '≈ ' : ''}${usage.tokensPerSecond.toFixed(1)} tok/s` }}</span>
+@@ -45,7 +37,7 @@ const { t } = useI18n()
+   padding: 12px 14px;
+   display: grid;
+   container-type: inline-size;
+-  grid-template-columns: repeat(6, minmax(0, 1fr));
++  grid-template-columns: repeat(4, minmax(0, 1fr));
+   gap: 12px;
+   background: $bg-secondary;
+   border: 1px solid $border-light;
+@@ -53,13 +45,10 @@ const { t } = useI18n()
+   color: $text-primary;
+   :global(.dark) & { background: #1f1f1f; border-color: rgba(255, 255, 255, 0.14); color: #f2f2f2; }
+ }
+-.run-usage-metric { display: flex; min-width: 0; grid-column: span 3; flex-direction: column; gap: 5px; }
++.run-usage-metric { display: flex; min-width: 0; grid-column: span 2; flex-direction: column; gap: 5px; }
+ .run-usage-label { color: $text-muted; font-size: 11px; line-height: 16px; overflow-wrap: anywhere; }
+ .run-usage-value { font-family: $font-code; font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+-@container (min-width: 360px) {
+-  .run-usage-metric { grid-column: span 2; }
+-}
+-@container (min-width: 732px) {
++@container (min-width: 440px) {
+   .run-usage-metric { grid-column: span 1; }
+ }
+ </style>
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index 4bf75585f..678fa9483 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -993,10 +993,7 @@ export default {
+   chat: {
+     runUsageOutput: "رموز الإخراج",
+     runUsageInput: "رموز الإدخال",
+-    runUsageCacheRate: "نسبة إصابة التخزين",
+-    runUsageCacheRateHint: "رموز القراءة من التخزين المؤقت ÷ جميع رموز إدخال التشغيل، بما فيها قراءات وكتابات التخزين المؤقت.",
+     runUsageCache: "إصابات التخزين",
+-    runUsageCost: "التكلفة المقدرة",
+     runUsageSpeed: "سرعة الرموز",
+     runUsageSpeedHint: "رموز إخراج التشغيل ÷ إجمالي وقت طلبات النموذج، بما فيه انتظار الرمز الأول، دون وقت الأدوات.",
+     runUsageAverageSpeed: "متوسط السرعة",
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index e4ab922fa..5929cf51b 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -979,10 +979,7 @@ export default {
+   chat: {
+     runUsageOutput: "Ausgabe-Tokens",
+     runUsageInput: "Eingabe-Tokens",
+-    runUsageCacheRate: "Cache-Trefferquote",
+-    runUsageCacheRateHint: "Aus dem Cache gelesene Tokens / alle Eingabe-Tokens dieses Laufs, einschließlich Cache-Lese- und Schreibzugriffen.",
+     runUsageCache: "Cache-Treffer",
+-    runUsageCost: "Geschätzte Kosten",
+     runUsageSpeed: "Token-Tempo",
+     runUsageSpeedHint: "Ausgabe-Tokens / gesamte Modellanfragezeit, einschließlich Wartezeit auf das erste Token, ohne Werkzeuglaufzeit.",
+     runUsageAverageSpeed: "Mittleres Tempo",
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 9c10f7c6c..7c5b335dc 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -1000,10 +1000,7 @@ export default {
+   chat: {
+     runUsageOutput: "Output tokens",
+     runUsageInput: "Input tokens",
+-    runUsageCacheRate: "Cache hit rate",
+-    runUsageCacheRateHint: "Cache-read tokens / all input tokens in this run, including cache reads and writes.",
+     runUsageCache: "Cache hits",
+-    runUsageCost: "Est. cost",
+     runUsageSpeed: "Token speed",
+     runUsageSpeedHint: "Run output tokens / total model request time, including first-token latency and excluding tools.",
+     runUsageAverageSpeed: "Average speed",
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 90c1b5aff..8bf439f41 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -979,10 +979,7 @@ export default {
+   chat: {
+     runUsageOutput: "Tokens de salida",
+     runUsageInput: "Tokens de entrada",
+-    runUsageCacheRate: "Tasa de caché",
+-    runUsageCacheRateHint: "Tokens leídos de caché / todos los tokens de entrada de la ejecución, incluidas lecturas y escrituras de caché.",
+     runUsageCache: "Caché",
+-    runUsageCost: "Coste estimado",
+     runUsageSpeed: "Velocidad",
+     runUsageSpeedHint: "Tokens de salida / tiempo total de solicitudes al modelo, incluida la espera inicial y excluidas las herramientas.",
+     runUsageAverageSpeed: "Velocidad media",
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 30e78fff5..fd584d6ff 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -979,10 +979,7 @@ export default {
+   chat: {
+     runUsageOutput: "Tokens de sortie",
+     runUsageInput: "Tokens d’entrée",
+-    runUsageCacheRate: "Taux de cache",
+-    runUsageCacheRateHint: "Tokens lus en cache / tous les tokens d’entrée de cette exécution, lectures et écritures en cache incluses.",
+     runUsageCache: "Cache",
+-    runUsageCost: "Coût estimé",
+     runUsageSpeed: "Vitesse",
+     runUsageSpeedHint: "Tokens de sortie / durée totale des requêtes au modèle, attente initiale incluse, outils exclus.",
+     runUsageAverageSpeed: "Vitesse moyenne",
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 0af2cbd83..5af85e44e 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -979,10 +979,7 @@ export default {
+   chat: {
+     runUsageOutput: "出力 token",
+     runUsageInput: "入力 token",
+-    runUsageCacheRate: "キャッシュ命中率",
+-    runUsageCacheRateHint: "キャッシュ読み取り token ÷ この実行の全入力 token（キャッシュの読み書きを含む）。",
+     runUsageCache: "キャッシュヒット",
+-    runUsageCost: "推定費用",
+     runUsageSpeed: "Token 速度",
+     runUsageSpeedHint: "実行の出力 token ÷ モデル要求の合計時間。最初の token の待機を含み、ツール実行を除きます。",
+     runUsageAverageSpeed: "平均速度",
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 97c37fd89..e04a34668 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -979,10 +979,7 @@ export default {
+   chat: {
+     runUsageOutput: "출력 토큰",
+     runUsageInput: "입력 토큰",
+-    runUsageCacheRate: "캐시 적중률",
+-    runUsageCacheRateHint: "캐시 읽기 토큰 ÷ 이번 실행의 전체 입력 토큰 (캐시 읽기 및 쓰기 포함).",
+     runUsageCache: "캐시 적중",
+-    runUsageCost: "예상 비용",
+     runUsageSpeed: "토큰 속도",
+     runUsageSpeedHint: "실행 출력 토큰 ÷ 모델 요청 총 시간. 첫 토큰 대기를 포함하고 도구 실행은 제외합니다.",
+     runUsageAverageSpeed: "평균 속도",
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index a90079e40..d1354ee12 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -979,10 +979,7 @@ export default {
+   chat: {
+     runUsageOutput: "Tokens de saída",
+     runUsageInput: "Tokens de entrada",
+-    runUsageCacheRate: "Taxa de cache",
+-    runUsageCacheRateHint: "Tokens lidos do cache / todos os tokens de entrada da execução, incluindo leituras e gravações em cache.",
+     runUsageCache: "Cache",
+-    runUsageCost: "Custo estimado",
+     runUsageSpeed: "Velocidade",
+     runUsageSpeedHint: "Tokens de saída / tempo total das requisições ao modelo, incluindo a espera inicial e excluindo ferramentas.",
+     runUsageAverageSpeed: "Velocidade média",
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index cad405bd5..be53c181c 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -902,10 +902,7 @@ export default {
+   chat: {
+     runUsageOutput: "Выходные токены",
+     runUsageInput: "Входные токены",
+-    runUsageCacheRate: "Попадания в кэш",
+-    runUsageCacheRateHint: "Токены чтения из кэша / все входные токены запуска, включая чтение и запись кэша.",
+     runUsageCache: "Кэш",
+-    runUsageCost: "Оценка цены",
+     runUsageSpeed: "Скорость",
+     runUsageSpeedHint: "Выходные токены / суммарное время запросов к модели, включая ожидание первого токена, без времени инструментов.",
+     runUsageAverageSpeed: "Средняя скорость",
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 5d1169433..aa12f2109 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -993,10 +993,7 @@ export default {
+   chat: {
+     runUsageOutput: "輸出 token",
+     runUsageInput: "輸入 token",
+-    runUsageCacheRate: "快取命中率",
+-    runUsageCacheRateHint: "命中快取的輸入 token ÷ 本輪全部輸入 token（含快取讀取和寫入）",
+     runUsageCache: "快取命中",
+-    runUsageCost: "預估費用",
+     runUsageSpeed: "Token 速度",
+     runUsageSpeedHint: "本輪輸出 token ÷ 模型請求總耗時（含首 token 等待，不含工具執行）",
+     runUsageAverageSpeed: "平均速度",
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 9c16d7e3a..ddf58c38f 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -1000,10 +1000,7 @@ export default {
+   chat: {
+     runUsageOutput: "输出 token",
+     runUsageInput: "输入 token",
+-    runUsageCacheRate: "缓存命中率",
+-    runUsageCacheRateHint: "命中缓存的输入 token ÷ 本轮全部输入 token（含缓存读取和写入）",
+     runUsageCache: "缓存命中",
+-    runUsageCost: "预估费用",
+     runUsageSpeed: "Token 速度",
+     runUsageSpeedHint: "本轮输出 token ÷ 模型请求总耗时（含首 token 等待，不含工具执行）",
+     runUsageAverageSpeed: "平均速度",
+-- 
+2.53.0
+
