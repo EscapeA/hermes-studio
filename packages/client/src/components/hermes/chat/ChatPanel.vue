@@ -2364,17 +2364,6 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
               @filter="handleProfileFilterChange"
               @batch="toggleBatchMode"
             />
-            <button
-              v-if="isMobile"
-              class="session-close-btn"
-              type="button"
-              :aria-label="t('common.close')"
-              @click="showSessions = false"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="m18 6-12 12M6 6l12 12" />
-              </svg>
-            </button>
           </template>
         </PageSidebarNav>
         <div v-if="contentMode === 'chat' && isBatchMode" class="session-list-toolbar">
@@ -3379,24 +3368,6 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
     justify-content: center;
     height: 22px;
     min-height: 22px;
-  }
-}
-
-.session-close-btn {
-  display: inline-flex;
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: $text-secondary;
-  padding: 4px;
-  border-radius: $radius-sm;
-  height: 22px;
-  min-height: 22px;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    background: rgba($accent-primary, 0.06);
   }
 }
 
