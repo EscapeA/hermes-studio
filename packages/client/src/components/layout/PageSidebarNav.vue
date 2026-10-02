@@ -100,6 +100,7 @@ function openUsage() {
         </div>
       </div>
       <button
+        v-if="active === 'history' || !hasNavigationRail"
         class="page-sidebar-tab"
         type="button"
         @click="openHistory"
@@ -231,10 +232,7 @@ function openUsage() {
 }
 
 .page-sidebar-nav--compact {
-  .page-sidebar-search-row { flex-wrap: nowrap; }
-  .page-sidebar-search { order: 0; flex: 1; background: rgba(var(--accent-primary-rgb), 0.05); }
-  .page-sidebar-primary { order: 1; flex: 0 0 32px; width: 32px; padding: 0; justify-content: center; }
-  .page-sidebar-primary span { display: none; }
+  .page-sidebar-search { order: 1; flex: 1; background: rgba(var(--accent-primary-rgb), 0.05); }
 }
 
 .page-sidebar-tab {
