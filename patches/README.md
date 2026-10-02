@@ -13,7 +13,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 |---|---|---|
 | 01-ci | CI/测试（unit-test 移除、custom 触发、CF Pages deploy、mock） | 001-006 |
 | 02-pwa | PWA（离线、SW 缓存、SWR、资源瘦身、_headers、状态栏主题色） | 001-009 |
-| 04-usage | 用量显示（prompt_tokens、百分比、session 累计、composer 对齐、用量行纯文字化＝去上游 0.7.26 的分栏面板、运行中实时解码 tok/s） | 001-010 |
+| 04-usage | 用量显示（prompt_tokens、百分比、session 累计、composer 对齐、用量行纯文字化＝去上游 0.7.26 的分栏面板、run 态解码读数） | 001-010 |
 | 05-chat | Chat 核心（fast-path、avatar、双下拉、identity、滚动、聊天身份开关、用户气泡蓝色、clarify 折叠收起、工具卡按轮分组、去「正在思考」gif 图标、run 态指示器与输入区间距收紧、去输入框语音按钮） | 001-022 |
 | 06-mobile-input | 移动端输入（Enter 换行、模型下拉不弹键盘） | 001-002 |
 | 07-workflow | Workflow 移动端布局 + i18n | 001-002 |
@@ -32,7 +32,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 20-remove-avatars | 前端头像整体移除（ProfileAvatar 组件 + chat-agent-avatar→chat-agent-label 只留名字映射 + 账号头像设置区 + Profile 头像弹窗/api/store + 聊天头像（气泡/空态/会话列表）+ 看板执行者头像 + `profiles.avatar`/`settings.userAvatar` i18n + 身份开关文案改「只控名字」；服务端路由/存储/DB 保留，coding-agents 静态 logo 保留） | 001-002 |
 | 21-chat-run-new-session-attachment | chat-run 新建会话首条带附件消息修复（上游 #3144 的 session-upload 守卫要求会话行已存在，而新建会话的行由本次 run 自己创建 → 首条带附件消息必报 `Session not found`；改为只对已存在的会话做严格校验、首条消息的上传也登记进 session uploads、run 前置拒绝补一行 warn 日志） | 001 |
 | 22-theme-styles | 主题风格表驱动化 + 四套新风格（`tech` 升级为「深空 HUD」，新增 `neon` 霓虹赛博 / `aurora` 渐变空间舱 / `blueprint` 浅色蓝图；风格类名与 naive-ui palette 改查表 `STYLE_CLASS` / `STYLE_PALETTES`，材质层拆到新文件 `styles/style-layers.scss`，风格下拉带色卡，11 locale 补标签键） | 001-002 |
-| 23-run-speed-latest | 本轮解码速度「当前/平均」双读数（run 态指示器在原有本轮平均旁补「最近一次已完成调用」的读数；server `usage.updated` 增加 `speedLatest`、client store 增加 `runSpeedLatest`、11 locale 的 `tokensPerSecond` 拆为 Current/Average） | 001-002 |
+| 23-run-speed-latest | 本轮解码速度「当前/平均」双读数（run 态指示器在原有本轮平均旁补「最近一次已完成调用」的读数；server `usage.updated` 增加 `speedLatest`、client store 增加 `runSpeedLatest`、11 locale 的 `tokensPerSecond` 拆为 Current/Average；**不落消息**） | 001-002 |
 | 24-styles-and-motion | 两套克制向风格 + 交互打磨：`graphite`（冷峻工程：近黑 + 单一靛蓝 + 细边框，零渐变零发光，naive-ui 圆角收紧，聚焦只画锐环）、`warm`（暖调暗：暖黑 + 暖白正文 + 无彩色强调，暖色渐隐 + 表面半透明）；新增 `--input-focus-glow` 聚焦光晕（按各风格主色派生，顺带修掉深色下聚焦阴影被 `.dark &` 覆盖的宿疾）；引入 `motion-v@2.4.4`（独立 chunk ≈46KB gzip）+ 共享 `motion-presets.ts`（三档 spring + 尊重减少动效），工具卡展开/入场/按压、会话列表 capped stagger、工具面板弹簧缓动 | 001-002 |
 | 25-0.7.25-adapt | 0.7.25 升级适配（搜索命中导航跳过 fast-first 预取；vitest 补 `@locales` 兜底别名；上游搜索导航/输入草稿套件适配 fork 行为） | 001-003 |
 | 26-0.7.26-nav-chrome | 0.7.26 导航外壳适配：rail 清掉已删功能入口（群聊/工作流/设备互联）并把首个条目改用现存 `sidebar.chat`；抽屉去掉自带的 40px 关闭行（恢复页面侧栏自带关闭键）+ `--drawer-top-inset` 统一顶部安全区；移动端侧栏头部内边距收紧；导航外壳纳入各风格材质层与自定义背景玻璃组 | 001-002 |
@@ -44,7 +44,8 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - **`04-usage/001`/`002`/`010`（同族，改动最大）**：上游 #3248 把 `recordBridgeModelUsage` 从 `services/chat-run/handle-bridge-run.ts` 抽到新模块 **`services/usage/bridge-model-usage.ts`**，并顺带补上 `parentRunId` / `apiDuration`（配合 0.7.27 新增的 `usage.parent_run_id`、`usage.api_duration` 列与 `run_usage` 表）。我们的**上下文用量口径（API `prompt_tokens`）与解码速度折叠（`foldDecodeCallResult`）移植进该新模块**——`bridge-model-usage.ts` 新增可选第 6 参 `live?: {state, emit}` 与 `applyApiPromptContextTokens` 调用，调用点仍在 `handle-bridge-run.ts`（传 `{ state, emit }`），上游的 `parentRunId`/`apiDuration` 一并保留。
 - **`17-remove-group-chat` / `18-remove-workflow`**：上游 #3248（群聊回复气泡里的 run usage）与 #3247（抽屉/工作区选择器）改了我们要删的前端文件（`api/studio/group-chat.ts`、`group-chat/{GroupAgentRunCard,GroupChatPanel,GroupMessageItem}.vue`、`stores/group-chat.ts`、`WorkflowView.vue` 及对应 `tests/client`+`tests/e2e`）⇒ 按 **modify/delete 接受删除**（先确认上游不再有其他引用）。服务端两模块照旧保留。
 - **`26-0.7.26-nav-chrome` / `27-0.7.26-mobile-nav-merge` / `28-sidebar-drawer-ux`（同一文件 `MobileNavigationDrawer.vue`）**：上游 #3247 引入**全局 `--studio-drawer-width`**（桌面 `min(520px,100vw)`、移动 `100vw`）统一所有 `NDrawer`，并给移动导航抽屉加了 5px 圆角、`overflow:hidden` 和自带关闭行的 CSS。裁决：**保留 fork 的 `drawerWidth`**（`min(320px, calc(100vw - 70px))`，与「点遮罩关闭、任何视口留 ≥70px」配套；上游的移动端 `100vw` 恰好是当初被否的形态）、保留玻璃面与「删掉自带关闭行」，**采纳上游的圆角/overflow**。
-- ⚠️ **重合点（观感待用户拍板）**：上游 0.7.27 新增 **`RunUsageCard.vue`**（每条 assistant 消息下方一格：输出 / 输入 / 缓存 / 命中率 / 费用 / **tok/s**，服务端按 assistant 消息落库 `run_usage`，`MessageItem` 在 `message.runUsage` 存在时渲染）与我们既有的 `04-usage/010`（消息下 `本轮平均速度：N tok/s`）+ `23-run-speed-latest`（run 态「当前/平均」）**并存在同一条消息上** — speed 信息重复出现，去留需 Aries 定。
+- **重合点的处置（Aries 2026-10-02 定）**：上游 0.7.27 新增 **`RunUsageCard.vue`**（每条 assistant 消息下方一格：输出 / 输入 / 缓存 / 命中率 / 费用 / **tok/s**，服务端按 assistant 消息落库 `run_usage`）与我们既有的消息下 `本轮平均速度：N tok/s`（`04-usage/010`）**会在同一条消息上重复出现 tok/s** ⇒ 决定**移除 fork 那条消息行**，**保留上游用量卡 + run 态「当前/平均」**。
+  落法（折叠，不留「加了又删」的补丁）：把移除折回引入它的 `04-usage/010`（该补丁现在只做 run 态读数与参考解算，`MessageItem.vue` 不再被它碰），并回写受上下文影响的 `23-run-speed-latest/001`、`24-styles-and-motion/001` 等 → 共重写 27 个补丁文件、verify-am 101/101 零冲突零差异。
 - 部署：`bin/` 与依赖**零变化**（`package.json` 仅版本号）⇒ **不需要 `npm i -g`**，直接 dist 热替即可（client + `server/index.js`±map + `server/openapi.json` + `ekko-skills` + `agent-bridge/python`）；跑 `npm i -g` 前仍须清 socks5 代理变量（0.7.24 坑，否则 node-pty 编译失败）。
 - 验证：本机 `npm run build`（`openapi:generate` + `vue-tsc -b` + vite + server tsc + esbuild）**exit 0**；**双树对比**受影响的 158 个测试文件：新树 1449 例 / 16 失败 vs 基线（0.7.26 custom）1327 例 / 13 失败，**新增 3 例全是 `tests/server/coding-agent-run-manager-windows.test.ts` 的 `no such table: messages`，纯净上游树同样复现 ⇒ 0 fork 回归**；行存活审计只剩「被本 fork 自己删除的文件」与已移植项；verify-am **101/101 落位、零冲突、与 custom 源码树 0 差异**；`i18n-coverage` 16 例全绿、无被删功能的 i18n key 回归（`sidebar.apiRelay`/`workflow`/`groupChat`/`connections` 全 0）。
 
@@ -79,7 +80,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - server：`foldDecodeCallResult` 额外记下最后一次调用的 span/tokens，`latestRunSpeed` 暴露它；
   `usage.updated` 在原有 `speed`（本轮平均）旁新增 `speedLatest`；新 run 接管 fold state 时两者一起归零。
 - client store：`runSpeedLatest` 与 `runSpeed` 并列，同一事件填充，`clearRunSpeed` 一起清。
-- 聊天视图：run 态指示器并排渲染「当前 / 平均」；run 结束时结算值仍常驻到该轮消息上。
+- 聊天视图：run 态指示器并排渲染「当前 / 平均」（**只在 run 态显示**；2026-10-02 起不再结算到消息上，消息下的速度行已随 0.7.27 重合处置移除）。
 - i18n：`chat.tokensPerSecond` 拆为 `chat.tokensPerSecondCurrent` / `chat.tokensPerSecondAverage`（11 locale 同步）。
 
 ⚠️ **为什么是新组 23 而不是接在 `04-usage/010` 后面**（踩过并已实证的坑）：
