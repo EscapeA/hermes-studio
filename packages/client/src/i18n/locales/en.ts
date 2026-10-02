@@ -1000,10 +1000,7 @@ export default {
   chat: {
     runUsageOutput: "Output tokens",
     runUsageInput: "Input tokens",
-    runUsageCacheRate: "Cache hit rate",
-    runUsageCacheRateHint: "Cache-read tokens / all input tokens in this run, including cache reads and writes.",
     runUsageCache: "Cache hits",
-    runUsageCost: "Est. cost",
     runUsageSpeed: "Token speed",
     runUsageSpeedHint: "Run output tokens / total model request time, including first-token latency and excluding tools.",
     runUsageAverageSpeed: "Average speed",
