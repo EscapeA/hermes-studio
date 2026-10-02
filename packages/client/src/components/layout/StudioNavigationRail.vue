@@ -33,7 +33,7 @@ interface RailEntry {
 
 const props = withDefaults(
   defineProps<{
-    /** Mobile drawer: render icon + label rows instead of the 64px icon rail. */
+    /** Mobile drawer: render icon + label rows instead of the icon-only rail. */
     labeled?: boolean
     /** Mobile drawer: also list the app-level destinations (logs … settings). */
     withAppEntries?: boolean
@@ -89,7 +89,7 @@ const modelsEntry: RailEntry = {
 
 /** The app-level destinations, same routes/icons/labels as AppSidebar's nav list.
  *  Only rendered in the mobile drawer (`withAppEntries`), because the desktop rail
- *  is a 64px icon column whose siblings are reachable from AppSidebar. */
+ *  is an icon-only column whose siblings are reachable from AppSidebar. */
 const appEntries: RailEntry[] = [
   { key: 'logs', route: 'hermes.logs', label: 'sidebar.logs', icon: [{ d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' }, { pts: '14 2 14 8 20 8' }, { l: ['16', '13', '8', '13'] }, { l: ['16', '17', '8', '17'] }, { pts: '10 9 9 9 8 9' }] },
   { key: 'usage', route: 'hermes.usage', label: 'sidebar.usage', icon: [{ r: ['3', '12', '4', '9', '1'] }, { r: ['10', '7', '4', '14', '1'] }, { r: ['17', '3', '4', '18', '1'] }] },
@@ -120,6 +120,27 @@ const entries = computed(() => [
             <PluginSymbol v-if="entry.key === 'studioPlugins'" :size="22" />
             <img v-else-if="entry.avatar" class="studio-navigation-rail__avatar" :src="entry.avatar" width="32" height="32" alt="" aria-hidden="true" />
             <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="entry.path" /></svg>
+])
+
+const activeKey = computed(() => {
+  const name = String(route.name || '')
+  if (route.meta.hermesConfig || route.meta.ekkoConfig || route.meta.codingAgentConfig) return 'agents'
+  if (['hermes.chat', 'hermes.session', 'hermes.globalAgent', 'hermes.globalAgentSession'].includes(name)) return 'chat'
+  if (name.startsWith('hermes.history')) return 'history'
+  return entries.value.find(entry => entry.route === name)?.key || 'settings'
+})
+const mobileNavigation = useMobileNavigation()
+function handleNavigate(key: string) {
+  if (mobileNavigation && ['connections', 'agents', 'models', 'usage'].includes(key)) {
+    mobileNavigation.open.value = false
+  }
+</script>
+<template>
+  <aside class="studio-navigation-rail" :class="{ 'studio-navigation-rail--labeled': labeled }">
+    <PageSidebarFooter rail collapsed />
+    <nav class="studio-navigation-rail__nav">
+      <NTooltip v-for="entry in entries" :key="entry.key" placement="right" trigger="hover">
+        <template #trigger>
           <RouteLinkItem
             class="studio-navigation-rail__item"
             :to="{ name: entry.route }"
@@ -259,14 +280,21 @@ $rail-labeled-width: 140px;
 .studio-navigation-rail__item {
   display: grid;
   place-items: center;
-  flex: 0 0 44px;
-  width: 44px;
-  height: 44px;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
   color: $text-muted;
   border-radius: $radius-sm;
   text-decoration: none;
   transition: background-color $transition-fast, color $transition-fast;
   -webkit-app-region: no-drag;
+
+  // Same glyph size as the labelled rows (18px) — the icon rail used to render
+  // the 22px svg attribute, which read oversized next to the labelled mode.
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 
   &:hover { color: $text-primary; background: rgba(var(--accent-primary-rgb), 0.06); }
   &.active { color: $accent-primary; background: rgba(var(--accent-primary-rgb), 0.12); }
@@ -288,7 +316,7 @@ $rail-labeled-width: 140px;
 }
 
 // ── labelled mode (mobile drawer) ────────────────────────────────────────────
-// Icon + text rows in a wider column; the same component keeps the 64px icon
+// Icon + text rows in a wider column; the same component keeps the icon-only
 // rail on desktop, where these props are not passed.
 .studio-navigation-rail--labeled {
   flex: 0 0 $rail-labeled-width;
