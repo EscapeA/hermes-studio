@@ -39,6 +39,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 27-0.7.26-mobile-nav-merge | 手机抽屉一级菜单合并（Aries 定稿）：rail 新增 `labeled`（图标+文字、140px）与 `withAppEntries`（AppSidebar 的 9 个应用级目的地）两个可选 prop，左下三条横线＝文字开关（localStorage 持久）；对应的应用级页面不再重复渲染同一份列表；桌面端不传 prop ⇒ 保持 64px 图标栏 | 001-002 |
 | 28-sidebar-drawer-ux | 侧边栏/抽屉四轮验收打磨：新建会话入口改通栏带文字行（有导航栏时不再重复渲染「历史」）；抽屉宽度 `min(320px, 100vw-70px)` + 去掉移动端 × 关闭键（点遮罩关闭）；抽屉玻璃面（容器 `--glass-sidebar-bg` + blur12、rail/页面列透明、naive 抽屉根透明、遮罩 0.3→0.18，非 scoped + `:has` 限定到本抽屉）；图标导航栏图标 22→18px、单项 44×44→36×36、栏宽 64→52 | 001-004 |
 | 29-usage-card-trim | 0.7.27 用量卡瘦身（上游新组件 `RunUsageCard`，本 fork 首个直接改上游新 UI 的组）：去掉「缓存命中率」与「预估费用」两格，只留 输出/输入/缓存/速度；栅格 6→4 列、窄栏 2×2 / ≥440px 一行四格；11 locale 删 `runUsageCacheRate(+Hint)`/`runUsageCost` 三键；e2e 断言同步（summary 载荷字段不动，用量页照旧） | 001-002 |
+| 30-bridge-clarify-contract | bridge（clarify 问答契约对齐 hermes-agent：`_clarify_callback` 从「旧字符串契约」改为「归一化问题列表 → `{answers,outcome,notice}`」，修复 Studio 里 clarify 面板无选项按钮 / 必报 `Failed to get user input: 'str' object has no attribute 'get'`） | 001 |
 
 **2026-10-03 新增 `29-usage-card-trim` 组（001 源码、002 测试）**：用量卡从 6 格减到 4 格。
 起因是 Aries 实测发现「预估费用」恒为 `—`：账本 `session_usage` 里 **69,631 行全部** `cost_usd=NULL` / `cost_source='unknown'`，原因是
@@ -48,6 +49,23 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 处置：**直接把这两格从卡片上拿掉**（命中率那格本来也只是把旁边的缓存读取数换个说法），保留 输出/输入/缓存/速度；
 `run_usage` 表与 summary 载荷里的 `costUsd`/`cacheHitRate` **字段不动**（用量页、导出仍在用）。
 复现与判据：`sqlite3` 读 `session_usage` 的 `cost_source` 分布 + `usage_pricing` 的键 + agent 日志的 `provider=` 计数，三者一比即定位。
+
+**2026-10-03 新增 `30-bridge-clarify-contract` 组（001）**：修好 Studio 里的 clarify 表单（本 fork 首个直接改 **agent-bridge Python** 的组）。
+
+- **症状**：Studio 会话里 `clarify` 必定失败——工具返回 `Failed to get user input: 'str' object has no attribute 'get'`；
+  面板即使弹出也是一条「Python 列表 repr 的纯文本题、没有选项按钮」，无人作答则 5 分钟后崩同样的异常。
+- **根因（契约错配，不是偶发）**：hermes-agent ≥0.21 把澄清契约改成「入参 = 归一化问题列表、回参 = `{answers:{qid:…},outcome,notice?}`」
+  （提交 `5eea87882a`「one question shape and one result shape」/ #127760，同批重构**删掉了旧的签名探测兼容层**），
+  而 `bridge_pool.py` 的 `_clarify_callback` 仍是 `def callback(question: str, choices=None) -> str` ⇒
+  `clarify_tool._result()` 对字符串调 `.get("answers")` 抛 `AttributeError`。上游 **0.7.28 仍是旧签名**（拉 tarball 核对过）⇒ 升级修不了。
+- **改法**：回调改为收归一化列表，逐题发卡（每题一个 `clarify_id`——服务端 `respond_clarify` 只能回一个字符串），汇总成 `answers`；
+  超时 → `outcome='timed_out'` + `notice`（不再把哨兵文本当成答案），空答 → 该题记 `None`（工具报 `skipped`）后停止整批。
+  事件形状 `question`/`choices` 与旧版**逐字一致** ⇒ Web UI 与客户端零改动；`multi_select` 未转发（Studio 仍单选，与既有结论一致）。
+- **真机回归（Aries 验收）**：单问（选择题 / 自由文本）与「三问串行」两形态都跑到 `status=answered` + 正确 `user_response` + `outcome=submitted`。
+- ⚠️ **生效需换新 worker 进程**（Python 不热重载，`_sync_*_patches()` 不含该方法）：回收 bridge worker 或重启 `hermes-web-ui-client.service`；
+  且 **agent 自身就跑在 worker 里**，只能由用户在本轮结束后执行。离线契约对拍脚本与两个回收脚本见 skill
+  `hermes-webui-development → references/clarify-capabilities.md`。
+- 当前补丁文件总数 = **104**（以 `find patches -type f -name '*.patch' | wc -l` 为准）。
 
 **2026-10-02 升级 0.7.27（main `ef9409601`；9 提交 / 145 文件 / +4948 −493）**：101 补丁重放 **10 处冲突**全部解毕并回写（**53 个补丁文件重写 / 48 个逐字节未变；无新增补丁组**）：
 
