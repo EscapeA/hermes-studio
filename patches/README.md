@@ -40,6 +40,8 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 28-sidebar-drawer-ux | 侧边栏/抽屉四轮验收打磨：新建会话入口改通栏带文字行（有导航栏时不再重复渲染「历史」）；抽屉宽度 `min(320px, 100vw-70px)` + 去掉移动端 × 关闭键（点遮罩关闭）；抽屉玻璃面（容器 `--glass-sidebar-bg` + blur12、rail/页面列透明、naive 抽屉根透明、遮罩 0.3→0.18，非 scoped + `:has` 限定到本抽屉）；图标导航栏图标 22→18px、单项 44×44→36×36、栏宽 64→52 | 001-004 |
 | 29-usage-card-trim | 0.7.27 用量卡瘦身（上游新组件 `RunUsageCard`，本 fork 首个直接改上游新 UI 的组）：去掉「缓存命中率」与「预估费用」两格，只留 输出/输入/缓存/速度；栅格 6→4 列、窄栏 2×2 / ≥440px 一行四格；11 locale 删 `runUsageCacheRate(+Hint)`/`runUsageCost` 三键；e2e 断言同步（summary 载荷字段不动，用量页照旧） | 001-002 |
 | 30-bridge-clarify-contract | bridge（clarify 问答契约对齐 hermes-agent：`_clarify_callback` 从「旧字符串契约」改为「归一化问题列表 → `{answers,outcome,notice}`」，修复 Studio 里 clarify 面板无选项按钮 / 必报 `Failed to get user input: 'str' object has no attribute 'get'`） | 001 |
+| 31-0.7.28-adapt | 0.7.28 上游测试套件适配（`tests/client/device-connections-icon.test.ts`、`file-context-menu.test.ts` 的断言对齐 fork 的入口裁剪） | 001 |
+| 32-reconnect-run-state | run 态卡死修复（socket 重连后**重新入房** + 回前台**只对账运行态**：修「壳退后台时任务跑完 ⇒ `run.completed` 收不到 ⇒ 完成报告能拉到、界面却永久停在 run 态」） | 001 |
 
 **2026-10-03 新增 `29-usage-card-trim` 组（001 源码、002 测试）**：用量卡从 6 格减到 4 格。
 起因是 Aries 实测发现「预估费用」恒为 `—`：账本 `session_usage` 里 **69,631 行全部** `cost_usd=NULL` / `cost_source='unknown'`，原因是
@@ -65,7 +67,22 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - ⚠️ **生效需换新 worker 进程**（Python 不热重载，`_sync_*_patches()` 不含该方法）：回收 bridge worker 或重启 `hermes-web-ui-client.service`；
   且 **agent 自身就跑在 worker 里**，只能由用户在本轮结束后执行。离线契约对拍脚本与两个回收脚本见 skill
   `hermes-webui-development → references/clarify-capabilities.md`。
-- 当前补丁文件总数 = **104**（以 `find patches -type f -name '*.patch' | wc -l` 为准）。
+- 当前补丁文件总数 = **106**（以 `find patches -type f -name '*.patch' | wc -l` 为准；104 = 30 组时点，其后新增 `31-0.7.28-adapt` 与本 32 组）。
+
+**2026-10-03 新增 `32-reconnect-run-state` 组（001）**：修「壳退后台时任务跑完，界面永久停在 run 态」（Aries 2026-10-03 真机验收）。
+
+- **症状**：手机壳（WebView）退后台期间任务跑完 → 回前台**完成报告能拿到**（消息自己出现），但界面一直停在 run 态（转圈不消失、停止键不还原），停在那个会话里不自愈；切走再切回/刷新即恢复。
+- **根因（两处叠加，都在客户端）**：
+  1. **重连丢房间**：客户端把 run 态建立在 `streamStates ∪ serverWorking` 上（`isStreaming` → `isRunActive`），而这两个集合只有 **socket 终态事件**（`run.completed`/`run.failed`/`abort.completed`）或**重新打开会话**（resume 返回 `isWorking:false`）才会清。服务端 run 事件**只发 `session:<sid>` 房间**（`sockets/chat-run.ts`）。重连在服务端是**新 socket 对象** ⇒ 房间成员关系清零；而**只有本机发起的那条 run** 会在 `connect` 时补发 `resume`（该钩子注册在 `startRunViaSocket` 内），
+     **以「resumed 运行中」挂着某个 run 的会话没有任何 connect/disconnect 钩子**（`switchSession`/`resumeServerWorkingRun` 里写明「不必再发 resume」）⇒ 终态事件永远收不到。
+  2. **前台恢复被自己挡住**：`visibilitychange` 恢复路径要求 `!isStreaming` 才走 ⇒ 客户端正（错误地）认为在跑 ⇒ 整段跳过，连消息都不拉；此时**唯一还在跑的是停滞看门狗**（`11-socket-stall/002`），而它只 `refreshActiveSession()` 重拉消息、**完全不碰运行态** ⇒ 正是「消息在刷、run 态不消」的组合。
+- **改法**（纯客户端，2 文件）：
+  - `api/studio/chat.ts`：新增全局 `onChatRunConnected`（照既有 `onPeerUserMessage` 注册表模式），在 `connectChatRun` 的全局监听块挂 `connect` ⇒ 首次连接与每次重连都广播。
+  - `stores/hermes/chat.ts`：① 订阅它 → 对「客户端仍认为在跑」的会话（`serverWorking ∪ streamStates`，且在本机会话列表中）逐个重发 `resume`（重新入房 + 拿服务端 `isWorking` 对账）；服务端说已经跑完则本地收敛（清 `streamStates`/`serverWorking`/`runStartedAt`、收尾流式气泡与运行中工具、关 abort/压缩态、按服务端值留队列、标未读、刷新该会话消息）。
+    ② `visibilitychange`：`isStreaming` 为真时不再整体跳过，改为发一次**只对账运行态、不动消息**的 resume（真实流式期间不会用服务端快照盖掉本地已累积的 delta）。
+- **验证**：`npm run build`（vue-tsc+vite+server）exit 0；本机 dist/client 热替（未重启，`MainPID`/`ActiveEnterTimestamp` 未变；三处 `index.html` md5 一致 + 入口 chunk sha256 一致 + chat chunk 内 `queueLength` 计数 11→12）；**Aries 真机复现验收通过**——「发起任务 → 切走再切回该会话（让客户端以 resumed 运行中挂着）→ 退后台等它跑完 → 回前台」，run 态自愈，无需切换/刷新。
+- 触发前提（复现要点）：该路径只在**任务开跑之后客户端才接上这个会话**时成立；若 run 就是本机当前页面发起的，`startRunViaSocket` 自带的 connect 钩子本来就会补 resume ⇒ 观察不到。
+- ⚠️ 纯前端改动，**热替 dist/client 即可、无需重启**（`packages/server` 零改动）。
 
 **2026-10-02 升级 0.7.27（main `ef9409601`；9 提交 / 145 文件 / +4948 −493）**：101 补丁重放 **10 处冲突**全部解毕并回写（**53 个补丁文件重写 / 48 个逐字节未变；无新增补丁组**）：
 
