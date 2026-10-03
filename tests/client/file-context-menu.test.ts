@@ -14,9 +14,7 @@ const mockDialog = vi.hoisted(() => ({
 }))
 
 const downloadSessionMock = vi.hoisted(() => vi.fn())
-const downloadGroupMock = vi.hoisted(() => vi.fn())
 vi.mock('@/api/studio/sessions', () => ({ downloadSessionWorkspaceFile: downloadSessionMock }))
-vi.mock('@/api/studio/group-chat', () => ({ downloadGroupWorkspaceFile: downloadGroupMock }))
 const downloadFileMock = vi.hoisted(() => vi.fn())
 const copyToClipboardMock = vi.hoisted(() => vi.fn())
 
@@ -156,15 +154,16 @@ describe('FileContextMenu', () => {
 
     expect(workspaceWrapper.emitted('attach')).toEqual([[entry]])
   })
-  it.each(['session', 'group'] as const)('downloads %s workspace files with the authorized scoped API', async scope => {
+  // The fork removes the group-chat frontend, so upstream's `it.each(['session','group'])`
+  // case is narrowed to the session scope it still has code for.
+  it('downloads session workspace files with the authorized scoped API', async () => {
     const store = useFilesStore()
-    if (scope === 'group') store.currentWorkspaceRoomId = 'room-1'
-    else store.currentWorkspaceSessionId = 'session-1'
+    store.currentWorkspaceSessionId = 'session-1'
     const wrapper = mount(FileContextMenu)
     const entry = { name: 'page.html', path: 'tools/page.html', isDir: false, size: 10, modTime: '' }
     await showMenu(wrapper, entry)
     await wrapper.get('[data-key="download"]').trigger('click'); await flushPromises()
-    expect(scope === 'group' ? downloadGroupMock : downloadSessionMock).toHaveBeenCalledWith(scope === 'group' ? 'room-1' : 'session-1', entry.path, entry.name)
+    expect(downloadSessionMock).toHaveBeenCalledWith('session-1', entry.path, entry.name)
     expect(downloadFileMock).not.toHaveBeenCalled()
   })
 
