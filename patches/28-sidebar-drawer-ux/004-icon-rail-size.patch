@@ -1,0 +1,104 @@
+From ca23326f3dedafedd36806f7379dffcdca8b09c4 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Fri, 2 Oct 2026 12:40:05 +0800
+Subject: [PATCH] refactor(nav): icon rail shrinks to the labelled glyph size
+
+The icon-only rail rendered the svg's 22px attribute while the labelled rows force
+18px, so the icons read oversized inside a 64px column. Both modes now use 18px, the
+icon-only item goes 44x44 -> 36x36, and $navigation-rail-width 64 -> 52 (the drawer's
+RAIL_WIDTH collapses with it).
+---
+ .../layout/MobileNavigationDrawer.vue         |  5 +++--
+ .../layout/StudioNavigationRail.vue           | 19 +++++++++++++------
+ packages/client/src/styles/variables.scss     |  2 +-
+ 3 files changed, 17 insertions(+), 9 deletions(-)
+
+diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
+index a6d4752e9..a1e6608f3 100644
+--- a/packages/client/src/components/layout/MobileNavigationDrawer.vue
++++ b/packages/client/src/components/layout/MobileNavigationDrawer.vue
+@@ -9,8 +9,9 @@ const emit = defineEmits<{
+   target: [element: HTMLElement | null]
+ }>()
+ 
+-/** Rail widths — keep in sync with $rail-labeled-width in StudioNavigationRail.vue. */
+-const RAIL_WIDTH = { collapsed: 64, labeled: 140 } as const
++/** Rail widths — keep in sync with $rail-labeled-width in StudioNavigationRail.vue
++ *  and $navigation-rail-width (styles/variables.scss) for the collapsed rail. */
++const RAIL_WIDTH = { collapsed: 52, labeled: 140 } as const
+ const LABELS_STORAGE_KEY = 'hermes_mobile_drawer_labels'
+ 
+ function storedLabelsOpen(): boolean {
+diff --git a/packages/client/src/components/layout/StudioNavigationRail.vue b/packages/client/src/components/layout/StudioNavigationRail.vue
+index 1b6d53878..b0980e9dc 100644
+--- a/packages/client/src/components/layout/StudioNavigationRail.vue
++++ b/packages/client/src/components/layout/StudioNavigationRail.vue
+@@ -27,7 +27,7 @@ interface RailEntry {
+ 
+ const props = withDefaults(
+   defineProps<{
+-    /** Mobile drawer: render icon + label rows instead of the 64px icon rail. */
++    /** Mobile drawer: render icon + label rows instead of the icon-only rail. */
+     labeled?: boolean
+     /** Mobile drawer: also list the app-level destinations (logs … settings). */
+     withAppEntries?: boolean
+@@ -68,7 +68,7 @@ const modelsEntry: RailEntry = {
+ 
+ /** The app-level destinations, same routes/icons/labels as AppSidebar's nav list.
+  *  Only rendered in the mobile drawer (`withAppEntries`), because the desktop rail
+- *  is a 64px icon column whose siblings are reachable from AppSidebar. */
++ *  is an icon-only column whose siblings are reachable from AppSidebar. */
+ const appEntries: RailEntry[] = [
+   { key: 'logs', route: 'hermes.logs', label: 'sidebar.logs', icon: [{ d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' }, { pts: '14 2 14 8 20 8' }, { l: ['16', '13', '8', '13'] }, { l: ['16', '17', '8', '17'] }, { pts: '10 9 9 9 8 9' }] },
+   { key: 'usage', route: 'hermes.usage', label: 'sidebar.usage', icon: [{ r: ['3', '12', '4', '9', '1'] }, { r: ['10', '7', '4', '14', '1'] }, { r: ['17', '3', '4', '18', '1'] }] },
+@@ -195,15 +195,22 @@ $rail-labeled-width: 140px;
+ .studio-navigation-rail__item {
+   display: grid;
+   place-items: center;
+-  flex: 0 0 44px;
+-  width: 44px;
+-  height: 44px;
++  flex: 0 0 36px;
++  width: 36px;
++  height: 36px;
+   color: $text-muted;
+   border-radius: $radius-sm;
+   text-decoration: none;
+   transition: background-color $transition-fast, color $transition-fast;
+   -webkit-app-region: no-drag;
+ 
++  // Same glyph size as the labelled rows (18px) — the icon rail used to render
++  // the 22px svg attribute, which read oversized next to the labelled mode.
++  svg {
++    width: 18px;
++    height: 18px;
++  }
++
+   &:hover { color: $text-primary; background: rgba(var(--accent-primary-rgb), 0.06); }
+   &.active { color: $accent-primary; background: rgba(var(--accent-primary-rgb), 0.12); }
+   &:focus-visible { outline: 2px solid $accent-primary; outline-offset: -2px; }
+@@ -224,7 +231,7 @@ $rail-labeled-width: 140px;
+ }
+ 
+ // ── labelled mode (mobile drawer) ────────────────────────────────────────────
+-// Icon + text rows in a wider column; the same component keeps the 64px icon
++// Icon + text rows in a wider column; the same component keeps the icon-only
+ // rail on desktop, where these props are not passed.
+ .studio-navigation-rail--labeled {
+   flex: 0 0 $rail-labeled-width;
+diff --git a/packages/client/src/styles/variables.scss b/packages/client/src/styles/variables.scss
+index f8e3f233a..80d3be1d6 100644
+--- a/packages/client/src/styles/variables.scss
++++ b/packages/client/src/styles/variables.scss
+@@ -846,7 +846,7 @@ $font-ui: var(--font-ui, 'Inter', system-ui, -apple-system, sans-serif);
+ $font-code: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+ 
+ // Layout
+-$navigation-rail-width: 64px;
++$navigation-rail-width: 52px;
+ $sidebar-width: 240px;
+ $sidebar-collapsed-width: 64px;
+ $header-height: 60px;
+-- 
+2.53.0
+
