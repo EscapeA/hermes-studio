@@ -3,7 +3,7 @@ import { historySessionSource, isBuiltinEkkoSession } from '@/utils/hermes/sessi
 import { isKnownEkkoSessionCommand } from '@/utils/hermes/bridge-session-commands'
 import { normalizeRunUsage, type RunUsageSummary } from '@/utils/run-usage'
 import { mergeTaskPlanMessages, type TaskPlanSnapshot } from '@/utils/task-plan'
-import { startRunViaSocket, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, onRunUsageUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
+import { startRunViaSocket, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onChatRunConnected, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, onRunUsageUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
 import { archiveSession as archiveSessionApi, deleteSession as deleteSessionApi, fetchSessionMessagesPage, fetchSessions, fetchWorkspaceRunChangeFile, setSessionModel, setSessionPushEnabled as persistSessionPushEnabled, setSessionReasoningEffort as persistSessionReasoningEffort, type HermesMessage, type SessionSummary, type WorkspaceRunChangeFileDetail, type WorkspaceRunChangeSummary } from '@/api/studio/sessions'
 import { getActiveProfileName } from '@/api/client'
 import { onAuthInvalidated } from '@/api/auth-invalidation'
@@ -5399,6 +5399,70 @@ export const useChatStore = defineStore('chat', () => {
     if (!passive) ensureAbortHandle()
   }
 
+  /**
+   * The server reports no run for this session, yet the client still believed
+   * one was live (its terminal event was lost while the socket was down).
+   * Settle the run state locally so the UI leaves the run state; the transcript
+   * is refreshed from the caller's own follow-up.
+   */
+  function settleRunEndedUnseen(sid: string, data?: ResumeSessionPayload) {
+    streamStates.value.delete(sid)
+    serverWorking.value.delete(sid)
+    clearRunStartedAt(sid)
+    setAbortState(sid, null)
+    setCompressionState(sid, null)
+    // The run ended, but the server may already have queued follow-ups: keep
+    // whatever the probe reported instead of assuming the queue is empty.
+    const queueLength = Number((data as any)?.queueLength || 0)
+    if (queueLength > 0) queueLengths.value.set(sid, queueLength)
+    else queueLengths.value.delete(sid)
+    clearAgentEventMessages(sid)
+    settleRunningTools(sid, 'done')
+    for (const message of getSessionMsgs(sid)) {
+      if (message.isStreaming) updateMessage(sid, message.id, { isStreaming: false })
+    }
+    markSessionCompletedUnread(sid)
+    if (activeSessionId.value === sid) void refreshActiveSession()
+  }
+
+  /**
+   * Ask the server whether a session we believe is live is still running,
+   * touching the run state only: a genuine run may be mid-stream and its
+   * locally accumulated deltas must not be replaced by the server's snapshot.
+   */
+  function probeRunState(sid: string) {
+    const generation = runtimeGeneration
+    const target = sessions.value.find(s => s.id === sid)
+    if (!target) return
+    resumeSession(sid, (data) => {
+      if (generation !== runtimeGeneration || data.session_id !== sid) return
+      if (data.isWorking) {
+        serverWorking.value.add(sid)
+        applyResumedRunActivity(sid, data as any)
+        return
+      }
+      settleRunEndedUnseen(sid, data)
+    }, target.profile, runtimeTransport())
+  }
+
+  /**
+   * A chat-run socket reconnect is a NEW server-side socket, so every session
+   * room membership is gone. Runs started from this client re-subscribe on
+   * their own (startRunViaSocket registers a connect handler); a session
+   * watched through the "resumed run" path does not — it would silently stop
+   * receiving events, terminal ones included, while the REST watchdog keeps the
+   * transcript fresh. Rejoin those rooms and reconcile their run state.
+   */
+  function rejoinLiveRunsAfterReconnect() {
+    const live = new Set<string>([...serverWorking.value, ...streamStates.value.keys()])
+    for (const sid of live) {
+      if (!sessions.value.some(s => s.id === sid)) continue
+      probeRunState(sid)
+    }
+  }
+
+  onChatRunConnected(rejoinLiveRunsAfterReconnect)
+
   function handlePeerUserMessage(evt: RunEvent) {
     const sid = evt.session_id
     if (evt.event === 'approval.requested') return setPendingApproval(evt)
@@ -5524,48 +5588,55 @@ export const useChatStore = defineStore('chat', () => {
   // Tab visibility: re-sync when returning to foreground
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && !isStreaming.value) {
-        // Live-sync the session list so sessions created elsewhere (CLI,
-        // Telegram, another device) appear without a manual reload.
-        void refreshSessionListOnly()
+      if (document.visibilityState !== 'visible') return
+      // Live-sync the session list so sessions created elsewhere (CLI,
+      // Telegram, another device) appear without a manual reload.
+      void refreshSessionListOnly()
+      const sid = activeSessionId.value
+      if (!sid) return
+      if (isStreaming.value) {
+        // The client believes a run is in flight. Ask the server about the run
+        // state only — replacing messages mid-stream would clobber the live
+        // response. A terminal event lost while the tab was hidden would
+        // otherwise leave the UI stuck in run state forever, while the stall
+        // watchdog keeps refreshing the transcript underneath it.
+        probeRunState(sid)
+        return
       }
-      if (document.visibilityState === 'visible' && activeSessionId.value && !isStreaming.value) {
-        const sid = activeSessionId.value
-        if (sid && !streamStates.value.has(sid)) {
-          // Re-load messages via resume (server loads from DB)
-          const generation = runtimeGeneration
-          resumeSession(sid, (data) => {
-            if (generation !== runtimeGeneration || data.session_id !== sid || activeSessionId.value !== sid) return
-            if (data.isWorking) {
-              serverWorking.value.add(sid)
-            } else {
-              serverWorking.value.delete(sid)
+      if (!streamStates.value.has(sid)) {
+        // Re-load messages via resume (server loads from DB)
+        const generation = runtimeGeneration
+        resumeSession(sid, (data) => {
+          if (generation !== runtimeGeneration || data.session_id !== sid || activeSessionId.value !== sid) return
+          if (data.isWorking) {
+            serverWorking.value.add(sid)
+          } else {
+            serverWorking.value.delete(sid)
+          }
+          applyResumedRunActivity(sid, data as any)
+          if (data.isAborting) {
+            setAbortState(sid, { aborting: true, synced: null })
+          } else if (!data.isWorking) {
+            setAbortState(sid, null)
+          }
+          if (!data.isWorking) setCompressionState(sid, null)
+          applyResumedSessionSettings(data)
+          if (activeSession.value) applySessionTokenUsage(activeSession.value, data)
+          if (Array.isArray(data.messages) && activeSession.value) {
+            if (typeof data.workspace === 'string') {
+              activeSession.value.workspace = data.workspace.trim() || null
+              activeSession.value.isLocalOnly = false
             }
-            applyResumedRunActivity(sid, data as any)
-            if (data.isAborting) {
-              setAbortState(sid, { aborting: true, synced: null })
-            } else if (!data.isWorking) {
-              setAbortState(sid, null)
-            }
-            if (!data.isWorking) setCompressionState(sid, null)
-            applyResumedSessionSettings(data)
-            if (activeSession.value) applySessionTokenUsage(activeSession.value, data)
-            if (Array.isArray(data.messages) && activeSession.value) {
-              if (typeof data.workspace === 'string') {
-                activeSession.value.workspace = data.workspace.trim() || null
-                activeSession.value.isLocalOnly = false
-              }
-              activeSession.value.messages = mapHermesMessages(data.messages as any[], data.taskPlans, activeSession.value.messages)
-              restorePersistedSubagentStreams(sid)
-              setWorkspaceRunChanges(sid, data.workspaceRunChanges || [])
-              activeSession.value.loadedMessageCount = data.messageLoadedCount ?? data.messages.length
-              activeSession.value.messageTotal = data.messageTotal ?? activeSession.value.messageCount ?? activeSession.value.loadedMessageCount
-              activeSession.value.messageCount = activeSession.value.messageTotal
-              activeSession.value.hasMoreBefore = data.hasMoreBefore ?? activeSession.value.loadedMessageCount < activeSession.value.messageTotal
-            }
-            resumeServerWorkingRun(sid, (data.backgroundPending || 0) > 0, !data.isWorking)
-          }, activeSession.value?.profile, runtimeTransport())
-        }
+            activeSession.value.messages = mapHermesMessages(data.messages as any[], data.taskPlans, activeSession.value.messages)
+            restorePersistedSubagentStreams(sid)
+            setWorkspaceRunChanges(sid, data.workspaceRunChanges || [])
+            activeSession.value.loadedMessageCount = data.messageLoadedCount ?? data.messages.length
+            activeSession.value.messageTotal = data.messageTotal ?? activeSession.value.messageCount ?? activeSession.value.loadedMessageCount
+            activeSession.value.messageCount = activeSession.value.messageTotal
+            activeSession.value.hasMoreBefore = data.hasMoreBefore ?? activeSession.value.loadedMessageCount < activeSession.value.messageTotal
+          }
+          resumeServerWorkingRun(sid, (data.backgroundPending || 0) > 0, !data.isWorking)
+        }, activeSession.value?.profile, runtimeTransport())
       }
     })
   }
