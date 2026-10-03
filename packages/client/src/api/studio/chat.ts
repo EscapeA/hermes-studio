@@ -262,10 +262,33 @@ const sessionTitleUpdatedHandlers = new Set<(event: RunEvent) => void>()
 const sessionWorkspaceUpdatedHandlers = new Set<(event: RunEvent) => void>()
 const sessionSettingsUpdatedHandlers = new Set<(event: RunEvent) => void>()
 const runUsageUpdatedHandlers = new Set<(event: RunEvent) => void>()
+const chatRunConnectedHandlers = new Set<() => void>()
 
 export function onRunUsageUpdated(handler: (event: RunEvent) => void): () => void {
   runUsageUpdatedHandlers.add(handler)
   return () => { runUsageUpdatedHandlers.delete(handler) }
+}
+
+/**
+ * Notified after every successful chat-run socket (re)connection, including the
+ * first one. A reconnect is a NEW server-side socket: room membership is gone,
+ * so a session watched through the "resumed run" path stops receiving events
+ * (terminal ones included) until it re-emits `resume`. Listeners use this to
+ * rejoin the rooms of the sessions they still believe are live.
+ */
+export function onChatRunConnected(handler: () => void): () => void {
+  chatRunConnectedHandlers.add(handler)
+  return () => { chatRunConnectedHandlers.delete(handler) }
+}
+
+function notifyChatRunConnected(): void {
+  for (const handler of [...chatRunConnectedHandlers]) {
+    try {
+      handler()
+    } catch {
+      // One listener must not take the others down with it.
+    }
+  }
 }
 
 function globalRunUsageUpdatedHandler(event: RunEvent): void {
@@ -891,6 +914,10 @@ export function connectChatRun(requestedProfile?: string | null, transport: Chat
     on('session.title.updated', globalSessionTitleUpdatedHandler)
     on('session.workspace.updated', globalSessionWorkspaceUpdatedHandler)
     on('session.settings.updated', globalSessionSettingsUpdatedHandler)
+
+    // Fires on the first connect as well as on every reconnect. See
+    // onChatRunConnected for why a reconnect has to be announced.
+    on('connect', () => notifyChatRunConnected())
 
     globalListenersRegistered = true
   }
