@@ -1436,26 +1436,44 @@ class AgentPool:
         return callback
 
     def _clarify_callback(self, session_id: str):
-        def callback(question: str, choices: list[str] | None = None) -> str:
-            clarify_id = uuid.uuid4().hex
-            response_queue: queue.Queue[str] = queue.Queue(maxsize=1)
-            with self._lock:
-                self._clarify_requests[clarify_id] = response_queue
-            self._append_event(session_id, {
-                "event": "clarify.requested",
-                "clarify_id": clarify_id,
-                "question": str(question or ""),
-                "choices": list(choices) if choices else None,
-                "timeout_ms": 300_000,
-            })
-            try:
-                user_response = response_queue.get(timeout=300)
-            except queue.Empty:
-                user_response = "[user did not respond within 5m]"
-            finally:
+        def callback(questions: list[dict[str, Any]]) -> dict[str, Any]:
+            # hermes-agent hands us the *normalized* question list and expects
+            # {"answers": {qid: raw}, "outcome": ..., "notice"?} back — see
+            # tools/clarify_tool.py (_result / _response_status). One card per question;
+            # an unanswered question stops the batch, mirroring the gateway's
+            # _clarify_callback_sync. The Web UI replies with a single string per
+            # clarify_id (respond_clarify), so each question gets its own card.
+            answers: dict[str, Any] = {}
+            reply: dict[str, Any] = {"answers": answers, "outcome": "submitted"}
+            for entry in questions or []:
+                clarify_id = uuid.uuid4().hex
+                response_queue: queue.Queue[str] = queue.Queue(maxsize=1)
                 with self._lock:
-                    self._clarify_requests.pop(clarify_id, None)
-            return user_response
+                    self._clarify_requests[clarify_id] = response_queue
+                self._append_event(session_id, {
+                    "event": "clarify.requested",
+                    "clarify_id": clarify_id,
+                    "question": str(entry.get("question") or ""),
+                    "choices": list(entry.get("choices") or []) or None,
+                    "timeout_ms": 300_000,
+                })
+                try:
+                    user_response = response_queue.get(timeout=300)
+                except queue.Empty:
+                    # The surface's own no-answer text rides along as ``notice``: a lone blank
+                    # answer would read as user inactivity instead of an unanswerable card.
+                    reply.update(outcome="timed_out", notice="[user did not respond within 5m]")
+                    break
+                finally:
+                    with self._lock:
+                        self._clarify_requests.pop(clarify_id, None)
+                qid = str(entry.get("qid") or "")
+                if not str(user_response or "").strip():
+                    # Dismissed/blank: keep the qid so the tool reports "skipped", then stop.
+                    answers[qid] = None
+                    break
+                answers[qid] = user_response
+            return reply
 
         return callback
 
