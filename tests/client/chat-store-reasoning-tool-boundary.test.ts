@@ -15,6 +15,7 @@ const sessionsApi = vi.hoisted(() => ({
 }))
 
 vi.mock('@/api/studio/chat', () => ({
+  onChatRunConnected: vi.fn(() => vi.fn()),
   startRunViaSocket: chatApi.startRunViaSocket,
   resumeSession: vi.fn(),
   registerSessionHandlers: vi.fn(),
