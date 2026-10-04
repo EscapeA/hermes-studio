@@ -1,4 +1,4 @@
-From c90f1551993c96a45e6084678f316ebd3a64ce08 Mon Sep 17 00:00:00 2001
+From 62d7871a3ad170b7173443b88c87599dfe0a581c Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 18:51:17 +0800
 Subject: [PATCH] feat(workflow): mobile runs panel as bottom sheet with
@@ -17,10 +17,10 @@ back control when viewing a run snapshot.
  6 files changed, 207 insertions(+), 25 deletions(-)
 
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 7bbc3feed..dd9a01c0b 100644
+index c80562bb7..68e6ea1d5 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1356,6 +1356,7 @@ export default {
+@@ -1386,6 +1386,7 @@ export default {
        createWorkflowFirst: 'Please create a workflow first',
        reset: 'Reset',
        startExecution: 'Start Execution',
@@ -29,10 +29,10 @@ index 7bbc3feed..dd9a01c0b 100644
        executionStarted: 'Workflow execution started',
        executionCompleted: 'Workflow execution completed',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 86dec1347..b1cce2b40 100644
+index 5e7e6a720..0b3bbab81 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1235,6 +1235,7 @@ export default {
+@@ -1265,6 +1265,7 @@ export default {
        createWorkflowFirst: 'Сначала создайте workflow',
        reset: 'Сбросить',
        startExecution: 'Запустить выполнение',
@@ -41,10 +41,10 @@ index 86dec1347..b1cce2b40 100644
        executionStarted: 'Выполнение workflow началось',
        executionCompleted: 'Выполнение workflow завершено',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 39587d3f9..a4b5d24f3 100644
+index 682524c4d..889aee70d 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1349,6 +1349,7 @@ export default {
+@@ -1379,6 +1379,7 @@ export default {
        createWorkflowFirst: '請先建立工作流',
        reset: '重置',
        startExecution: '開始執行',
@@ -53,10 +53,10 @@ index 39587d3f9..a4b5d24f3 100644
        executionStarted: '工作流已開始執行',
        executionCompleted: '工作流執行完成',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index de8a38bb7..a22fd4f46 100644
+index 50f257ae9..ee4adcb97 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1356,6 +1356,7 @@ export default {
+@@ -1386,6 +1386,7 @@ export default {
        createWorkflowFirst: '请先创建工作流',
        reset: '重置',
        startExecution: '开始执行',
@@ -65,10 +65,10 @@ index de8a38bb7..a22fd4f46 100644
        executionStarted: '工作流已开始执行',
        executionCompleted: '工作流执行完成',
 diff --git a/packages/client/src/views/hermes/WorkflowView.vue b/packages/client/src/views/hermes/WorkflowView.vue
-index 591729441..fbe318028 100644
+index 7fce8263a..a2fe034a1 100644
 --- a/packages/client/src/views/hermes/WorkflowView.vue
 +++ b/packages/client/src/views/hermes/WorkflowView.vue
-@@ -373,6 +373,8 @@ const workflowScheduleTimeoutMinutes = ref<number | null>(null)
+@@ -374,6 +374,8 @@ const workflowScheduleTimeoutMinutes = ref<number | null>(null)
  const workflowRunsLoading = ref(false)
  const rerunningWorkflowNodeId = ref<string | null>(null)
  const showWorkflowRunsPanel = ref(true)
@@ -77,7 +77,7 @@ index 591729441..fbe318028 100644
  const selectedWorkflowRunId = ref<string | null>(null)
  const workflowRunPage = ref<WorkflowRunPagerPage>('history')
  const workflowEvidenceTab = ref<'actual' | 'other' | 'loops'>('actual')
-@@ -944,7 +946,16 @@ onUnmounted(() => {
+@@ -940,7 +942,16 @@ onUnmounted(() => {
    removeWorkflowStatusErrorListener = null
  })
  
@@ -95,7 +95,7 @@ index 591729441..fbe318028 100644
  
  
  function loadWorkflowChatPanelWidth() {
-@@ -2094,6 +2105,10 @@ async function selectWorkflowRun(run: WorkflowRunRecord) {
+@@ -2090,6 +2101,10 @@ async function selectWorkflowRun(run: WorkflowRunRecord) {
    nextDeselected.delete(run.id)
    manuallyDeselectedWorkflowRunIds.value = nextDeselected
    selectedWorkflowRunId.value = run.id
@@ -106,7 +106,7 @@ index 591729441..fbe318028 100644
    await applyWorkflowRunSnapshot(run)
    await changeWorkflowRunPage('details')
  }
-@@ -2138,11 +2153,51 @@ function closeWorkflowRunContextMenu() {
+@@ -2134,11 +2149,51 @@ function closeWorkflowRunContextMenu() {
  async function toggleWorkflowRunsPanel() {
    const nextVisible = !showWorkflowRunsPanel.value
    showWorkflowRunsPanel.value = nextVisible
@@ -160,7 +160,7 @@ index 591729441..fbe318028 100644
  async function handleWorkflowRunContextMenuSelect(key: string | number) {
    const run = workflowRunContextMenuTarget.value
    closeWorkflowRunContextMenu()
-@@ -2196,6 +2251,7 @@ function handleWorkflowRuntimeStatus(status: WorkflowRuntimeStatus) {
+@@ -2192,6 +2247,7 @@ function handleWorkflowRuntimeStatus(status: WorkflowRuntimeStatus) {
        !manuallyDeselectedWorkflowRunIds.value.has(status.runId)
      if (shouldAutoSelect) {
        showWorkflowRunsPanel.value = true
@@ -168,7 +168,7 @@ index 591729441..fbe318028 100644
        const wasSelected = selectedWorkflowRunId.value === status.runId
        selectedWorkflowRunId.value = status.runId
        void loadWorkflowRuns(status.workflowId, status.runId, {
-@@ -2696,6 +2752,7 @@ async function executeWorkflowWithBudget(timeoutMs: number | undefined): Promise
+@@ -2692,6 +2748,7 @@ async function executeWorkflowWithBudget(timeoutMs: number | undefined): Promise
    const saved = await saveActiveWorkflow({ quiet: true })
    if (!saved) return false
    showWorkflowRunsPanel.value = true
@@ -176,7 +176,7 @@ index 591729441..fbe318028 100644
    manuallyDeselectedWorkflowRunIds.value = new Set()
    autoSelectRunningWorkflowIds.value = new Set([...autoSelectRunningWorkflowIds.value, workflowId])
    executingWorkflow.value = true
-@@ -2729,6 +2786,7 @@ async function rerunWorkflowFromNode(nodeId: string, preserveStartNode: boolean,
+@@ -2725,6 +2782,7 @@ async function rerunWorkflowFromNode(nodeId: string, preserveStartNode: boolean,
    if (!workflowId || !run || rerunningWorkflowNodeId.value) return false
    rerunningWorkflowNodeId.value = nodeId
    showWorkflowRunsPanel.value = true
@@ -184,7 +184,7 @@ index 591729441..fbe318028 100644
    autoSelectRunningWorkflowIds.value = new Set([...autoSelectRunningWorkflowIds.value, workflowId])
    closeWorkflowChatPanel()
    try {
-@@ -3361,21 +3419,25 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -3357,21 +3415,25 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
            </div>
          </div>
          <div class="header-actions">
@@ -224,7 +224,7 @@ index 591729441..fbe318028 100644
            <NTooltip trigger="hover">
              <template #trigger>
                <NButton
-@@ -3806,14 +3868,32 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -3802,14 +3864,32 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
            @clickoutside="handleContextMenuClickOutside"
          />
        </section>
@@ -257,7 +257,7 @@ index 591729441..fbe318028 100644
          <span class="workflow-runs-live-region" aria-live="polite" aria-atomic="true">{{ workflowRunPageAnnouncement }}</span>
          <div
            class="workflow-runs-pages"
-@@ -3889,7 +3969,8 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -3885,7 +3965,8 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
              </div>
              <div ref="workflowRunDetailsScrollRef" class="workflow-runs-page-scroll">
          <section
@@ -267,7 +267,7 @@ index 591729441..fbe318028 100644
            class="workflow-evidence"
            :aria-label="t('workflow.evidence.ariaLabel')"
          >
-@@ -4820,6 +4901,14 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -4816,6 +4897,14 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
    .workflow-runs-pages { transition-duration: 0.01ms; }
  }
  
@@ -282,7 +282,7 @@ index 591729441..fbe318028 100644
  .workflow-chat-panel {
    position: relative;
    flex: 0 0 auto;
-@@ -5313,23 +5402,61 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -5309,23 +5398,61 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
  
    .workflow-body {
      min-height: 420px;
@@ -351,7 +351,7 @@ index 591729441..fbe318028 100644
      }
    }
  
-@@ -5349,5 +5476,13 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -5345,5 +5472,13 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
    .workflow-chat-resize-handle {
      display: none;
    }

@@ -1,4 +1,4 @@
-From 008779efc63d68609ab5dd66e95865b79a2a863d Mon Sep 17 00:00:00 2001
+From 5aabc4462bc210ac8b8f21a290de9c6912025b76 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 14:27:20 +0800
 Subject: [PATCH] feat(chat): drop context progress bar, two-decimal usage
@@ -9,10 +9,10 @@ Subject: [PATCH] feat(chat): drop context progress bar, two-decimal usage
  1 file changed, 2 insertions(+), 65 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 084e3079f..6df62b438 100644
+index 592bd9380..5c7bf90b9 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -1170,7 +1170,7 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1159,7 +1159,7 @@ function openAttachmentPreview(attachment: Attachment) {
        </button>
      </div>
  
@@ -21,7 +21,7 @@ index 084e3079f..6df62b438 100644
        <span class="context-info" :class="{ 'context-warning': showContextLimit && usagePercent > 80 }">
          <template v-if="showSessionUsage">{{ t('chat.sessionUsage') }} </template>
          {{ formatTokens(totalTokens) }}
-@@ -1190,20 +1190,10 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1179,20 +1179,10 @@ function openAttachmentPreview(attachment: Attachment) {
                'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
                'context-percent-danger': usagePercent > 80,
              }"
@@ -43,7 +43,7 @@ index 084e3079f..6df62b438 100644
      </div>
  
      <div
-@@ -1966,34 +1956,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1955,34 +1945,6 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -78,7 +78,7 @@ index 084e3079f..6df62b438 100644
  .dark .context-limit-editable {
    color: var(--text-secondary);
  
-@@ -2003,26 +1965,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1992,26 +1954,6 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -105,7 +105,7 @@ index 084e3079f..6df62b438 100644
  @media (max-width: 768px) {
    .chat-input-area {
      --voice-overlay-mobile-bottom-offset: 146px;
-@@ -2079,11 +2021,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2068,11 +2010,6 @@ function openAttachmentPreview(attachment: Attachment) {
      font-size: 10px;
      line-height: 14px;
    }

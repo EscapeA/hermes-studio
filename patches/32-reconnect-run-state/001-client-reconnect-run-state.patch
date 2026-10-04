@@ -1,4 +1,4 @@
-From ceae6fc2881223394b254568c5336746b49f0998 Mon Sep 17 00:00:00 2001
+From dda2ec9e4fe9c15f4cfc27ba373d3f0ca5996ab2 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 11:22:27 +0800
 Subject: [PATCH] fix(chat): settle run state when a run ends while the socket
@@ -26,7 +26,7 @@ transcript. The UI stayed in run state forever.
  2 files changed, 139 insertions(+), 41 deletions(-)
 
 diff --git a/packages/client/src/api/studio/chat.ts b/packages/client/src/api/studio/chat.ts
-index 2fa861ea7..6afe9dcf0 100644
+index 6724df2a2..8c747dc95 100644
 --- a/packages/client/src/api/studio/chat.ts
 +++ b/packages/client/src/api/studio/chat.ts
 @@ -262,12 +262,35 @@ const sessionTitleUpdatedHandlers = new Set<(event: RunEvent) => void>()
@@ -77,10 +77,11 @@ index 2fa861ea7..6afe9dcf0 100644
    }
  
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 641d44d2b..696332372 100644
+index e08366a68..c4d371c87 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -1,6 +1,6 @@
+@@ -3,7 +3,7 @@ import { historySessionSource, isBuiltinEkkoSession } from '@/utils/hermes/sessi
+ import { isKnownEkkoSessionCommand } from '@/utils/hermes/bridge-session-commands'
  import { normalizeRunUsage, type RunUsageSummary } from '@/utils/run-usage'
  import { mergeTaskPlanMessages, type TaskPlanSnapshot } from '@/utils/task-plan'
 -import { startRunViaSocket, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, onRunUsageUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
@@ -88,7 +89,7 @@ index 641d44d2b..696332372 100644
  import { archiveSession as archiveSessionApi, deleteSession as deleteSessionApi, fetchSessionMessagesPage, fetchSessions, fetchWorkspaceRunChangeFile, setSessionModel, setSessionPushEnabled as persistSessionPushEnabled, setSessionReasoningEffort as persistSessionReasoningEffort, type HermesMessage, type SessionSummary, type WorkspaceRunChangeFileDetail, type WorkspaceRunChangeSummary } from '@/api/studio/sessions'
  import { getActiveProfileName } from '@/api/client'
  import { onAuthInvalidated } from '@/api/auth-invalidation'
-@@ -5381,6 +5381,70 @@ export const useChatStore = defineStore('chat', () => {
+@@ -5399,6 +5399,70 @@ export const useChatStore = defineStore('chat', () => {
      if (!passive) ensureAbortHandle()
    }
  
@@ -159,7 +160,7 @@ index 641d44d2b..696332372 100644
    function handlePeerUserMessage(evt: RunEvent) {
      const sid = evt.session_id
      if (evt.event === 'approval.requested') return setPendingApproval(evt)
-@@ -5506,48 +5570,55 @@ export const useChatStore = defineStore('chat', () => {
+@@ -5524,48 +5588,55 @@ export const useChatStore = defineStore('chat', () => {
    // Tab visibility: re-sync when returning to foreground
    if (typeof document !== 'undefined') {
      document.addEventListener('visibilitychange', () => {

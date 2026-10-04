@@ -1,4 +1,4 @@
-From 44d18d86d01b4ea51115616c2ce9154223032ce8 Mon Sep 17 00:00:00 2001
+From 6791bf5b76d2ec5cba9051dadfae131969f08355 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] feat(web): remove workflow from the frontend
@@ -25,7 +25,7 @@ Drop the whole workflow surface from the SPA (server modules untouched):
  packages/client/src/App.vue                   |   25 +-
  .../client/src/api/studio/workflow-socket.ts  |  132 -
  packages/client/src/api/studio/workflows.ts   |  348 --
- .../hermes/workflow/WorkflowAgentNode.vue     |  788 ---
+ .../hermes/workflow/WorkflowAgentNode.vue     |  789 ---
  .../hermes/workflow/WorkflowConditionEdge.vue |  140 -
  .../hermes/workflow/WorkflowFieldHelp.vue     |   68 -
  .../hermes/workflow/WorkflowModelSelector.vue |  121 -
@@ -56,8 +56,8 @@ Drop the whole workflow surface from the SPA (server modules untouched):
  .../client/src/utils/workflow-run-pager.ts    |   22 -
  .../client/src/utils/workflow-run-snapshot.ts |   68 -
  .../client/src/views/hermes/ModelsView.vue    |    2 +-
- .../client/src/views/hermes/WorkflowView.vue  | 5492 -----------------
- 35 files changed, 31 insertions(+), 10699 deletions(-)
+ .../client/src/views/hermes/WorkflowView.vue  | 5488 -----------------
+ 35 files changed, 31 insertions(+), 10696 deletions(-)
  delete mode 100644 packages/client/src/api/studio/workflow-socket.ts
  delete mode 100644 packages/client/src/api/studio/workflows.ts
  delete mode 100644 packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue
@@ -674,11 +674,12 @@ index afc22e59b..000000000
 -}
 diff --git a/packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue b/packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue
 deleted file mode 100644
-index a094f634d..000000000
+index 2dcbde590..000000000
 --- a/packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue
 +++ /dev/null
-@@ -1,788 +0,0 @@
+@@ -1,789 +0,0 @@
 -<script setup lang="ts">
+-import { isGlobalOnlyCodingAgent } from "@/utils/agent-catalog"
 -import DshSessionPresetSelect from "@/components/coding-agents/dsh/DshSessionPresetSelect.vue"
 -import { computed, ref } from 'vue'
 -import { Handle, Position, type NodeProps } from '@vue-flow/core'
@@ -711,8 +712,8 @@ index a094f634d..000000000
 -    : ''
 -))
 -const isCodingAgent = computed(() => props.data.agent !== 'hermes')
--const supportsGlobalMode = computed(() => ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity'].includes(props.data.agent))
--const usesScopedModel = computed(() => !supportsGlobalMode.value || props.data.agentMode !== 'global')
+-const supportsGlobalMode = computed(() => ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity', 'qwen', 'kimi', 'codebuddy', 'qoder', 'copilot', 'zcode'].includes(props.data.agent))
+-const usesScopedModel = computed(() => !isGlobalOnlyCodingAgent(props.data.agent) && (!supportsGlobalMode.value || props.data.agentMode !== 'global'))
 -const agentModeOptions = computed(() => [
 -  { label: t('codingAgents.launchModeGlobal'), value: 'global' },
 -  { label: t('codingAgents.launchModeScoped'), value: 'scoped' },
@@ -871,7 +872,7 @@ index a094f634d..000000000
 -      <DshSessionPresetSelect v-if="data.agent === 'dsh'" :model-value="data.agentPreset" :disabled="data.readonly"
 -        @update:model-value="updateField('agentPreset', $event)" @valid="updateField('agentPresetReady', $event)" />
 -      <NSelect
--        v-if="supportsGlobalMode && data.agent !== 'cursor'"
+-        v-if="supportsGlobalMode && !isGlobalOnlyCodingAgent(data.agent)"
 -        :value="data.agentMode"
 -        :options="agentModeOptions"
 -        size="small"
@@ -2182,7 +2183,7 @@ index f10e17a19..54b2a5e55 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index db4dbce3e..ed625a8ec 100644
+index 9b35c4f56..932908b30 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -486,7 +486,6 @@ export default {
@@ -2193,7 +2194,7 @@ index db4dbce3e..ed625a8ec 100644
      models: 'النماذج',
      profiles: 'البروفايلات',
      skills: 'المهارات',
-@@ -1325,301 +1324,6 @@ export default {
+@@ -1326,301 +1325,6 @@ export default {
      stopSpeech: 'إيقاف',
      speechNotSupported: 'تشغيل الصوت غير مدعوم في هذا المتصفح',
    },
@@ -2496,7 +2497,7 @@ index db4dbce3e..ed625a8ec 100644
    kanban: {
      title: 'لوحة كانبان',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 27b62d132..20cdb893c 100644
+index ed57a7d90..e32df54ea 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -547,7 +547,6 @@ export default {
@@ -2507,7 +2508,7 @@ index 27b62d132..20cdb893c 100644
      groupTools: 'Werkzeuge',
      groupToolsShort: "Tools",
      codingAgents: "Coding Agents",
-@@ -2904,174 +2903,6 @@ jobTriggered: 'Job ausgelost',
+@@ -2901,174 +2900,6 @@ jobTriggered: 'Job ausgelost',
      loadFailed: 'Skill-Nutzung konnte nicht geladen werden',
      otherSkills: 'Andere Skills',
    },
@@ -2683,7 +2684,7 @@ index 27b62d132..20cdb893c 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index f6b3bcc3a..042baf07e 100644
+index 5c4d40049..319bf85e9 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -486,7 +486,6 @@ export default {
@@ -2694,7 +2695,7 @@ index f6b3bcc3a..042baf07e 100644
      models: 'Models',
      profiles: 'Profiles',
      skills: 'Skills',
-@@ -1339,256 +1338,6 @@ export default {
+@@ -1340,256 +1339,6 @@ export default {
      stopSpeech: 'Stop',
      speechNotSupported: 'Voice playback not supported in this browser',
    },
@@ -2952,7 +2953,7 @@ index f6b3bcc3a..042baf07e 100644
    kanban: {
      title: 'Kanban Board',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 1fc88bdb1..afe4996d8 100644
+index e544fdc4c..69adb047b 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -547,7 +547,6 @@ export default {
@@ -2963,7 +2964,7 @@ index 1fc88bdb1..afe4996d8 100644
      groupTools: 'Herramientas',
      groupToolsShort: "Herr.",
      codingAgents: "Agentes de código",
-@@ -2904,174 +2903,6 @@ jobTriggered: 'Job ejecutado',
+@@ -2901,174 +2900,6 @@ jobTriggered: 'Job ejecutado',
      loadFailed: 'No se pudo cargar el uso de habilidades',
      otherSkills: 'Otras habs.',
    },
@@ -3139,7 +3140,7 @@ index 1fc88bdb1..afe4996d8 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 9a65f8f90..18c7a38de 100644
+index 4ff95e946..4e838d4fd 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -547,7 +547,6 @@ export default {
@@ -3150,7 +3151,7 @@ index 9a65f8f90..18c7a38de 100644
      groupTools: 'Outils',
      groupToolsShort: "Outils",
      codingAgents: "Agents de code",
-@@ -2904,174 +2903,6 @@ jobTriggered: 'Job declenche',
+@@ -2901,174 +2900,6 @@ jobTriggered: 'Job declenche',
      loadFailed: 'Impossible de charger l\'utilisation des compétences',
      otherSkills: 'Autres comp.',
    },
@@ -3326,7 +3327,7 @@ index 9a65f8f90..18c7a38de 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 9054eeb2d..f6bad407c 100644
+index 8b2c32f31..adf80d9c3 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -548,7 +548,6 @@ export default {
@@ -3337,7 +3338,7 @@ index 9054eeb2d..f6bad407c 100644
      groupTools: 'ツール',
      groupToolsShort: "ツール",
      codingAgents: "コーディングエージェント",
-@@ -2904,174 +2903,6 @@ export default {
+@@ -2901,174 +2900,6 @@ export default {
      loadFailed: 'スキル使用状況の読み込みに失敗しました',
      otherSkills: 'その他',
    },
@@ -3513,7 +3514,7 @@ index 9054eeb2d..f6bad407c 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 73276da8b..48cc81369 100644
+index 0323e0077..1493b3d58 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -548,7 +548,6 @@ export default {
@@ -3524,7 +3525,7 @@ index 73276da8b..48cc81369 100644
      groupTools: '도구',
      groupToolsShort: "도구",
      codingAgents: "코딩 에이전트",
-@@ -2904,174 +2903,6 @@ export default {
+@@ -2901,174 +2900,6 @@ export default {
      loadFailed: '스킬 사용량을 불러오지 못했습니다',
      otherSkills: '기타',
    },
@@ -3700,7 +3701,7 @@ index 73276da8b..48cc81369 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 44238a647..55fab6509 100644
+index 695942d39..4de68c0c5 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -547,7 +547,6 @@ export default {
@@ -3711,7 +3712,7 @@ index 44238a647..55fab6509 100644
      groupTools: 'Ferramentas',
      groupToolsShort: "Ferr.",
      codingAgents: "Agentes de código",
-@@ -2904,174 +2903,6 @@ jobTriggered: 'Job acionado',
+@@ -2901,174 +2900,6 @@ jobTriggered: 'Job acionado',
      loadFailed: 'Falha ao carregar o uso de habilidades',
      otherSkills: 'Outras habs.',
    },
@@ -3887,7 +3888,7 @@ index 44238a647..55fab6509 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 876a6eb79..3b8906bfd 100644
+index 0e1aacf7d..16f517a20 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -412,7 +412,6 @@ export default {
@@ -3898,7 +3899,7 @@ index 876a6eb79..3b8906bfd 100644
      models: 'Модели',
      profiles: 'Профили',
      plugins: 'Плагины',
-@@ -1212,270 +1211,6 @@ export default {
+@@ -1213,270 +1212,6 @@ export default {
      speechNotSupported: 'Этот браузер не поддерживает воспроизведение речи',
    },
  
@@ -4170,7 +4171,7 @@ index 876a6eb79..3b8906bfd 100644
    kanban: {
      title: 'Канбан',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index d2aeb25c8..8dc525b19 100644
+index 7378ba3c4..57123220d 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -487,7 +487,6 @@ export default {
@@ -4181,7 +4182,7 @@ index d2aeb25c8..8dc525b19 100644
      models: '模型',
      profiles: '設定檔',
      plugins: '插件',
-@@ -1333,297 +1332,6 @@ export default {
+@@ -1334,297 +1333,6 @@ export default {
      newCliChat: '新增 CLI',
      cliEmptyState: '開始 CLI 對話',
    },
@@ -4480,7 +4481,7 @@ index d2aeb25c8..8dc525b19 100644
    kanban: {
      title: '看板',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 16a841659..652e24afb 100644
+index c08c5ab12..57a20fd51 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -487,7 +487,6 @@ export default {
@@ -4491,7 +4492,7 @@ index 16a841659..652e24afb 100644
      models: '模型',
      profiles: '配置',
      plugins: '插件',
-@@ -1340,302 +1339,6 @@ export default {
+@@ -1341,302 +1340,6 @@ export default {
      stopSpeech: '停止',
      speechNotSupported: '此浏览器不支持语音播放',
    },
@@ -5857,10 +5858,10 @@ index 857a715a0..000000000
 -  }
 -}
 diff --git a/packages/client/src/views/hermes/ModelsView.vue b/packages/client/src/views/hermes/ModelsView.vue
-index eeaa61db2..4e69f0514 100644
+index 38c62a530..2b7e66ee0 100644
 --- a/packages/client/src/views/hermes/ModelsView.vue
 +++ b/packages/client/src/views/hermes/ModelsView.vue
-@@ -174,7 +174,7 @@ async function handleRefreshModelCache() {
+@@ -157,7 +157,7 @@ async function handleRefreshModelCache() {
            :options="profileOptions"
            :disabled="profileLoading || modelsStore.refreshingModelCache"
            :loading="profileLoading"
@@ -5871,11 +5872,12 @@ index eeaa61db2..4e69f0514 100644
            @update:value="handleProfileUpdate"
 diff --git a/packages/client/src/views/hermes/WorkflowView.vue b/packages/client/src/views/hermes/WorkflowView.vue
 deleted file mode 100644
-index 979c3435c..000000000
+index c93336fcb..000000000
 --- a/packages/client/src/views/hermes/WorkflowView.vue
 +++ /dev/null
-@@ -1,5492 +0,0 @@
+@@ -1,5488 +0,0 @@
 -<script setup lang="ts">
+-import { isGlobalOnlyCodingAgent } from '@/utils/agent-catalog'
 -import PageSidebar from "@/components/layout/PageSidebar.vue"
 -import { usePageSidebarState } from "@/composables/usePageSidebar"
 -import PageLoading from '@/components/common/PageLoading.vue'
@@ -6305,14 +6307,9 @@ index 979c3435c..000000000
 -
 -const workflowAgentDefinitions = AGENT_OPTIONS
 -
--const agentOptions = computed<WorkflowSelectOption[]>(() => workflowAgentDefinitions.map((option) => {
--  const disabled = !isAgentStatusAvailable(agentStatusSnapshot.value, option.value)
--  return {
--    ...option,
--    disabled,
--    label: disabled ? `${option.label} · ${t('codingAgents.notInstalled')}` : option.label,
--  }
--}))
+-const agentOptions = computed<WorkflowSelectOption[]>(() => workflowAgentDefinitions.filter(option =>
+-  isAgentStatusAvailable(agentStatusSnapshot.value, option.value),
+-))
 -
 -const firstAvailableWorkflowAgent = computed(() =>
 -  agentOptions.value.find(option => !option.disabled)?.value || null,
@@ -6532,7 +6529,7 @@ index 979c3435c..000000000
 -    data: {
 -      title,
 -      agent,
--      agentMode: agent === 'cursor' || (data.agentMode === 'global' && ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity'].includes(agent)) ? 'global' : 'scoped',
+-      agentMode: isGlobalOnlyCodingAgent(agent) || (data.agentMode === 'global' && ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity', 'qwen', 'kimi', 'codebuddy', 'qoder', 'copilot', 'zcode'].includes(agent)) ? 'global' : 'scoped',
 -      priorAgentMode: data.priorAgentMode === 'global' || data.priorAgentMode === 'scoped' ? data.priorAgentMode : undefined,
 -      provider: data.provider || defaultModelSelection.value.provider,
 -      model: data.model || defaultModelSelection.value.model,
@@ -8509,7 +8506,7 @@ index 979c3435c..000000000
 -    const label = workflowNodeLabel(node)
 -    if (node.data.agent === 'dsh' && (!node.data.agentPreset || node.data.agentPresetReady === false)) return t('dshPresets.selectMode')
 -    if (!node.data.title.trim()) return t('workflow.validation.nodeNameRequired', { node: node.id })
--    const usesGlobalCodingAgent = ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity'].includes(node.data.agent)
+-    const usesGlobalCodingAgent = ['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity', 'qwen', 'kimi', 'codebuddy', 'qoder', 'copilot', 'zcode'].includes(node.data.agent)
 -      && node.data.agentMode === 'global'
 -    if (!usesGlobalCodingAgent && !node.data.provider.trim()) return t('workflow.validation.providerRequired', { node: label })
 -    if (!usesGlobalCodingAgent && !node.data.model.trim()) return t('workflow.validation.modelRequired', { node: label })

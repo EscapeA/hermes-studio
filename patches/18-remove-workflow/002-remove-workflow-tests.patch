@@ -1,4 +1,4 @@
-From 1809bbf926130bddf2907bc1dcc75476c5057e25 Mon Sep 17 00:00:00 2001
+From 6eadd6aeeb43dc50cdd665f256fc19020175b43a Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
@@ -64,7 +64,7 @@ Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
  delete mode 100644 tests/e2e/workflow-ui.spec.ts
 
 diff --git a/tests/client/api.test.ts b/tests/client/api.test.ts
-index 16ca86634..0301936e2 100644
+index 697c1e1d1..53e7506f5 100644
 --- a/tests/client/api.test.ts
 +++ b/tests/client/api.test.ts
 @@ -212,15 +212,15 @@ describe('API Client', () => {
@@ -143,16 +143,16 @@ index 5b1162e33..0735ab158 100644
  
    it('keeps native Windows title-bar geometry LTR in every app language', () => {
 diff --git a/tests/client/ekko-display-name.test.ts b/tests/client/ekko-display-name.test.ts
-index 3984e74f2..20bcffe92 100644
+index 5edc9d64f..404c7e966 100644
 --- a/tests/client/ekko-display-name.test.ts
 +++ b/tests/client/ekko-display-name.test.ts
 @@ -24,8 +24,6 @@ describe('Ekko display name', () => {
    it.each([
      ['single chat', 'packages/client/src/components/hermes/chat/ChatPanel.vue',
-       AGENT_OPTIONS, 'AGENT_OPTIONS', 'const newChatAgentOptions = computed(() => AGENT_OPTIONS.map('],
+       AGENT_OPTIONS, 'AGENT_OPTIONS', 'const newChatAgentOptions = computed(() => AGENT_OPTIONS.filter('],
 -    ['workflow', 'packages/client/src/views/hermes/WorkflowView.vue',
 -      AGENT_OPTIONS, 'AGENT_OPTIONS', 'const workflowAgentDefinitions = AGENT_OPTIONS'],
-   ] as const)('uses the shared order with Ekko second in the %s Agent dropdown', (_name, path, options, exportName, binding) => {
+   ] as const)('uses the shared order with Ekko first in the %s Agent dropdown', (_name, path, options, exportName, binding) => {
      const source = readFileSync(path, 'utf8')
  
 @@ -36,14 +34,6 @@ describe('Ekko display name', () => {
@@ -1608,7 +1608,7 @@ index 73b2fdd50..000000000
 \ No newline at end of file
 diff --git a/tests/client/workflow-reasoning-effort.test.ts b/tests/client/workflow-reasoning-effort.test.ts
 deleted file mode 100644
-index 2f6fb981b..000000000
+index da8f56c25..000000000
 --- a/tests/client/workflow-reasoning-effort.test.ts
 +++ /dev/null
 @@ -1,62 +0,0 @@
@@ -1648,7 +1648,7 @@ index 2f6fb981b..000000000
 -    const node = read('packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue')
 -    const view = read('packages/client/src/views/hermes/WorkflowView.vue')
 -    expect(types).toMatch(/agentMode:\s*'scoped' \| 'global'/)
--    expect(node).toContain("['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity'].includes(props.data.agent)")
+-    expect(node).toContain("['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity', 'qwen', 'kimi', 'codebuddy', 'qoder', 'copilot', 'zcode'].includes(props.data.agent)")
 -    expect(node).toContain("updateField('agentMode'")
 -    expect(node).toContain('v-if="usesScopedModel"')
 -    expect(view).toContain('agentMode: node.data.agentMode')
@@ -2356,7 +2356,7 @@ index 62abc9e58..e52b030b9 100644
            messages: [],
 diff --git a/tests/e2e/workflow-cursor-mode.spec.ts b/tests/e2e/workflow-cursor-mode.spec.ts
 deleted file mode 100644
-index a9b1db3b7..000000000
+index 385126163..000000000
 --- a/tests/e2e/workflow-cursor-mode.spec.ts
 +++ /dev/null
 @@ -1,65 +0,0 @@
@@ -2396,7 +2396,7 @@ index a9b1db3b7..000000000
 -    const node = page.locator('.vue-flow__node[data-id="agent"]')
 -    await node.locator('.n-select').first().click()
 -    await expect.poll(async () => (await page.locator('.n-base-select-option__content:visible').allTextContents())
--      .map(label => label.split(' · ')[0])).toEqual(['Hermes', 'Ekko', 'Claude', 'Codex', 'Pi', 'Grok', 'OpenCode', 'DeepSeek Harness', 'Cursor', 'Antigravity'])
+-      .map(label => label.split(' · ')[0])).toEqual(['Ekko', 'Hermes', 'Codex', 'Cursor'])
 -    await page.getByText('Cursor', { exact: true }).last().click()
 -    await expect(node.locator('.n-select').first()).toContainText('Cursor')
 -    await expect.poll(() => api.requests.some(request => (

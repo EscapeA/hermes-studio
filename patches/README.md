@@ -67,7 +67,21 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - ⚠️ **生效需换新 worker 进程**（Python 不热重载，`_sync_*_patches()` 不含该方法）：回收 bridge worker 或重启 `hermes-web-ui-client.service`；
   且 **agent 自身就跑在 worker 里**，只能由用户在本轮结束后执行。离线契约对拍脚本与两个回收脚本见 skill
   `hermes-webui-development → references/clarify-capabilities.md`。
-- 当前补丁文件总数 = **106**（以 `find patches -type f -name '*.patch' | wc -l` 为准；104 = 30 组时点，其后新增 `31-0.7.28-adapt` 与本 32 组）。
+- 当前补丁文件总数 = **107**（以 `find patches -type f -name '*.patch' | wc -l` 为准；104 = 30 组时点，其后新增 `31-0.7.28-adapt`、`32-reconnect-run-state` 与 `33-0.7.29-adapt`）。
+
+**2026-10-04 升级 0.7.29（main `ae238d0ae`；7 提交 / 199 文件 / +4966 −1165）**：106 补丁重放 **6 处冲突**全部解毕并回写（**55 个补丁文件重写 / 51 个逐字节未变；新增 `33-0.7.29-adapt` 组**）：
+
+- **`04-usage/001`（session.ts）**：union merge——上游新增 `ekkoContext?: { fixedContextTokens: number }`，fork 的 `apiPromptTokens?: number` 并排保留。
+- **`05-chat/005` / `06-mobile-input/002`（同文件 `ChatPanel.vue`）**：上游 #3277 删除 retired **OpenCode Free** provider，连带删掉 `utils/codingAgentProviders.ts` 的 `isKeylessModelProvider` / `openCodeFreeApiMode`（fork 的 05-chat/005 只把它们当上下文行）⇒ 取上游的 2 符号导入；上游新加的 `useCollapsedProviderGroups` 导入**不带**（fork 的 05-chat/005 已删折叠组 UI，带上会 TS6133）。新会话模型选择：**保留上游 `:loading`/`:disabled`，用 fork 的 `:filterable="!isMobile"`**。
+- **`17-remove-group-chat/002` / `18-remove-workflow/002`**：上游 #3280 给 agent picker 重排（Ekko 提到首位、新增 6 个 native agent、`AGENT_OPTIONS.map` → `.filter`）⇒ 保留上游新增的 `it.each([...])` 块与首行，套用 fork 的删除/改名（`it('normalizes Agent aliases')`、丢掉 group-chat / group chat link / workflow 三行）。
+- **modify/delete ×9 全接受删除**（fork 侧删除）：`api/studio/group-chat{,-agent-link}.ts`、`group-chat/GroupChatPanel.vue`、`utils/group-agent-avatar.ts`、`views/hermes/GroupChatLinkView.vue`、`workflow/WorkflowAgentNode.vue`、`views/hermes/WorkflowView.vue`、`tests/client/group-chat-panel-workspace-source.test.ts`、`tests/e2e/group-chat-room-deeplink.spec.ts`、`utils/chat-agent-avatar.ts`。
+- ⚠️ **上游把 fork 删掉的东西换个地方重新用起来（本轮两处，只有 build 抓到）**：
+  1. `stores/hermes/chat.ts` 的 `completionNotificationAgent()` 新增 `if (isNativeCodingAgent(codingAgentId)) return { icon: chatSessionAgentAvatar(session).src }`——引用 fork 已删的 `utils/chat-agent-avatar.ts` ⇒ 改为 6 条显式 logo 分支（`/coding-agents/{qwen-logo.svg,kimi-logo.png,codebuddy-logo.svg,qoder-logo.svg,copilot-logo.svg,zcode-logo.png}`），与既有 claude/cursor/antigravity 分支同款。
+  2. 新上游测试 `tests/client/native-coding-agents.test.ts` import 同一模块 ⇒ 新增 **`33-0.7.29-adapt/001-native-agent-avatar-test-adapt`** 去掉该 import 与一条 avatar 断言（其余断言原样保留）。
+- 部署：`bin/` 与依赖**零变化**（`package.json` 仅版本号）⇒ 纯 dist 热替，**不需要 `npm i -g`**。
+- 验证：预演树 `npm run build`（openapi:generate + vue-tsc -b + vite + server tsc + esbuild）**exit 0**；`harness:check` 通过；三树对比（预演 1675 例 / 140 失败 vs 0.7.28 基线树 1477 / 135 vs 纯净上游 1788 / 1）⇒ **新增失败 5 例全是本轮新上游测试**（`chat-store-session-command` 的 5 个 Ekko 命令用例），根因是 fork 的 `32-reconnect-run-state` 让 store 在 setup 期调用 `onChatRunConnected`、而这 8 个测试文件的 `@/api/studio/chat` mock 没补该导出（**同样因由使基线该文件 23/23 全红，属既有缺口、非本轮回归**）；promo / 删除型补丁标识符全仓复扫 0 命中（`apikey.fan/register`、`apiRelay`、`groupChat.*`、`workflow.*`、`ProfileAvatar`）；改动 vs 旧 custom 与上游改动文件集**完全重合**（无解析器误改）。
+- 上游本轮主题：6 个 native coding agent（qwen/kimi/codebuddy/qoder/copilot/zcode，`config/agents.json` → 16 agent）、builtin Ekko 会话分类（`source:'builtin_agent'`）、**新会话默认 agent Hermes → Ekko**（fork 无对抗，跟随上游 ⇒ 用户可见变化）、移除 OpenCode Free provider、Antigravity Live Activity 身份、coding-agent 图片输入 / Windows 长 prompt。
+
 
 **2026-10-03 新增 `32-reconnect-run-state` 组（001）**：修「壳退后台时任务跑完，界面永久停在 run 态」（Aries 2026-10-03 真机验收）。
 

@@ -1,4 +1,4 @@
-From cd0cfcc234bd5252c399365023e7d2b82c9a778b Mon Sep 17 00:00:00 2001
+From 1349b1601994eb1c5142a4319404e25b07514b8f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 1 Oct 2026 12:39:49 +0800
 Subject: [PATCH] feat(mobile-nav): one labelled rail with the app-level
@@ -86,7 +86,7 @@ index 512ed205b..bf39dceb2 100644
          <div :ref="element => emit('target', element as HTMLElement | null)" class="studio-mobile-navigation__content" />
        </section>
 diff --git a/packages/client/src/components/layout/StudioNavigationRail.vue b/packages/client/src/components/layout/StudioNavigationRail.vue
-index 5bb99dead..1b6d53878 100644
+index c819818fa..c3b61152a 100644
 --- a/packages/client/src/components/layout/StudioNavigationRail.vue
 +++ b/packages/client/src/components/layout/StudioNavigationRail.vue
 @@ -8,15 +8,87 @@ import RouteLinkItem from '@/components/common/RouteLinkItem.vue'
@@ -245,7 +245,7 @@ index 5bb99dead..1b6d53878 100644
  .studio-navigation-rail {
    position: relative;
    z-index: 2;
-@@ -104,4 +208,44 @@ function handleNavigate(key: string) {
+@@ -103,4 +207,44 @@ function handleNavigate(key: string) {
    &.active { color: $accent-primary; background: rgba(var(--accent-primary-rgb), 0.12); }
    &:focus-visible { outline: 2px solid $accent-primary; outline-offset: -2px; }
  }

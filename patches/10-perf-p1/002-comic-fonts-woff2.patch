@@ -1,8 +1,7 @@
-From c498007d4881da4ee236edbab782f893227cd8a4 Mon Sep 17 00:00:00 2001
+From 463db07d6a64ba47b37b6c96e207acded7b2b95e Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
-Subject: [PATCH 2/4] perf(fonts): subset comic fonts to woff2 (15.4MB ->
- 1.6MB)
+Subject: [PATCH] perf(fonts): subset comic fonts to woff2 (15.4MB -> 1.6MB)
 
 Comic theme fonts were full TTF files: 15.4MB total, downloaded whenever
 the comic style is active. Subset each font to the character set used by
@@ -173595,7 +173594,7 @@ literal 0
 HcmV?d00001
 
 diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
-index 1a71541c..13d5be66 100644
+index ee7ac699e..fc28b3d03 100644
 --- a/packages/client/src/styles/global.scss
 +++ b/packages/client/src/styles/global.scss
 @@ -6,7 +6,7 @@

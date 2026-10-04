@@ -1,4 +1,4 @@
-From 4bdbfad8670cd957f9155bdf30941d5ae6b98803 Mon Sep 17 00:00:00 2001
+From f8e343744512438cce222ca6c863852d8a205137 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Wed, 19 Aug 2026 23:13:59 +0800
 Subject: [PATCH] feat(chat): anti-flicker collapsible tool strip
@@ -20,7 +20,7 @@ unmount so session switches never leak stale tools into the new panel.
  4 files changed, 173 insertions(+), 5 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 9d1a6d2db..6555fd0b1 100644
+index 735fc038a..4f3f109b1 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
 @@ -139,10 +139,64 @@ const currentToolCalls = computed(() => {
@@ -236,10 +236,10 @@ index 9d1a6d2db..6555fd0b1 100644
    display: flex;
    flex: 1 1 0;
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 44c472cc5..6d019d481 100644
+index f3f3e7040..e30e7ad60 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1325,6 +1325,10 @@ export default {
+@@ -1326,6 +1326,10 @@ export default {
      thinkingHide: 'Hide thinking',
      thinkingDuration: 'Observed {duration}',
      thinkingChars: '{count} chars',
@@ -251,10 +251,10 @@ index 44c472cc5..6d019d481 100644
      copiedBubble: 'Message copied',
      copyFailed: 'Copy failed',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 80ab9185d..249ae70b2 100644
+index b0380d959..02cd876b8 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1307,6 +1307,10 @@ export default {
+@@ -1309,6 +1309,10 @@ export default {
      thinkingHide: '收起思考過程',
      thinkingDuration: '已觀察 {duration}',
      thinkingChars: '{count} 字',
@@ -266,10 +266,10 @@ index 80ab9185d..249ae70b2 100644
      copiedBubble: '已複製',
      copyFailed: '複製失敗',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 6d5e67aea..c1dfe81c2 100644
+index e67a4325c..31166d090 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1325,6 +1325,10 @@ export default {
+@@ -1327,6 +1327,10 @@ export default {
      thinkingHide: '收起思考过程',
      thinkingDuration: '已观察 {duration}',
      thinkingChars: '{count} 字',

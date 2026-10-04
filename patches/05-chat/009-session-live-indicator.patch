@@ -1,4 +1,4 @@
-From 095d72944c8fbdbe99e1a59e88ea1cdb115a8705 Mon Sep 17 00:00:00 2001
+From e4370fca228b427efb0e0fe22e75cfddf42f7ef2 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 23:21:16 +0800
 Subject: [PATCH] fix(chat): keep session live indicator when identity row is
@@ -82,10 +82,10 @@ index 8792af9bd..03f4c6471 100644
    flex: 0 0 auto;
    margin-top: 1px;
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 93044c496..8c18a827e 100644
+index 5f0759ccd..c1c3b49e1 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1167,6 +1167,7 @@ export default {
+@@ -1196,6 +1196,7 @@ export default {
      sessionListActions: 'Aktionen für die Sitzungsliste',
      filterByProfile: 'Nach Profil filtern',
      selectedSessions: '{count} ausgewählt',
@@ -94,10 +94,10 @@ index 93044c496..8c18a827e 100644
      selectAll: 'Alle auswählen',
      confirmBatchDelete: '{count} ausgewählte Sitzungen löschen?',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index e76dc8e97..881181e6a 100644
+index ad40ab28a..1c4327a6d 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1226,6 +1226,7 @@ export default {
+@@ -1255,6 +1255,7 @@ export default {
      interactionCountdownElapsed: '00:00 · Awaiting server confirmation',
      newCliChat: 'New CLI',
      deleteSession: 'Delete this session?',
@@ -106,10 +106,10 @@ index e76dc8e97..881181e6a 100644
      sessionListActions: 'Session list actions',
      filterByProfile: 'Filter by Profile',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index a3c86a092..958445f59 100644
+index ce32b6809..554c5ecc3 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1167,6 +1167,7 @@ export default {
+@@ -1196,6 +1196,7 @@ export default {
      sessionListActions: 'Acciones de la lista de sesiones',
      filterByProfile: 'Filtrar por perfil',
      selectedSessions: '{count} seleccionadas',
@@ -118,10 +118,10 @@ index a3c86a092..958445f59 100644
      selectAll: 'Seleccionar todo',
      confirmBatchDelete: '¿Eliminar {count} sesiones seleccionadas?',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 06d2fff33..0021c50af 100644
+index 3bc6568ac..a8d08b582 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1167,6 +1167,7 @@ export default {
+@@ -1196,6 +1196,7 @@ export default {
      sessionListActions: 'Actions de la liste des sessions',
      filterByProfile: 'Filtrer par profil',
      selectedSessions: '{count} sélectionnées',
@@ -130,10 +130,10 @@ index 06d2fff33..0021c50af 100644
      selectAll: 'Tout sélectionner',
      confirmBatchDelete: 'Supprimer {count} sessions sélectionnées?',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index a098786ac..bb575e210 100644
+index d9b3c3db1..4a934758f 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1167,6 +1167,7 @@ export default {
+@@ -1196,6 +1196,7 @@ export default {
      sessionListActions: 'セッション一覧の操作',
      filterByProfile: 'プロファイルで絞り込み',
      selectedSessions: '{count} 件選択中',
@@ -142,10 +142,10 @@ index a098786ac..bb575e210 100644
      selectAll: 'すべて選択',
      confirmBatchDelete: '{count}件のセッションを削除しますか？',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index e02424926..160b0319c 100644
+index 3c8d464b8..3cd9645d0 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1167,6 +1167,7 @@ export default {
+@@ -1196,6 +1196,7 @@ export default {
      sessionListActions: '세션 목록 작업',
      filterByProfile: '프로필로 필터링',
      selectedSessions: '{count}개 선택됨',
@@ -154,10 +154,10 @@ index e02424926..160b0319c 100644
      selectAll: '모두 선택',
      confirmBatchDelete: '선택한 {count}개의 세션을 삭제하시겠습니까?',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 8d4c79ded..485035cf9 100644
+index 9e83c948a..3464baf9d 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1167,6 +1167,7 @@ export default {
+@@ -1196,6 +1196,7 @@ export default {
      sessionListActions: 'Ações da lista de sessões',
      filterByProfile: 'Filtrar por perfil',
      selectedSessions: '{count} selecionadas',
@@ -166,10 +166,10 @@ index 8d4c79ded..485035cf9 100644
      selectAll: 'Selecionar tudo',
      confirmBatchDelete: 'Excluir {count} sessões selecionadas?',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 5a8cc10b5..b253e67d4 100644
+index d1a6073ea..6525b7d09 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1110,6 +1110,7 @@ export default {
+@@ -1139,6 +1139,7 @@ export default {
      interactionCountdownElapsed: '00:00 · Ожидание подтверждения сервера',
      newCliChat: 'Новый CLI',
      deleteSession: 'Удалить этот сеанс?',
@@ -178,10 +178,10 @@ index 5a8cc10b5..b253e67d4 100644
      sessionListActions: 'Действия со списком сеансов',
      filterByProfile: 'Фильтр по профилю',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 26e045b27..a9bfc56b3 100644
+index 39f055ca3..1ea570a05 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1216,6 +1216,7 @@ export default {
+@@ -1245,6 +1245,7 @@ export default {
      interactionCountdown: '剩餘 {time}',
      interactionCountdownElapsed: '00:00 · 等待伺服器確認',
      deleteSession: '確定刪除此工作階段？',
@@ -190,10 +190,10 @@ index 26e045b27..a9bfc56b3 100644
      sessionListActions: '會話列表操作',
      filterByProfile: '依 Profile 篩選',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 1c7564bb6..dd4299774 100644
+index 8082a0689..c681389df 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1226,6 +1226,7 @@ export default {
+@@ -1255,6 +1255,7 @@ export default {
      interactionCountdownElapsed: '00:00 · 等待服务端确认',
      newCliChat: '新建 CLI',
      deleteSession: '确定删除此会话？',

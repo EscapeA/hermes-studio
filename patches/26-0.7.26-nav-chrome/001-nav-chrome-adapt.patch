@@ -1,4 +1,4 @@
-From d2973abc7ad2dd57e9b754ae38532598eaf7f621 Mon Sep 17 00:00:00 2001
+From da57205fdbce253d2f533e46b35280874396f3a1 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 1 Oct 2026 12:05:54 +0800
 Subject: [PATCH] fix(mobile-nav): adapt the 0.7.26 nav chrome to the fork's
@@ -24,10 +24,10 @@ Content-Transfer-Encoding: 8bit
  3 files changed, 27 insertions(+), 30 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index 34b0cda2c..1ef6a6fa9 100644
+index 970516b7a..fb0880963 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -3465,6 +3465,19 @@ async function handleSessionModelCustomSubmit() {
+@@ -3476,6 +3476,19 @@ async function handleSessionModelCustomSubmit() {
    padding: 12px;
  }
  

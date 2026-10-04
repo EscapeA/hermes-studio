@@ -1,4 +1,4 @@
-From 64d2e9d3bb76e37ba223e0b527e54517254c2c52 Mon Sep 17 00:00:00 2001
+From 09080238cd4865146717a7c9c7050e4ffaff7576 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 09:33:58 +0800
 Subject: [PATCH] fix(server): kill stalled chat-run sockets with non-draining
@@ -16,10 +16,10 @@ socket.io-client's reconnection + resume path re-syncs the session.
  1 file changed, 49 insertions(+)
 
 diff --git a/packages/server/src/modules/studio/sockets/chat-run.ts b/packages/server/src/modules/studio/sockets/chat-run.ts
-index 9aa2ec273..fbe3eac76 100644
+index df8809778..d264a8756 100644
 --- a/packages/server/src/modules/studio/sockets/chat-run.ts
 +++ b/packages/server/src/modules/studio/sockets/chat-run.ts
-@@ -437,6 +437,9 @@ export class ChatRunSocket {
+@@ -441,6 +441,9 @@ export class ChatRunSocket {
    private backgroundBrokerId?: string
    private backgroundPollRetryAt = 0
    private backgroundActivityGraceUntil = 0
@@ -29,7 +29,7 @@ index 9aa2ec273..fbe3eac76 100644
    private closing = false
    private stopUsageUpdates: () => void
  
-@@ -703,10 +706,51 @@ export class ChatRunSocket {
+@@ -707,10 +710,51 @@ export class ChatRunSocket {
      this.nsp.on('connection', this.onConnection.bind(this))
      this.backgroundPollTimer = setInterval(() => void this.pollBackgroundWork(), 500)
      this.backgroundPollTimer.unref?.()
@@ -81,7 +81,7 @@ index 9aa2ec273..fbe3eac76 100644
    // --- Auth middleware ---
  
    private async authMiddleware(socket: Socket, next: (err?: Error) => void) {
-@@ -3176,6 +3220,11 @@ export class ChatRunSocket {
+@@ -3192,6 +3236,11 @@ export class ChatRunSocket {
      for (const requestId of [...this.pendingMobileHealth.keys()]) {
        this.finishMobileHealthRequest(requestId, { status: 'error', error: { code: 'health_failed' } })
      }

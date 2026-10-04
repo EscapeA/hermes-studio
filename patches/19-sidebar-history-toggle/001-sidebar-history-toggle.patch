@@ -1,4 +1,4 @@
-From a4be68555a1e6f9e059d90796d1bcfe61af4e433 Mon Sep 17 00:00:00 2001
+From 84a84e163d62afc1150a720795c058c27d24e8e3 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 18:23:53 +0800
 Subject: [PATCH] feat(web): rework the page sidebar into a flat nav with a
@@ -208,10 +208,10 @@ index 54b2a5e55..55b9e60a8 100644
 -}
  </style>
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index a3035bde0..e68b357ce 100644
+index 932908b30..66cd40981 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -504,7 +504,6 @@ export default {
+@@ -503,7 +503,6 @@ export default {
      gateways: 'البوابات',
      terminal: 'الطرفية',
      browser: 'المتصفح',
@@ -220,10 +220,10 @@ index a3035bde0..e68b357ce 100644
      files: 'الملفات',
      devices: 'الأجهزة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index c33d2defe..862e7f61a 100644
+index e32df54ea..ee23d1f70 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -514,7 +514,6 @@ export default {
+@@ -513,7 +513,6 @@ export default {
      socialMessages: 'Nachrichten senden',
      terminal: 'Konsole',
      browser: 'Browser',
@@ -232,10 +232,10 @@ index c33d2defe..862e7f61a 100644
      files: 'Dateien',
      devices: 'Gerate',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 13327e404..f2b9dc5d8 100644
+index 319bf85e9..813724b2c 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -504,7 +504,6 @@ export default {
+@@ -503,7 +503,6 @@ export default {
      gateways: 'Gateways',
      terminal: 'Terminal',
      browser: 'Browser',
@@ -244,10 +244,10 @@ index 13327e404..f2b9dc5d8 100644
      files: 'Files',
      devices: 'Devices',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index e2ab7f1db..882f1b59b 100644
+index 69adb047b..25ac3d191 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -514,7 +514,6 @@ export default {
+@@ -513,7 +513,6 @@ export default {
      socialMessages: 'Enviar mensajes',
      terminal: 'Terminal',
      browser: 'Navegador',
@@ -256,10 +256,10 @@ index e2ab7f1db..882f1b59b 100644
      files: 'Archivos',
      devices: 'Dispositivos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 64b0a5071..c06b9dec5 100644
+index 4e838d4fd..de900063c 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -514,7 +514,6 @@ export default {
+@@ -513,7 +513,6 @@ export default {
      socialMessages: 'Envoyer des messages',
      terminal: 'Terminal',
      browser: 'Navigateur',
@@ -268,7 +268,7 @@ index 64b0a5071..c06b9dec5 100644
      files: 'Fichiers',
      devices: 'Appareils',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 03cb0cc26..61bfcd82b 100644
+index adf80d9c3..76d5fc1ed 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -514,7 +514,6 @@ export default {
@@ -280,7 +280,7 @@ index 03cb0cc26..61bfcd82b 100644
      files: 'ファイル',
      devices: 'デバイス',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index d5a476814..3d32e8100 100644
+index 1493b3d58..b31b17194 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -514,7 +514,6 @@ export default {
@@ -292,10 +292,10 @@ index d5a476814..3d32e8100 100644
      files: '파일',
      devices: '기기',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 545f215fd..27b81b279 100644
+index 4de68c0c5..4b97d4dcf 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -514,7 +514,6 @@ export default {
+@@ -513,7 +513,6 @@ export default {
      socialMessages: 'Enviar mensagens',
      terminal: 'Terminal',
      browser: 'Navegador',
@@ -304,10 +304,10 @@ index 545f215fd..27b81b279 100644
      files: 'Arquivos',
      devices: 'Dispositivos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index fd16ba416..b899dca80 100644
+index 16f517a20..54232f969 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -429,7 +429,6 @@ export default {
+@@ -428,7 +428,6 @@ export default {
      gateways: 'Шлюзы',
      terminal: 'Терминал',
      browser: 'Браузер',
@@ -316,7 +316,7 @@ index fd16ba416..b899dca80 100644
      files: 'Файлы',
      devices: 'Устройства',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index fc994265f..0bf3481c3 100644
+index 57123220d..fcc89fee7 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -504,7 +504,6 @@ export default {
@@ -328,7 +328,7 @@ index fc994265f..0bf3481c3 100644
      files: '檔案',
      devices: '裝置',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index f7673df86..ed309335c 100644
+index 57a20fd51..fade5aeac 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -504,7 +504,6 @@ export default {

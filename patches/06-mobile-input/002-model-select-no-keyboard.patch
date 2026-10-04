@@ -1,4 +1,4 @@
-From 2f65f6b21fc28e0e58543ba179503840af5b93d6 Mon Sep 17 00:00:00 2001
+From 3364067a17ea96fa231ade754c2d1d82e00b4569 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sat, 4 Jul 2026 11:56:09 +0800
 Subject: [PATCH] feat: disable model select filter on mobile to prevent
@@ -14,13 +14,13 @@ filter stays available on desktop while mobile gets a simple dropdown.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index 375fe5e6b..6d036fd89 100644
+index b1beb9327..bf772981f 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -2923,7 +2923,7 @@ async function handleSessionModelCustomSubmit() {
-               v-model:value="newChatModel"
+@@ -2937,7 +2937,7 @@ async function handleSessionModelCustomSubmit() {
                :options="newChatModelOptions"
-               :disabled="newChatLoading || !newChatProvider"
+               :loading="newChatModelsLoading"
+               :disabled="newChatLoading || newChatModelsLoading || !newChatProvider"
 -              filterable
 +              :filterable="!isMobile"
              />

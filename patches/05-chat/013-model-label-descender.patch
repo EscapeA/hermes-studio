@@ -1,4 +1,4 @@
-From 8772be72ab664510c1f478e5bb0ea899bf63a879 Mon Sep 17 00:00:00 2001
+From f46a900c416dfa8d26541d9dc12fe631bc8a9eb3 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Thu, 6 Aug 2026 13:14:23 +0800
 Subject: [PATCH] fix(client): unclip model label descenders in composer
@@ -11,10 +11,10 @@ letters like "g" in grok-*. Give the label slightly more line-height and
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index a897c0b23..01f1577af 100644
+index 389f5225e..1e058901a 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -1794,8 +1794,11 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1783,8 +1783,11 @@ function openAttachmentPreview(attachment: Attachment) {
    min-width: 0;
    overflow: hidden;
    text-overflow: ellipsis;

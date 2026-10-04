@@ -1,4 +1,4 @@
-From e4539ec74345715c2c673194f3e0d9a412ed8d20 Mon Sep 17 00:00:00 2001
+From fc4c62fa3e9d47762961b330f7aaf7d17c6ac6e8 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:05:12 +0800
 Subject: [PATCH] feat(chat): use latest API prompt_tokens for context usage UI
@@ -20,13 +20,13 @@ the next real API usage event.
  create mode 100644 tests/server/run-chat-api-prompt-context.test.ts
 
 diff --git a/packages/server/src/modules/studio/contracts/runs/session.ts b/packages/server/src/modules/studio/contracts/runs/session.ts
-index 83825b795..c1fdbf762 100644
+index 8332ccd84..2429f0a04 100644
 --- a/packages/server/src/modules/studio/contracts/runs/session.ts
 +++ b/packages/server/src/modules/studio/contracts/runs/session.ts
-@@ -161,6 +161,8 @@ export interface SessionState {
-   cacheReadTokens?: number
-   cacheWriteTokens?: number
+@@ -163,6 +163,8 @@ export interface SessionState {
    contextTokens?: number
+   /** Ekko's system/tool context, kept separately from conversation history. */
+   ekkoContext?: { fixedContextTokens: number }
 +  /** Last real API prompt_tokens (in=) for context-window UI; blocks local estimate overwrite. */
 +  apiPromptTokens?: number
    bridgeContext?: BridgeContextState

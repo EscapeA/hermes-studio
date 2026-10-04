@@ -1,4 +1,4 @@
-From 780dc86faffde23e9a771540b6a4adcea9dc2e64 Mon Sep 17 00:00:00 2001
+From 595dcc04d2165f27efd45a8aef6d1c27e32fccb2 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:23 +0800
 Subject: [PATCH] feat(web): remove group chat from the frontend
@@ -38,7 +38,7 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  .../hermes/group-chat/GroupAgentRobotIcon.vue |   62 -
  .../hermes/group-chat/GroupAgentRunCard.vue   |  383 --
  .../hermes/group-chat/GroupChatInput.vue      | 1386 -----
- .../hermes/group-chat/GroupChatPanel.vue      | 5341 -----------------
+ .../hermes/group-chat/GroupChatPanel.vue      | 5337 -----------------
  .../hermes/group-chat/GroupMessageItem.vue    | 1543 -----
  .../hermes/group-chat/GroupMessageList.vue    |  552 --
  .../group-chat/GroupRoomAgentAvatar.vue       |  299 -
@@ -61,16 +61,16 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  packages/client/src/router/index.ts           |   36 -
  packages/client/src/stores/hermes/files.ts    |  142 +-
  .../client/src/stores/hermes/group-chat.ts    | 2360 --------
- .../client/src/utils/group-agent-avatar.ts    |   82 -
+ .../client/src/utils/group-agent-avatar.ts    |   88 -
  .../src/utils/group-chat-invite-code.ts       |    8 -
  .../src/utils/group-chat-remote-rooms.ts      |   69 -
  .../client/src/views/hermes/FilesView.vue     |    1 -
- .../src/views/hermes/GroupChatLinkView.vue    |  971 ---
+ .../src/views/hermes/GroupChatLinkView.vue    |  972 ---
  .../client/src/views/hermes/GroupChatView.vue |  113 -
  .../src/views/hermes/SharedGroupChatView.vue  |  887 ---
  .../src/main/group-chat-agent-popup.ts        |   44 -
  packages/desktop/src/main/index.ts            |    9 +-
- 47 files changed, 89 insertions(+), 18655 deletions(-)
+ 47 files changed, 89 insertions(+), 18658 deletions(-)
  delete mode 100644 packages/client/src/api/studio/group-chat-agent-link.ts
  delete mode 100644 packages/client/src/api/studio/group-chat-attachments.ts
  delete mode 100644 packages/client/src/api/studio/group-chat.ts
@@ -246,14 +246,14 @@ index 5a8c4219e..6cd20dd83 100644
  }
 diff --git a/packages/client/src/api/studio/group-chat-agent-link.ts b/packages/client/src/api/studio/group-chat-agent-link.ts
 deleted file mode 100644
-index 1f90db3ec..000000000
+index b9c6eefe8..000000000
 --- a/packages/client/src/api/studio/group-chat-agent-link.ts
 +++ /dev/null
 @@ -1,208 +0,0 @@
 -import { request } from '../client'
 -
 -export type RemoteGroupAgentDescriptor = {
--  agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor' | 'antigravity'
+-  agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor' | 'antigravity' | 'qwen' | 'kimi' | 'codebuddy' | 'qoder' | 'copilot' | 'zcode'
 -  agentMode: 'scoped' | 'global'
 -  priorAgentMode?: 'scoped' | 'global' | ''
 -  profile: string
@@ -524,7 +524,7 @@ index 2b7212a95..000000000
 -}
 diff --git a/packages/client/src/api/studio/group-chat.ts b/packages/client/src/api/studio/group-chat.ts
 deleted file mode 100644
-index 1c9bd56fb..000000000
+index e7187198a..000000000
 --- a/packages/client/src/api/studio/group-chat.ts
 +++ /dev/null
 @@ -1,661 +0,0 @@
@@ -630,7 +630,7 @@ index 1c9bd56fb..000000000
 -    id: string
 -    roomId: string
 -    agentId: string
--    agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor' | 'antigravity'
+-    agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor' | 'antigravity' | 'qwen' | 'kimi' | 'codebuddy' | 'qoder' | 'copilot' | 'zcode'
 -    agentMode: 'scoped' | 'global'
 -    priorAgentMode?: 'scoped' | 'global' | ''
 -    profile: string
@@ -676,7 +676,7 @@ index 1c9bd56fb..000000000
 -
 -export interface RoomAgentInput {
 -    presetId?: string
--    agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor' | 'antigravity'
+-    agent: 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor' | 'antigravity' | 'qwen' | 'kimi' | 'codebuddy' | 'qoder' | 'copilot' | 'zcode'
 -    agentMode?: 'scoped' | 'global'
 -    priorAgentMode?: 'scoped' | 'global' | ''
 -    profile: string
@@ -3841,11 +3841,12 @@ index e88f518a7..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 deleted file mode 100644
-index a83b98486..000000000
+index de2ddc29a..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 +++ /dev/null
-@@ -1,5341 +0,0 @@
+@@ -1,5337 +0,0 @@
 -<script setup lang="ts">
+-import { isNativeCodingAgent, isGlobalOnlyCodingAgent } from '@/utils/agent-catalog'
 -import PageSidebar from "@/components/layout/PageSidebar.vue"
 -import { usePageSidebarState } from "@/composables/usePageSidebar"
 -import { usePageLoadingState } from '@/composables/usePageLoading'
@@ -4098,23 +4099,18 @@ index a83b98486..000000000
 -    profilesStore.profiles.map(p => ({ label: p.name, value: p.name }))
 -)
 -
--type GroupAgentType = 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor' | 'antigravity'
+-type GroupAgentType = 'hermes' | 'ekko' | 'codex' | 'claude' | 'pi' | 'grok' | 'opencode' | 'dsh' | 'cursor' | 'antigravity' | 'qwen' | 'kimi' | 'codebuddy' | 'qoder' | 'copilot' | 'zcode'
 -
 -const groupAgentTypeDefinitions = GROUP_AGENT_OPTIONS
 -
--const groupAgentTypeOptions = computed(() => groupAgentTypeDefinitions.map((option) => {
--    const disabled = !isAgentStatusAvailable(agentStatusSnapshot.value, option.value)
--    return {
--        ...option,
--        disabled,
--        label: disabled ? `${option.label} · ${t('codingAgents.notInstalled')}` : option.label,
--    }
--}))
+-const groupAgentTypeOptions = computed(() => groupAgentTypeDefinitions.filter(option =>
+-    isAgentStatusAvailable(agentStatusSnapshot.value, option.value)
+-))
 -
 -const firstAvailableGroupAgentType = computed<GroupAgentType | null>(() =>
--    groupAgentTypeOptions.value.find(option => !option.disabled)?.value || null
+-    groupAgentTypeOptions.value[0]?.value || null
 -)
--const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity'].includes(selectedAgentType.value))
+-const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity', 'qwen', 'kimi', 'codebuddy', 'qoder', 'copilot', 'zcode'].includes(selectedAgentType.value))
 -const usesGlobalAgentMode = computed(() => supportsGlobalAgentMode.value && selectedAgentMode.value === 'global')
 -const agentModeOptions = computed(() => [
 -    { label: t('codingAgents.launchModeGlobal'), value: 'global' },
@@ -4158,7 +4154,7 @@ index a83b98486..000000000
 -                        ? 'pi'
 -                        : selectedAgentType.value === 'grok'
 -                            ? 'grok'
--                            : (selectedAgentType.value === 'cursor' || selectedAgentType.value === 'antigravity')
+-                            : (isGlobalOnlyCodingAgent(selectedAgentType.value) || (selectedAgentType.value === 'antigravity' || isNativeCodingAgent(selectedAgentType.value)))
 -                                ? 'cursor'
 -                            : selectedAgentType.value === 'dsh' ? 'dsh' : selectedAgentType.value === 'opencode'
 -                                ? 'opencode'
@@ -12141,7 +12137,7 @@ index be2fbd388..f10e17a19 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 163e47afc..db4dbce3e 100644
+index 870800822..9b35c4f56 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -506,7 +506,6 @@ export default {
@@ -12152,7 +12148,7 @@ index 163e47afc..db4dbce3e 100644
      files: 'الملفات',
      devices: 'الأجهزة',
      connections: 'ترابط الأجهزة',
-@@ -3327,238 +3326,6 @@ export default {
+@@ -3324,238 +3323,6 @@ export default {
      connectionClosed: 'تم إغلاق اتصال الطرفية',
      connectionError: 'خطأ في اتصال الطرفية',
    },
@@ -12392,7 +12388,7 @@ index 163e47afc..db4dbce3e 100644
    usage: {
      costStates: {
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index bb13600fb..27b62d132 100644
+index 1ba731d40..ed57a7d90 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -519,7 +519,6 @@ export default {
@@ -12403,7 +12399,7 @@ index bb13600fb..27b62d132 100644
      groupConversation: 'Konversation',
      groupConversationShort: 'Konv',
      groupAgent: 'Agent',
-@@ -3073,238 +3072,6 @@ jobTriggered: 'Job ausgelost',
+@@ -3070,238 +3069,6 @@ jobTriggered: 'Job ausgelost',
        idle: 'Inaktiv', queued: 'In Warteschlange', running: 'Wird ausgeführt', pending_approval: 'Wartet auf Freigabe', completed: 'Abgeschlossen', skipped: 'Übersprungen', failed: 'Fehlgeschlagen', approval_rejected: 'Freigabe abgelehnt', canceled: 'Abgebrochen',
      },
    },
@@ -12643,7 +12639,7 @@ index bb13600fb..27b62d132 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 3670075d1..f6b3bcc3a 100644
+index 5b4bc9913..5c4d40049 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -506,7 +506,6 @@ export default {
@@ -12654,7 +12650,7 @@ index 3670075d1..f6b3bcc3a 100644
      files: 'Files',
      devices: 'Devices',
      connections: 'Device connections',
-@@ -3356,238 +3355,6 @@ export default {
+@@ -3353,238 +3352,6 @@ export default {
      connectionClosed: 'Terminal connection closed',
      connectionError: 'Terminal connection error',
    },
@@ -12894,7 +12890,7 @@ index 3670075d1..f6b3bcc3a 100644
    usage: {
      costStates: {
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 066791321..1fc88bdb1 100644
+index fc1db09c0..e544fdc4c 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -519,7 +519,6 @@ export default {
@@ -12905,7 +12901,7 @@ index 066791321..1fc88bdb1 100644
      groupConversation: 'Conversación',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3073,238 +3072,6 @@ jobTriggered: 'Job ejecutado',
+@@ -3070,238 +3069,6 @@ jobTriggered: 'Job ejecutado',
        idle: 'Inactivo', queued: 'En cola', running: 'En ejecución', pending_approval: 'Pendiente de aprobación', completed: 'Completado', skipped: 'Omitido', failed: 'Fallido', approval_rejected: 'Aprobación rechazada', canceled: 'Cancelado',
      },
    },
@@ -13145,7 +13141,7 @@ index 066791321..1fc88bdb1 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index ad87e9608..9a65f8f90 100644
+index 8e7216c94..4ff95e946 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -519,7 +519,6 @@ export default {
@@ -13156,7 +13152,7 @@ index ad87e9608..9a65f8f90 100644
      groupConversation: 'Conversation',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agent',
-@@ -3073,238 +3072,6 @@ jobTriggered: 'Job declenche',
+@@ -3070,238 +3069,6 @@ jobTriggered: 'Job declenche',
        idle: 'Inactif', queued: 'En attente', running: 'En cours', pending_approval: 'En attente d\'approbation', completed: 'Terminé', skipped: 'Ignoré', failed: 'Échec', approval_rejected: 'Approbation refusée', canceled: 'Annulé',
      },
    },
@@ -13396,7 +13392,7 @@ index ad87e9608..9a65f8f90 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index e011e9700..9054eeb2d 100644
+index 0474fcd48..8b2c32f31 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -520,7 +520,6 @@ export default {
@@ -13407,7 +13403,7 @@ index e011e9700..9054eeb2d 100644
      groupConversation: '会話',
      groupConversationShort: '会話',
      groupAgent: 'エージェント',
-@@ -3073,238 +3072,6 @@ export default {
+@@ -3070,238 +3069,6 @@ export default {
        idle: '待機中', queued: '待機列', running: '実行中', pending_approval: '承認待ち', completed: '完了', skipped: 'スキップ', failed: '失敗', approval_rejected: '承認拒否', canceled: 'キャンセル済み',
      },
    },
@@ -13647,7 +13643,7 @@ index e011e9700..9054eeb2d 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 6ba01a1b8..73276da8b 100644
+index 8c86c31d4..0323e0077 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -520,7 +520,6 @@ export default {
@@ -13658,7 +13654,7 @@ index 6ba01a1b8..73276da8b 100644
      groupConversation: '대화',
      groupConversationShort: '대화',
      groupAgent: '에이전트',
-@@ -3073,238 +3072,6 @@ export default {
+@@ -3070,238 +3069,6 @@ export default {
        idle: '대기', queued: '대기열', running: '실행 중', pending_approval: '승인 대기', completed: '완료', skipped: '건너뜀', failed: '실패', approval_rejected: '승인 거부', canceled: '취소됨',
      },
    },
@@ -13898,7 +13894,7 @@ index 6ba01a1b8..73276da8b 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 4b2faf880..44238a647 100644
+index a5c25c918..695942d39 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -519,7 +519,6 @@ export default {
@@ -13909,7 +13905,7 @@ index 4b2faf880..44238a647 100644
      groupConversation: 'Conversa',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3073,238 +3072,6 @@ jobTriggered: 'Job acionado',
+@@ -3070,238 +3069,6 @@ jobTriggered: 'Job acionado',
        idle: 'Inativo', queued: 'Na fila', running: 'Em execução', pending_approval: 'Aguardando aprovação', completed: 'Concluído', skipped: 'Ignorado', failed: 'Falhou', approval_rejected: 'Aprovação rejeitada', canceled: 'Cancelado',
      },
    },
@@ -14149,7 +14145,7 @@ index 4b2faf880..44238a647 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index f789b0c3c..876a6eb79 100644
+index d56b31084..0e1aacf7d 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -431,7 +431,6 @@ export default {
@@ -14160,7 +14156,7 @@ index f789b0c3c..876a6eb79 100644
      files: 'Файлы',
      devices: 'Устройства',
      connections: 'Подключение устройств',
-@@ -2967,235 +2966,6 @@ export default {
+@@ -2964,235 +2963,6 @@ export default {
      connectionError: 'Ошибка соединения с терминалом',
    },
  
@@ -14397,7 +14393,7 @@ index f789b0c3c..876a6eb79 100644
    usage: {
      costStates: {
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index e17def0cb..d2aeb25c8 100644
+index 862993bd9..7378ba3c4 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -507,7 +507,6 @@ export default {
@@ -14408,7 +14404,7 @@ index e17def0cb..d2aeb25c8 100644
      files: '檔案',
      devices: '裝置',
      connections: '裝置互聯',
-@@ -3299,238 +3298,6 @@ export default {
+@@ -3296,238 +3295,6 @@ export default {
      connectionClosed: '終端機連線已關閉',
      connectionError: '終端機連線錯誤',
    },
@@ -14648,7 +14644,7 @@ index e17def0cb..d2aeb25c8 100644
    usage: {
      costStates: {
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index e75d275da..16a841659 100644
+index df1756341..c08c5ab12 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -507,7 +507,6 @@ export default {
@@ -14659,7 +14655,7 @@ index e75d275da..16a841659 100644
      files: '文件',
      devices: '设备',
      connections: '设备互联',
-@@ -3405,238 +3404,6 @@ export default {
+@@ -3402,238 +3401,6 @@ export default {
      connectionClosed: '终端连接已关闭',
      connectionError: '终端连接错误',
    },
@@ -17636,10 +17632,10 @@ index 2ab20e0af..000000000
 -}
 diff --git a/packages/client/src/utils/group-agent-avatar.ts b/packages/client/src/utils/group-agent-avatar.ts
 deleted file mode 100644
-index b18c458c6..000000000
+index 8998f3673..000000000
 --- a/packages/client/src/utils/group-agent-avatar.ts
 +++ /dev/null
-@@ -1,82 +0,0 @@
+@@ -1,88 +0,0 @@
 -import type { ChatMessage, RoomAgent } from '@/api/studio/group-chat'
 -import type { ProfileAvatar } from '@/api/hermes/profiles'
 -
@@ -17653,6 +17649,12 @@ index b18c458c6..000000000
 -    opencode: '/coding-agents/opencode.png',
 -    dsh: '/coding-agents/deepseek.svg',
 -    cursor: '/coding-agents/cursor-logo.png',
+-    qwen: '/coding-agents/qwen-logo.svg',
+-    kimi: '/coding-agents/kimi-logo.png',
+-    codebuddy: '/coding-agents/codebuddy-logo.svg',
+-    qoder: '/coding-agents/qoder-logo.svg',
+-    copilot: '/coding-agents/copilot-logo.svg',
+-    zcode: '/coding-agents/zcode-logo.png',
 -    antigravity: '/coding-agents/antigravity.png',
 -}
 -
@@ -17825,11 +17827,12 @@ index 10e396e87..055653cc7 100644
  
 diff --git a/packages/client/src/views/hermes/GroupChatLinkView.vue b/packages/client/src/views/hermes/GroupChatLinkView.vue
 deleted file mode 100644
-index 0362c842e..000000000
+index 8e5ada119..000000000
 --- a/packages/client/src/views/hermes/GroupChatLinkView.vue
 +++ /dev/null
-@@ -1,971 +0,0 @@
+@@ -1,972 +0,0 @@
 -<script setup lang="ts">
+-import { isNativeCodingAgent, isGlobalOnlyCodingAgent } from '@/utils/agent-catalog'
 -import PageLoading from '@/components/common/PageLoading.vue'
 -import { GROUP_AGENT_OPTIONS } from "@/utils/agent-options"
 -import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -17962,7 +17965,7 @@ index 0362c842e..000000000
 -            ? 'pi'
 -            : selectedAgentType.value === 'grok'
 -              ? 'grok'
--            : (selectedAgentType.value === 'cursor' || selectedAgentType.value === 'antigravity')
+-            : (isGlobalOnlyCodingAgent(selectedAgentType.value) || (selectedAgentType.value === 'antigravity' || isNativeCodingAgent(selectedAgentType.value)))
 -              ? 'cursor'
 -            : selectedAgentType.value === 'dsh' ? 'dsh' : selectedAgentType.value === 'opencode'
 -              ? 'opencode'
@@ -18013,7 +18016,7 @@ index 0362c842e..000000000
 -  { label: t('chat.reasoningEffort.options.xhigh'), value: 'xhigh' },
 -  { label: t('chat.reasoningEffort.options.max'), value: 'max' },
 -])
--const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity'].includes(selectedAgentType.value))
+-const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity', 'qwen', 'kimi', 'codebuddy', 'qoder', 'copilot', 'zcode'].includes(selectedAgentType.value))
 -const usesGlobalAgentMode = computed(() => supportsGlobalAgentMode.value && selectedAgentMode.value === 'global')
 -const agentModeOptions = computed(() => [
 -  { label: t('codingAgents.launchModeGlobal'), value: 'global' },

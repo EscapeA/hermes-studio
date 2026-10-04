@@ -1,4 +1,4 @@
-From d3d8d35621b2de82f2e450ef962600d1bc570f95 Mon Sep 17 00:00:00 2001
+From 870aef7a9b71e506cd065b07d5ceaa18abd6dd59 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 11:59:49 +0800
 Subject: [PATCH] feat(mobile): compact top bar and single hamburger sidebar
@@ -58,10 +58,10 @@ index 092b9086d..c4e875144 100644
                  <AppSidebar v-if="!isLoginPage && showAppSidebar" />
                  <HermesConfigSidebar
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index 6d036fd89..166c0b5c8 100644
+index bf772981f..0a36c837f 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -3924,7 +3924,8 @@ async function handleSessionModelCustomSubmit() {
+@@ -3935,7 +3935,8 @@ async function handleSessionModelCustomSubmit() {
  
  @media (max-width: $breakpoint-mobile) {
    .chat-header {
@@ -72,10 +72,10 @@ index 6d036fd89..166c0b5c8 100644
  
    .header-sidebar-toggle {
 diff --git a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
-index b8e64f3fd..399ea4c4f 100644
+index 84f012ae2..de2ddc29a 100644
 --- a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
 +++ b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
-@@ -5291,7 +5291,8 @@ export default defineComponent({ components: { CreateRoomForm } })
+@@ -5287,7 +5287,8 @@ export default defineComponent({ components: { CreateRoomForm } })
      }
  
      .chat-header {
@@ -147,10 +147,10 @@ index 4a8db281c..6e1de25f3 100644
  
  // Radius
 diff --git a/packages/client/src/views/hermes/HistoryView.vue b/packages/client/src/views/hermes/HistoryView.vue
-index 21e9eac5c..557c4edc7 100644
+index 7abc04309..8de3ee6f3 100644
 --- a/packages/client/src/views/hermes/HistoryView.vue
 +++ b/packages/client/src/views/hermes/HistoryView.vue
-@@ -1373,7 +1373,8 @@ function handleBatchDeleteConfirm() {
+@@ -1365,7 +1365,8 @@ function handleBatchDeleteConfirm() {
    }
  
    .chat-header {
@@ -192,10 +192,10 @@ index 65858bf7d..a08e6a7ae 100644
  
    .terminal-container {
 diff --git a/packages/client/src/views/hermes/WorkflowView.vue b/packages/client/src/views/hermes/WorkflowView.vue
-index fbe318028..a27483025 100644
+index a2fe034a1..c93336fcb 100644
 --- a/packages/client/src/views/hermes/WorkflowView.vue
 +++ b/packages/client/src/views/hermes/WorkflowView.vue
-@@ -5372,7 +5372,11 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
+@@ -5368,7 +5368,11 @@ function nodeColor(node: { data: WorkflowAgentNodeData }) {
      flex-wrap: nowrap;
      align-items: center;
      gap: 8px;

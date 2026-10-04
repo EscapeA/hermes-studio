@@ -1,7 +1,7 @@
-From 587e4e853829acd901d5719db4c2c99be755eb1b Mon Sep 17 00:00:00 2001
+From a763cef77e25df3e1cb4f44932985a76b2ac0383 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 01:01:19 +0800
-Subject: [PATCH 1/2] feat(usage): keep four metrics on the run usage card
+Subject: [PATCH] feat(usage): keep four metrics on the run usage card
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -84,7 +84,7 @@ index 0a21a3dc6..e72ebbc8b 100644
  }
  </style>
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 4bf75585f..678fa9483 100644
+index df2600c44..5d58adffc 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -993,10 +993,7 @@ export default {
@@ -99,7 +99,7 @@ index 4bf75585f..678fa9483 100644
      runUsageSpeedHint: "رموز إخراج التشغيل ÷ إجمالي وقت طلبات النموذج، بما فيه انتظار الرمز الأول، دون وقت الأدوات.",
      runUsageAverageSpeed: "متوسط السرعة",
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index e4ab922fa..5929cf51b 100644
+index ebf45f5f1..ef3a895a4 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -979,10 +979,7 @@ export default {
@@ -114,7 +114,7 @@ index e4ab922fa..5929cf51b 100644
      runUsageSpeedHint: "Ausgabe-Tokens / gesamte Modellanfragezeit, einschließlich Wartezeit auf das erste Token, ohne Werkzeuglaufzeit.",
      runUsageAverageSpeed: "Mittleres Tempo",
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 9c10f7c6c..7c5b335dc 100644
+index c33ccfd68..9c2d94932 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -1000,10 +1000,7 @@ export default {
@@ -129,7 +129,7 @@ index 9c10f7c6c..7c5b335dc 100644
      runUsageSpeedHint: "Run output tokens / total model request time, including first-token latency and excluding tools.",
      runUsageAverageSpeed: "Average speed",
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 90c1b5aff..8bf439f41 100644
+index 1b89e160f..18d06a337 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -979,10 +979,7 @@ export default {
@@ -144,7 +144,7 @@ index 90c1b5aff..8bf439f41 100644
      runUsageSpeedHint: "Tokens de salida / tiempo total de solicitudes al modelo, incluida la espera inicial y excluidas las herramientas.",
      runUsageAverageSpeed: "Velocidad media",
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 30e78fff5..fd584d6ff 100644
+index 6bdd16b93..8f0c8c490 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -979,10 +979,7 @@ export default {
@@ -159,10 +159,10 @@ index 30e78fff5..fd584d6ff 100644
      runUsageSpeedHint: "Tokens de sortie / durée totale des requêtes au modèle, attente initiale incluse, outils exclus.",
      runUsageAverageSpeed: "Vitesse moyenne",
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 0af2cbd83..5af85e44e 100644
+index 9f04dfa2f..f0d120bf4 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -979,10 +979,7 @@ export default {
+@@ -980,10 +980,7 @@ export default {
    chat: {
      runUsageOutput: "出力 token",
      runUsageInput: "入力 token",
@@ -174,10 +174,10 @@ index 0af2cbd83..5af85e44e 100644
      runUsageSpeedHint: "実行の出力 token ÷ モデル要求の合計時間。最初の token の待機を含み、ツール実行を除きます。",
      runUsageAverageSpeed: "平均速度",
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 97c37fd89..e04a34668 100644
+index 29ad841d7..8bc0b44d2 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -979,10 +979,7 @@ export default {
+@@ -980,10 +980,7 @@ export default {
    chat: {
      runUsageOutput: "출력 토큰",
      runUsageInput: "입력 토큰",
@@ -189,7 +189,7 @@ index 97c37fd89..e04a34668 100644
      runUsageSpeedHint: "실행 출력 토큰 ÷ 모델 요청 총 시간. 첫 토큰 대기를 포함하고 도구 실행은 제외합니다.",
      runUsageAverageSpeed: "평균 속도",
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index a90079e40..d1354ee12 100644
+index 356a5c827..071640826 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -979,10 +979,7 @@ export default {
@@ -204,10 +204,10 @@ index a90079e40..d1354ee12 100644
      runUsageSpeedHint: "Tokens de saída / tempo total das requisições ao modelo, incluindo a espera inicial e excluindo ferramentas.",
      runUsageAverageSpeed: "Velocidade média",
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index cad405bd5..be53c181c 100644
+index dc60a36d3..0edf86f7d 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -902,10 +902,7 @@ export default {
+@@ -900,10 +900,7 @@ export default {
    chat: {
      runUsageOutput: "Выходные токены",
      runUsageInput: "Входные токены",
@@ -219,10 +219,10 @@ index cad405bd5..be53c181c 100644
      runUsageSpeedHint: "Выходные токены / суммарное время запросов к модели, включая ожидание первого токена, без времени инструментов.",
      runUsageAverageSpeed: "Средняя скорость",
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 5d1169433..aa12f2109 100644
+index 21da15c03..e990a4698 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -993,10 +993,7 @@ export default {
+@@ -994,10 +994,7 @@ export default {
    chat: {
      runUsageOutput: "輸出 token",
      runUsageInput: "輸入 token",
@@ -234,10 +234,10 @@ index 5d1169433..aa12f2109 100644
      runUsageSpeedHint: "本輪輸出 token ÷ 模型請求總耗時（含首 token 等待，不含工具執行）",
      runUsageAverageSpeed: "平均速度",
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 9c16d7e3a..ddf58c38f 100644
+index 7cfa1300e..6be4be793 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1000,10 +1000,7 @@ export default {
+@@ -1001,10 +1001,7 @@ export default {
    chat: {
      runUsageOutput: "输出 token",
      runUsageInput: "输入 token",

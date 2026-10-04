@@ -1,4 +1,4 @@
-From 9f2cd987c90ee6f42adc1f91c1aca60dbdc38e50 Mon Sep 17 00:00:00 2001
+From 8835b21ada1f13a08b1db2aac005f74215174d33 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 14:17:08 +0800
 Subject: [PATCH] feat(chat): show context usage percentage with warning colors
@@ -8,10 +8,10 @@ Subject: [PATCH] feat(chat): show context usage percentage with warning colors
  1 file changed, 21 insertions(+), 3 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 268639e7b..084e3079f 100644
+index 9cf9145e1..592bd9380 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -843,8 +843,6 @@ const totalTokens = computed(() => {
+@@ -832,8 +832,6 @@ const totalTokens = computed(() => {
  const showContextUsage = computed(() => !!chatStore.activeSession)
  const showContextLimit = computed(() => !showSessionUsage.value)
  
@@ -20,7 +20,7 @@ index 268639e7b..084e3079f 100644
  const usagePercent = computed(() =>
    Math.min((totalTokens.value / contextLength.value) * 100, 100),
  )
-@@ -1186,7 +1184,14 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1175,7 +1173,14 @@ function openAttachmentPreview(attachment: Attachment) {
              </template>
              <span>{{ t('chat.contextClickToEdit') }}</span>
            </NTooltip>
@@ -36,7 +36,7 @@ index 268639e7b..084e3079f 100644
          </template>
        </span>
        <div v-if="showContextLimit" class="context-bar">
-@@ -1935,6 +1940,19 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1924,6 +1929,19 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  

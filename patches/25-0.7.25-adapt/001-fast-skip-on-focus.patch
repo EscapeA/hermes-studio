@@ -1,4 +1,4 @@
-From 6a103b24808b95b64b9721e32589e68efee29df5 Mon Sep 17 00:00:00 2001
+From 7e78810da9232fca1493e9f078dfd415356f803f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Mon, 28 Sep 2026 22:59:13 +0800
 Subject: [PATCH] fix(chat): skip the fast-first REST fetch when navigating to
@@ -14,10 +14,10 @@ call). focusId is set exactly when such a navigation is in progress.
  1 file changed, 8 insertions(+), 4 deletions(-)
 
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index b421dc957..898ae80b1 100644
+index b25bfd605..e08366a68 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -2175,10 +2175,14 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2182,10 +2182,14 @@ export const useChatStore = defineStore('chat', () => {
      let loaded = false
      try {
        // Fast path: fire the paginated REST request immediately so the latest

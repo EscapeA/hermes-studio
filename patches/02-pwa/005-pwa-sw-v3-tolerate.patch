@@ -1,8 +1,8 @@
-From 5b6757099261ea7b3cb91f88ed4c404207986abb Mon Sep 17 00:00:00 2001
+From 8ecbba6ad642724b68d83f4567ab63f6c28714af Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 22:37:51 +0800
-Subject: [PATCH 5/5] fix(pwa): bump SW to v3, make precache tolerant so
- activation never blocks
+Subject: [PATCH] fix(pwa): bump SW to v3, make precache tolerant so activation
+ never blocks
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -17,7 +17,7 @@ Content-Transfer-Encoding: 8bit
  1 file changed, 7 insertions(+), 5 deletions(-)
 
 diff --git a/packages/client/public/sw.js b/packages/client/public/sw.js
-index bede7c61..9195bbb5 100644
+index bede7c618..9195bbb54 100644
 --- a/packages/client/public/sw.js
 +++ b/packages/client/public/sw.js
 @@ -1,8 +1,9 @@

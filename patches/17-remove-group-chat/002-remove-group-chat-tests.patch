@@ -1,4 +1,4 @@
-From 8c2e80684f80d6b8559fcd67f9f806721f70b3f0 Mon Sep 17 00:00:00 2001
+From 93361150f1a1203231b68d51eec15789a51c203a Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:29 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after group chat
@@ -58,11 +58,11 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  tests/desktop/group-chat-agent-popup.test.ts  |   63 -
  tests/e2e/desktop-window-chrome.spec.ts       |    6 -
  tests/e2e/fixtures.ts                         |   10 -
- tests/e2e/group-chat-room-deeplink.spec.ts    | 2051 -----------------
+ tests/e2e/group-chat-room-deeplink.spec.ts    | 2059 -----------------
  tests/e2e/group-chat-share.spec.ts            |  448 ----
  tests/e2e/history-session-deeplink.spec.ts    |   42 +-
  tests/e2e/theme.spec.ts                       |   18 -
- 48 files changed, 33 insertions(+), 8987 deletions(-)
+ 48 files changed, 33 insertions(+), 8995 deletions(-)
  delete mode 100644 tests/client/group-agent-avatar.test.ts
  delete mode 100644 tests/client/group-agent-presets-source.test.ts
  delete mode 100644 tests/client/group-agent-presets.test.ts
@@ -104,20 +104,20 @@ index a8a654117..4b31f8258 100644
      expect(route).toContain("name: 'hermes.agentManager'")
      expect(route).toContain("component: () => import('@/views/hermes/ChatView.vue')")
 diff --git a/tests/client/agent-status-availability.test.ts b/tests/client/agent-status-availability.test.ts
-index 9b1798711..7c7ae0bee 100644
+index e8e6f49d6..fe32f5f47 100644
 --- a/tests/client/agent-status-availability.test.ts
 +++ b/tests/client/agent-status-availability.test.ts
-@@ -24,7 +24,7 @@ function snapshot(): AgentStatusSnapshot {
- }
- 
- describe('Agent status availability', () => {
+@@ -38,7 +38,7 @@ describe('Agent status availability', () => {
+       expect(isAgentStatusAvailable(null, id)).toBe(false)
+     },
+   )
 -  it('normalizes group-chat and workflow Agent aliases', () => {
 +  it('normalizes Agent aliases', () => {
      expect(resolveAgentStatusId('ekko')).toBe('ekko-agent')
      expect(resolveAgentStatusId('claude')).toBe('claude-code')
      expect(resolveAgentStatusId('codex')).toBe('codex')
 diff --git a/tests/client/api.test.ts b/tests/client/api.test.ts
-index 78b906a32..16ca86634 100644
+index bafda2619..697c1e1d1 100644
 --- a/tests/client/api.test.ts
 +++ b/tests/client/api.test.ts
 @@ -212,15 +212,15 @@ describe('API Client', () => {
@@ -261,20 +261,20 @@ index 94e11d911..5b1162e33 100644
      expect(browserSource).toContain('props.visible && !externalOverlayOpen.value')
    })
 diff --git a/tests/client/ekko-display-name.test.ts b/tests/client/ekko-display-name.test.ts
-index d700e0e5f..3984e74f2 100644
+index 2cf8186c4..5edc9d64f 100644
 --- a/tests/client/ekko-display-name.test.ts
 +++ b/tests/client/ekko-display-name.test.ts
 @@ -24,10 +24,6 @@ describe('Ekko display name', () => {
    it.each([
      ['single chat', 'packages/client/src/components/hermes/chat/ChatPanel.vue',
-       AGENT_OPTIONS, 'AGENT_OPTIONS', 'const newChatAgentOptions = computed(() => AGENT_OPTIONS.map('],
+       AGENT_OPTIONS, 'AGENT_OPTIONS', 'const newChatAgentOptions = computed(() => AGENT_OPTIONS.filter('],
 -    ['group chat', 'packages/client/src/components/hermes/group-chat/GroupChatPanel.vue',
 -      GROUP_AGENT_OPTIONS, 'GROUP_AGENT_OPTIONS', 'const groupAgentTypeDefinitions = GROUP_AGENT_OPTIONS'],
 -    ['group chat link', 'packages/client/src/views/hermes/GroupChatLinkView.vue',
 -      GROUP_AGENT_OPTIONS, 'GROUP_AGENT_OPTIONS', 'const groupAgentTypeDefinitions = GROUP_AGENT_OPTIONS'],
      ['workflow', 'packages/client/src/views/hermes/WorkflowView.vue',
        AGENT_OPTIONS, 'AGENT_OPTIONS', 'const workflowAgentDefinitions = AGENT_OPTIONS'],
-   ] as const)('uses the shared order with Ekko second in the %s Agent dropdown', (_name, path, options, exportName, binding) => {
+   ] as const)('uses the shared order with Ekko first in the %s Agent dropdown', (_name, path, options, exportName, binding) => {
 diff --git a/tests/client/files-panel-attach.test.ts b/tests/client/files-panel-attach.test.ts
 index a5ec87dae..c75bf3614 100644
 --- a/tests/client/files-panel-attach.test.ts
@@ -1779,7 +1779,7 @@ index 59e07acf6..000000000
 -})
 diff --git a/tests/client/group-chat-panel-workspace-source.test.ts b/tests/client/group-chat-panel-workspace-source.test.ts
 deleted file mode 100644
-index 0aa93f8a3..000000000
+index b87c18dc1..000000000
 --- a/tests/client/group-chat-panel-workspace-source.test.ts
 +++ /dev/null
 @@ -1,585 +0,0 @@
@@ -1803,7 +1803,7 @@ index 0aa93f8a3..000000000
 -      expect(source).toMatch(/selectedAgentType\.value === 'pi'[\s\S]*?\\? 'pi'/)
 -      expect(source).toContain("selectedAgentType.value === 'grok'")
 -      expect(source).toContain("selectedAgentType.value === 'opencode'")
--      expect(source).toContain("selectedAgentType.value === 'cursor'")
+-      expect(source).toContain("isGlobalOnlyCodingAgent(selectedAgentType.value)")
 -    }
 -    expect(panel).toContain('priorAgentMode.value = storedPriorAgentMode(agent.priorAgentMode)')
 -    expect(panel).toContain('priorAgentMode: priorAgentMode.value,')
@@ -2347,7 +2347,7 @@ index 0aa93f8a3..000000000
 -    expect(source).toContain('normalizeCodingAgentApiMode(')
 -    expect(source).toContain("v-if=\"selectedAgentType !== 'hermes' && !usesGlobalAgentMode\"")
 -    for (const modelSource of [source, linkView]) {
--      expect(modelSource).toContain("const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity'].includes(selectedAgentType.value))")
+-      expect(modelSource).toContain("const supportsGlobalAgentMode = computed(() => ['claude', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity', 'qwen', 'kimi', 'codebuddy', 'qoder', 'copilot', 'zcode'].includes(selectedAgentType.value))")
 -      expect(modelSource).toContain("v-if=\"!usesGlobalAgentMode\"")
 -    }
 -    expect(source).toContain('@update:value="handleAgentModeChange"')
@@ -7159,10 +7159,10 @@ index c46a3406f..62abc9e58 100644
        return
 diff --git a/tests/e2e/group-chat-room-deeplink.spec.ts b/tests/e2e/group-chat-room-deeplink.spec.ts
 deleted file mode 100644
-index 1db3cafb3..000000000
+index 1186e794a..000000000
 --- a/tests/e2e/group-chat-room-deeplink.spec.ts
 +++ /dev/null
-@@ -1,2051 +0,0 @@
+@@ -1,2059 +0,0 @@
 -import { expect, test, type Page, type Route } from '@playwright/test'
 -import { authenticate, TEST_MODEL_GROUP } from './fixtures'
 -
@@ -9205,14 +9205,22 @@ index 1db3cafb3..000000000
 -})
 -
 -
--test('group-chat Agent picker follows the single-chat order', async ({ page }) => {
+-test('group-chat Agent picker only lists installed Agents in catalog order', async ({ page }) => {
 -  await setup(page, '/#/hermes/group-chat/room/room-alpha')
+-  await page.route('**/api/agents/status', route => route.fulfill({ json: {
+-    revision: 1, updatedAt: new Date().toISOString(), agents: [
+-      { id: 'ekko-agent', installed: true, source: 'built-in', path: '', version: '' },
+-      { id: 'claude-code', installed: false, source: 'not-installed', path: '', version: '' },
+-      { id: 'codex', installed: true, source: 'user-cli', path: '/test/codex', version: '' },
+-      { id: 'qwen', installed: true, source: 'user-cli', path: '/test/qwen', version: '' },
+-    ],
+-  } }))
 -  await page.locator('.agent-avatar-rail-add').click()
 -  const drawer = page.locator('.n-drawer').filter({ hasText: 'Add Agent' })
 -  await expect(drawer.locator('.agent-form-loading')).toBeHidden()
 -  await drawer.locator('.n-select').first().click()
 -  await expect.poll(async () => (await page.locator('.n-base-select-option__content:visible').allTextContents())
--    .map(label => label.split(' · ')[0])).toEqual(['Hermes', 'Ekko', 'Claude', 'Codex', 'Pi', 'Grok', 'OpenCode', 'DeepSeek Harness', 'Cursor', 'Antigravity'])
+-    .map(label => label.split(' · ')[0])).toEqual(['Ekko', 'Codex', 'Qwen Code'])
 -})
 diff --git a/tests/e2e/group-chat-share.spec.ts b/tests/e2e/group-chat-share.spec.ts
 deleted file mode 100644
@@ -9669,7 +9677,7 @@ index 83cd30f88..000000000
 -  await expect(cards).toContainText('1/2 completed')
 -})
 diff --git a/tests/e2e/history-session-deeplink.spec.ts b/tests/e2e/history-session-deeplink.spec.ts
-index f188df703..8f418c99b 100644
+index e5b887504..12d7371ea 100644
 --- a/tests/e2e/history-session-deeplink.spec.ts
 +++ b/tests/e2e/history-session-deeplink.spec.ts
 @@ -132,12 +132,7 @@ function detailFor(id: string, sessions = historySessions) {
@@ -9720,7 +9728,7 @@ index f188df703..8f418c99b 100644
      if (pathname === '/api/studio/sessions/hermes/groups') {
        const limit = Number(url.searchParams.get('limit') || 20)
        const includedIds = new Set(url.searchParams.getAll('include'))
-@@ -362,14 +330,6 @@ test.describe('history session deep links', () => {
+@@ -370,14 +338,6 @@ test.describe('history session deep links', () => {
      await expect(page.getByText('API Server', { exact: true }).first()).toBeVisible()
    })
  

@@ -1,4 +1,4 @@
-From 6952b06987f613a05dd4b17f46e090367230ef72 Mon Sep 17 00:00:00 2001
+From d12be49f7e1202b592b321425ae9a0de10d49083 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 2 Oct 2026 12:40:05 +0800
 Subject: [PATCH] fix(mobile-nav): narrow the drawer so the scrim is tappable
@@ -16,10 +16,10 @@ scrim closes the drawer.
  3 files changed, 4 insertions(+), 59 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index b4b48842b..8d2f1a5c2 100644
+index fb0880963..9f4600ef9 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -2353,17 +2353,6 @@ async function handleSessionModelCustomSubmit() {
+@@ -2363,17 +2363,6 @@ async function handleSessionModelCustomSubmit() {
                @filter="handleProfileFilterChange"
                @batch="toggleBatchMode"
              />
@@ -37,7 +37,7 @@ index b4b48842b..8d2f1a5c2 100644
            </template>
          </PageSidebarNav>
          <div v-if="contentMode === 'chat' && isBatchMode" class="session-list-toolbar">
-@@ -3551,24 +3540,6 @@ async function handleSessionModelCustomSubmit() {
+@@ -3562,24 +3551,6 @@ async function handleSessionModelCustomSubmit() {
    }
  }
  
@@ -81,10 +81,10 @@ index bf39dceb2..ca43273da 100644
  )
  </script>
 diff --git a/packages/client/src/views/hermes/HistoryView.vue b/packages/client/src/views/hermes/HistoryView.vue
-index 557c4edc7..8793fb3c2 100644
+index 8de3ee6f3..ffc0d2273 100644
 --- a/packages/client/src/views/hermes/HistoryView.vue
 +++ b/packages/client/src/views/hermes/HistoryView.vue
-@@ -873,17 +873,6 @@ function handleBatchDeleteConfirm() {
+@@ -865,17 +865,6 @@ function handleBatchDeleteConfirm() {
                :batch-disabled="hermesSessions.length === 0"
                @batch="toggleBatchMode"
              />
@@ -102,7 +102,7 @@ index 557c4edc7..8793fb3c2 100644
            </template>
          </PageSidebarNav>
          <div v-if="isBatchMode" class="session-list-toolbar">
-@@ -1204,24 +1193,6 @@ function handleBatchDeleteConfirm() {
+@@ -1196,24 +1185,6 @@ function handleBatchDeleteConfirm() {
    .n-button { height: 22px; min-height: 22px; }
  }
  

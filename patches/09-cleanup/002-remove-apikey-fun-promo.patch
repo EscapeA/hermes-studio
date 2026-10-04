@@ -1,4 +1,4 @@
-From 37812c542642f929a39cbf2d1bcbcdf37826880d Mon Sep 17 00:00:00 2001
+From b159116a51a78dfb8ee38b3b3b72ad37e2f6af9e Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 6 Sep 2026 09:25:42 +0800
 Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
@@ -266,10 +266,10 @@ index 657a8e6e9..000000000
 -@media (max-width: $breakpoint-mobile) { .relay-usage-card { padding: 16px; } }
 -</style>
 diff --git a/packages/client/src/components/hermes/models/ProviderFormModal.vue b/packages/client/src/components/hermes/models/ProviderFormModal.vue
-index 0b322c52e..70b7adf70 100644
+index 6a0b53681..0bf710d83 100644
 --- a/packages/client/src/components/hermes/models/ProviderFormModal.vue
 +++ b/packages/client/src/components/hermes/models/ProviderFormModal.vue
-@@ -129,13 +129,6 @@ const canFetchProviderCatalog = computed(() =>
+@@ -128,13 +128,6 @@ const canFetchProviderCatalog = computed(() =>
    )),
  )
  
@@ -283,7 +283,7 @@ index 0b322c52e..70b7adf70 100644
  async function switchToApiKeyFunPreset(providerKey: ApiKeyFunPresetProvider, preferredModel: string) {
    const apiKey = formData.value.api_key
    const contextLength = formData.value.context_length
-@@ -502,12 +495,6 @@ function handleClose() {
+@@ -500,12 +493,6 @@ function handleClose() {
            :placeholder="t('models.chooseProvider')"
            filterable
          />
@@ -296,7 +296,7 @@ index 0b322c52e..70b7adf70 100644
        </NFormItem>
  
        <NFormItem v-if="providerType === 'custom'" :label="t('models.name')">
-@@ -636,29 +623,6 @@ function handleClose() {
+@@ -630,29 +617,6 @@ function handleClose() {
  </template>
  
  <style scoped lang="scss">
@@ -410,7 +410,7 @@ index a41890e78..7a4be328b 100644
    place-items: center;
    flex: 0 0 44px;
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 29fd2ddda..397070b50 100644
+index 24c013b31..2dde8b32c 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -468,35 +468,6 @@ export default {
@@ -458,7 +458,7 @@ index 29fd2ddda..397070b50 100644
      jobs: 'المهام المجدولة',
      kanban: 'كانبان',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 4a35e0a5f..0ff8d851e 100644
+index f3ca8b532..999b264ac 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -480,35 +480,6 @@ export default {
@@ -506,7 +506,7 @@ index 4a35e0a5f..0ff8d851e 100644
      jobs: 'Geplante Aufgaben',
      models: 'Modelle',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 2e160171b..d619d4f4d 100644
+index 68e6ea1d5..f3f3e7040 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -468,35 +468,6 @@ export default {
@@ -554,7 +554,7 @@ index 2e160171b..d619d4f4d 100644
      jobs: 'Jobs',
      kanban: 'Kanban',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 32ba6da69..98d75cd25 100644
+index 074ff9717..730018da4 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -480,35 +480,6 @@ export default {
@@ -602,7 +602,7 @@ index 32ba6da69..98d75cd25 100644
      jobs: 'Tareas programadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 4765c9e42..f617d712d 100644
+index 04d5de9f1..98337056d 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -480,35 +480,6 @@ export default {
@@ -650,7 +650,7 @@ index 4765c9e42..f617d712d 100644
      jobs: 'Taches planifiees',
      models: 'Modeles',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index f029ff1c6..b0f2c6c42 100644
+index cf82513c0..0f0753bac 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -481,34 +481,6 @@ export default {
@@ -697,7 +697,7 @@ index f029ff1c6..b0f2c6c42 100644
      jobs: 'ジョブ',
      models: 'モデル',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index a790057b1..d49fb9880 100644
+index ff578761c..c7d8018fb 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -481,34 +481,6 @@ export default {
@@ -744,7 +744,7 @@ index a790057b1..d49fb9880 100644
      jobs: '예약 작업',
      models: '모델',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 5e8706a4c..0bdeac8b5 100644
+index fd2f5230e..86b91583a 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -480,35 +480,6 @@ export default {
@@ -792,7 +792,7 @@ index 5e8706a4c..0bdeac8b5 100644
      jobs: 'Tarefas agendadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index bab48774c..16772ba9a 100644
+index 0b3bbab81..78775f144 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -361,7 +361,6 @@ export default {
@@ -862,7 +862,7 @@ index bab48774c..16772ba9a 100644
    chat: {
      runUsageOutput: "Выходные токены",
      runUsageInput: "Входные токены",
-@@ -1245,7 +1213,6 @@ export default {
+@@ -1246,7 +1214,6 @@ export default {
      speechNotSupported: 'Этот браузер не поддерживает воспроизведение речи',
    },
  
@@ -870,7 +870,7 @@ index bab48774c..16772ba9a 100644
    workflow: {
      listActions: 'Действия со списком рабочих процессов',
      quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
-@@ -1511,7 +1478,6 @@ export default {
+@@ -1512,7 +1479,6 @@ export default {
      newNodeTitle: 'Узел {count}',
    },
  
@@ -878,7 +878,7 @@ index bab48774c..16772ba9a 100644
    kanban: {
      title: 'Канбан',
      createTask: 'Создать задачу',
-@@ -1647,7 +1613,6 @@ export default {
+@@ -1648,7 +1614,6 @@ export default {
      },
    },
  
@@ -886,7 +886,7 @@ index bab48774c..16772ba9a 100644
    scheduleBuilder: { time: 'Время', hour: 'Час', minute: 'Минута', weekday: 'День недели', monthDay: 'День месяца' },
    jobs: {
      title: 'Периодические задачи',
-@@ -1735,7 +1700,6 @@ export default {
+@@ -1736,7 +1701,6 @@ export default {
      },
    },
  
@@ -894,7 +894,7 @@ index bab48774c..16772ba9a 100644
    skills: {
      filterBySource: "Фильтр по источнику",
      title: 'Навыки',
-@@ -1798,7 +1762,6 @@ export default {
+@@ -1799,7 +1763,6 @@ export default {
      writeApprovalRemoveFile: 'Это подтверждение удалит {file} из skill {skill}.',
    },
  
@@ -902,7 +902,7 @@ index bab48774c..16772ba9a 100644
    plugins: {
      title: 'Плагины',
      refresh: 'Обновить',
-@@ -1869,7 +1832,6 @@ export default {
+@@ -1870,7 +1833,6 @@ export default {
      },
    },
  
@@ -910,15 +910,15 @@ index bab48774c..16772ba9a 100644
    petdex: {
      title: 'Petdex Pets',
      subtitle: 'Browse the public petdex catalog used by Hermes desktop pets.',
-@@ -1908,7 +1870,6 @@ export default {
+@@ -1909,7 +1871,6 @@ export default {
      soulPlaceholder: 'Введите конфигурацию души...',
    },
  
 -
    models: {
-     opencodeFreeHint: "Аккаунт и API-ключ не нужны. Для бесплатных моделей возможны ограничения запросов.",
-     opencodeFreeLoading: "Бесплатные модели загружаются в фоновом режиме…",
-@@ -2156,7 +2117,6 @@ export default {
+     title: 'Модели',
+     searchPlaceholder: 'Поиск моделей...',
+@@ -2153,7 +2114,6 @@ export default {
      fetchFailed: 'Не удалось получить модели',
    },
  
@@ -926,7 +926,7 @@ index bab48774c..16772ba9a 100644
    profiles: {
      title: 'Профили',
      create: 'Создать профиль',
-@@ -2240,7 +2200,6 @@ export default {
+@@ -2237,7 +2197,6 @@ export default {
      },
    },
  
@@ -934,7 +934,7 @@ index bab48774c..16772ba9a 100644
    logs: {
      file: "Файл журнала",
      level: "Уровень журнала",
-@@ -2253,7 +2212,6 @@ export default {
+@@ -2250,7 +2209,6 @@ export default {
      noEntries: 'Нет записей',
    },
  
@@ -942,7 +942,7 @@ index bab48774c..16772ba9a 100644
    theme: {
      title: 'Тема',
      saved: 'Тема сохранена',
-@@ -2820,12 +2778,10 @@ export default {
+@@ -2817,12 +2775,10 @@ export default {
        providerEdge: 'Edge TTS (бесплатно, не требует API-ключа)',
        providerMimo: 'MiMo TTS',
  
@@ -955,7 +955,7 @@ index bab48774c..16772ba9a 100644
        openaiKey: 'API-ключ',
        openaiKeyHint: 'API-ключ OpenAI с правами TTS',
        openaiUrl: 'Базовый URL API',
-@@ -2835,7 +2791,6 @@ export default {
+@@ -2832,7 +2788,6 @@ export default {
        openaiVoice: 'Тембр',
        openaiVoiceHint: 'Тембр для синтеза речи',
  
@@ -963,7 +963,7 @@ index bab48774c..16772ba9a 100644
        customHint: 'Поддерживается любая служба TTS, совместимая с OpenAI, включая GPT-SoVITS, CosyVoice и т.п.',
        customUrl: 'URL API',
        customUrlHint: 'Полный базовый URL службы TTS',
-@@ -2855,7 +2810,6 @@ export default {
+@@ -2852,7 +2807,6 @@ export default {
        edgePitch: 'Высота тона',
        edgePitchHint: 'Регулировка высоты тона (–20 … +20 Гц)',
  
@@ -971,7 +971,7 @@ index bab48774c..16772ba9a 100644
        testTitle: 'Тестовое прослушивание',
        testText: 'Тестовый текст',
        testTextPlaceholder: 'Введите тестовый текст...',
-@@ -2864,7 +2818,6 @@ export default {
+@@ -2861,7 +2815,6 @@ export default {
        testButtonPlaying: 'Воспроизведение...',
        testFailed: 'Ошибка теста: {error}',
  
@@ -979,7 +979,7 @@ index bab48774c..16772ba9a 100644
        mimoHint: 'MiMo TTS от Xiaomi. Поддерживает три режима: предустановленные тембры, дизайн тембра и клонирование тембра.',
        mimoApiKey: 'API-ключ',
        mimoApiKeyHint: 'Получите его на platform.xiaomimimo.com',
-@@ -2891,7 +2844,6 @@ export default {
+@@ -2888,7 +2841,6 @@ export default {
      },
    },
  
@@ -987,7 +987,7 @@ index bab48774c..16772ba9a 100644
    platform: {
      requireMention: "Требуется упоминание {'@'}",
      requireMentionGroup: "В группе требуется упоминание {'@'}бота для ответа",
-@@ -2984,7 +2936,6 @@ export default {
+@@ -2981,7 +2933,6 @@ export default {
      qqQrScanHint: 'Отсканируйте QR-код с помощью QQ или откройте ссылку на телефоне, чтобы завершить привязку',
    },
  
@@ -995,7 +995,7 @@ index bab48774c..16772ba9a 100644
    gateways: {
      title: 'Шлюзы',
      running: 'Работает',
-@@ -2994,7 +2945,6 @@ export default {
+@@ -2991,7 +2942,6 @@ export default {
      stopFailed: 'Ошибка остановки',
    },
  
@@ -1003,7 +1003,7 @@ index bab48774c..16772ba9a 100644
    language: {
      label: 'Язык',
      zh: 'Китайский',
-@@ -3002,7 +2952,6 @@ export default {
+@@ -2999,7 +2949,6 @@ export default {
      ru: 'Русский',
    },
  
@@ -1011,7 +1011,7 @@ index bab48774c..16772ba9a 100644
    terminal: {
      sessions: 'Сеансы',
      newTab: 'Новая вкладка терминала',
-@@ -3015,7 +2964,6 @@ export default {
+@@ -3012,7 +2961,6 @@ export default {
      connectionError: 'Ошибка соединения с терминалом',
    },
  
@@ -1019,7 +1019,7 @@ index bab48774c..16772ba9a 100644
    groupChat: {
      routingHandoffIncomplete: 'Информация для передачи может быть неполной.',
      routingLoopDetected: 'Возможно повторное хождение по кругу.',
-@@ -3246,7 +3194,6 @@ export default {
+@@ -3243,7 +3191,6 @@ export default {
      summaryLoadFailed: 'Не удалось загрузить резюме комнаты',
    },
  
@@ -1028,7 +1028,7 @@ index bab48774c..16772ba9a 100644
      costStates: {
        unknown: "Не записано",
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index b432b9507..5dd8fe71e 100644
+index 889aee70d..b0380d959 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -469,34 +469,6 @@ export default {
@@ -1075,7 +1075,7 @@ index b432b9507..5dd8fe71e 100644
      jobs: '任務',
      kanban: '看板',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index bd0518321..b979da007 100644
+index ee4adcb97..e67a4325c 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -469,34 +469,6 @@ export default {

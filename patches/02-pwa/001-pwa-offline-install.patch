@@ -1,4 +1,4 @@
-From 883304c469e4f4f2b21066ba1c3edd0f797c829c Mon Sep 17 00:00:00 2001
+From 41dd0392b5956ed1211de461bec9f9cc709a1415 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 7 Jul 2026 10:11:13 +0800
 Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
@@ -8927,7 +8927,7 @@ index 000000000..b775142ab
 +  return cached || fetchPromise;
 +}
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index b2a059ecb..3d53d49f8 100644
+index 54058db68..91b0bdb95 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
 @@ -35,6 +35,7 @@ import { navigationRailKey } from "@/composables/useNavigationRail";
@@ -8938,7 +8938,7 @@ index b2a059ecb..3d53d49f8 100644
  
  const StudioNavigationRail = defineAsyncComponent(
    async () => (await import("@/components/layout/StudioNavigationRail.vue")).default,
-@@ -283,6 +284,7 @@ onUnmounted(() => {
+@@ -284,6 +285,7 @@ onUnmounted(() => {
  });
  
  useKeyboard();
@@ -9067,10 +9067,10 @@ index 000000000..1ee3936c6
 +  return { updateAvailable, applyUpdate }
 +}
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 544fc8bb7..9fffbd93a 100644
+index 649cde840..30830f500 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -3860,4 +3860,7 @@ export default {
+@@ -3894,4 +3894,7 @@ export default {
      new_0_7_0_10: 'The English and Chinese READMEs now document the five runtimes, three Agent families, module ownership, canonical APIs, and current development and validation workflows (#2745)',
      new_0_7_0_11: 'Device Connections now shows only Android and iOS download cards; official Apple releases are labeled App Store instead of TestFlight · App Store',
    },
@@ -9079,10 +9079,10 @@ index 544fc8bb7..9fffbd93a 100644
 +  },
  }
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 1d13d3e55..7d7dddb6e 100644
+index 700ddfdb4..adf6f9c66 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -3908,4 +3908,7 @@ export default {
+@@ -3942,4 +3942,7 @@ export default {
      new_0_7_0_10: '中英文 README 已更新，完整说明五种运行时、三类 Agent、模块归属、规范 API，以及当前开发和验证流程（#2745）',
      new_0_7_0_11: '“设备互联”现仅显示 Android 和 iOS 下载卡片；Apple 正式版只标记为 App Store，不再显示 TestFlight · App Store',
    },

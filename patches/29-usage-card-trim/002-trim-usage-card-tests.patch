@@ -1,8 +1,7 @@
-From b3de144f762b5b5ab041c79671a67cbcc870944b Mon Sep 17 00:00:00 2001
+From 1025420bd96587f439b7a30d1108d06081eb7592 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 01:01:19 +0800
-Subject: [PATCH 2/2] test(e2e): adapt run usage card assertions to four
- metrics
+Subject: [PATCH] test(e2e): adapt run usage card assertions to four metrics
 
 The spec asserted the removed cache-rate cell and the cost cell. Output stays
 the first cell and the speed cell is still the last metric with its tooltip,
