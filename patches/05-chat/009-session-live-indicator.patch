@@ -1,0 +1,255 @@
+From 095d72944c8fbdbe99e1a59e88ea1cdb115a8705 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 20 Jul 2026 23:21:16 +0800
+Subject: [PATCH] fix(chat): keep session live indicator when identity row is
+ hidden
+
+The working/live status was rendered only as a streaming class on the
+agent avatar row. Hiding display.show_session_identity therefore also
+hid the active-session marker. Add a title-row live dot independent of
+the identity row so working sessions stay visible either way.
+---
+ .../hermes/chat/SessionListItem.vue           | 40 +++++++++++++++++++
+ packages/client/src/i18n/locales/de.ts        |  1 +
+ packages/client/src/i18n/locales/en.ts        |  1 +
+ packages/client/src/i18n/locales/es.ts        |  1 +
+ packages/client/src/i18n/locales/fr.ts        |  1 +
+ packages/client/src/i18n/locales/ja.ts        |  1 +
+ packages/client/src/i18n/locales/ko.ts        |  1 +
+ packages/client/src/i18n/locales/pt.ts        |  1 +
+ packages/client/src/i18n/locales/ru.ts        |  1 +
+ packages/client/src/i18n/locales/zh-TW.ts     |  1 +
+ packages/client/src/i18n/locales/zh.ts        |  1 +
+ tests/client/session-list-item.test.ts        | 40 +++++++++++++++++++
+ 12 files changed, 90 insertions(+)
+
+diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
+index 8792af9bd..03f4c6471 100644
+--- a/packages/client/src/components/hermes/chat/SessionListItem.vue
++++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
+@@ -131,6 +131,12 @@ onUnmounted(() => {
+             <PinIcon width="13" height="13" filled />
+           </span>
+           <span v-if="completedUnread" class="session-item-unread-dot" aria-hidden="true" />
++          <span
++            v-if="streaming"
++            class="session-item-live-dot"
++            :title="t('chat.sessionLive')"
++            :aria-label="t('chat.sessionLive')"
++          />
+           <span class="session-item-title" dir="auto">
+             {{ session.title }}
+           </span>
+@@ -307,6 +313,40 @@ onUnmounted(() => {
+   box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.12);
+ }
+ 
++/* Live/working indicator is independent of the agent/profile identity row.
++   Identity can be hidden via display settings; the live status must remain visible. */
++.session-item-live-dot {
++  flex: 0 0 auto;
++  width: 7px;
++  height: 7px;
++  margin-top: 5px;
++  border-radius: 50%;
++  background: #171717;
++  box-shadow:
++    0 0 0 2px rgba(23, 23, 23, 0.12),
++    0 0 8px rgba(255, 107, 107, 0.35);
++  animation: session-live-pulse 1.5s ease-in-out infinite;
++}
++
++.dark .session-item-live-dot {
++  background: #f5f5f5;
++  box-shadow:
++    0 0 0 2px rgba(245, 245, 245, 0.16),
++    0 0 10px rgba(255, 107, 107, 0.4);
++}
++
++@keyframes session-live-pulse {
++  0%,
++  100% {
++    transform: scale(1);
++    opacity: 1;
++  }
++  50% {
++    transform: scale(0.82);
++    opacity: 0.72;
++  }
++}
++
+ .session-item-time {
+   flex: 0 0 auto;
+   margin-top: 1px;
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 93044c496..8c18a827e 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1167,6 +1167,7 @@ export default {
+     sessionListActions: 'Aktionen für die Sitzungsliste',
+     filterByProfile: 'Nach Profil filtern',
+     selectedSessions: '{count} ausgewählt',
++    sessionLive: 'Sitzung arbeitet',
+     toggleBatchMode: 'Batch-Auswahl',
+     selectAll: 'Alle auswählen',
+     confirmBatchDelete: '{count} ausgewählte Sitzungen löschen?',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index e76dc8e97..881181e6a 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -1226,6 +1226,7 @@ export default {
+     interactionCountdownElapsed: '00:00 · Awaiting server confirmation',
+     newCliChat: 'New CLI',
+     deleteSession: 'Delete this session?',
++    sessionLive: 'Session is working',
+     sessionDeleted: 'Session deleted',
+     sessionListActions: 'Session list actions',
+     filterByProfile: 'Filter by Profile',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index a3c86a092..958445f59 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1167,6 +1167,7 @@ export default {
+     sessionListActions: 'Acciones de la lista de sesiones',
+     filterByProfile: 'Filtrar por perfil',
+     selectedSessions: '{count} seleccionadas',
++    sessionLive: 'Sesion en curso',
+     toggleBatchMode: 'Selección por lotes',
+     selectAll: 'Seleccionar todo',
+     confirmBatchDelete: '¿Eliminar {count} sesiones seleccionadas?',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 06d2fff33..0021c50af 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1167,6 +1167,7 @@ export default {
+     sessionListActions: 'Actions de la liste des sessions',
+     filterByProfile: 'Filtrer par profil',
+     selectedSessions: '{count} sélectionnées',
++    sessionLive: 'Session en cours',
+     toggleBatchMode: 'Sélection par lot',
+     selectAll: 'Tout sélectionner',
+     confirmBatchDelete: 'Supprimer {count} sessions sélectionnées?',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index a098786ac..bb575e210 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1167,6 +1167,7 @@ export default {
+     sessionListActions: 'セッション一覧の操作',
+     filterByProfile: 'プロファイルで絞り込み',
+     selectedSessions: '{count} 件選択中',
++    sessionLive: 'セッション実行中',
+     toggleBatchMode: '一括選択',
+     selectAll: 'すべて選択',
+     confirmBatchDelete: '{count}件のセッションを削除しますか？',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index e02424926..160b0319c 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1167,6 +1167,7 @@ export default {
+     sessionListActions: '세션 목록 작업',
+     filterByProfile: '프로필로 필터링',
+     selectedSessions: '{count}개 선택됨',
++    sessionLive: '세션 작업 중',
+     toggleBatchMode: '일괄 선택',
+     selectAll: '모두 선택',
+     confirmBatchDelete: '선택한 {count}개의 세션을 삭제하시겠습니까?',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 8d4c79ded..485035cf9 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1167,6 +1167,7 @@ export default {
+     sessionListActions: 'Ações da lista de sessões',
+     filterByProfile: 'Filtrar por perfil',
+     selectedSessions: '{count} selecionadas',
++    sessionLive: 'Sessão em execução',
+     toggleBatchMode: 'Seleção em lote',
+     selectAll: 'Selecionar tudo',
+     confirmBatchDelete: 'Excluir {count} sessões selecionadas?',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 5a8cc10b5..b253e67d4 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -1110,6 +1110,7 @@ export default {
+     interactionCountdownElapsed: '00:00 · Ожидание подтверждения сервера',
+     newCliChat: 'Новый CLI',
+     deleteSession: 'Удалить этот сеанс?',
++    sessionLive: 'Сессия выполняется',
+     sessionDeleted: 'Сеанс удалён',
+     sessionListActions: 'Действия со списком сеансов',
+     filterByProfile: 'Фильтр по профилю',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 26e045b27..a9bfc56b3 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -1216,6 +1216,7 @@ export default {
+     interactionCountdown: '剩餘 {time}',
+     interactionCountdownElapsed: '00:00 · 等待伺服器確認',
+     deleteSession: '確定刪除此工作階段？',
++    sessionLive: '會話進行中',
+     sessionDeleted: '工作階段已刪除',
+     sessionListActions: '會話列表操作',
+     filterByProfile: '依 Profile 篩選',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 1c7564bb6..dd4299774 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -1226,6 +1226,7 @@ export default {
+     interactionCountdownElapsed: '00:00 · 等待服务端确认',
+     newCliChat: '新建 CLI',
+     deleteSession: '确定删除此会话？',
++    sessionLive: '会话进行中',
+     sessionDeleted: '会话已删除',
+     sessionListActions: '会话列表操作',
+     filterByProfile: '按 Profile 筛选',
+diff --git a/tests/client/session-list-item.test.ts b/tests/client/session-list-item.test.ts
+index 37d8d65ef..8c7172592 100644
+--- a/tests/client/session-list-item.test.ts
++++ b/tests/client/session-list-item.test.ts
+@@ -354,4 +354,44 @@ describe('SessionListItem', () => {
+     expect(wrapper.get('.session-item-agent-logo').attributes('src')).toBe('/coding-agents/hermes.png')
+     expect(wrapper.find('.session-item-profile').exists()).toBe(true)
+   })
++  it('shows an independent live-status indicator when streaming', () => {
++    settingsDisplay.show_session_identity = false
++    const wrapper = mount(SessionListItem, {
++      props: {
++        session: { ...session, source: 'cli', agent: 'hermes' },
++        active: false,
++        pinned: false,
++        canDelete: true,
++        streaming: true,
++      },
++      global: {
++        stubs: {
++          ProfileAvatar: true,
++        },
++      },
++    })
++
++    expect(wrapper.find('.session-item-agent-row').exists()).toBe(false)
++    expect(wrapper.find('.session-item-live-dot').exists()).toBe(true)
++  })
++
++  it('does not show the live-status indicator when not streaming', () => {
++    const wrapper = mount(SessionListItem, {
++      props: {
++        session: { ...session, source: 'cli', agent: 'hermes' },
++        active: false,
++        pinned: false,
++        canDelete: true,
++        streaming: false,
++      },
++      global: {
++        stubs: {
++          ProfileAvatar: true,
++        },
++      },
++    })
++
++    expect(wrapper.find('.session-item-live-dot').exists()).toBe(false)
++  })
++
+ })
+-- 
+2.53.0
+
