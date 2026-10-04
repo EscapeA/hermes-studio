@@ -817,7 +817,7 @@ const headerTitle = computed(() =>
 );
 
 const showNewChatModal = ref(false);
-const newChatAgent = ref<"hermes" | ChatCodingAgentId>("ekko-agent");
+const newChatAgent = ref<"hermes" | ChatCodingAgentId>("hermes");
 const newChatAgentMode = ref<"global" | "scoped">("scoped");
 const newChatProfile = ref<string>("default");
 const newChatProvider = ref<string>("");
@@ -1217,7 +1217,7 @@ async function refreshNewChatAgentAvailability(sequence: number) {
     if (!isCurrentNewChatOptionsLoad(sequence)) return;
     newChatAgentAvailability.value = availability;
     if (!newChatAgentOptions.value.some(option => option.value === newChatAgent.value)) {
-      newChatAgent.value = newChatAgentOptions.value[0]?.value || "ekko-agent";
+      newChatAgent.value = newChatAgentOptions.value[0]?.value || "hermes";
     }
   } catch {
     if (isCurrentNewChatOptionsLoad(sequence) && !newChatAgentAvailability.value) {
