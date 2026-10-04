@@ -67,7 +67,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - ⚠️ **生效需换新 worker 进程**（Python 不热重载，`_sync_*_patches()` 不含该方法）：回收 bridge worker 或重启 `hermes-web-ui-client.service`；
   且 **agent 自身就跑在 worker 里**，只能由用户在本轮结束后执行。离线契约对拍脚本与两个回收脚本见 skill
   `hermes-webui-development → references/clarify-capabilities.md`。
-- 当前补丁文件总数 = **107**（以 `find patches -type f -name '*.patch' | wc -l` 为准；104 = 30 组时点，其后新增 `31-0.7.28-adapt`、`32-reconnect-run-state` 与 `33-0.7.29-adapt`）。
+- 当前补丁文件总数 = **109**（以 `find patches -type f -name '*.patch' | wc -l` 为准；104 = 30 组时点，其后新增 `31-0.7.28-adapt`、`32-reconnect-run-state`（001-002）、`33-0.7.29-adapt` 与 `34-new-chat-default-hermes`）。
 
 **2026-10-04 升级 0.7.29（main `ae238d0ae`；7 提交 / 199 文件 / +4966 −1165）**：106 补丁重放 **6 处冲突**全部解毕并回写（**55 个补丁文件重写 / 51 个逐字节未变；新增 `33-0.7.29-adapt` 组**）：
 
@@ -81,6 +81,9 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - 部署：`bin/` 与依赖**零变化**（`package.json` 仅版本号）⇒ 纯 dist 热替，**不需要 `npm i -g`**。
 - 验证：预演树 `npm run build`（openapi:generate + vue-tsc -b + vite + server tsc + esbuild）**exit 0**；`harness:check` 通过；三树对比（预演 1675 例 / 140 失败 vs 0.7.28 基线树 1477 / 135 vs 纯净上游 1788 / 1）⇒ **新增失败 5 例全是本轮新上游测试**（`chat-store-session-command` 的 5 个 Ekko 命令用例），根因是 fork 的 `32-reconnect-run-state` 让 store 在 setup 期调用 `onChatRunConnected`、而这 8 个测试文件的 `@/api/studio/chat` mock 没补该导出（**同样因由使基线该文件 23/23 全红，属既有缺口、非本轮回归**）；promo / 删除型补丁标识符全仓复扫 0 命中（`apikey.fan/register`、`apiRelay`、`groupChat.*`、`workflow.*`、`ProfileAvatar`）；改动 vs 旧 custom 与上游改动文件集**完全重合**（无解析器误改）。
 - 上游本轮主题：6 个 native coding agent（qwen/kimi/codebuddy/qoder/copilot/zcode，`config/agents.json` → 16 agent）、builtin Ekko 会话分类（`source:'builtin_agent'`）、**新会话默认 agent Hermes → Ekko**（fork 无对抗，跟随上游 ⇒ 用户可见变化）、移除 OpenCode Free provider、Antigravity Live Activity 身份、coding-agent 图片输入 / Windows 长 prompt。
+- **同日追加两条（Aries 2026-10-04 拍板）**：
+  - **`34-new-chat-default-hermes/001`**：把新会话默认 agent 从上游的 `ekko-agent` **改回 `hermes`**（`ChatPanel.vue` 两处：ref 初值 + 空选项时的兜底字面量）。上游 #3284 的「只列已安装 agent」过滤与「创建期不探测 CLI」**照留**；默认只在 `hermes` 不在已安装列表时才被首个可用项取代（既有逻辑）。
+  - **`32-reconnect-run-state/002`**：补 8 个 chat-store 测试文件 `@/api/studio/chat` mock 的 `onChatRunConnected`（32/001 让 store 在 setup 期就调用它 ⇒ 未 mock 的测试**在 setup 直接抛错**）。并把 `chat-store-reasoning-effort` 的 `fetchSessions` 从裸 `vi.fn()` 重新接回 `sessionsApi.fetchSessions`——05-chat/003 当年改断了这层接线，使「从服务端摘要读 reasoning effort」用例的 `.mockImplementation` 失效（此前被 setup 崩溃掩盖，补 mock 后才暴露）。8 文件 132 例全绿（此前 127 例红）。
 
 
 **2026-10-03 新增 `32-reconnect-run-state` 组（001）**：修「壳退后台时任务跑完，界面永久停在 run 态」（Aries 2026-10-03 真机验收）。
