@@ -861,12 +861,14 @@ function handleNewChatEscape(event: KeyboardEvent) {
 
 watch(() => router.currentRoute.value.fullPath, () => closeNewChatPage());
 const NEW_CHAT_AGENT_STORAGE_KEY = "hermes_new_chat_agent_v1";
+// fork: Hermes stays the default for new chats; the last explicit pick wins afterwards.
+const DEFAULT_NEW_CHAT_AGENT = "hermes";
 function loadNewChatAgent(): "hermes" | ChatCodingAgentId {
   try {
     const saved = localStorage.getItem(NEW_CHAT_AGENT_STORAGE_KEY);
-    return AGENT_OPTIONS.find(option => option.value === saved)?.value || AGENT_OPTIONS[0].value;
+    return AGENT_OPTIONS.find(option => option.value === saved)?.value || DEFAULT_NEW_CHAT_AGENT;
   } catch {
-    return AGENT_OPTIONS[0].value;
+    return DEFAULT_NEW_CHAT_AGENT;
   }
 }
 let preferredNewChatAgent = loadNewChatAgent();
@@ -1224,6 +1226,7 @@ async function refreshNewChatAgentAvailability(sequence: number) {
     if (!isCurrentNewChatOptionsLoad(sequence)) return;
     newChatAgentAvailability.value = availability;
     newChatAgent.value = newChatAgentOptions.value.find(option => option.value === preferredNewChatAgent)?.value
+      || newChatAgentOptions.value.find(option => option.value === DEFAULT_NEW_CHAT_AGENT)?.value
       || newChatAgentOptions.value[0]?.value || AGENT_OPTIONS[0].value;
   } catch {
     if (isCurrentNewChatOptionsLoad(sequence) && !newChatAgentAvailability.value) {
