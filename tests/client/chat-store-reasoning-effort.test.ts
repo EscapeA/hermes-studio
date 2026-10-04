@@ -19,6 +19,7 @@ const sessionsApi = vi.hoisted(() => ({
 
 vi.mock('@/api/studio/chat', () => ({
   onUnobservedRunStarted: vi.fn(() => vi.fn()),
+  onChatRunConnected: vi.fn(() => vi.fn()),
   startRunViaSocket: chatApi.startRunViaSocket,
   resumeSession: chatApi.resumeSession,
   registerSessionHandlers: chatApi.registerSessionHandlers,
@@ -45,6 +46,7 @@ vi.mock('@/api/studio/sessions', () => ({
   deleteSession: vi.fn(),
   fetchSession: vi.fn(),
   fetchSessions: sessionsApi.fetchSessions,
+  fetchSessionMessagesPage: vi.fn(),
   fetchWorkspaceRunChangesForSession: vi.fn(async () => []),
   fetchWorkspaceRunChangeFile: vi.fn(async () => null),
   setSessionModel: sessionsApi.setSessionModel,

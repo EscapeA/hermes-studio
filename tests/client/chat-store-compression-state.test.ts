@@ -14,6 +14,7 @@ const chatApi = vi.hoisted(() => ({
 
 vi.mock('@/api/studio/chat', () => ({
   onUnobservedRunStarted: vi.fn(() => vi.fn()),
+  onChatRunConnected: vi.fn(() => vi.fn()),
   startRunViaSocket: chatApi.startRunViaSocket,
   resumeSession: chatApi.resumeSession,
   registerSessionHandlers: chatApi.registerSessionHandlers,

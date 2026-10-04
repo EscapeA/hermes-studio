@@ -16,6 +16,7 @@ vi.mock('@/api/studio/sessions', () => ({
 }))
 vi.mock('@/api/studio/chat', () => ({
   onUnobservedRunStarted: vi.fn(() => vi.fn()),
+  onChatRunConnected: vi.fn(() => vi.fn()),
   resumeSession: api.resumeSession,
   startRunViaSocket: vi.fn(), registerSessionHandlers: vi.fn(), unregisterSessionHandlers: vi.fn(),
   getChatRunSocket: vi.fn(() => ({ emit: vi.fn() })),
