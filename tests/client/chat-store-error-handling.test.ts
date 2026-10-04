@@ -19,6 +19,7 @@ vi.mock('@/utils/completion-notification',()=>({showCompletionNotification:compl
 
 vi.mock('@/api/studio/chat', () => ({
   onUnobservedRunStarted: vi.fn(() => vi.fn()),
+  onChatRunConnected: vi.fn(() => vi.fn()),
   startRunViaSocket: chatApi.startRunViaSocket,
   resumeSession: chatApi.resumeSession,
   registerSessionHandlers: chatApi.registerSessionHandlers,
