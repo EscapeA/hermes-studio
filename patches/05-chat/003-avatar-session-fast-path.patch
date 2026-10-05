@@ -1,4 +1,4 @@
-From 0f6382e0c46fe376b883935c65ae80052916f77b Mon Sep 17 00:00:00 2001
+From 1c40f279c186ba592585ee4ab8de48892b3daa82 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 01:53:06 +0800
 Subject: [PATCH] perf(web): strip avatar payloads and open last session first
@@ -12,7 +12,7 @@ for the full session list.
  packages/client/src/api/studio/auth.ts        |   2 +
  .../hermes/profiles/ProfileAvatar.vue         |  66 ++++++++++-
  .../hermes/settings/AccountSettings.vue       |   2 +-
- packages/client/src/stores/hermes/chat.ts     |  50 +++++++--
+ packages/client/src/stores/hermes/chat.ts     |  48 +++++++-
  .../client/src/stores/hermes/group-chat.ts    |   3 +-
  .../client/src/utils/group-agent-avatar.ts    |   9 +-
  packages/client/src/views/hermes/ChatView.vue |   5 +-
@@ -30,7 +30,7 @@ for the full session list.
  tests/server/auth-routes-avatar.test.ts       |   8 ++
  tests/server/profiles-routes.test.ts          |  51 +++++++++
  tests/server/user-auth.test.ts                |   2 +
- 22 files changed, 400 insertions(+), 24 deletions(-)
+ 22 files changed, 400 insertions(+), 22 deletions(-)
  create mode 100644 tests/client/chat-store-startup-session.test.ts
 
 diff --git a/packages/client/src/api/hermes/profiles.ts b/packages/client/src/api/hermes/profiles.ts
@@ -168,7 +168,7 @@ index bae25a294..806f7ef8e 100644
            />
          </div>
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 33e6b5667..6e7e8f62c 100644
+index 30373538e..5b69b3f9c 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
 @@ -1896,10 +1896,20 @@ export const useChatStore = defineStore('chat', () => {
@@ -216,7 +216,7 @@ index 33e6b5667..6e7e8f62c 100644
    // Refresh ONLY the session list metadata (titles, ordering, new/removed
    // sessions) without switching the active session or reloading its messages.
    // Used for live sync so sessions created elsewhere (CLI, Telegram, another
-@@ -2115,11 +2138,23 @@ export const useChatStore = defineStore('chat', () => {
+@@ -2115,7 +2138,21 @@ export const useChatStore = defineStore('chat', () => {
      setItemBestEffort(storageKey(), sessionId)
      const legacyActiveKey = legacyStorageKey()
      if (legacyActiveKey) removeItem(legacyActiveKey)
@@ -238,12 +238,8 @@ index 33e6b5667..6e7e8f62c 100644
 +    activeSession.value = target
      clearSessionCompletedUnread(sessionId)
  
--    if (!activeSession.value) return false
--
-     beginMessageLoad(sessionId, requestSequence)
-     let backgroundPendingOnResume = 0
- 
-@@ -5718,6 +5753,7 @@ export const useChatStore = defineStore('chat', () => {
+     if (!activeSession.value) return false
+@@ -5722,6 +5759,7 @@ export const useChatStore = defineStore('chat', () => {
      loadSessions,
      refreshSessionListOnly,
      refreshActiveSession,
@@ -523,7 +519,7 @@ index ed9d2a1a2..07d1e42fd 100644
  authProtectedRoutes.delete('/api/auth/password', ctrl.removePassword)
  authProtectedRoutes.get('/api/auth/users', requireSuperAdmin, ctrl.listManagedUsers)
 diff --git a/tests/client/chat-store-compression-state.test.ts b/tests/client/chat-store-compression-state.test.ts
-index 82a89811b..5aa29810f 100644
+index 63ff81019..4bdb04a34 100644
 --- a/tests/client/chat-store-compression-state.test.ts
 +++ b/tests/client/chat-store-compression-state.test.ts
 @@ -39,6 +39,7 @@ vi.mock('@/api/studio/sessions', () => ({

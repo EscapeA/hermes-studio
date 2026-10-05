@@ -69,6 +69,15 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
   `hermes-webui-development → references/clarify-capabilities.md`。
 - 当前补丁文件总数 = **109**（以 `find patches -type f -name '*.patch' | wc -l` 为准；104 = 30 组时点，其后新增 `31-0.7.28-adapt`、`32-reconnect-run-state`（001-002）、`33-0.7.29-adapt` 与 `34-new-chat-default-hermes`）。
 
+**2026-10-05 升级 0.7.30（main `c204d59bd`；5 提交 / 100 文件 / +2675 −2807）**：109 补丁重放 **1 处冲突**（**2 个补丁文件回写 / 100 个逐字节未变**；无新增补丁组）：
+
+- **`05-chat/003-avatar-session-fast-path`（`stores/hermes/chat.ts`）**：上游 #3288 在 `openSession` 的 `beginMessageLoad(...)` 之前新增「未发送草稿无服务端历史」的提前返回，与 fork fast-first 补丁同区域 ⇒ **取上游新行为（HEAD 侧 4 行）+ fork fast-first 增量原样保留**（ours 侧为空，无内容丢失）。回写后该补丁 hunk 的上下文即含上游这段提前返回。
+- **`02-pwa/001-pwa-offline-install`（仅上下文漂移）**：上游本轮裁剪 changelog（删 0.7.27 及更早条目），该补丁在 `i18n/locales/{en,zh}.ts` 的 changelog 锚点由 `new_0_7_0_10/11` 变为 `new_0_7_28_5/6`；语义未变，回写仅刷新锚点。
+- 上游本轮主题：**#3281 coding-agents 模块隔离重构**（`services/runtime/*` 拆成每 agent 一个 `services/<id>/` + `services/registry/`；`services/native/chat-turn.ts`、`services/native/runtime-config.ts` 删除；`protocol/acp/turn.ts` 迁移；新增 `scripts/coding-agent-module-harness.mjs` 并入 `harness:check`）、#3286/#3289 Copilot 流式与自定义工具参数、#3287 Claude 沙箱权限绕过、#3288 未发送草稿不加载历史、0.7.30 版本号与 changelog。
+- 兼容性：`package.json` / `package-lock.json` **仅版本号变化**、`bin/` 与已装包逐字节一致（`npm pack` 实测）⇒ **纯 dist 热替，不需要 `npm i -g`**；`docs/openapi.json` 只有 `info.version` ⇒ **API 面零变化**（hstudio-mobile 无需适配）。
+- 验证：预演树（worktree `--detach` 到 upstream tip）`npm run build` exit 0 + `harness:check` 通过；单测三向对比中的双向（30 个受影响/新增文件）新树 **598 例 / 0 失败** vs 0.7.29 基线树 494 例 / 0 失败 ⇒ **0 回归**；补丁行存活审计（带 baseline）**无静默丢失**；删除型补丁标识符复扫 `apikey.fan` 推广链接 / `apiRelay` / workflow 目录 **全仓 0 命中**，`i18n-coverage` 通过。
+- 落地手法：预演树已验证树等价，故按 playbook §9 **`cherry-pick upstream/main..<preflight-tip>`**（不再二次 `git am`），`git diff custom <preflight-tip> -- . ':(exclude)patches'` 为空；verify-am **109/109 零冲突、0 差异**。备份 tag `backup/custom-pre-0.7.30`。
+
 **2026-10-04 升级 0.7.29（main `ae238d0ae`；7 提交 / 199 文件 / +4966 −1165）**：106 补丁重放 **6 处冲突**全部解毕并回写（**55 个补丁文件重写 / 51 个逐字节未变；新增 `33-0.7.29-adapt` 组**）：
 
 - **`04-usage/001`（session.ts）**：union merge——上游新增 `ekkoContext?: { fixedContextTokens: number }`，fork 的 `apiPromptTokens?: number` 并排保留。
