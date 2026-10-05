@@ -1,0 +1,61 @@
+From 8835b21ada1f13a08b1db2aac005f74215174d33 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 14:17:08 +0800
+Subject: [PATCH] feat(chat): show context usage percentage with warning colors
+
+---
+ .../src/components/hermes/chat/ChatInput.vue  | 24 ++++++++++++++++---
+ 1 file changed, 21 insertions(+), 3 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index 9cf9145e1..592bd9380 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -832,8 +832,6 @@ const totalTokens = computed(() => {
+ const showContextUsage = computed(() => !!chatStore.activeSession)
+ const showContextLimit = computed(() => !showSessionUsage.value)
+ 
+-const remainingTokens = computed(() => Math.max(0, contextLength.value - totalTokens.value))
+-
+ const usagePercent = computed(() =>
+   Math.min((totalTokens.value / contextLength.value) * 100, 100),
+ )
+@@ -1175,7 +1173,14 @@ function openAttachmentPreview(attachment: Attachment) {
+             </template>
+             <span>{{ t('chat.contextClickToEdit') }}</span>
+           </NTooltip>
+-          · {{ t('chat.contextRemaining') }} {{ formatTokens(remainingTokens) }}
++          · <span
++            class="context-percent"
++            :class="{
++              'context-percent-warn': usagePercent > 60 && usagePercent <= 80,
++              'context-percent-danger': usagePercent > 80,
++            }"
++            >{{ usagePercent.toFixed(1) }}%</span
++          >
+         </template>
+       </span>
+       <div v-if="showContextLimit" class="context-bar">
+@@ -1924,6 +1929,19 @@ function openAttachmentPreview(attachment: Attachment) {
+   }
+ }
+ 
++.context-percent {
++  font-weight: 600;
++  color: inherit;
++
++  &.context-percent-warn {
++    color: #e8a735;
++  }
++
++  &.context-percent-danger {
++    color: #e85d4a;
++  }
++}
++
+ .context-limit-editable {
+   cursor: pointer;
+   border-bottom: 1px dashed transparent;
+-- 
+2.53.0
+
