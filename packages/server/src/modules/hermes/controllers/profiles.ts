@@ -529,6 +529,14 @@ export async function getAvatarImage(ctx: any) {
       ctx.body = { error: 'Avatar image not found' }
       return
     }
+    // Defense in depth: meta.file is only ever written as 'avatar.bin', but a
+    // tampered metadata file must not be able to point the read stream at an
+    // arbitrary path. Reject anything that is not a bare filename.
+    if (basename(meta.file) !== meta.file || meta.file === '.' || meta.file === '..') {
+      ctx.status = 404
+      ctx.body = { error: 'Avatar image not found' }
+      return
+    }
     const imagePath = profileAvatarImagePath(name, meta.file)
     if (!existsSync(imagePath)) {
       ctx.status = 404
