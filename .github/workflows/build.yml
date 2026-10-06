@@ -40,6 +40,10 @@ jobs:
       - name: Check repository harness
         run: npm run harness:check
 
+      - name: Verify patch stack freshness
+        # 补丁串必须能从 main 干净重放并与 custom 源码树逐字节一致（否则有改动漏回写 patches/）
+        run: bash scripts/verify-patch-stack.sh
+
       - name: Build
         run: npm run build
 
