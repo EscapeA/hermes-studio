@@ -20,7 +20,9 @@ const AGENT_LABELS = {
 } as const satisfies Record<string, ChatAgentLabel>
 
 export function chatSessionAgentLabel(session?: ChatAgentSessionIdentity | null): ChatAgentLabel {
-  if (!session) return AGENT_LABELS['ekko-agent']
+  // No session yet (before the first load) — the fork's default agent is Hermes
+  // (34-new-chat-default-hermes), so don't flash the legacy Ekko label.
+  if (!session) return AGENT_LABELS.hermes
   const runtime = String(session?.codingAgentId || session?.agent || '').trim().toLowerCase()
   if (runtime === 'ekko-agent' || runtime === 'ekko_agent' || runtime === 'ekko') return AGENT_LABELS['ekko-agent']
   if (runtime === 'claude' || runtime === 'claude-code') return AGENT_LABELS['claude-code']
