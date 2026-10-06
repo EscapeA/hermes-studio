@@ -38,8 +38,26 @@ trap cleanup EXIT
 WT_DIR=""  # cleanup 引用前占位，避免 set -u 误报
 
 # --- 前置检查 -------------------------------------------------------------
-git rev-parse --verify --quiet "$BASE_REF^{commit}"  >/dev/null || fail "基线引用不存在: $BASE_REF"
-git rev-parse --verify --quiet "$STACK_REF^{commit}" >/dev/null || fail "补丁分支不存在: $STACK_REF"
+# 解析引用：本地分支优先，回退到远端跟踪引用（CI 上 actions/checkout 通常只有
+# 被推送分支是本地分支，基线 main 只作为 origin/main 存在）。
+resolve_ref() {
+  local name="$1" cand
+  for cand in "$name" "origin/$name" "refs/remotes/origin/$name"; do
+    if git rev-parse --verify --quiet "$cand^{commit}" >/dev/null 2>&1; then
+      printf '%s' "$cand"; return 0
+    fi
+  done
+  return 1
+}
+
+if ! BASE_RESOLVED="$(resolve_ref "$BASE_REF")"; then
+  fail "基线引用不存在: $BASE_REF（本地与 origin/ 均无）"
+fi
+BASE_REF="$BASE_RESOLVED"
+if ! STACK_RESOLVED="$(resolve_ref "$STACK_REF")"; then
+  fail "补丁分支不存在: $STACK_REF（本地与 origin/ 均无）"
+fi
+STACK_REF="$STACK_RESOLVED"
 
 # patches/ 只存在于 custom 分支；基线(main)上没有。需要从 custom 取出补丁清单。
 if ! git cat-file -e "$STACK_REF:patches" 2>/dev/null; then
