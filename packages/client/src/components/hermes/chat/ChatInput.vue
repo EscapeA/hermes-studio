@@ -883,8 +883,6 @@ const totalTokens = computed(() => {
 const showContextUsage = computed(() => !!composerSession.value)
 const showContextLimit = computed(() => !showSessionUsage.value)
 
-const remainingTokens = computed(() => totalTokens.value == null ? null : Math.max(0, contextLength.value - totalTokens.value))
-
 const usagePercent = computed(() =>
   Math.min(((totalTokens.value ?? 0) / contextLength.value) * 100, 100),
 )
@@ -936,7 +934,7 @@ const showSessionTokensUsed = computed(() => {
   const u = sessionUsageTotal.value
   return !!chatStore.activeSession && !!u && sessionTotalTokens.value > 0
 })
-const cacheHitRatePercent = computed(() => {
+const cacheReadSharePercent = computed(() => {
   const u = sessionUsageTotal.value
   if (!u || sessionTotalTokens.value <= 0) return '0.00'
   return ((u.cacheRead / sessionTotalTokens.value) * 100).toFixed(2)
@@ -1310,7 +1308,7 @@ function openAttachmentPreview(attachment: Attachment) {
           placement="bottom-start"
         >
           <template #trigger>
-            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · <span class="session-percent">{{ cacheHitRatePercent }}%</span></span>
+            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · <span class="session-percent">{{ cacheReadSharePercent }}%</span></span>
           </template>
           <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
         </NPopover>
