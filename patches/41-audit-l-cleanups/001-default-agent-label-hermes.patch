@@ -1,0 +1,45 @@
+From 4a912f8c5436b5fdcd8886061bd5e2cea1bd9d9c Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 7 Oct 2026 00:26:54 +0800
+Subject: [PATCH] fix(chat): default agent label is Hermes before a session
+ loads
+
+---
+ packages/client/src/utils/chat-agent-label.ts | 4 +++-
+ tests/client/chat-agent-label.test.ts         | 4 ++--
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/packages/client/src/utils/chat-agent-label.ts b/packages/client/src/utils/chat-agent-label.ts
+index e6be4da15..d8c407488 100644
+--- a/packages/client/src/utils/chat-agent-label.ts
++++ b/packages/client/src/utils/chat-agent-label.ts
+@@ -20,7 +20,9 @@ const AGENT_LABELS = {
+ } as const satisfies Record<string, ChatAgentLabel>
+ 
+ export function chatSessionAgentLabel(session?: ChatAgentSessionIdentity | null): ChatAgentLabel {
+-  if (!session) return AGENT_LABELS['ekko-agent']
++  // No session yet (before the first load) — the fork's default agent is Hermes
++  // (34-new-chat-default-hermes), so don't flash the legacy Ekko label.
++  if (!session) return AGENT_LABELS.hermes
+   const runtime = String(session?.codingAgentId || session?.agent || '').trim().toLowerCase()
+   if (runtime === 'ekko-agent' || runtime === 'ekko_agent' || runtime === 'ekko') return AGENT_LABELS['ekko-agent']
+   if (runtime === 'claude' || runtime === 'claude-code') return AGENT_LABELS['claude-code']
+diff --git a/tests/client/chat-agent-label.test.ts b/tests/client/chat-agent-label.test.ts
+index c1c5d65ee..bcf72c5b1 100644
+--- a/tests/client/chat-agent-label.test.ts
++++ b/tests/client/chat-agent-label.test.ts
+@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
+ import { chatSessionAgentLabel } from '@/utils/chat-agent-label'
+ 
+ describe('single chat Agent labels', () => {
+-  it('shows Ekko before the session loads while preserving legacy Hermes sessions', () => {
++  it('shows the Hermes default before the session loads while preserving legacy Hermes sessions', () => {
+     for (const session of [null, undefined]) {
+-      expect(chatSessionAgentLabel(session)).toEqual({ label: 'Ekko' })
++      expect(chatSessionAgentLabel(session)).toEqual({ label: 'Hermes' })
+     }
+     expect(chatSessionAgentLabel({ source: 'cli' })).toEqual({ label: 'Hermes' })
+   })
+-- 
+2.53.0
+
