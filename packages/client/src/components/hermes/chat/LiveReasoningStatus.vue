@@ -44,7 +44,7 @@ watch(
     </div>
     <div
       v-if="reasoning"
-      :key="reasoningId ?? reasoning"
+      :key="reasoningId ?? 'live-reasoning'"
       class="live-reasoning-detail"
       :data-reasoning-id="reasoningId"
     >
