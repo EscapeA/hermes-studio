@@ -42,6 +42,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 30-bridge-clarify-contract | bridge（clarify 问答契约对齐 hermes-agent：`_clarify_callback` 从「旧字符串契约」改为「归一化问题列表 → `{answers,outcome,notice}`」，修复 Studio 里 clarify 面板无选项按钮 / 必报 `Failed to get user input: 'str' object has no attribute 'get'`） | 001 |
 | 31-0.7.28-adapt | 0.7.28 上游测试套件适配（`tests/client/device-connections-icon.test.ts`、`file-context-menu.test.ts` 的断言对齐 fork 的入口裁剪） | 001 |
 | 32-reconnect-run-state | run 态卡死修复（socket 重连后**重新入房** + 回前台**只对账运行态**：修「壳退后台时任务跑完 ⇒ `run.completed` 收不到 ⇒ 完成报告能拉到、界面却永久停在 run 态」） | 001 |
+| 35-patch-stack-verify | 补丁串新鲜度机器校验（`scripts/verify-patch-stack.sh` 把 §348-353 的 verify-am 流程固化：隔离 worktree 重放 109→111 补丁到 main，与 custom 源码树逐字节比对，漏回写即非零退出；CI 在 build 前执行） | 001-002 |
 
 **2026-10-03 新增 `29-usage-card-trim` 组（001 源码、002 测试）**：用量卡从 6 格减到 4 格。
 起因是 Aries 实测发现「预估费用」恒为 `—`：账本 `session_usage` 里 **69,631 行全部** `cost_usd=NULL` / `cost_source='unknown'`，原因是
@@ -67,7 +68,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - ⚠️ **生效需换新 worker 进程**（Python 不热重载，`_sync_*_patches()` 不含该方法）：回收 bridge worker 或重启 `hermes-web-ui-client.service`；
   且 **agent 自身就跑在 worker 里**，只能由用户在本轮结束后执行。离线契约对拍脚本与两个回收脚本见 skill
   `hermes-webui-development → references/clarify-capabilities.md`。
-- 当前补丁文件总数 = **109**（以 `find patches -type f -name '*.patch' | wc -l` 为准；104 = 30 组时点，其后新增 `31-0.7.28-adapt`、`32-reconnect-run-state`（001-002）、`33-0.7.29-adapt` 与 `34-new-chat-default-hermes`）。
+- 当前补丁文件总数 = **111**（以 `find patches -type f -name '*.patch' | wc -l` 为准；109 = 34 组时点，其后新增 `35-patch-stack-verify`（001 脚本、002 CI 步骤））。
 
 **2026-10-05 升级 0.7.30（main `c204d59bd`；5 提交 / 100 文件 / +2675 −2807）**：109 补丁重放 **1 处冲突**（**2 个补丁文件回写 / 100 个逐字节未变**；无新增补丁组）：
 
