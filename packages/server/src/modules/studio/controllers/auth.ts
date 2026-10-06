@@ -73,14 +73,20 @@ export async function currentUser(ctx: Context) {
 
 const MAX_AVATAR_BYTES = 500 * 1024
 
+// Hardened avatar mime whitelist. Rendering an `image/svg+xml` data URL from the
+// same origin executes any embedded script (self-XSS), so SVG — and every other
+// image subtype — is rejected on both write and read. Kept as a single source of
+// truth so the write validator and the read endpoint cannot drift apart.
+const AVATAR_DATA_URL_RE = /^data:(image\/(?:png|jpeg|webp|gif));base64,([a-zA-Z0-9+/=]+)$/
+
 function isValidAvatarPayload(value: unknown): { ok: true; json: string } | { ok: false; error: string } {
   if (!value || typeof value !== 'object') return { ok: false, error: 'Invalid avatar payload' }
   const obj = value as Record<string, unknown>
   const type = obj.type
   if (type !== 'image' && type !== 'default') return { ok: false, error: 'Avatar type must be "image" or "default"' }
   if (type === 'image') {
-    if (typeof obj.dataUrl !== 'string' || !obj.dataUrl.startsWith('data:image/')) {
-      return { ok: false, error: 'Image avatar must include a dataUrl' }
+    if (typeof obj.dataUrl !== 'string' || !AVATAR_DATA_URL_RE.test(obj.dataUrl)) {
+      return { ok: false, error: 'Image avatar must be a PNG, JPEG, WebP, or GIF dataUrl' }
     }
     if (obj.dataUrl.length > MAX_AVATAR_BYTES) {
       return { ok: false, error: `Avatar image is too large (max ${MAX_AVATAR_BYTES} bytes)` }
@@ -104,6 +110,46 @@ export async function getMyAvatar(ctx: Context) {
     return
   }
   ctx.body = { avatar: getUserAvatar(userId) }
+}
+
+/**
+ * GET /api/auth/avatar/image
+ * Stream the authenticated user's image avatar as bytes (for <img src>).
+ */
+export async function getMyAvatarImage(ctx: Context) {
+  const userId = ctx.state.user?.id
+  if (!userId) {
+    ctx.status = 401
+    ctx.body = { error: 'Unauthorized' }
+    return
+  }
+  const raw = getUserAvatar(userId)
+  if (!raw) {
+    ctx.status = 404
+    ctx.body = { error: 'Avatar not found' }
+    return
+  }
+  try {
+    const parsed = JSON.parse(raw) as { type?: string; dataUrl?: string }
+    if (parsed?.type !== 'image' || typeof parsed.dataUrl !== 'string') {
+      ctx.status = 404
+      ctx.body = { error: 'Avatar image not found' }
+      return
+    }
+    const match = parsed.dataUrl.match(AVATAR_DATA_URL_RE)
+    if (!match) {
+      ctx.status = 404
+      ctx.body = { error: 'Avatar image not found' }
+      return
+    }
+    ctx.set('Content-Type', match[1])
+    ctx.set('X-Content-Type-Options', 'nosniff')
+    ctx.set('Cache-Control', 'private, max-age=60')
+    ctx.body = Buffer.from(match[2], 'base64')
+  } catch {
+    ctx.status = 404
+    ctx.body = { error: 'Avatar image not found' }
+  }
 }
 
 /**
