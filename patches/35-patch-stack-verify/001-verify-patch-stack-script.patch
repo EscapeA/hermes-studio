@@ -1,19 +1,19 @@
-From 23bb616a17f2a91d54571500094c8c6e53ec72ef Mon Sep 17 00:00:00 2001
+From 1c53c949846f5d2c866ad0d151d8177052ef4a01 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
-Date: Wed, 7 Oct 2026 00:31:13 +0800
+Date: Wed, 7 Oct 2026 00:31:30 +0800
 Subject: [PATCH] feat(ci): add patch-stack freshness verifier script
 
 ---
- scripts/verify-patch-stack.sh | 127 ++++++++++++++++++++++++++++++++++
- 1 file changed, 127 insertions(+)
+ scripts/verify-patch-stack.sh | 134 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 134 insertions(+)
  create mode 100755 scripts/verify-patch-stack.sh
 
 diff --git a/scripts/verify-patch-stack.sh b/scripts/verify-patch-stack.sh
 new file mode 100755
-index 000000000..0a206e742
+index 000000000..58922f7b2
 --- /dev/null
 +++ b/scripts/verify-patch-stack.sh
-@@ -0,0 +1,127 @@
+@@ -0,0 +1,134 @@
 +#!/usr/bin/env bash
 +# verify-patch-stack.sh — hermes-studio fork 补丁串新鲜度机器校验
 +#
@@ -34,6 +34,13 @@ index 000000000..0a206e742
 +
 +REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 +cd "$REPO_ROOT"
++
++# The verifier creates throwaway commits (commit-tree + git am). Provide an
++# identity so it works in clean CI checkouts that have no git user configured.
++export GIT_AUTHOR_NAME="${GIT_AUTHOR_NAME:-verify-patch-stack}"
++export GIT_AUTHOR_EMAIL="${GIT_AUTHOR_EMAIL:-verify-patch-stack@localhost}"
++export GIT_COMMITTER_NAME="${GIT_COMMITTER_NAME:-verify-patch-stack}"
++export GIT_COMMITTER_EMAIL="${GIT_COMMITTER_EMAIL:-verify-patch-stack@localhost}"
 +
 +BASE_REF="${BASE_REF:-main}"          # 上游同步基线（纯 upstream/main）
 +STACK_REF="${STACK_REF:-custom}"      # 补丁串部署/集成分支
