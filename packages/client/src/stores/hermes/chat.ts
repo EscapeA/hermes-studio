@@ -1676,16 +1676,43 @@ export const useChatStore = defineStore('chat', () => {
     return sid ? compressionStates.value.get(sid) || null : null
   })
 
+  // Per-session auto-clear timers for compression.completed. Tracked so a new
+  // completion cancels the previous pending clear — otherwise an older timer
+  // could wipe the state set by a newer completion (race).
+  const compressionClearTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+  function cancelCompressionAutoClear(sessionId: string) {
+    const timer = compressionClearTimers.get(sessionId)
+    if (timer != null) {
+      clearTimeout(timer)
+      compressionClearTimers.delete(sessionId)
+    }
+  }
+
   function setCompressionState(sessionId: string | null | undefined, state: CompressionState | null) {
     if (!sessionId) return
+    // Setting any new compression state supersedes a pending auto-clear.
+    cancelCompressionAutoClear(sessionId)
     const next = new Map(compressionStates.value)
     if (state) next.set(sessionId, state)
     else next.delete(sessionId)
     compressionStates.value = next
   }
 
-  // Abort state is scoped per session because background sockets remain active
-  // while another conversation is selected.
+  function scheduleCompressionAutoClear(sessionId: string) {
+    cancelCompressionAutoClear(sessionId)
+    const timer = setTimeout(() => {
+      compressionClearTimers.delete(sessionId)
+      const state = compressionStates.value.get(sessionId)
+      if (state && !state.compressing) {
+        setCompressionState(sessionId, null)
+      }
+    }, 5000)
+    compressionClearTimers.set(sessionId, timer)
+  }
+
+  // Abort state is scoped per session because sockets can stay joined to
+  // background sessions while another conversation is selected.
   const abortStates = ref<Map<string, AbortState>>(new Map())
 
   function setAbortState(sessionId: string | null | undefined, state: AbortState | null) {
@@ -4290,13 +4317,9 @@ export const useChatStore = defineStore('chat', () => {
                 const target = sessions.value.find(s => s.id === sid)
                 if (target) target.contextTokens = (evt as any).contextTokens
               }
-              // Auto-clear after 5s
-              setTimeout(() => {
-                const state = compressionStates.value.get(sid)
-                if (state && !state.compressing) {
-                  setCompressionState(sid, null)
-                }
-              }, 5000)
+              // Auto-clear after 5s (tracked per-session to avoid clearing a
+              // newer completion's state from an older pending timer).
+              scheduleCompressionAutoClear(sid)
               break
             }
 
@@ -4963,12 +4986,7 @@ export const useChatStore = defineStore('chat', () => {
             const target = sessions.value.find(s => s.id === sid)
             if (target) target.contextTokens = (evt as any).contextTokens
           }
-          setTimeout(() => {
-            const state = compressionStates.value.get(sid)
-            if (state && !state.compressing) {
-              setCompressionState(sid, null)
-            }
-          }, 5000)
+          scheduleCompressionAutoClear(sid)
           break
         }
 
