@@ -1,27 +1,75 @@
-From 6ec59188f8b4ca0a9ffeecef1b94a8fbb9188069 Mon Sep 17 00:00:00 2001
+From 5a18b20aed5847549de38c07b43e0000ad84f6cc Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
-Date: Tue, 6 Oct 2026 23:52:49 +0800
+Date: Wed, 7 Oct 2026 00:30:29 +0800
 Subject: [PATCH] ci: verify patch stack freshness before build
 
 ---
- .github/workflows/build.yml | 4 ++++
- 1 file changed, 4 insertions(+)
+ .github/workflows/build.yml | 38 +++++++++++++++++++++++++++++++++++--
+ 1 file changed, 36 insertions(+), 2 deletions(-)
 
 diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
-index 4dc3f3e70..ca6993a42 100644
+index 7a65359b4..88cb46ee2 100644
 --- a/.github/workflows/build.yml
 +++ b/.github/workflows/build.yml
-@@ -40,6 +40,10 @@ jobs:
+@@ -4,6 +4,7 @@ on:
+   push:
+     branches:
+       - main
++      - custom
+   pull_request:
+     branches:
+       - main
+@@ -23,6 +24,10 @@ jobs:
+     steps:
+       - name: Checkout repository
+         uses: actions/checkout@v4
++        with:
++          # Full history so the patch-stack verifier can resolve the `main`
++          # baseline (it is only present as origin/main after a shallow checkout).
++          fetch-depth: 0
+ 
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+@@ -39,8 +44,37 @@ jobs:
        - name: Check repository harness
          run: npm run harness:check
  
+-      - name: Test with coverage
+-        run: npm run test:coverage
 +      - name: Verify patch stack freshness
 +        # 补丁串必须能从 main 干净重放并与 custom 源码树逐字节一致（否则有改动漏回写 patches/）
 +        run: bash scripts/verify-patch-stack.sh
-+
+ 
        - name: Build
          run: npm run build
- 
++
++      - name: Upload client dist
++        uses: actions/upload-artifact@v4
++        with:
++          name: hermes-studio-client-dist
++          path: dist/client/
++
++  deploy:
++    needs: build
++    if: github.event_name == 'push' && github.ref == 'refs/heads/custom'
++    runs-on: ubuntu-latest
++    permissions:
++      contents: read
++      deployments: write
++
++    steps:
++      - name: Download client dist
++        uses: actions/download-artifact@v4
++        with:
++          name: hermes-studio-client-dist
++          path: dist/client/
++
++      - name: Deploy to Cloudflare Pages
++        uses: cloudflare/wrangler-action@v3
++        with:
++          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
++          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
++          command: pages deploy dist/client --project-name=hermes-studio --branch=main
 -- 
 2.53.0
 

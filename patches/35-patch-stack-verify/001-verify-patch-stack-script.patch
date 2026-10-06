@@ -1,19 +1,19 @@
-From cbeb23069718f2560fd533c0f4e7f6fa7d4fad37 Mon Sep 17 00:00:00 2001
+From 04d6062cf8e7b0c20b59e33153ebc45bbe5257e2 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
-Date: Tue, 6 Oct 2026 23:52:49 +0800
+Date: Wed, 7 Oct 2026 00:30:29 +0800
 Subject: [PATCH] feat(ci): add patch-stack freshness verifier script
 
 ---
- scripts/verify-patch-stack.sh | 109 ++++++++++++++++++++++++++++++++++
- 1 file changed, 109 insertions(+)
- create mode 100755 scripts/verify-patch-stack.sh
+ scripts/verify-patch-stack.sh | 127 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 127 insertions(+)
+ create mode 100644 scripts/verify-patch-stack.sh
 
 diff --git a/scripts/verify-patch-stack.sh b/scripts/verify-patch-stack.sh
-new file mode 100755
-index 000000000..6472974a6
+new file mode 100644
+index 000000000..0a206e742
 --- /dev/null
 +++ b/scripts/verify-patch-stack.sh
-@@ -0,0 +1,109 @@
+@@ -0,0 +1,127 @@
 +#!/usr/bin/env bash
 +# verify-patch-stack.sh — hermes-studio fork 补丁串新鲜度机器校验
 +#
@@ -54,8 +54,26 @@ index 000000000..6472974a6
 +WT_DIR=""  # cleanup 引用前占位，避免 set -u 误报
 +
 +# --- 前置检查 -------------------------------------------------------------
-+git rev-parse --verify --quiet "$BASE_REF^{commit}"  >/dev/null || fail "基线引用不存在: $BASE_REF"
-+git rev-parse --verify --quiet "$STACK_REF^{commit}" >/dev/null || fail "补丁分支不存在: $STACK_REF"
++# 解析引用：本地分支优先，回退到远端跟踪引用（CI 上 actions/checkout 通常只有
++# 被推送分支是本地分支，基线 main 只作为 origin/main 存在）。
++resolve_ref() {
++  local name="$1" cand
++  for cand in "$name" "origin/$name" "refs/remotes/origin/$name"; do
++    if git rev-parse --verify --quiet "$cand^{commit}" >/dev/null 2>&1; then
++      printf '%s' "$cand"; return 0
++    fi
++  done
++  return 1
++}
++
++if ! BASE_RESOLVED="$(resolve_ref "$BASE_REF")"; then
++  fail "基线引用不存在: $BASE_REF（本地与 origin/ 均无）"
++fi
++BASE_REF="$BASE_RESOLVED"
++if ! STACK_RESOLVED="$(resolve_ref "$STACK_REF")"; then
++  fail "补丁分支不存在: $STACK_REF（本地与 origin/ 均无）"
++fi
++STACK_REF="$STACK_RESOLVED"
 +
 +# patches/ 只存在于 custom 分支；基线(main)上没有。需要从 custom 取出补丁清单。
 +if ! git cat-file -e "$STACK_REF:patches" 2>/dev/null; then
