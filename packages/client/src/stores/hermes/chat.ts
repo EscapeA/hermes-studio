@@ -1406,6 +1406,42 @@ export const useChatStore = defineStore('chat', () => {
   const completedUnreadSessions = ref<Set<string>>(new Set())
   /** UI-only live streams for Hermes background subagents. Never sent into parent context. */
   const subagentStreams = ref<Map<string, SubagentStream>>(new Map())
+  /**
+   * LRU bound for the streams above. Each stream can hold up to 200 timeline
+   * entries / 80KB of text, and nothing ever removed finished ones, so every
+   * background subagent that ever ran leaked ~80KB for the store's lifetime.
+   * When the map exceeds the cap we drop the least-recently-used *finished*
+   * streams; running ones are never evicted (a live background agent keeps its
+   * stream). Recency is a plain (non-reactive) map so touching it during a
+   * render/computed never triggers reactivity.
+   */
+  const SUBAGENT_STREAM_LRU_LIMIT = 50
+  const subagentStreamRecency = new Map<string, number>()
+  let subagentStreamAccessTick = 0
+
+  function touchSubagentStream(key: string) {
+    subagentStreamRecency.set(key, ++subagentStreamAccessTick)
+  }
+
+  function evictSubagentStreams() {
+    if (subagentStreams.value.size <= SUBAGENT_STREAM_LRU_LIMIT) return
+    const evictable = [...subagentStreams.value.keys()]
+      .filter(key => subagentStreams.value.get(key)?.status !== 'running')
+      .sort((a, b) => (subagentStreamRecency.get(a) ?? 0) - (subagentStreamRecency.get(b) ?? 0))
+    let overflow = subagentStreams.value.size - SUBAGENT_STREAM_LRU_LIMIT
+    for (const key of evictable) {
+      if (overflow <= 0) break
+      subagentStreams.value.delete(key)
+      subagentStreamRecency.delete(key)
+      overflow -= 1
+    }
+  }
+
+  function setSubagentStream(key: string, stream: SubagentStream) {
+    subagentStreams.value.set(key, stream)
+    touchSubagentStream(key)
+    evictSubagentStreams()
+  }
   const storedSessionProfileFilter = getItemBestEffort(SESSION_PROFILE_FILTER_STORAGE_KEY)?.trim()
   const sessionProfileFilter = ref<string | null>(
     storedSessionProfileFilter && storedSessionProfileFilter !== '__all__'
@@ -2870,9 +2906,10 @@ export const useChatStore = defineStore('chat', () => {
     const subagentId = String((evt as any).subagent_id || `${(evt as any).task_index ?? 0}`)
     const streamKey = `${sessionId}:${subagentId}`
     const currentStream = subagentStreams.value.get(streamKey)
+    touchSubagentStream(streamKey)
     const nextStream = reduceSubagentStream(currentStream, sessionId, evt)
     if (nextStream === currentStream) return
-    subagentStreams.value.set(streamKey, nextStream)
+    setSubagentStream(streamKey, nextStream)
     const toolCallId = `subagent:${subagentId}`
     const taskIndex = Number((evt as any).task_index ?? 0)
     const taskCount = Number((evt as any).task_count ?? 1)
@@ -2979,7 +3016,10 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   function getSubagentStream(sessionId: string, subagentId: string): SubagentStream | null {
-    return subagentStreams.value.get(`${sessionId}:${subagentId}`) || null
+    const key = `${sessionId}:${subagentId}`
+    const stream = subagentStreams.value.get(key)
+    if (stream) touchSubagentStream(key)
+    return stream || null
   }
 
   function handleMoaEvent(sessionId: string, evt: RunEvent) {
