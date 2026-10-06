@@ -19,6 +19,13 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
+# The verifier creates throwaway commits (commit-tree + git am). Provide an
+# identity so it works in clean CI checkouts that have no git user configured.
+export GIT_AUTHOR_NAME="${GIT_AUTHOR_NAME:-verify-patch-stack}"
+export GIT_AUTHOR_EMAIL="${GIT_AUTHOR_EMAIL:-verify-patch-stack@localhost}"
+export GIT_COMMITTER_NAME="${GIT_COMMITTER_NAME:-verify-patch-stack}"
+export GIT_COMMITTER_EMAIL="${GIT_COMMITTER_EMAIL:-verify-patch-stack@localhost}"
+
 BASE_REF="${BASE_REF:-main}"          # 上游同步基线（纯 upstream/main）
 STACK_REF="${STACK_REF:-custom}"      # 补丁串部署/集成分支
 VERIFY_TAG="refs/verify-patch-stack-base"  # 临时引用前缀
