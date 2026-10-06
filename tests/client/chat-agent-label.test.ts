@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { chatSessionAgentLabel } from '@/utils/chat-agent-label'
 
 describe('single chat Agent labels', () => {
-  it('shows Ekko before the session loads while preserving legacy Hermes sessions', () => {
+  it('shows the Hermes default before the session loads while preserving legacy Hermes sessions', () => {
     for (const session of [null, undefined]) {
-      expect(chatSessionAgentLabel(session)).toEqual({ label: 'Ekko' })
+      expect(chatSessionAgentLabel(session)).toEqual({ label: 'Hermes' })
     }
     expect(chatSessionAgentLabel({ source: 'cli' })).toEqual({ label: 'Hermes' })
   })
