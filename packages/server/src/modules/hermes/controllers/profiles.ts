@@ -498,6 +498,45 @@ export async function deleteAvatar(ctx: any) {
   }
 }
 
+export async function getAvatarImage(ctx: any) {
+  const name = String(ctx.params.name || '').trim() || 'default'
+  if (denyProfile(ctx, name)) return
+  const metaPath = profileAvatarMetaPath(name)
+  if (!existsSync(metaPath)) {
+    ctx.status = 404
+    ctx.body = { error: 'Avatar not found' }
+    return
+  }
+  try {
+    const meta = JSON.parse(readFileSync(metaPath, 'utf-8')) as ProfileAvatarMeta
+    if (meta.type !== 'image' || !meta.file || !meta.mime) {
+      ctx.status = 404
+      ctx.body = { error: 'Avatar image not found' }
+      return
+    }
+    // Defense in depth: meta.file is only ever written as 'avatar.bin', but a
+    // tampered metadata file must not be able to point the read stream at an
+    // arbitrary path. Reject anything that is not a bare filename.
+    if (basename(meta.file) !== meta.file || meta.file === '.' || meta.file === '..') {
+      ctx.status = 404
+      ctx.body = { error: 'Avatar image not found' }
+      return
+    }
+    const imagePath = profileAvatarImagePath(name, meta.file)
+    if (!existsSync(imagePath)) {
+      ctx.status = 404
+      ctx.body = { error: 'Avatar image not found' }
+      return
+    }
+    ctx.set('Content-Type', meta.mime)
+    ctx.set('Cache-Control', 'private, max-age=31536000, immutable')
+    ctx.body = createReadStream(imagePath)
+  } catch (err: any) {
+    ctx.status = 500
+    ctx.body = { error: err.message }
+  }
+}
+
 export async function runtimeStatus(ctx: any) {
   const name = String(ctx.params.name || '').trim() || 'default'
   if (denyProfile(ctx, name)) return
