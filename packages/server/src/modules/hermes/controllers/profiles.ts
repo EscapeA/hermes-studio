@@ -496,8 +496,11 @@ export async function updateAvatar(ctx: any) {
     ctx.status = 400
     ctx.body = { error: 'Invalid avatar payload' }
   } catch (err: any) {
+    // Sanitized response; the raw message (which may contain absolute paths)
+    // stays in the server log.
+    logger.warn(err, '[profiles] failed to update avatar for profile "%s"', name)
     ctx.status = 400
-    ctx.body = { error: err.message }
+    ctx.body = { error: 'Avatar update failed' }
   }
 }
 
@@ -547,8 +550,11 @@ export async function getAvatarImage(ctx: any) {
     ctx.set('Cache-Control', 'private, max-age=31536000, immutable')
     ctx.body = createReadStream(imagePath)
   } catch (err: any) {
+    // Do not echo internal error details (they can embed absolute paths) to the
+    // client; keep them in the server log only.
+    logger.warn(err, '[profiles] failed to read avatar image for profile "%s"', name)
     ctx.status = 500
-    ctx.body = { error: err.message }
+    ctx.body = { error: 'Avatar image unavailable' }
   }
 }
 
