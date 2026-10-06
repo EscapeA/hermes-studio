@@ -43,6 +43,12 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 31-0.7.28-adapt | 0.7.28 上游测试套件适配（`tests/client/device-connections-icon.test.ts`、`file-context-menu.test.ts` 的断言对齐 fork 的入口裁剪） | 001 |
 | 32-reconnect-run-state | run 态卡死修复（socket 重连后**重新入房** + 回前台**只对账运行态**：修「壳退后台时任务跑完 ⇒ `run.completed` 收不到 ⇒ 完成报告能拉到、界面却永久停在 run 态」） | 001 |
 | 35-patch-stack-verify | 补丁串新鲜度机器校验（`scripts/verify-patch-stack.sh` 把 §348-353 的 verify-am 流程固化：隔离 worktree 重放 109→111 补丁到 main，与 custom 源码树逐字节比对，漏回写即非零退出；CI 在 build 前执行） | 001-002 |
+| 36-server-hardening | server 安全加固（头像 mime 白名单收紧去掉 svg+xml 并加 nosniff；profile 头像 `meta.file` basename 守卫；头像错误响应脱敏；socket 健康检查改为连续 3 次 backlog 超阈才断连） | 001-004 |
+| 37-client-memory-leaks | client 内存（`subagentStreams` LRU 上限 50、只淘汰非活跃；`usePwa` 模块级闸门 + `onUnmounted` 清理 controllerchange 监听与 30min timer） | 001-002 |
+| 38-security-headers | Pages `_headers` 补安全头（nosniff / X-Frame-Options DENY / Referrer-Policy / CSP；内联 theme 脚本需 script-src 'unsafe-inline'、TTS 需 media-src blob:） | 001 |
+| 39-chat-compression-timer | 压缩完成自动清除改为 per-session 跟踪 timer（设置新压缩状态即取消旧 timer，避免旧 timer 清掉新状态；两处 compression.completed 共用 helper） | 001 |
+| 40-message-list-parse-cache | `MessageList` filter 的 `parseThinking` 按消息对象缓存（内容引用不变即复用，仅流式那行未命中；实测每重算 300 行 1.06ms→0.029ms） | 001 |
+| 41-audit-l-cleanups | 审计 L 级（空会话默认 Hermes 而非遗留 Ekko；live reasoning 用稳定 `:key` 不再每 token 重挂载；`cacheHitRatePercent`→`cacheReadSharePercent` 命名对齐实际语义） | 001-003 |
 
 **2026-10-03 新增 `29-usage-card-trim` 组（001 源码、002 测试）**：用量卡从 6 格减到 4 格。
 起因是 Aries 实测发现「预估费用」恒为 `—`：账本 `session_usage` 里 **69,631 行全部** `cost_usd=NULL` / `cost_source='unknown'`，原因是
@@ -68,7 +74,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - ⚠️ **生效需换新 worker 进程**（Python 不热重载，`_sync_*_patches()` 不含该方法）：回收 bridge worker 或重启 `hermes-web-ui-client.service`；
   且 **agent 自身就跑在 worker 里**，只能由用户在本轮结束后执行。离线契约对拍脚本与两个回收脚本见 skill
   `hermes-webui-development → references/clarify-capabilities.md`。
-- 当前补丁文件总数 = **111**（以 `find patches -type f -name '*.patch' | wc -l` 为准；109 = 34 组时点，其后新增 `35-patch-stack-verify`（001 脚本、002 CI 步骤））。
+- 当前补丁文件总数 = **123**（以 `find patches -type f -name '*.patch' | wc -l` 为准；111 = 35 组时点，其后新增审计整改六组 `36`–`41`）。
 
 **2026-10-05 升级 0.7.30（main `c204d59bd`；5 提交 / 100 文件 / +2675 −2807）**：109 补丁重放 **1 处冲突**（**2 个补丁文件回写 / 100 个逐字节未变**；无新增补丁组）：
 
