@@ -892,7 +892,7 @@ const showSessionTokensUsed = computed(() => {
   const u = sessionUsageTotal.value
   return !!chatStore.activeSession && !!u && sessionTotalTokens.value > 0
 })
-const cacheHitRatePercent = computed(() => {
+const cacheReadSharePercent = computed(() => {
   const u = sessionUsageTotal.value
   if (!u || sessionTotalTokens.value <= 0) return '0.00'
   return ((u.cacheRead / sessionTotalTokens.value) * 100).toFixed(2)
@@ -1260,7 +1260,7 @@ function openAttachmentPreview(attachment: Attachment) {
           placement="bottom-start"
         >
           <template #trigger>
-            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · <span class="session-percent">{{ cacheHitRatePercent }}%</span></span>
+            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · <span class="session-percent">{{ cacheReadSharePercent }}%</span></span>
           </template>
           <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
         </NPopover>
