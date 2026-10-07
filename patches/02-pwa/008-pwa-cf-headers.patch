@@ -1,0 +1,37 @@
+From cf7f259b036d9587ac0690d469a4c71bc74e4600 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 00:57:53 +0800
+Subject: [PATCH] feat(web): add CF Pages _headers for immutable hashed assets
+
+Mirror local Koa static-cache.ts on Cloudflare Pages: /assets/* and
+/coding-agents/* get Cache-Control: public, max-age=31536000, immutable;
+index.html / sw.js / manifest get no-cache so new deployments are picked
+up promptly. Before this, every CF Pages response was max-age=0 and
+non-PWA browsers re-downloaded the full ~735KB bundle on each visit.
+---
+ packages/client/public/_headers | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+ create mode 100644 packages/client/public/_headers
+
+diff --git a/packages/client/public/_headers b/packages/client/public/_headers
+new file mode 100644
+index 00000000..5f73de8e
+--- /dev/null
++++ b/packages/client/public/_headers
+@@ -0,0 +1,13 @@
++# Cloudflare Pages headers — mirror local Koa static-cache.ts behavior.
++# Hashed build assets are immutable: content hash in filename, safe to cache 1y.
++/assets/*
++  Cache-Control: public, max-age=31536000, immutable
++/coding-agents/*
++  Cache-Control: public, max-age=31536000, immutable
++# Entry HTML and SW must always revalidate so new deployments pick up.
++/index.html
++  Cache-Control: no-cache
++/sw.js
++  Cache-Control: no-cache
++/manifest.webmanifest
++  Cache-Control: no-cache
+-- 
+2.53.0
+
