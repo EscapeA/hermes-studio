@@ -1,4 +1,4 @@
-From e6fd6ee8f02012d1f7838723164876cc22c856f8 Mon Sep 17 00:00:00 2001
+From 80377f28b389088176bcb765d8c00478a48f8b03 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 11:30:19 +0800
 Subject: [PATCH] feat(web): make theme styles table-driven and add neon,
@@ -33,11 +33,11 @@ menus stay clean — combined with translucent `--bg-main-surface` /
 
 All 11 locales get the new style labels.
 ---
- packages/client/index.html                    |   3 +-
+ packages/client/index.html                    |   2 +-
  packages/client/src/App.vue                   |   4 +-
  .../src/components/hermes/chat/ChatInput.vue  |   6 +-
  .../src/components/layout/ThemeSwitch.vue     | 109 ++++-
- packages/client/src/composables/useTheme.ts   |  45 +-
+ packages/client/src/composables/useTheme.ts   |  44 +-
  packages/client/src/i18n/locales/ar.ts        |   6 +
  packages/client/src/i18n/locales/de.ts        |   6 +
  packages/client/src/i18n/locales/en.ts        |   6 +
@@ -57,20 +57,19 @@ All 11 locales get the new style labels.
  packages/client/src/styles/theme.ts           | 295 +++++++++++-
  packages/client/src/styles/variables.scss     | 454 +++++++++++++++++-
  .../client/src/views/hermes/ThemeView.vue     |  33 +-
- 24 files changed, 1384 insertions(+), 47 deletions(-)
+ 24 files changed, 1384 insertions(+), 45 deletions(-)
  create mode 100644 packages/client/src/styles/style-layers.scss
  create mode 100644 packages/client/src/styles/theme-style.ts
 
 diff --git a/packages/client/index.html b/packages/client/index.html
-index 07546572a..07350e4e0 100644
+index a7de4119d..07350e4e0 100644
 --- a/packages/client/index.html
 +++ b/packages/client/index.html
-@@ -79,8 +79,7 @@
+@@ -79,7 +79,7 @@
      (function() {
        try {
          const brightness = localStorage.getItem('hermes_brightness') || 'system';
--        // Match useTheme's default startup style, including for saved Comic preferences.
--        const style = 'ink';
+-        const style = localStorage.getItem('hermes_style') === 'comic' ? 'comic' : 'ink';
 +        const style = localStorage.getItem('hermes_style') || 'ink';
  
          // Resolve dark mode
@@ -98,10 +97,10 @@ index de7d776f0..07febb662 100644
  const naiveTheme = computed(() => (isDark.value ? darkTheme : null));
  
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 11d014983..3f73768c0 100644
+index 5dc1fae9d..bf7068451 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -2239,7 +2239,9 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2246,7 +2246,9 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  
    .dark & {
@@ -112,7 +111,7 @@ index 11d014983..3f73768c0 100644
      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
    }
  }
-@@ -2409,7 +2411,7 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2416,7 +2418,7 @@ function openAttachmentPreview(attachment: Attachment) {
    padding: 4px;
  
    .dark & {
@@ -251,7 +250,7 @@ index 9bfa74e75..520e14218 100644
  }
  </style>
 diff --git a/packages/client/src/composables/useTheme.ts b/packages/client/src/composables/useTheme.ts
-index bad39e453..e3e01620e 100644
+index 1472a02e5..e3e01620e 100644
 --- a/packages/client/src/composables/useTheme.ts
 +++ b/packages/client/src/composables/useTheme.ts
 @@ -8,6 +8,15 @@ import {
@@ -290,20 +289,19 @@ index bad39e453..e3e01620e 100644
    let meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]:not([media])')
    if (!meta) {
      meta = document.createElement('meta')
-@@ -105,9 +110,9 @@ function loadCachedTheme(userId: number | null): UserThemeSettings {
+@@ -105,8 +110,9 @@ function loadCachedTheme(userId: number | null): UserThemeSettings {
  const brightness = ref<BrightnessMode>(
    (localStorage.getItem(BRIGHTNESS_KEY) as BrightnessMode) || 'system',
  )
--// Start in the default style while the quick style switch is unavailable.
 -// Keep this in sync with the pre-render theme in index.html.
--const style = ref<ThemeStyle>('ink')
+-const style = ref<ThemeStyle>(localStorage.getItem(STYLE_KEY) === 'comic' ? 'comic' : 'ink')
 +const style = ref<ThemeStyle>(
 +  normalizeThemeStyle(localStorage.getItem(STYLE_KEY)),
 +)
  const isDark = ref(false)
  const isComic = ref(false)
  const activeUserId = ref<number | null>(storedUserId())
-@@ -125,6 +130,11 @@ const customization = computed<ThemeCustomization>(() => ({
+@@ -124,6 +130,11 @@ const customization = computed<ThemeCustomization>(() => ({
    accentColor: serverTheme.value.accentColor,
  }))
  
@@ -315,7 +313,7 @@ index bad39e453..e3e01620e 100644
  function resolveDark(mode: BrightnessMode): boolean {
    if (mode === 'system') {
      return window.matchMedia('(prefers-color-scheme: dark)').matches
-@@ -156,11 +166,17 @@ function applyCustomization() {
+@@ -155,11 +166,17 @@ function applyCustomization() {
  }
  
  function applyClasses() {
@@ -336,7 +334,7 @@ index bad39e453..e3e01620e 100644
    // Sync CSS color-scheme so the browser/WebView knows the page supports
    // dark mode (mirrors next-themes' enableColorScheme). Without it, Android
    // WebView's FORCE_DARK falls back to UA algorithmic darkening (inverts
-@@ -326,7 +342,7 @@ watch(hasBackgroundImage, (active) => {
+@@ -325,7 +342,7 @@ watch(hasBackgroundImage, (active) => {
  export function useTheme() {
    const themeName = computed(() => {
      const mode = isDark.value ? 'dark' : 'light'
@@ -345,7 +343,7 @@ index bad39e453..e3e01620e 100644
    })
  
    function setBrightness(mode: BrightnessMode) {
-@@ -350,6 +366,7 @@ export function useTheme() {
+@@ -349,6 +366,7 @@ export function useTheme() {
      style,
      isDark,
      isComic,
@@ -354,7 +352,7 @@ index bad39e453..e3e01620e 100644
      customization,
      fontSize: computed(() => serverTheme.value.fontSize),
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index b0a44d2a6..f6c8792aa 100644
+index 36a63f338..eaa2b8ca2 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -2155,6 +2155,12 @@ export default {
@@ -371,7 +369,7 @@ index b0a44d2a6..f6c8792aa 100644
      fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',
      textColor: 'لون النص',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 3425b748d..a2e49fab8 100644
+index 404b78aeb..9714f39ee 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -1958,6 +1958,12 @@ jobTriggered: 'Job ausgelost',
@@ -388,7 +386,7 @@ index 3425b748d..a2e49fab8 100644
      fontSizeHint: 'Grundgröße für Oberfläche und Unterhaltungen',
      textColor: 'Textfarbe',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 60a897b51..d7d50c141 100644
+index 6f8a56e96..6868e0174 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -2169,6 +2169,12 @@ export default {
@@ -405,7 +403,7 @@ index 60a897b51..d7d50c141 100644
      fontSizeHint: 'Base interface and conversation text size',
      textColor: 'Text color',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 26cbe6cfd..c156bee7d 100644
+index 4b9613281..0bba85b16 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -1958,6 +1958,12 @@ jobTriggered: 'Job ejecutado',
@@ -422,7 +420,7 @@ index 26cbe6cfd..c156bee7d 100644
      fontSizeHint: 'Tamaño base de la interfaz y las conversaciones',
      textColor: 'Color del texto',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 46fceb78a..6ab3430b0 100644
+index 0e46aadd9..c72784e06 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -1958,6 +1958,12 @@ jobTriggered: 'Job declenche',
@@ -439,7 +437,7 @@ index 46fceb78a..6ab3430b0 100644
      fontSizeHint: 'Taille de base de l’interface et des conversations',
      textColor: 'Couleur du texte',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 7bfbc1c0c..6464469e9 100644
+index 077d9ef7d..6f0fcaf0b 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -1959,6 +1959,12 @@ export default {
@@ -456,7 +454,7 @@ index 7bfbc1c0c..6464469e9 100644
      fontSizeHint: '画面と会話テキストの基本サイズ',
      textColor: '文字色',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index e83ed5221..f8d245dd0 100644
+index 372e92b34..824424201 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -1959,6 +1959,12 @@ export default {
@@ -473,7 +471,7 @@ index e83ed5221..f8d245dd0 100644
      fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',
      textColor: '텍스트 색상',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 9329311e3..2d56b3a78 100644
+index 4f74e8c22..58e35951e 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -1958,6 +1958,12 @@ jobTriggered: 'Job acionado',
@@ -490,7 +488,7 @@ index 9329311e3..2d56b3a78 100644
      fontSizeHint: 'Tamanho base da interface e das conversas',
      textColor: 'Cor do texto',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index cdc8f9ca0..5224fa68b 100644
+index 614725db6..0b7dd4bde 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -1945,6 +1945,12 @@ export default {
@@ -507,7 +505,7 @@ index cdc8f9ca0..5224fa68b 100644
      fontSizeHint: 'Базовый размер текста интерфейса и диалогов',
      textColor: 'Цвет текста',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 3dca5453e..f19c2a49e 100644
+index 6498cb45c..b7710665f 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -2116,6 +2116,12 @@ export default {
@@ -524,7 +522,7 @@ index 3dca5453e..f19c2a49e 100644
      fontSizeHint: '介面與對話內容的基礎字級',
      textColor: '文字顏色',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 37745e5a6..2fc089d46 100644
+index b2a654d3a..1d2419e2b 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -2162,6 +2162,12 @@ export default {

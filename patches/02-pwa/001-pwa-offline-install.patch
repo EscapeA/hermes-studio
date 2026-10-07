@@ -1,4 +1,4 @@
-From e9af6b657d0ccbccf1b73cd17934439f809e0180 Mon Sep 17 00:00:00 2001
+From a241018de4f8d95aa679634a9862ca4442ea79cc Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 7 Jul 2026 10:11:13 +0800
 Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
@@ -33,7 +33,7 @@ Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
  create mode 100644 packages/client/src/composables/usePwa.ts
 
 diff --git a/packages/client/index.html b/packages/client/index.html
-index 35fa2a391..110f851eb 100644
+index e93d1d33a..b32dba299 100644
 --- a/packages/client/index.html
 +++ b/packages/client/index.html
 @@ -5,10 +5,15 @@
@@ -9067,24 +9067,24 @@ index 000000000..1ee3936c6
 +  return { updateAvailable, applyUpdate }
 +}
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 2e2648dad..d01b97bbc 100644
+index 5facd745d..d6b7b882a 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -3767,4 +3767,7 @@ export default {
-     new_0_7_28_5: 'Fixed native login credential access for Antigravity global mode on macOS and corrected the sign-in hint (#3266)',
-     new_0_7_28_6: 'Updated Device Connections navigation to a monitor and phone icon for a clearer connection entry point (#3262)',
+@@ -3766,4 +3766,7 @@ export default {
+     new_0_7_29_1: 'Restored file downloads from workspace tree menus and diff toolbars in chats and group chats (#3268)',
+     new_0_7_29_2: 'Fixed Antigravity being mislabeled as Ekko in Live Activity notifications (#3272)',
    },
 +  pwa: {
 +    install: 'Install App',
 +  },
  }
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 12e80a83b..32ea9d624 100644
+index 7ffa4169f..fc1e1e8f6 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -3815,4 +3815,7 @@ export default {
-     new_0_7_28_5: '修复 macOS 上 Antigravity 全局模式无法读取原生登录凭据的问题，并更正登录提示 (#3266)',
-     new_0_7_28_6: '设备连接导航改用显示器与手机图标，更清晰地区分连接入口 (#3262)',
+@@ -3814,4 +3814,7 @@ export default {
+     new_0_7_29_1: '恢复聊天和群聊工作区文件树菜单及差异工具栏中的文件下载功能 (#3268)',
+     new_0_7_29_2: '修复实时活动通知将 Antigravity 错误识别为 Ekko 的问题 (#3272)',
    },
 +  pwa: {
 +    install: '安装应用',

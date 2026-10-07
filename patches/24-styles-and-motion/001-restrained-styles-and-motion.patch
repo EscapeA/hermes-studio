@@ -1,4 +1,4 @@
-From cf00971a8ebbcea1a226cdbcd76c1099ec56801b Mon Sep 17 00:00:00 2001
+From 627a85e5e0c8cff4f469085ea5c38ffbedba0c83 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 12:56:11 +0800
 Subject: [PATCH] feat(web): graphite/warm styles, composer focus halo and
@@ -44,7 +44,7 @@ Motion (motion-v 2.4.4, ~46 KB gzip in its own lazily loaded chunk):
 A spring on `DrawerPanel.vue` was attempted and reverted: that component is dead
 code in this fork and is rendered nowhere.
 ---
- package-lock.json                             |  62 +++++-
+ package-lock.json                             |  61 ++++++
  package.json                                  |   1 +
  .../src/components/hermes/chat/ChatInput.vue  |   9 +
  .../src/components/hermes/chat/ChatPanel.vue  |  10 +-
@@ -67,11 +67,11 @@ code in this fork and is rendered nowhere.
  packages/client/src/styles/theme-style.ts     |  12 ++
  packages/client/src/styles/theme.ts           |  76 +++++++-
  packages/client/src/styles/variables.scss     | 182 ++++++++++++++++++
- 23 files changed, 539 insertions(+), 40 deletions(-)
+ 23 files changed, 539 insertions(+), 39 deletions(-)
  create mode 100644 packages/client/src/composables/motion-presets.ts
 
 diff --git a/package-lock.json b/package-lock.json
-index 44ece2d97..02339ddf8 100644
+index 1139bd7bd..2ad1d81ac 100644
 --- a/package-lock.json
 +++ b/package-lock.json
 @@ -26,6 +26,7 @@
@@ -82,7 +82,7 @@ index 44ece2d97..02339ddf8 100644
          "node-edge-tts": "^1.2.10",
          "node-pty": "^1.1.0",
          "sharp": "^0.35.3",
-@@ -7200,6 +7201,29 @@
+@@ -7521,6 +7522,29 @@
          "node": ">= 0.6"
        }
      },
@@ -112,7 +112,7 @@ index 44ece2d97..02339ddf8 100644
      "node_modules/fresh": {
        "version": "0.5.2",
        "resolved": "https://registry.npmjs.org/fresh/-/fresh-0.5.2.tgz",
-@@ -7451,6 +7475,12 @@
+@@ -7781,6 +7805,12 @@
        "dev": true,
        "license": "MIT"
      },
@@ -125,7 +125,7 @@ index 44ece2d97..02339ddf8 100644
      "node_modules/highlight.js": {
        "version": "11.11.1",
        "resolved": "https://registry.npmjs.org/highlight.js/-/highlight.js-11.11.1.tgz",
-@@ -9047,6 +9077,37 @@
+@@ -9442,6 +9472,37 @@
          "node": ">= 18"
        }
      },
@@ -163,16 +163,8 @@ index 44ece2d97..02339ddf8 100644
      "node_modules/mpg123-decoder": {
        "version": "1.0.3",
        "resolved": "https://registry.npmjs.org/mpg123-decoder/-/mpg123-decoder-1.0.3.tgz",
-@@ -11817,7 +11878,6 @@
-       "version": "2.8.1",
-       "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz",
-       "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
--      "devOptional": true,
-       "license": "0BSD"
-     },
-     "node_modules/tsoa": {
 diff --git a/package.json b/package.json
-index cf719f517..b348f4222 100644
+index c0da96e01..33852f7cf 100644
 --- a/package.json
 +++ b/package.json
 @@ -99,6 +99,7 @@
@@ -184,10 +176,10 @@ index cf719f517..b348f4222 100644
      "node-pty": "^1.1.0",
      "sharp": "^0.35.3",
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 3f73768c0..613a79c59 100644
+index bf7068451..e53870122 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -2244,6 +2244,15 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2251,6 +2251,15 @@ function openAttachmentPreview(attachment: Attachment) {
      background-color: var(--bg-input-elevated);
      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
    }
@@ -499,7 +491,7 @@ index 000000000..e51ae33a7
 +  }
 +}
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index a2693dfc6..df2600c44 100644
+index a2b32a366..f0a8eb6c1 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -2161,6 +2161,8 @@ export default {
@@ -512,7 +504,7 @@ index a2693dfc6..df2600c44 100644
      fontSize: 'حجم النص',
      fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 8124be7d8..ebf45f5f1 100644
+index 198493b48..d2cad097a 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -1964,6 +1964,8 @@ jobTriggered: 'Job ausgelost',
@@ -525,7 +517,7 @@ index 8124be7d8..ebf45f5f1 100644
      fontSize: 'Textgröße',
      fontSizeHint: 'Grundgröße für Oberfläche und Unterhaltungen',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index a4206eb76..c33ccfd68 100644
+index 4a4e36a7d..356891fe5 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -2175,6 +2175,8 @@ export default {
@@ -538,7 +530,7 @@ index a4206eb76..c33ccfd68 100644
      fontSize: 'Text size',
      fontSizeHint: 'Base interface and conversation text size',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 9c539f781..1b89e160f 100644
+index 87f26aaf6..57cd6d766 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -1964,6 +1964,8 @@ jobTriggered: 'Job ejecutado',
@@ -551,7 +543,7 @@ index 9c539f781..1b89e160f 100644
      fontSize: 'Tamaño del texto',
      fontSizeHint: 'Tamaño base de la interfaz y las conversaciones',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 98a17a57d..6bdd16b93 100644
+index 717cbd41b..c777e047c 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -1964,6 +1964,8 @@ jobTriggered: 'Job declenche',
@@ -564,7 +556,7 @@ index 98a17a57d..6bdd16b93 100644
      fontSize: 'Taille du texte',
      fontSizeHint: 'Taille de base de l’interface et des conversations',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 67a1e15bb..9f04dfa2f 100644
+index 08e564cd8..f030361b8 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -1965,6 +1965,8 @@ export default {
@@ -577,7 +569,7 @@ index 67a1e15bb..9f04dfa2f 100644
      fontSize: '文字サイズ',
      fontSizeHint: '画面と会話テキストの基本サイズ',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 2381d8b0f..29ad841d7 100644
+index 29eb0c46c..b68c8f148 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -1965,6 +1965,8 @@ export default {
@@ -590,7 +582,7 @@ index 2381d8b0f..29ad841d7 100644
      fontSize: '텍스트 크기',
      fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 0c4da3744..356a5c827 100644
+index cfe1e2d19..5573bd257 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -1964,6 +1964,8 @@ jobTriggered: 'Job acionado',
@@ -603,7 +595,7 @@ index 0c4da3744..356a5c827 100644
      fontSize: 'Tamanho do texto',
      fontSizeHint: 'Tamanho base da interface e das conversas',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index a0d3aed97..dc60a36d3 100644
+index 0f96a05f8..6474f7139 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -1951,6 +1951,8 @@ export default {
@@ -616,7 +608,7 @@ index a0d3aed97..dc60a36d3 100644
      fontSize: 'Размер текста',
      fontSizeHint: 'Базовый размер текста интерфейса и диалогов',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index e65704c40..21da15c03 100644
+index 62387736c..d06c9510c 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -2122,6 +2122,8 @@ export default {
@@ -629,7 +621,7 @@ index e65704c40..21da15c03 100644
      fontSize: '文字大小',
      fontSizeHint: '介面與對話內容的基礎字級',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 1b43e3c57..7cfa1300e 100644
+index 66e8f2cdf..1aa651e38 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -2168,6 +2168,8 @@ export default {

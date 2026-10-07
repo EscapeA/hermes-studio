@@ -76,6 +76,15 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
   `hermes-webui-development → references/clarify-capabilities.md`。
 - 当前补丁文件总数 = **123**（以 `find patches -type f -name '*.patch' | wc -l` 为准；111 = 35 组时点，其后新增审计整改六组 `36`–`41`）。
 
+**2026-10-07 升级 0.7.31（main `8b2fd130a`；8 提交 / 83 文件 / +2712 −436）**：123 补丁重放 **4 个停点 / 6 条冲突路径**全部解毕并回写（**6 个补丁文件重写 / 117 个逐字节未变**；无新增补丁组）：
+
+- **`17-remove-group-chat/001` / `18-remove-workflow/001` / `18-remove-workflow/002`（modify/delete ×4）**：上游本轮改了 fork 已删的 `group-chat/GroupChatPanel.vue`、`views/hermes/GroupChatLinkView.vue`、`workflow/WorkflowAgentNode.vue`、`tests/client/workflow-reasoning-effort.test.ts` ⇒ **fork 侧删除一律接受**（`git rm`）。判据用 git 索引阶段而非冲突标记：**有 stage 3 = 内容冲突；无 stage 3 = 补丁删文件**（`git ls-files -u`），避免「重跑一次已解冲突的 am」把内容冲突误判成删除。
+- **`22-theme-styles/001`（内容冲突 ×2）**：上游 #3302「reload 后主题风格持久化」在 `packages/client/index.html` 与 `composables/useTheme.ts` 把启动风格从钉死的 `'ink'` 改回 `localStorage.getItem('hermes_style') === 'comic' ? 'comic' : 'ink'`；fork 的表驱动实现（`normalizeThemeStyle`，支持 ink/comic/neon/aurora/blueprint）是**超集** ⇒ **保留 fork**（取 stage 3）。解析后两文件与升级前 fork 基线**逐字节一致**。
+- **`02-pwa/001` / `24-styles-and-motion/001`（仅上下文漂移）**：上游本轮改 `index.html`/`useTheme.ts` 与 `package-lock.json`（新增 `werift`），这两个补丁内嵌的 changelog 锚点（`new_0_7_28_5/6` → `new_0_7_29_1/2`）与 lockfile 上下文随之刷新；语义未变。
+- 上游本轮主题：**#3290/#3292/#3303 P2P 直连 App 传输**（新依赖 `werift@0.24.4`、STUN 解析、绑定上行网卡、Docker UDP 端口、新增 `.github/workflows/p2p-platforms.yml`）、#3298/#3299/#3300 模型元数据与定价解析统一 / 模型 ID 按末段匹配 / App 模型能力 API 转发、#3302 主题风格持久化修复、#3305 0.7.31 发布 + 本地化 changelog。
+- 兼容性：`bin/` **零改动**；`werift` 已被 esbuild 打进 `dist/server/index.js`（externals 仍只有 `node-pty`/`node:sqlite`/`sharp`/`socket.io`）⇒ **纯 dist 热替即可**。`docs/openapi.json` **447 ops、增删 0** ⇒ API 面零变化（hstudio-mobile/App 无需适配）。用户可见变化：推理强度档位改为**按模型能力过滤**（聊天输入框 / 辅助模型 / 组合模型列表随所选模型变化，仅 1 档时滑块禁用）——上游新增行为。
+- 验证：预演树 `harness:check` + `npm run build`（`openapi:generate` + `vue-tsc -b` + vite + server tsc + esbuild）**exit 0**；**三树单测**（新树 7056 例 / 91 失败 vs 0.7.30 基线树 6951 / 89 vs 纯净上游树 7379 / 8）⇒ 新−旧 = 2 且**均非 fork 回归**（① `agent-bridge-profile-env` 的收集期竞态，隔离重跑通过；② `tts-synthesize-controller` 路由测试默认 5s 超时 vs 上游新增 p2p/werift 后 `import bootstrap/routes` 需 ~5.6s，**纯净上游树同样 5.72s**，`--testTimeout=30000` 下两树皆过）；补丁行存活审计（带 baseline）**无静默丢失**；删除型补丁复扫 `apikey.fan` 推广 / `apiRelay` / `sidebar.connections` **全仓 0 命中**，被删目录与测试仍全部删除；**verify-am 123/123 零冲突、0 差异**。备份 tag `backup/custom-pre-0.7.31`（`c1c17175a`）。
+
 **2026-10-05 升级 0.7.30（main `c204d59bd`；5 提交 / 100 文件 / +2675 −2807）**：109 补丁重放 **1 处冲突**（**2 个补丁文件回写 / 100 个逐字节未变**；无新增补丁组）：
 
 - **`05-chat/003-avatar-session-fast-path`（`stores/hermes/chat.ts`）**：上游 #3288 在 `openSession` 的 `beginMessageLoad(...)` 之前新增「未发送草稿无服务端历史」的提前返回，与 fork fast-first 补丁同区域 ⇒ **取上游新行为（HEAD 侧 4 行）+ fork fast-first 增量原样保留**（ours 侧为空，无内容丢失）。回写后该补丁 hunk 的上下文即含上游这段提前返回。

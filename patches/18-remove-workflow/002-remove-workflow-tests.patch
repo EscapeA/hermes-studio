@@ -1,4 +1,4 @@
-From 6eadd6aeeb43dc50cdd665f256fc19020175b43a Mon Sep 17 00:00:00 2001
+From 457f666c87b018c434e05419af644927bc35d52f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
@@ -31,7 +31,7 @@ Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
  .../workflow-import-confirmation.test.ts      |   19 -
  tests/client/workflow-locales.test.ts         |  108 --
  .../workflow-notification-target.test.ts      |   34 -
- .../client/workflow-reasoning-effort.test.ts  |   62 -
+ .../client/workflow-reasoning-effort.test.ts  |   60 -
  tests/client/workflow-run-budget.test.ts      |   99 -
  .../workflow-run-evidence-layout.test.ts      |  121 --
  tests/client/workflow-run-pager.test.ts       |   21 -
@@ -43,7 +43,7 @@ Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
  tests/e2e/fixtures.ts                         |  126 +-
  tests/e2e/workflow-cursor-mode.spec.ts        |   65 -
  tests/e2e/workflow-ui.spec.ts                 | 1618 -----------------
- 29 files changed, 15 insertions(+), 3633 deletions(-)
+ 29 files changed, 15 insertions(+), 3631 deletions(-)
  delete mode 100644 tests/client/workflow-approval-key.test.ts
  delete mode 100644 tests/client/workflow-canvas.test.ts
  delete mode 100644 tests/client/workflow-edge-authoring.test.ts
@@ -1608,12 +1608,13 @@ index 73b2fdd50..000000000
 \ No newline at end of file
 diff --git a/tests/client/workflow-reasoning-effort.test.ts b/tests/client/workflow-reasoning-effort.test.ts
 deleted file mode 100644
-index da8f56c25..000000000
+index 95421a07e..000000000
 --- a/tests/client/workflow-reasoning-effort.test.ts
 +++ /dev/null
-@@ -1,62 +0,0 @@
+@@ -1,60 +0,0 @@
 -import { readFileSync } from 'node:fs'
 -import { describe, expect, it } from 'vitest'
+-import { DEFAULT_REASONING_EFFORTS, modelReasoningEfforts } from '@/utils/model-reasoning-effort'
 -
 -const read = (path: string) => readFileSync(path, 'utf8')
 -const locales = ['de.ts', 'en.ts', 'es.ts', 'fr.ts', 'ja.ts', 'ko.ts', 'pt.ts', 'ru.ts', 'zh-TW.ts', 'zh.ts']
@@ -1633,10 +1634,7 @@ index da8f56c25..000000000
 -  })
 -
 -  it('offers every canonical reasoning effort in every locale', () => {
--    const node = read('packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue')
--    for (const effort of ['default', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']) {
--      expect(node).toContain(`value: '${effort}'`)
--    }
+-    expect(modelReasoningEfforts([], '', '')).toEqual(DEFAULT_REASONING_EFFORTS)
 -    for (const locale of locales) {
 -      const text = read(`packages/client/src/i18n/locales/${locale}`)
 -      expect(text, locale).toMatch(/reasoningEffort:\s*\{/)
