@@ -92,28 +92,33 @@ log "待重放补丁数: ${#PATCHES[@]}"
 BASE_SHA="$(git rev-parse "$BASE_REF")"
 git update-ref "$WORK_BRANCH" "$BASE_SHA"
 
-# 2) 把 custom 的 patches/ 提交成一个临时 commit 叠在基线上，使 git am 能读到补丁文件。
-#    用临时 index 不碰工作区。
-TMP_INDEX="$(mktemp -u)"
-trap 'rm -f "$TMP_INDEX"; cleanup' EXIT
-GIT_INDEX_FILE="$TMP_INDEX" git read-tree "$BASE_SHA"
-# 从 custom 把 patches/ 全量读进 index
-PATCH_TREE="$(git rev-parse "$STACK_REF:patches")"
-GIT_INDEX_FILE="$TMP_INDEX" git read-tree --prefix=patches/ "$PATCH_TREE"
-TMP_TREE="$(GIT_INDEX_FILE="$TMP_INDEX" git write-tree)"
-TMP_COMMIT="$(git commit-tree "$TMP_TREE" -p "$BASE_SHA" -m "tmp: carry patches for verification")"
+# 2) 基线树原样作为重放起点（patches/ 稍后以未跟踪文件落盘，不能预先提交）。
+TMP_COMMIT="$(git commit-tree "$BASE_SHA^{tree}" -p "$BASE_SHA" -m "tmp: baseline for patch replay")"
 git update-ref "$WORK_BRANCH" "$TMP_COMMIT"
 
 # --- 在临时引用上重放 ------------------------------------------------------
 # git am 需要 checkout；用 --git-dir/--work-tree 指向一个隔离 worktree，避免动当前工作区。
 WT_DIR="$(mktemp -d)"
-trap 'rm -rf "$WT_DIR"; rm -f "$TMP_INDEX"; cleanup' EXIT
+trap 'rm -rf "$WT_DIR"; cleanup' EXIT
 git worktree add --detach "$WT_DIR" "$WORK_BRANCH" >/dev/null 2>&1
 
 pushd "$WT_DIR" >/dev/null
-# 逐补丁重放（沿用 README 的 --3way）。补丁路径相对 worktree 根（patches/ 已随临时 commit 落盘）。
+# 补丁文件以未跟踪文件方式落到工作树（不能预先提交：补丁串里有自引用补丁会创建同名文件）。
+mkdir -p patches
+PATCHES_ABS=()
+for rel in "${PATCHES[@]}"; do
+  mkdir -p "$(dirname "$rel")"
+  git --git-dir="$(git rev-parse --absolute-git-dir)" --work-tree="$WT_DIR" \
+      checkout "$STACK_REF" -- "$rel" 2>/dev/null \
+    || git -C "$(git rev-parse --git-common-dir)" show "$STACK_REF:$rel" > "$rel"
+  # checkout 会把文件加进 index；am 之前必须移出，否则被当作基线内容
+  git reset -q HEAD -- "$rel" 2>/dev/null || true
+  PATCHES_ABS+=("$rel")
+done
+
+# 逐补丁重放（沿用 README 的 --3way）
 AM_LOG="$(mktemp)"
-if ! git am --3way "${PATCHES[@]}" >"$AM_LOG" 2>&1; then
+if ! git am --3way "${PATCHES_ABS[@]}" >"$AM_LOG" 2>&1; then
   CONFLICTED="$(git am --show-current-patch 2>/dev/null || echo '?')"
   tail -15 "$AM_LOG" >&2 || true
   git am --abort >/dev/null 2>&1 || true
