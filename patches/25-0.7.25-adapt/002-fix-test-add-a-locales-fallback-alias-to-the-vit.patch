@@ -1,0 +1,29 @@
+From 8e06d14bc55a74af526fc44a8ffd848ead01d938 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Mon, 28 Sep 2026 23:05:58 +0800
+Subject: [PATCH] fix(test): add a @locales fallback alias to the vitest config
+
+messages.ts loads locales through the build-time merge plugin that lives in
+vite.config.ts. Vitest uses its own bare config, so any test whose module
+graph reaches messages.ts (e.g. the new sidebar account controls chain)
+failed to transform it. Point the specifier at the raw locale files; tests
+read the un-merged locale, which is fine for their purposes.
+---
+ vitest.config.ts | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/vitest.config.ts b/vitest.config.ts
+index 16c1a1d89..8f0dba54f 100644
+--- a/vitest.config.ts
++++ b/vitest.config.ts
+@@ -7,6 +7,10 @@ export default defineConfig({
+   resolve: {
+     alias: {
+       '@': resolve(__dirname, 'packages/client/src'),
++      // messages.ts loads locales through the build-time merge plugin in
++      // vite.config.ts; vitest uses this bare config, so map the specifier to
++      // the raw locale files to keep transforms of messages.ts resolvable.
++      '@locales': resolve(__dirname, 'packages/client/src/i18n/locales'),
+       electron: resolve(__dirname, 'tests/mocks/electron.ts'),
+       'dbus-next': resolve(__dirname, 'tests/mocks/dbus-next.ts'),
+       'electron-updater': resolve(__dirname, 'tests/mocks/electron-updater.ts'),

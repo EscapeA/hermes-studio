@@ -50,6 +50,14 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 40-message-list-parse-cache | `MessageList` filter 的 `parseThinking` 按消息对象缓存（内容引用不变即复用，仅流式那行未命中；实测每重算 300 行 1.06ms→0.029ms） | 001 |
 | 41-audit-l-cleanups | 审计 L 级（空会话默认 Hermes 而非遗留 Ekko；live reasoning 用稳定 `:key` 不再每 token 重挂载；`cacheHitRatePercent`→`cacheReadSharePercent` 命名对齐实际语义） | 001-003 |
 
+> **0.7.32 升级（2026-10-09）**：补丁串重建为 **124** 个 —— `30-bridge-clarify-contract` 因上游 #3330 已原生实现同一 clarify 契约而作废删除，
+> 新增 `35-patch-stack-verify/003·004`（校验脚本支持 ORDER + 补丁以未跟踪文件落盘，避免自引用补丁失败）。
+> 同时新增 **`patches/ORDER`**（`NNN <组>/<文件名>`）记录**真实重放顺序**：分组目录只为人类可读，
+> `git am patches/*/*.patch` 的通配顺序**不等于**提交顺序，必须按 `ORDER` 重放。
+> 重建工具：`hermes_workspace/hermes-studio-upgrade-20261009/replay_auto.py`（冲突策略：i18n locale 取补丁侧、modify/delete 一律 `git rm`、
+> 其余取上游侧再补 fork 意图、空提交 `am --skip`）与 `regen_patches2.py`（用 **`git patch-id --stable`** 对齐旧栈分组，不靠 subject 文本）；
+> 校验：`verify_am.py`（重放后与 custom 树零差异）与 `scripts/verify-patch-stack.sh`（CI 用，读 ORDER）。
+
 **2026-10-03 新增 `29-usage-card-trim` 组（001 源码、002 测试）**：用量卡从 6 格减到 4 格。
 起因是 Aries 实测发现「预估费用」恒为 `—`：账本 `session_usage` 里 **69,631 行全部** `cost_usd=NULL` / `cost_source='unknown'`，原因是
 **价格表的 provider 键与账本上报的 provider 不是同一个字符串** —— 定价面板存的是配置里的 provider id（`custom:octopus`，agent 日志里 31 次的少数派），

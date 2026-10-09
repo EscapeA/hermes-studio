@@ -1,0 +1,38 @@
+From fbb3da6bf906c5f920d628de96e9de7cb3c82273 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 4 Oct 2026 13:21:44 +0800
+Subject: [PATCH] feat(chat): keep Hermes as the default agent for new chats
+
+---
+ packages/client/src/components/hermes/chat/ChatPanel.vue | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
+index dfade6ac5..25fdc82f6 100644
+--- a/packages/client/src/components/hermes/chat/ChatPanel.vue
++++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
+@@ -818,12 +818,14 @@ const headerTitle = computed(() =>
+ 
+ const showNewChatModal = ref(false);
+ const NEW_CHAT_AGENT_STORAGE_KEY = "hermes_new_chat_agent_v1";
++// fork: Hermes stays the default for new chats; the last explicit pick wins afterwards.
++const DEFAULT_NEW_CHAT_AGENT = "hermes";
+ function loadNewChatAgent(): "hermes" | ChatCodingAgentId {
+   try {
+     const saved = localStorage.getItem(NEW_CHAT_AGENT_STORAGE_KEY);
+-    return AGENT_OPTIONS.find(option => option.value === saved)?.value || AGENT_OPTIONS[0].value;
++    return AGENT_OPTIONS.find(option => option.value === saved)?.value || DEFAULT_NEW_CHAT_AGENT;
+   } catch {
+-    return AGENT_OPTIONS[0].value;
++    return DEFAULT_NEW_CHAT_AGENT;
+   }
+ }
+ let preferredNewChatAgent = loadNewChatAgent();
+@@ -1215,6 +1217,7 @@ async function refreshNewChatAgentAvailability(sequence: number) {
+     if (!isCurrentNewChatOptionsLoad(sequence)) return;
+     newChatAgentAvailability.value = availability;
+     newChatAgent.value = newChatAgentOptions.value.find(option => option.value === preferredNewChatAgent)?.value
++      || newChatAgentOptions.value.find(option => option.value === DEFAULT_NEW_CHAT_AGENT)?.value
+       || newChatAgentOptions.value[0]?.value || AGENT_OPTIONS[0].value;
+   } catch {
+     if (isCurrentNewChatOptionsLoad(sequence) && !newChatAgentAvailability.value) {
