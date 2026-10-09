@@ -71,8 +71,15 @@ if ! git cat-file -e "$STACK_REF:patches" 2>/dev/null; then
   fail "$STACK_REF 上没有 patches/ 目录（补丁串应只存在于该分支）"
 fi
 
-mapfile -t PATCHES < <(git ls-tree -r --name-only "$STACK_REF" -- patches \
-  | grep -E '^patches/[^/]+/[^/]+\.patch$' | LC_ALL=C sort)
+# patches/ORDER（若有）记录真实重放顺序：分组目录只为人类可读，通配排序不等于提交顺序。
+if git cat-file -e "$STACK_REF:patches/ORDER" 2>/dev/null; then
+  # ORDER 行格式：`NNN <组>/<文件名>.patch`（相对 patches/）
+  mapfile -t PATCHES < <(git show "$STACK_REF:patches/ORDER" \
+    | sed -nE 's/^[0-9]+ +([^[:space:]]+\.patch)$/patches\/\1/p')
+else
+  mapfile -t PATCHES < <(git ls-tree -r --name-only "$STACK_REF" -- patches \
+    | grep -E '^patches/[^/]+/[^/]+\.patch$' | LC_ALL=C sort)
+fi
 
 [ "${#PATCHES[@]}" -gt 0 ] || fail "在 $STACK_REF 的 patches/ 下没有找到任何 *.patch"
 
