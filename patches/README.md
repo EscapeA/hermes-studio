@@ -77,10 +77,20 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
   本次收尾用 `git filter-branch --index-filter 'git rm -r --cached --ignore-unmatch patches'` 把污染剥净。
 - 上游本轮主题：**#3333 新建会话 → 响应式 Agent 卡片（`NewChatAgentCards.vue`）**、**#3355 统一 `ModelCascader`**（侧栏 ModelSelector −568 行 / ChatPanel −493 行）、
   移动端抽屉宽度对齐、Agent 卡片动效、chat-run 用量估算修复、#3359 清掉托管 MCP 传输继承的 bearer token。
-- 兼容性：`package.json` / `bin/` **零改动** ⇒ 纯 dist 热替，**不需要 `npm i -g`**。
+- 兼容性：`bin/` **零改动**、`package.json`/`package-lock.json` **仅版本号** ⇒ 纯 dist 热替，**不需要 `npm i -g`**。
 - 用户可见变化：**会话模型选择器改为上游级联组件**（三处统一、桌面可搜索 provider→model 两列）；新会话表单变为 Agent 卡片。
 - 落地手法：预演树（隔离 worktree）验证树等价后，按 playbook §9 **`cherry-pick upstream/main..<preflight-tip>`**（不再二次 `git am`）。
   备份 tag `backup/custom-pre-0.7.33`（`f8a47d739`）。
+- **验证**：预演树 `npm run harness:check` + `npm run build`（`openapi:generate` + `vue-tsc -b` + vite + server tsc + esbuild）**exit 0**；
+  **双树单测 1575 例 / 76 失败 vs 0.7.32 基线树 1531 例 / 77 失败 ⇒ 新−旧 = 0 真回归**（还反修好 1 例 `chat-panel-session-click`）；
+  删除型补丁**标识符族**重扫（`apikey.fan/register`、`apiRelay`、`groupChat`/`group-chat`/`GroupChat*`、`WorkflowView`/`components/workflow`、`ProfileAvatar`/`userAvatar`/
+  `profiles.avatar`、`sidebar.singleChat|apiRelay|connections`）**全仓 0 命中**（`apikey.fan` 裸域名仅剩 `utils/providerBaseUrl.ts` 的默认域名常量，属正常）；
+  `scripts/verify-patch-stack.sh` **123/123 零冲突、源码树与 custom 逐字节一致**。
+- **部署**：`bin/` **零改动**、`package.json`/`package-lock.json` **仅版本号** ⇒ **纯 dist 热替，不需要 `npm i -g`**（包内 `package.json` 版本串仍是 0.7.31/0.7.32，属既定预期）；
+  client **464/464 文件**逐字节一致，`ekko-skills`(83)/`skills`(6)/`mcu`(3) 全等，`dist/server/index.js`/`openapi.json`/`agent-bridge/python` sha 全 MATCH；
+  `/api/openapi.json` 运行期读盘 ⇒ 立即报 **0.7.33 / 449 ops**（docs 里 448，多出 `GET /api/coding-agents/models`）；
+  **服务未重启**（`MainPID=1594176`、`ActiveEnterTimestamp=2026-10-09 12:27:40`、`NRestarts=0` 三项未变）⇒ 新 server 路由要等 Aries 自己 restart 才加载；前端 rsync 已即时生效（线上入口 chunk = 构建产物 `index-DuEGKnmY.js`）。
+- **CI**：run **38107042052**（tip `b17dc5161`）build + CF Pages deploy **双绿**。API 面：新增 **1 条**端点 `GET /api/coding-agents/models`、**零删除** ⇒ hstudio-mobile / App 无需适配。
 
 **2026-10-03 新增 `29-usage-card-trim` 组（001 源码、002 测试）**：用量卡从 6 格减到 4 格。
 起因是 Aries 实测发现「预估费用」恒为 `—`：账本 `session_usage` 里 **69,631 行全部** `cost_usd=NULL` / `cost_source='unknown'`，原因是
