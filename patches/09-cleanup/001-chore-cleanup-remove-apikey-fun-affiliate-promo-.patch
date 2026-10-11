@@ -1,0 +1,2039 @@
+From 5afa7d24a6884e66770e04617e2c019c29ee3111 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 6 Sep 2026 09:25:42 +0800
+Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
+ apiRelay button, FUN_LINK_MAP hint, apiRelay locale keys)
+
+---
+ packages/client/public/relay-logo.png         | Bin 1556 -> 0 bytes
+ packages/client/src/App.vue                   |   3 +-
+ packages/client/src/api/hermes/api-relay.ts   |   8 -
+ .../components/hermes/ApiRelayUsageCard.vue   | 141 -----------
+ .../hermes/models/ProviderFormModal.vue       |  36 ---
+ .../src/components/layout/PageSidebarNav.vue  |  13 +-
+ .../layout/StudioNavigationRail.vue           |  13 +-
+ packages/client/src/i18n/locales/ar.ts        |  30 ---
+ packages/client/src/i18n/locales/de.ts        |  30 ---
+ packages/client/src/i18n/locales/en.ts        |  30 ---
+ packages/client/src/i18n/locales/es.ts        |  30 ---
+ packages/client/src/i18n/locales/fr.ts        |  30 ---
+ packages/client/src/i18n/locales/ja.ts        |  29 ---
+ packages/client/src/i18n/locales/ko.ts        |  29 ---
+ packages/client/src/i18n/locales/pt.ts        |  30 ---
+ packages/client/src/i18n/locales/ru.ts        |  53 -----
+ packages/client/src/i18n/locales/zh-TW.ts     |  29 ---
+ packages/client/src/i18n/locales/zh.ts        |  29 ---
+ packages/client/src/router/index.ts           |   5 -
+ .../client/src/views/hermes/ApiRelayView.vue  | 222 ------------------
+ .../modules/hermes/controllers/api-relay.ts   |  20 --
+ .../src/modules/hermes/routes/providers.ts    |   4 -
+ .../services/providers/api-relay-usage.ts     | 176 --------------
+ .../src/modules/studio/contracts/api-relay.ts |  43 ----
+ tests/e2e/api-relay.spec.ts                   | 200 ----------------
+ tests/server/api-relay-usage.test.ts          | 170 --------------
+ vitest.config.ts                              |   1 -
+ 27 files changed, 3 insertions(+), 1401 deletions(-)
+ delete mode 100644 packages/client/public/relay-logo.png
+ delete mode 100644 packages/client/src/api/hermes/api-relay.ts
+ delete mode 100644 packages/client/src/components/hermes/ApiRelayUsageCard.vue
+ delete mode 100644 packages/client/src/views/hermes/ApiRelayView.vue
+ delete mode 100644 packages/server/src/modules/hermes/controllers/api-relay.ts
+ delete mode 100644 packages/server/src/modules/hermes/services/providers/api-relay-usage.ts
+ delete mode 100644 packages/server/src/modules/studio/contracts/api-relay.ts
+ delete mode 100644 tests/e2e/api-relay.spec.ts
+ delete mode 100644 tests/server/api-relay-usage.test.ts
+
+diff --git a/packages/client/public/relay-logo.png b/packages/client/public/relay-logo.png
+deleted file mode 100644
+index fe05a570545ebff55a6a34670ce4325690f28096..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 1556
+zcmV+v2J88WP)<h;3K|Lk000e1NJLTq004jh004jl0{{R3F%W$C0000OP)t-s_xAS0
+zMh3w<0OPWn*o$SpH2~6dM(M}4SNDdR00008bW%=J|NsC0|NsC0^MO*-000G}Nkl<Z
+zc-rll&u<$=6vsca>(+$?cE?UDDo}As4{)Gat3_OZI4E$<0db`{AaScwfz&^vk>K9k
+zxxfviRCUD#iB_yA;($aG)Jk<p8;@IP-KO?(*k3d2iM^pm@(#)F+Vk~$@B7~O%`EKO
+zzU>=;&~K{qKb2VW(e$cz=V;fJDbG(XrSw4}q?FPJqy!|w2ig0!W%r;Wr&T$xy;s}$
+zs{HwjPs^<*(!b|sS55k*GxzxUM<Y3Kl`5b5C<;aZ<`f|P5*d&{^k5_h8-Tq3%Em+h
+zcaAP>7jqz9>LUhQof7VEF8iB^YTpcDQ9<oaxeQ$BL9|$?0}0|-STcw1F$G=21J{RI
+z+4T%gfM^*Wh=vlw@;qu^PjjGPc@K2}QPp7Kt!@18_Rz!*cwOBC-|WkY*2sc)vj`sc
+z_W;m2L{*LG!GAKxDovBkw<*%IdGJ35s8}DifTyYQe!7|6ETVs~y9ej~ls9hF)86e#
+zDZ@ngrIb=l_Tbvxb-141<-a&w2M+(9l<pW0LV&GZs^_l~h2#N<6&((sG7pHxWER}O
+zT$l+_8+bn~0T9{&Bp}vH)WMEQR42ATk6=W%Yyi#pU)>tPY6$?pICsZHU<F8m-!gCA
+z`Ql_Z0U|?l0YqSYbJzxIWtz!t6;%g-89>}CBWZ4E`W`#tzEg-m=>S!4gvC6l&>lfj
+zsWHGH$m!->dQl&V;9Y%J5NZG?+gg8J2kNH_JjM~M>9g%-PPW?zHud11doN5!jpOx!
+zeg`;`<uG#K(d(VWgX+AehZh0&F6jN3R8i$<e*YS9Yb60VyP-6K+!lzK!>pY|#RH}_
+zExYQ&@OA=lNr9(~T~pu$IzTi~W~~wRAiAp6!NZ)zHV_QLY(dtIhLoH!3rW0z&SJDm
+zZ=@fm4K@C<WdKCCj8-}v|E_BYOV@x~Xy*Vf&<k{cH)AqQT{YU<ohJX0+eiBhRl2`8
+z1l;J;IRxUfAJaNO&oe*=<Zu1hgJ{W*OI2f$1Ab8!d-^$J5yU?#&B28QxTiVl2621D
+z0BLZM4tEv2J9!c>`k8#}wByBtwn;qjp_T$aO{$aq4RS^GRuh3Rd0Y?lgeDUvX=erB
+z<UM=<;8dFU-1E)6+Omk8q8?oX2E<erc+7U_y5KpMT`b#DN_kQ5M-d6&Qi&ak+k*VK
+z=!R)>mK%Urp1ebGLm*14c96zjTNMpO^uuHic2qGQ0Pe<@!^r?m^R^zdAb=CaVzdJk
+zCaTsz>&0TUkG5;(#~P1L3pg^-11}{Zra{xy!4=?cFo6X(Xlo>x{n*$riqY<Y8-keY
+zcDvnf_d(Lo>5u;E7mLv{Tz6DHHlu<NKT)<~bVgZBQ$0`xR+@nD#{>AWqUKKNLU<X7
+z>f-^zv=>t;+S2mq_-My=J3vG(Zd@+R$3c($$ZH2k71i)5r+(Q|jLv8;2D<PW!u*w=
+z%;{YLc9afK<S{0)7mNXD#&Z#a$9&9k8i+Q>0Mw<FALy^9q&!Je%5>_iODW}|y%!>Y
+z?r|f=Ga)<}+&>O4$D{P%as9BO%W*B*%liiq4drj_pIpam_sf{&-01IRy(oGRjGl1D
+z+NtdOPUg{YF93gJF(&{&LvN-0`l^@7hLdMttvtY!JPS_tFPbS2u&AJ601Omtw@SaY
+zn9h|c4Pn;U?oO~z+WGmy(Z<epz1;d{S3f?bR+CcJX5P*poX=7YtN<%iSK$2T3$s$n
+z*^!buw+2*RFt_9^t#NQln>z~RTpKuerwCA;vUP*MLCyMnX?3KiMZ+RVV%W1kwlq_;
+zU}>kQ_|_+0Kcg&dMRm$6CyT=KLfa1I@zbR%MF*5^qW`U}FHFKOelcJ2eC;dXWAi=2
+z&F}Znbu}qxS4v9DF8be_FfS(QkmGfDCKEpUwr~4Z#{LBX<E1-_go$tf0000<MNUMn
+GLSTX!^7c;v
+
+diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
+index 98e8c1c73..092b9086d 100644
+--- a/packages/client/src/App.vue
++++ b/packages/client/src/App.vue
+@@ -133,7 +133,7 @@ provide(mobileNavigationKey, {
+   target: computed(() => !isWideViewport.value && hasNavigationRail.value ? mobileSidebarHost.value : null),
+ });
+ const hasMobileContextSidebar = computed(() =>
+-  !['hermes.connections', 'hermes.agentManager', 'hermes.models', 'hermes.apiRelay'].includes(String(route.name)),
++  !['hermes.connections', 'hermes.agentManager', 'hermes.models'].includes(String(route.name)),
+ );
+ watch([hasNavigationRail, isWideViewport], () => { mobileNavigationOpen.value = false; });
+ watch(sessionSearchOpen, (open) => { if (open) mobileNavigationOpen.value = false; });
+@@ -152,7 +152,6 @@ const usesPageSidebar = computed(() =>
+     "hermes.connections",
+     "hermes.agentManager",
+     "hermes.models",
+-    "hermes.apiRelay",
+     "hermes.history",
+     "hermes.historySession",
+     "hermes.globalAgent",
+diff --git a/packages/client/src/api/hermes/api-relay.ts b/packages/client/src/api/hermes/api-relay.ts
+deleted file mode 100644
+index 9070ca993..000000000
+--- a/packages/client/src/api/hermes/api-relay.ts
++++ /dev/null
+@@ -1,8 +0,0 @@
+-import { request } from '../client'
+-import type { ApiRelayUsageResult } from '../../../../server/src/modules/studio/contracts/api-relay'
+-
+-export type { ApiRelayAccount, ApiRelayPeriodUsage } from '../../../../server/src/modules/studio/contracts/api-relay'
+-
+-export function fetchApiRelayUsage(signal?: AbortSignal): Promise<ApiRelayUsageResult> {
+-  return request('/api/hermes/api-relay/usage', { signal })
+-}
+diff --git a/packages/client/src/components/hermes/ApiRelayUsageCard.vue b/packages/client/src/components/hermes/ApiRelayUsageCard.vue
+deleted file mode 100644
+index 657a8e6e9..000000000
+--- a/packages/client/src/components/hermes/ApiRelayUsageCard.vue
++++ /dev/null
+@@ -1,141 +0,0 @@
+-<script setup lang="ts">
+-import { useI18n } from 'vue-i18n'
+-import type { ApiRelayAccount, ApiRelayPeriodUsage } from '@/api/hermes/api-relay'
+-
+-defineProps<{ account: ApiRelayAccount }>()
+-const { t, locale } = useI18n()
+-
+-function number(value: number | null | undefined, money = false): string {
+-  if (value == null) return '—'
+-  return new Intl.NumberFormat(locale.value, { maximumFractionDigits: money ? 4 : 0 }).format(value)
+-}
+-
+-function spend(period: ApiRelayPeriodUsage | undefined): number | undefined {
+-  return period?.actual_cost ?? period?.cost
+-}
+-</script>
+-
+-<template>
+-  <article class="relay-usage-card">
+-    <div class="relay-usage-heading">
+-      <div>
+-        <h3>{{ [...new Set(account.sources.map(source => source.label))].join(' · ') }}</h3>
+-        <p class="relay-usage-endpoint">{{ account.endpoint }}</p>
+-      </div>
+-      <span v-if="account.usage" class="relay-key-status" :class="{ inactive: !account.usage.isValid }">
+-        {{ t(account.usage.isValid ? 'apiRelay.keyActive' : 'apiRelay.keyInactive') }}
+-      </span>
+-    </div>
+-    <ul class="relay-usage-sources" :aria-label="t('apiRelay.sources')">
+-      <li v-for="source in account.sources" :key="`${source.profile}:${source.provider}`">
+-        {{ source.profile }} / {{ source.label }}
+-      </li>
+-    </ul>
+-    <p v-if="account.status === 'error'" class="relay-usage-error" role="status">
+-      {{ t(`apiRelay.errors.${account.error || 'unavailable'}`) }}
+-    </p>
+-    <template v-else-if="account.usage">
+-      <div class="relay-balance">
+-        <span>{{ t('apiRelay.remaining') }}</span>
+-        <strong>{{ number(account.usage.remaining, true) }} <small>{{ account.usage.unit }}</small></strong>
+-        <p v-if="account.usage.planName">{{ account.usage.planName }}</p>
+-      </div>
+-      <div v-if="account.usage.today || account.usage.total" class="relay-table-scroll">
+-        <table class="relay-usage-table">
+-          <thead><tr>
+-            <th scope="col"></th>
+-            <th scope="col">{{ t('apiRelay.requests') }}</th>
+-            <th scope="col">{{ t('usage.totalTokens') }}</th>
+-            <th scope="col">{{ t('apiRelay.spend') }} ({{ account.usage.unit }})</th>
+-          </tr></thead>
+-          <tbody>
+-            <tr v-for="period in (['today', 'total'] as const)" :key="period">
+-              <th scope="row">{{ t(`apiRelay.${period}`) }}</th>
+-              <td>{{ number(account.usage[period]?.requests) }}</td>
+-              <td>{{ number(account.usage[period]?.total_tokens) }}</td>
+-              <td>{{ number(spend(account.usage[period]), true) }}</td>
+-            </tr>
+-          </tbody>
+-        </table>
+-      </div>
+-      <p v-if="account.usage.rpm != null || account.usage.tpm != null" class="relay-usage-rates">
+-        RPM {{ number(account.usage.rpm) }} <span>·</span> TPM {{ number(account.usage.tpm) }}
+-      </p>
+-      <details v-if="account.usage.modelStats.length" class="relay-model-details">
+-        <summary>{{ t('apiRelay.modelUsage') }}</summary>
+-        <div class="relay-table-scroll">
+-          <table class="relay-usage-table">
+-            <thead><tr>
+-              <th scope="col">{{ t('apiRelay.model') }}</th>
+-              <th scope="col">{{ t('apiRelay.requests') }}</th>
+-              <th scope="col">{{ t('usage.totalTokens') }}</th>
+-              <th scope="col">{{ t('apiRelay.spend') }} ({{ account.usage.unit }})</th>
+-            </tr></thead>
+-            <tbody><tr v-for="(model, index) in account.usage.modelStats" :key="`${model.model}:${index}`">
+-              <th scope="row">{{ model.model }}</th>
+-              <td>{{ number(model.requests) }}</td>
+-              <td>{{ number(model.total_tokens) }}</td>
+-              <td>{{ number(spend(model), true) }}</td>
+-            </tr></tbody>
+-          </table>
+-        </div>
+-      </details>
+-    </template>
+-  </article>
+-</template>
+-
+-<style scoped lang="scss">
+-@use '@/styles/variables' as *;
+-
+-.relay-usage-card {
+-  min-width: 0;
+-  padding: 20px;
+-  border: 1px solid $border-color;
+-  border-radius: 12px;
+-  background: $bg-card;
+-}
+-
+-.relay-usage-heading {
+-  display: flex;
+-  align-items: flex-start;
+-  justify-content: space-between;
+-  gap: 12px;
+-
+-  > div { min-width: 0; }
+-  h3 { margin: 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+-}
+-
+-.relay-usage-endpoint { margin: 6px 0 0; color: $text-muted; font-size: 11px; overflow-wrap: anywhere; }
+-.relay-key-status { flex-shrink: 0; color: $success; font-size: 11px; }
+-.relay-key-status.inactive { color: $error; }
+-.relay-usage-sources {
+-  display: flex;
+-  flex-wrap: wrap;
+-  gap: 6px;
+-  margin: 12px 0 20px;
+-  padding: 0;
+-  list-style: none;
+-  li { padding: 4px 7px; border-radius: 4px; color: $text-secondary; background: $bg-secondary; font-size: 11px; overflow-wrap: anywhere; }
+-}
+-.relay-balance {
+-  > span { display: block; margin-bottom: 6px; color: $text-muted; font-size: 12px; }
+-  strong { font-size: 28px; font-weight: 600; overflow-wrap: anywhere; }
+-  small { color: $text-secondary; font-size: 13px; font-weight: 400; }
+-  p { margin: 6px 0 0; color: $text-secondary; font-size: 12px; }
+-}
+-.relay-table-scroll { min-width: 0; max-width: 100%; overflow-x: auto; }
+-.relay-usage-table {
+-  width: 100%;
+-  margin-top: 16px;
+-  border-collapse: collapse;
+-  font-size: 12px;
+-  th, td { padding: 9px 8px; text-align: end; white-space: nowrap; border-bottom: 1px solid $border-light; }
+-  th { color: $text-muted; font-weight: 400; }
+-  th:first-child { padding-inline-start: 0; text-align: start; }
+-  td { color: $text-primary; font-variant-numeric: tabular-nums; }
+-}
+-.relay-usage-rates { margin: 14px 0 0; color: $text-muted; font-size: 11px; span { margin: 0 8px; } }
+-.relay-model-details { margin-top: 16px; summary { color: $text-secondary; font-size: 12px; cursor: pointer; } }
+-.relay-usage-error { margin: 0; color: $text-secondary; font-size: 13px; line-height: 1.6; }
+-@media (max-width: $breakpoint-mobile) { .relay-usage-card { padding: 16px; } }
+-</style>
+diff --git a/packages/client/src/components/hermes/models/ProviderFormModal.vue b/packages/client/src/components/hermes/models/ProviderFormModal.vue
+index 6a0b53681..0bf710d83 100644
+--- a/packages/client/src/components/hermes/models/ProviderFormModal.vue
++++ b/packages/client/src/components/hermes/models/ProviderFormModal.vue
+@@ -128,13 +128,6 @@ const canFetchProviderCatalog = computed(() =>
+   )),
+ )
+ 
+-const FUN_LINK_MAP: Record<string, string> = {
+-  'fun-codex': 'https://apikey.fan/register?aff=LIBAPI',
+-  'fun-claude': 'https://apikey.fan/register?aff=LIBAPI',
+-}
+-
+-const funProviderLink = computed(() => selectedPreset.value ? FUN_LINK_MAP[selectedPreset.value] || '' : '')
+-
+ async function switchToApiKeyFunPreset(providerKey: ApiKeyFunPresetProvider, preferredModel: string) {
+   const apiKey = formData.value.api_key
+   const contextLength = formData.value.context_length
+@@ -500,12 +493,6 @@ function handleClose() {
+           :placeholder="t('models.chooseProvider')"
+           filterable
+         />
+-        <div v-if="selectedPreset && funProviderLink" class="fun-provider-hint">
+-          <a :href="funProviderLink" target="_blank" rel="noopener noreferrer">
+-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+-            {{ t('models.getApiKey') }}
+-          </a>
+-        </div>
+       </NFormItem>
+ 
+       <NFormItem v-if="providerType === 'custom'" :label="t('models.name')">
+@@ -630,29 +617,6 @@ function handleClose() {
+ </template>
+ 
+ <style scoped lang="scss">
+-.fun-provider-hint {
+-  margin-top: 6px;
+-  font-size: 12px;
+-
+-  a {
+-    display: inline-flex;
+-    align-items: center;
+-    gap: 6px;
+-    padding: 4px 8px;
+-    white-space: nowrap;
+-    color: var(--accent-primary);
+-    text-decoration: none;
+-    opacity: 0.7;
+-    transition: opacity 0.2s;
+-
+-    svg {
+-      flex-shrink: 0;
+-    }
+-
+-    &:hover { opacity: 1; }
+-  }
+-}
+-
+ .modal-footer {
+   display: flex;
+   justify-content: flex-end;
+diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
+index 1fde59255..919eaad84 100644
+--- a/packages/client/src/components/layout/PageSidebarNav.vue
++++ b/packages/client/src/components/layout/PageSidebarNav.vue
+@@ -8,7 +8,7 @@ import { useSessionSearch } from '@/composables/useSessionSearch'
+ import DesktopUpdateDownloadTab from './DesktopUpdateDownloadTab.vue'
+ import { useNavigationRail } from '@/composables/useNavigationRail'
+ 
+-type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'apiRelay' | 'group' | 'global' | 'workflow'
++type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'group' | 'global' | 'workflow'
+ 
+ const props = defineProps<{
+   active: ActiveSection
+@@ -61,11 +61,6 @@ function openWorkflow() {
+   if (props.active === 'workflow') return
+   void router.push({ name: 'hermes.workflow' })
+ }
+-
+-function openApiRelay() {
+-  if (props.active === 'apiRelay') return
+-  void router.push({ name: 'hermes.apiRelay' })
+-}
+ </script>
+ 
+ <template>
+@@ -184,10 +179,6 @@ function openApiRelay() {
+         </svg>
+         <span>{{ t('sidebar.models') }}</span>
+       </button>
+-      <button v-if="!hasNavigationRail" class="page-sidebar-tab" :class="{ active: active === 'apiRelay' }" type="button" :aria-current="active === 'apiRelay' ? 'page' : undefined" @click="openApiRelay">
+-        <img class="api-relay-logo" src="/relay-logo.png" width="18" height="18" alt="" aria-hidden="true" />
+-        <span>{{ t('sidebar.apiRelay') }}</span>
+-      </button>
+     </div>
+     <div v-if="!hasNavigationRail" class="conversation-switch conversation-switch--four" role="tablist" aria-label="Conversation type">
+       <NTooltip trigger="hover" placement="top">
+@@ -315,8 +306,6 @@ function openApiRelay() {
+   .page-sidebar-primary span { display: none; }
+ }
+ 
+-.api-relay-logo { border-radius: 4px; }
+-
+ .page-sidebar-tab {
+   width: 100%;
+   min-width: 0;
+diff --git a/packages/client/src/components/layout/StudioNavigationRail.vue b/packages/client/src/components/layout/StudioNavigationRail.vue
+index a41890e78..7a4be328b 100644
+--- a/packages/client/src/components/layout/StudioNavigationRail.vue
++++ b/packages/client/src/components/layout/StudioNavigationRail.vue
+@@ -26,7 +26,6 @@ const activeKey = computed(() => {
+   if (['hermes.chat', 'hermes.session', 'hermes.globalAgent', 'hermes.globalAgentSession'].includes(name)) return 'chat'
+   if (name.startsWith('hermes.groupChat')) return 'group'
+   if (name.startsWith('hermes.history')) return 'history'
+-  if (name === 'hermes.apiRelay') return 'apiRelay'
+   return entries.value.find(entry => entry.route === name)?.key || 'settings'
+ })
+ const mobileNavigation = useMobileNavigation()
+@@ -49,14 +48,6 @@ function handleNavigate(key: string) {
+         </template>
+         {{ t(entry.label) }}
+       </NTooltip>
+-      <NTooltip placement="right" trigger="hover">
+-        <template #trigger>
+-          <RouteLinkItem class="studio-navigation-rail__item" :to="{ name: 'hermes.apiRelay' }" :active="activeKey === 'apiRelay'" :aria-label="t('sidebar.apiRelay')" @click="handleNavigate('apiRelay')">
+-            <img class="api-relay-logo" src="/relay-logo.png" width="24" height="24" alt="" aria-hidden="true" />
+-          </RouteLinkItem>
+-        </template>
+-        {{ t('sidebar.apiRelay') }}
+-      </NTooltip>
+     </nav>
+     <div class="studio-navigation-rail__bottom">
+       <NTooltip placement="right" trigger="hover">
+@@ -100,9 +91,7 @@ function handleNavigate(key: string) {
+   overflow-y: auto;
+   scrollbar-width: none;
+ }
+-.studio-navigation-rail__bottom { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; }
+-.api-relay-logo { border-radius: 4px; }
+-.studio-navigation-rail__item {
++.studio-navigation-rail__bottom { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; }.studio-navigation-rail__item {
+   display: grid;
+   place-items: center;
+   flex: 0 0 44px;
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index 39a1e6b4f..acc0f8735 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -468,35 +468,6 @@ export default {
+     toolsClearExcluded: 'مسح المستثنى',
+   },
+ 
+-  // Sidebar
+-  apiRelay: {
+-    title: "بوابة API",
+-    headline: "نماذج الذكاء الاصطناعي الرائدة عبر بوابة واحدة",
+-    description: "APIKEY.FAN هي بوابة API الشريكة لـ Ekko Studio. توفر وصولًا موحدًا إلى Claude وChatGPT وGrok وGemini وZhipu وKimi وDeepSeek وMiniMax، وهي متوافقة مع واجهات API وحزم SDK الرسمية.",
+-    zhipu: "Zhipu",
+-    viewNow: "عرض الآن",
+-    apiCompatible: "متوافقة مع واجهات API الرسمية",
+-    usageTitle: "استخدام المفاتيح",
+-    usageScope: "يشمل الملفات الشخصية المتاحة لك. تُدمج الخدمة والمفتاح نفسهما في بطاقة واحدة، وتُعرض المفاتيح المختلفة بشكل منفصل.",
+-    loadFailed: "تعذر تحميل الاستخدام. حدّث لإعادة المحاولة.",
+-    remaining: "الحصة المتبقية",
+-    sources: "مصادر الإعداد",
+-    keyActive: "المفتاح نشط",
+-    keyInactive: "المفتاح غير نشط",
+-    requests: "الطلبات",
+-    spend: "التكلفة",
+-    today: "اليوم",
+-    total: "الإجمالي",
+-    modelUsage: "الاستخدام حسب النموذج",
+-    model: "النموذج",
+-    errors: {
+-      unauthorized: "فشلت مصادقة المفتاح. تحقق من المفتاح المُعدّ.",
+-      timeout: "انتهت مهلة طلب الاستخدام. حدّث لإعادة المحاولة.",
+-      unavailable: "خدمة الاستخدام غير متاحة. حدّث لإعادة المحاولة.",
+-      invalid_response: "أعادت الخدمة استجابة استخدام بتنسيق غير معروف.",
+-    },
+-  },
+-
+   sidebar: {
+     desktopUpdatePreparing: "جارٍ تجهيز التحديث",
+     desktopUpdateStopping: "جارٍ إيقاف التنزيل…",
+@@ -512,7 +483,6 @@ export default {
+     chat: 'محادثة',
+     backToChat: 'رجوع',
+     search: 'بحث',
+-    apiRelay: 'ترحيل API',
+     history: 'السجل',
+     jobs: 'المهام المجدولة',
+     kanban: 'كانبان',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index bf6cf51b6..47ae1c37f 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -480,35 +480,6 @@ export default {
+     toolsClearExcluded: 'Ausschlüsse löschen',
+   },
+ 
+-  // Sidebar
+-  apiRelay: {
+-    title: "API-Relay",
+-    headline: "Führende KI-Modelle über ein Gateway",
+-    description: "APIKEY.FAN ist das API-Gateway von Ekko Studios Partner. Es bietet einheitlichen Zugriff auf Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek und MiniMax und ist mit offiziellen APIs und SDKs kompatibel.",
+-    zhipu: "Zhipu",
+-    viewNow: "Jetzt ansehen",
+-    apiCompatible: "Mit offiziellen APIs kompatibel",
+-    usageTitle: "Schlüsselnutzung",
+-    usageScope: "Umfasst zugängliche Profile. Derselbe Dienst und Schlüssel werden zusammengefasst; unterschiedliche Schlüssel werden separat angezeigt.",
+-    loadFailed: "Nutzung konnte nicht geladen werden. Aktualisieren Sie zum erneuten Versuch.",
+-    remaining: "Verbleibendes Kontingent",
+-    sources: "Konfiguriert in",
+-    keyActive: "Schlüssel aktiv",
+-    keyInactive: "Schlüssel inaktiv",
+-    requests: "Anfragen",
+-    spend: "Kosten",
+-    today: "Heute",
+-    total: "Gesamt",
+-    modelUsage: "Nutzung nach Modell",
+-    model: "Modell",
+-    errors: {
+-      unauthorized: "Schlüsselauthentifizierung fehlgeschlagen. Prüfen Sie den konfigurierten Schlüssel.",
+-      timeout: "Zeitüberschreitung bei der Nutzungsabfrage. Bitte aktualisieren.",
+-      unavailable: "Nutzungsdienst nicht verfügbar. Bitte aktualisieren.",
+-      invalid_response: "Der Dienst lieferte ein unbekanntes Antwortformat.",
+-    },
+-  },
+-
+   sidebar: {
+     desktopUpdatePreparing: "Update wird vorbereitet",
+     desktopUpdateStopping: "Download wird gestoppt…",
+@@ -524,7 +495,6 @@ export default {
+     chat: 'Chat',
+     backToChat: 'Zuruck',
+     search: 'Suche',
+-    apiRelay: 'API-Relay',
+     history: 'Verlauf',
+     jobs: 'Geplante Aufgaben',
+     models: 'Modelle',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index b79de16fd..45997594c 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -468,35 +468,6 @@ export default {
+     toolsClearExcluded: 'Clear excluded',
+   },
+ 
+-  // Sidebar
+-  apiRelay: {
+-    title: "API Relay",
+-    headline: "Leading AI models, one gateway",
+-    description: "APIKEY.FAN is Ekko Studio’s partner API gateway, offering unified access to Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek, and MiniMax. It is compatible with official APIs and SDKs.",
+-    zhipu: "Zhipu",
+-    viewNow: "View now",
+-    apiCompatible: "Official API compatibility",
+-    usageTitle: "Key usage",
+-    usageScope: "Includes your accessible profiles. The same service and key share one card; different keys are shown separately.",
+-    loadFailed: "Unable to load usage. Refresh to try again.",
+-    remaining: "Remaining quota",
+-    sources: "Configured in",
+-    keyActive: "Key active",
+-    keyInactive: "Key inactive",
+-    requests: "Requests",
+-    spend: "Spend",
+-    today: "Today",
+-    total: "Total",
+-    modelUsage: "Usage by model",
+-    model: "Model",
+-    errors: {
+-      unauthorized: "Key authentication failed. Check the configured key.",
+-      timeout: "The usage request timed out. Refresh to try again.",
+-      unavailable: "The usage service is unavailable. Refresh to try again.",
+-      invalid_response: "The service returned an unrecognized usage response.",
+-    },
+-  },
+-
+   sidebar: {
+     desktopUpdatePreparing: "Preparing update",
+     desktopUpdateStopping: "Stopping download…",
+@@ -512,7 +483,6 @@ export default {
+     chat: 'Chat',
+     backToChat: 'Back',
+     search: 'Search',
+-    apiRelay: 'API Relay',
+     history: 'History',
+     jobs: 'Jobs',
+     kanban: 'Kanban',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 2f0b0229b..22fc44c27 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -480,35 +480,6 @@ export default {
+     toolsClearExcluded: 'Borrar exclusiones',
+   },
+ 
+-  // Sidebar
+-  apiRelay: {
+-    title: "Relay de API",
+-    headline: "Los principales modelos de IA en una sola puerta de enlace",
+-    description: "APIKEY.FAN es la puerta de enlace de API asociada de Ekko Studio. Ofrece acceso unificado a Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek y MiniMax, y es compatible con las API y los SDK oficiales.",
+-    zhipu: "Zhipu",
+-    viewNow: "Ver ahora",
+-    apiCompatible: "Compatible con las API oficiales",
+-    usageTitle: "Uso por clave",
+-    usageScope: "Incluye los perfiles accesibles. El mismo servicio y clave comparten una tarjeta; las claves distintas se muestran por separado.",
+-    loadFailed: "No se pudo cargar el uso. Actualiza para volver a intentarlo.",
+-    remaining: "Cuota restante",
+-    sources: "Configurada en",
+-    keyActive: "Clave activa",
+-    keyInactive: "Clave inactiva",
+-    requests: "Solicitudes",
+-    spend: "Gasto",
+-    today: "Hoy",
+-    total: "Total",
+-    modelUsage: "Uso por modelo",
+-    model: "Modelo",
+-    errors: {
+-      unauthorized: "Falló la autenticación. Comprueba la clave configurada.",
+-      timeout: "La consulta de uso agotó el tiempo de espera. Actualiza para reintentar.",
+-      unavailable: "El servicio de uso no está disponible. Actualiza para reintentar.",
+-      invalid_response: "El servicio devolvió un formato de uso desconocido.",
+-    },
+-  },
+-
+   sidebar: {
+     desktopUpdatePreparing: "Preparando actualización",
+     desktopUpdateStopping: "Deteniendo descarga…",
+@@ -524,7 +495,6 @@ export default {
+     chat: 'Chat',
+     backToChat: 'Volver',
+     search: 'Buscar',
+-    apiRelay: 'API Relay',
+     history: 'Historial',
+     jobs: 'Tareas programadas',
+     models: 'Modelos',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index a0f8007a1..e336250a0 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -480,35 +480,6 @@ export default {
+     toolsClearExcluded: 'Effacer les exclusions',
+   },
+ 
+-  // Sidebar
+-  apiRelay: {
+-    title: "Relais API",
+-    headline: "Les principaux modèles IA, une seule passerelle",
+-    description: "APIKEY.FAN est la passerelle API partenaire d’Ekko Studio. Elle offre un accès unifié à Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek et MiniMax, et est compatible avec les API et SDK officiels.",
+-    zhipu: "Zhipu",
+-    viewNow: "Voir maintenant",
+-    apiCompatible: "Compatible avec les API officielles",
+-    usageTitle: "Utilisation par clé",
+-    usageScope: "Inclut les profils accessibles. Un même service et une même clé partagent une carte ; les clés différentes sont affichées séparément.",
+-    loadFailed: "Impossible de charger l’utilisation. Actualisez pour réessayer.",
+-    remaining: "Quota restant",
+-    sources: "Configurée dans",
+-    keyActive: "Clé active",
+-    keyInactive: "Clé inactive",
+-    requests: "Requêtes",
+-    spend: "Coût",
+-    today: "Aujourd’hui",
+-    total: "Total",
+-    modelUsage: "Utilisation par modèle",
+-    model: "Modèle",
+-    errors: {
+-      unauthorized: "Échec de l’authentification. Vérifiez la clé configurée.",
+-      timeout: "La requête a expiré. Actualisez pour réessayer.",
+-      unavailable: "Le service est indisponible. Actualisez pour réessayer.",
+-      invalid_response: "Le format de la réponse du service n’est pas reconnu.",
+-    },
+-  },
+-
+   sidebar: {
+     desktopUpdatePreparing: "Préparation de la mise à jour",
+     desktopUpdateStopping: "Arrêt du téléchargement…",
+@@ -524,7 +495,6 @@ export default {
+     chat: 'Discussion',
+     backToChat: 'Retour',
+     search: 'Rechercher',
+-    apiRelay: 'API Relay',
+     history: 'Historique',
+     jobs: 'Taches planifiees',
+     models: 'Modeles',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 64e007eb9..65598b566 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -481,34 +481,6 @@ export default {
+     toolsClearExcluded: '除外をクリア',
+   },
+ 
+-  apiRelay: {
+-    title: "APIリレー",
+-    headline: "主要なAIモデルを一つの窓口で",
+-    description: "APIKEY.FANはEkko Studioの提携APIゲートウェイです。Claude、ChatGPT、Grok、Gemini、Zhipu、Kimi、DeepSeek、MiniMaxに統一APIで接続でき、公式APIとSDKに対応しています。",
+-    zhipu: "Zhipu",
+-    viewNow: "今すぐ見る",
+-    apiCompatible: "公式API互換",
+-    usageTitle: "キーの使用量",
+-    usageScope: "アクセス可能なプロファイルが対象です。同じサービスとキーは1枚のカードにまとめ、異なるキーは個別に表示します。",
+-    loadFailed: "使用量を読み込めません。更新して再試行してください。",
+-    remaining: "残りの割り当て",
+-    sources: "設定元",
+-    keyActive: "キーは有効",
+-    keyInactive: "キーは無効",
+-    requests: "リクエスト数",
+-    spend: "費用",
+-    today: "今日",
+-    total: "累計",
+-    modelUsage: "モデル別の使用量",
+-    model: "モデル",
+-    errors: {
+-      unauthorized: "キー認証に失敗しました。設定したキーを確認してください。",
+-      timeout: "使用量の取得がタイムアウトしました。更新して再試行してください。",
+-      unavailable: "使用量サービスに接続できません。更新して再試行してください。",
+-      invalid_response: "使用量の応答形式を認識できません。",
+-    },
+-  },
+-
+   sidebar: {
+     desktopUpdatePreparing: "更新を準備中",
+     desktopUpdateStopping: "ダウンロードを停止中…",
+@@ -524,7 +496,6 @@ export default {
+     chat: 'チャット',
+     backToChat: '戻る',
+     search: '検索',
+-    apiRelay: 'APIリレー',
+     history: '履歴',
+     jobs: 'ジョブ',
+     models: 'モデル',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 9e581552f..8e77ca1d9 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -481,34 +481,6 @@ export default {
+     toolsClearExcluded: '제외 항목 지우기',
+   },
+ 
+-  apiRelay: {
+-    title: "API 릴레이",
+-    headline: "주요 AI 모델을 하나의 게이트웨이로",
+-    description: "APIKEY.FAN은 Ekko Studio의 제휴 API 게이트웨이입니다. Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek, MiniMax에 통합 API로 접근할 수 있으며, 공식 API 및 SDK와 호환됩니다.",
+-    zhipu: "Zhipu",
+-    viewNow: "지금 보기",
+-    apiCompatible: "공식 API 호환",
+-    usageTitle: "키 사용량",
+-    usageScope: "접근 가능한 프로필을 포함합니다. 같은 서비스와 키는 한 카드로 합치고 다른 키는 별도로 표시합니다.",
+-    loadFailed: "사용량을 불러오지 못했습니다. 새로고침하여 다시 시도하세요.",
+-    remaining: "남은 할당량",
+-    sources: "설정 출처",
+-    keyActive: "유효한 키",
+-    keyInactive: "비활성 키",
+-    requests: "요청 수",
+-    spend: "비용",
+-    today: "오늘",
+-    total: "누적",
+-    modelUsage: "모델별 사용량",
+-    model: "모델",
+-    errors: {
+-      unauthorized: "키 인증에 실패했습니다. 설정한 키를 확인하세요.",
+-      timeout: "사용량 요청 시간이 초과되었습니다. 새로고침하여 다시 시도하세요.",
+-      unavailable: "사용량 서비스에 연결할 수 없습니다. 새로고침하여 다시 시도하세요.",
+-      invalid_response: "사용량 응답 형식을 인식할 수 없습니다.",
+-    },
+-  },
+-
+   sidebar: {
+     desktopUpdatePreparing: "업데이트 준비 중",
+     desktopUpdateStopping: "다운로드 중지 중…",
+@@ -524,7 +496,6 @@ export default {
+     chat: '채팅',
+     backToChat: '뒤로',
+     search: '검색',
+-    apiRelay: 'API 릴레이',
+     history: '기록',
+     jobs: '예약 작업',
+     models: '모델',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 5a8444831..1fe38ad4a 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -480,35 +480,6 @@ export default {
+     toolsClearExcluded: 'Limpar exclusões',
+   },
+ 
+-  // Sidebar
+-  apiRelay: {
+-    title: "Relay de API",
+-    headline: "Os principais modelos de IA em um só gateway",
+-    description: "APIKEY.FAN é o gateway de API parceiro do Ekko Studio. Oferece acesso unificado a Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek e MiniMax e é compatível com as APIs e os SDKs oficiais.",
+-    zhipu: "Zhipu",
+-    viewNow: "Ver agora",
+-    apiCompatible: "Compatível com as APIs oficiais",
+-    usageTitle: "Uso por chave",
+-    usageScope: "Inclui os perfis acessíveis. O mesmo serviço e chave compartilham um cartão; chaves diferentes são exibidas separadamente.",
+-    loadFailed: "Não foi possível carregar o uso. Atualize para tentar novamente.",
+-    remaining: "Cota restante",
+-    sources: "Configurada em",
+-    keyActive: "Chave ativa",
+-    keyInactive: "Chave inativa",
+-    requests: "Solicitações",
+-    spend: "Custo",
+-    today: "Hoje",
+-    total: "Total",
+-    modelUsage: "Uso por modelo",
+-    model: "Modelo",
+-    errors: {
+-      unauthorized: "Falha na autenticação. Verifique a chave configurada.",
+-      timeout: "A consulta de uso excedeu o tempo limite. Atualize para tentar novamente.",
+-      unavailable: "O serviço de uso está indisponível. Atualize para tentar novamente.",
+-      invalid_response: "O serviço retornou um formato de uso desconhecido.",
+-    },
+-  },
+-
+   sidebar: {
+     desktopUpdatePreparing: "Preparando atualização",
+     desktopUpdateStopping: "Parando download…",
+@@ -524,7 +495,6 @@ export default {
+     chat: 'Chat',
+     backToChat: 'Voltar',
+     search: 'Pesquisar',
+-    apiRelay: 'API Relay',
+     history: 'Histórico',
+     jobs: 'Tarefas agendadas',
+     models: 'Modelos',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index fdcf62dfe..97d4f86ba 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -361,7 +361,6 @@ export default {
+     },
+   },
+ 
+-
+   common: {
+     close: 'Закрыть',
+     loading: 'Загрузка...',
+@@ -395,34 +394,6 @@ export default {
+   },
+ 
+ 
+-  apiRelay: {
+-    title: "API-реле",
+-    headline: "Ведущие модели ИИ через единый шлюз",
+-    description: "APIKEY.FAN — партнёрский API-шлюз Ekko Studio. Он предоставляет единый доступ к Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek и MiniMax и совместим с официальными API и SDK.",
+-    zhipu: "Zhipu",
+-    viewNow: "Посмотреть",
+-    apiCompatible: "Совместимость с официальными API",
+-    usageTitle: "Использование ключей",
+-    usageScope: "Включает доступные профили. Одинаковый сервис и ключ объединяются в одну карточку; разные ключи показаны отдельно.",
+-    loadFailed: "Не удалось загрузить статистику. Обновите страницу и повторите попытку.",
+-    remaining: "Оставшаяся квота",
+-    sources: "Настроен в",
+-    keyActive: "Ключ активен",
+-    keyInactive: "Ключ неактивен",
+-    requests: "Запросы",
+-    spend: "Расходы",
+-    today: "Сегодня",
+-    total: "Всего",
+-    modelUsage: "Использование по моделям",
+-    model: "Модель",
+-    errors: {
+-      unauthorized: "Ошибка аутентификации. Проверьте настроенный ключ.",
+-      timeout: "Время запроса истекло. Обновите и повторите попытку.",
+-      unavailable: "Сервис статистики недоступен. Обновите и повторите попытку.",
+-      invalid_response: "Сервис вернул неизвестный формат статистики.",
+-    },
+-  },
+-
+   sidebar: {
+     desktopUpdatePreparing: "Подготовка обновления",
+     desktopUpdateStopping: "Остановка загрузки…",
+@@ -438,7 +409,6 @@ export default {
+     chat: 'Чат',
+     backToChat: 'Назад',
+     search: 'Поиск',
+-    apiRelay: 'Ретранслятор API',
+     history: 'История',
+     jobs: 'Задачи',
+     kanban: 'Канбан',
+@@ -911,7 +881,6 @@ export default {
+     pinned: 'Закреплено',
+   },
+ 
+-
+   drawer: {
+     terminal: 'Терминал',
+     files: 'Рабочая область',
+@@ -932,7 +901,6 @@ export default {
+     hint: { idle: 'Нажмите в центре, чтобы начать голосовую реплику', paused: 'Включите микрофон, когда будете готовы', listening: 'Сделайте паузу для отправки или нажмите для завершения', listeningManual: 'Идет запись. Нажмите в центре еще раз, чтобы остановить и распознать речь', processing: 'Преобразую речь в текст', thinking: 'Сообщение отправлено в текущий разговор', speaking: 'Ответ можно прервать в любое время', error: 'Нажмите в центре, чтобы повторить' },
+   },
+ 
+-
+   chat: {
+     screenshot: {
+       shortcut: {
+@@ -1300,7 +1268,6 @@ export default {
+     speechNotSupported: 'Этот браузер не поддерживает воспроизведение речи',
+   },
+ 
+-
+   workflow: {
+     listActions: 'Действия со списком рабочих процессов',
+     quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
+@@ -1566,7 +1533,6 @@ export default {
+     newNodeTitle: 'Узел {count}',
+   },
+ 
+-
+   kanban: {
+     title: 'Канбан',
+     createTask: 'Создать задачу',
+@@ -1702,7 +1668,6 @@ export default {
+     },
+   },
+ 
+-
+   scheduleBuilder: { time: 'Время', hour: 'Час', minute: 'Минута', weekday: 'День недели', monthDay: 'День месяца' },
+   jobs: {
+     title: 'Периодические задачи',
+@@ -1790,7 +1755,6 @@ export default {
+     },
+   },
+ 
+-
+   skills: {
+     filterBySource: "Фильтр по источнику",
+     title: 'Навыки',
+@@ -1853,7 +1817,6 @@ export default {
+     writeApprovalRemoveFile: 'Это подтверждение удалит {file} из skill {skill}.',
+   },
+ 
+-
+   plugins: {
+     title: 'Плагины',
+     refresh: 'Обновить',
+@@ -1924,7 +1887,6 @@ export default {
+     },
+   },
+ 
+-
+   petdex: {
+     title: 'Petdex Pets',
+     subtitle: 'Browse the public petdex catalog used by Hermes desktop pets.',
+@@ -1963,7 +1925,6 @@ export default {
+     soulPlaceholder: 'Введите конфигурацию души...',
+   },
+ 
+-
+   models: {
+     providerColumn: 'Провайдер',
+     title: 'Модели',
+@@ -2208,7 +2169,6 @@ export default {
+     fetchFailed: 'Не удалось получить модели',
+   },
+ 
+-
+   profiles: {
+     title: 'Профили',
+     create: 'Создать профиль',
+@@ -2292,7 +2252,6 @@ export default {
+     },
+   },
+ 
+-
+   logs: {
+     file: "Файл журнала",
+     level: "Уровень журнала",
+@@ -2305,7 +2264,6 @@ export default {
+     noEntries: 'Нет записей',
+   },
+ 
+-
+   theme: {
+     title: 'Тема',
+     saved: 'Тема сохранена',
+@@ -2872,12 +2830,10 @@ export default {
+       providerEdge: 'Edge TTS (бесплатно, не требует API-ключа)',
+       providerMimo: 'MiMo TTS',
+ 
+-
+       webspeechVoice: 'Тембр',
+       webspeechVoiceHint: 'Выберите голос из предложенных браузером или системой',
+       webspeechVoicePlaceholder: 'Автоматический (голос по умолчанию)',
+ 
+-
+       openaiKey: 'API-ключ',
+       openaiKeyHint: 'API-ключ OpenAI с правами TTS',
+       openaiUrl: 'Базовый URL API',
+@@ -2887,7 +2843,6 @@ export default {
+       openaiVoice: 'Тембр',
+       openaiVoiceHint: 'Тембр для синтеза речи',
+ 
+-
+       customHint: 'Поддерживается любая служба TTS, совместимая с OpenAI, включая GPT-SoVITS, CosyVoice и т.п.',
+       customUrl: 'URL API',
+       customUrlHint: 'Полный базовый URL службы TTS',
+@@ -2907,7 +2862,6 @@ export default {
+       edgePitch: 'Высота тона',
+       edgePitchHint: 'Регулировка высоты тона (–20 … +20 Гц)',
+ 
+-
+       testTitle: 'Тестовое прослушивание',
+       testText: 'Тестовый текст',
+       testTextPlaceholder: 'Введите тестовый текст...',
+@@ -2916,7 +2870,6 @@ export default {
+       testButtonPlaying: 'Воспроизведение...',
+       testFailed: 'Ошибка теста: {error}',
+ 
+-
+       mimoHint: 'MiMo TTS от Xiaomi. Поддерживает три режима: предустановленные тембры, дизайн тембра и клонирование тембра.',
+       mimoApiKey: 'API-ключ',
+       mimoApiKeyHint: 'Получите его на platform.xiaomimimo.com',
+@@ -2943,7 +2896,6 @@ export default {
+     },
+   },
+ 
+-
+   platform: {
+     requireMention: "Требуется упоминание {'@'}",
+     requireMentionGroup: "В группе требуется упоминание {'@'}бота для ответа",
+@@ -3036,7 +2988,6 @@ export default {
+     qqQrScanHint: 'Отсканируйте QR-код с помощью QQ или откройте ссылку на телефоне, чтобы завершить привязку',
+   },
+ 
+-
+   gateways: {
+     title: 'Шлюзы',
+     running: 'Работает',
+@@ -3046,7 +2997,6 @@ export default {
+     stopFailed: 'Ошибка остановки',
+   },
+ 
+-
+   language: {
+     label: 'Язык',
+     zh: 'Китайский',
+@@ -3054,7 +3004,6 @@ export default {
+     ru: 'Русский',
+   },
+ 
+-
+   terminal: {
+     sessions: 'Сеансы',
+     newTab: 'Новая вкладка терминала',
+@@ -3067,7 +3016,6 @@ export default {
+     connectionError: 'Ошибка соединения с терминалом',
+   },
+ 
+-
+   groupChat: {
+     routingHandoffIncomplete: 'Информация для передачи может быть неполной.',
+     routingLoopDetected: 'Возможно повторное хождение по кругу.',
+@@ -3296,7 +3244,6 @@ export default {
+     summaryLoadFailed: 'Не удалось загрузить резюме комнаты',
+   },
+ 
+-
+   usage: {
+     costStates: {
+       unknown: "Не записано",
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index e5a947d31..a547716af 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -469,34 +469,6 @@ export default {
+     toolsClearExcluded: '清空排除',
+   },
+ 
+-  apiRelay: {
+-    title: "API 中轉",
+-    headline: "一站接入主流 AI 模型",
+-    description: "APIKEY.FAN 是 Ekko Studio 的合作中轉服務，統一接入 Claude、ChatGPT、Grok、Gemini、智譜、Kimi、DeepSeek 和 MiniMax，相容官方 API 與 SDK。",
+-    zhipu: "智譜",
+-    viewNow: "立即查看",
+-    apiCompatible: "相容官方 API",
+-    usageTitle: "金鑰用量",
+-    usageScope: "涵蓋有權限存取的 Profile。同一服務和金鑰合併顯示，不同金鑰分別統計。",
+-    loadFailed: "用量載入失敗，請點擊重新整理重試。",
+-    remaining: "剩餘額度",
+-    sources: "設定來源",
+-    keyActive: "金鑰有效",
+-    keyInactive: "金鑰已失效",
+-    requests: "請求數",
+-    spend: "費用",
+-    today: "今日",
+-    total: "累計",
+-    modelUsage: "按模型查看用量",
+-    model: "模型",
+-    errors: {
+-      unauthorized: "金鑰驗證失敗，請檢查設定的金鑰。",
+-      timeout: "用量查詢逾時，請點擊重新整理重試。",
+-      unavailable: "暫時無法連線用量服務，請點擊重新整理重試。",
+-      invalid_response: "無法辨識用量介面傳回的資料格式。",
+-    },
+-  },
+-
+   sidebar: {
+     desktopUpdatePreparing: "正在準備更新",
+     desktopUpdateStopping: "正在停止下載…",
+@@ -512,7 +484,6 @@ export default {
+     chat: '對話',
+     backToChat: '返回',
+     search: '搜尋',
+-    apiRelay: '中轉站',
+     history: '歷史',
+     jobs: '任務',
+     kanban: '看板',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 4eabfed00..67959cd19 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -469,34 +469,6 @@ export default {
+     toolsClearExcluded: '清空排除',
+   },
+ 
+-  apiRelay: {
+-    title: "API 中转",
+-    headline: "一站接入主流 AI 模型",
+-    description: "APIKEY.FAN 是 Ekko Studio 的合作中转服务，统一接入 Claude、ChatGPT、Grok、Gemini、智谱、Kimi、DeepSeek 和 MiniMax，兼容官方 API 与 SDK。",
+-    zhipu: "智谱",
+-    viewNow: "立即查看",
+-    apiCompatible: "官方 API 兼容",
+-    usageTitle: "密钥用量",
+-    usageScope: "涵盖有权限访问的 Profile。同一服务和密钥合并展示，不同密钥分别统计。",
+-    loadFailed: "用量加载失败，请点击刷新重试。",
+-    remaining: "剩余额度",
+-    sources: "配置来源",
+-    keyActive: "密钥有效",
+-    keyInactive: "密钥已失效",
+-    requests: "请求数",
+-    spend: "费用",
+-    today: "今日",
+-    total: "累计",
+-    modelUsage: "按模型查看用量",
+-    model: "模型",
+-    errors: {
+-      unauthorized: "密钥认证失败，请检查配置的密钥。",
+-      timeout: "用量查询超时，请点击刷新重试。",
+-      unavailable: "暂时无法连接用量服务，请点击刷新重试。",
+-      invalid_response: "用量接口返回的数据格式无法识别。",
+-    },
+-  },
+-
+   sidebar: {
+     desktopUpdatePreparing: "正在准备更新",
+     desktopUpdateStopping: "正在停止下载…",
+@@ -512,7 +484,6 @@ export default {
+     chat: '对话',
+     backToChat: '返回',
+     search: '搜索',
+-    apiRelay: '饲料',
+     history: '历史',
+     jobs: '任务',
+     kanban: '看板',
+diff --git a/packages/client/src/router/index.ts b/packages/client/src/router/index.ts
+index e44b1c420..a27107d24 100644
+--- a/packages/client/src/router/index.ts
++++ b/packages/client/src/router/index.ts
+@@ -88,11 +88,6 @@ const router = createRouter({
+       name: 'hermes.models',
+       component: () => import('@/views/hermes/ChatView.vue'),
+     },
+-    {
+-      path: '/hermes/api-relay',
+-      name: 'hermes.apiRelay',
+-      component: () => import('@/views/hermes/ApiRelayView.vue'),
+-    },
+     {
+       path: '/hermes/profiles',
+       name: 'hermes.profiles',
+diff --git a/packages/client/src/views/hermes/ApiRelayView.vue b/packages/client/src/views/hermes/ApiRelayView.vue
+deleted file mode 100644
+index 69a4ba74a..000000000
+--- a/packages/client/src/views/hermes/ApiRelayView.vue
++++ /dev/null
+@@ -1,222 +0,0 @@
+-<script setup lang="ts">
+-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+-import { NButton } from 'naive-ui'
+-import { useI18n } from 'vue-i18n'
+-import PageLoading from '@/components/common/PageLoading.vue'
+-import PageHeader from '@/components/layout/PageHeader.vue'
+-import ApiRelayUsageCard from '@/components/hermes/ApiRelayUsageCard.vue'
+-import { fetchApiRelayUsage, type ApiRelayAccount } from '@/api/hermes/api-relay'
+-
+-const { t } = useI18n()
+-const logoLoading = ref(true)
+-const usageLoading = ref(true)
+-const initialized = ref(false)
+-const accounts = ref<ApiRelayAccount[]>([])
+-const loadFailed = ref(false)
+-const loading = computed(() => logoLoading.value || !initialized.value)
+-let requestController: AbortController | undefined
+-
+-async function loadUsage() {
+-  if (requestController) return
+-  const controller = new AbortController()
+-  requestController = controller
+-  usageLoading.value = true
+-  loadFailed.value = false
+-  try {
+-    const result = await fetchApiRelayUsage(controller.signal)
+-    accounts.value = result.accounts
+-  } catch {
+-    if (!controller.signal.aborted) loadFailed.value = true
+-  } finally {
+-    requestController = undefined
+-    usageLoading.value = false
+-    initialized.value = true
+-  }
+-}
+-
+-onMounted(() => { void loadUsage() })
+-onBeforeUnmount(() => { requestController?.abort() })
+-</script>
+-
+-<template>
+-  <PageLoading :show="loading" initial-only class="api-relay-view">
+-    <PageHeader>
+-      <header class="page-header">
+-        <h2 class="header-title">{{ t('apiRelay.title') }}</h2>
+-      </header>
+-    </PageHeader>
+-    <div class="api-relay-content">
+-      <section class="api-relay-hero" aria-labelledby="api-relay-heading">
+-        <div class="api-relay-intro">
+-          <div class="api-relay-brand">
+-            <img
+-              class="api-relay-logo"
+-              src="/relay-logo.png"
+-              width="54"
+-              height="54"
+-              alt=""
+-              @load="logoLoading = false"
+-              @error="logoLoading = false"
+-            >
+-            <div>
+-              <span>APIKEY.FAN</span>
+-              <h3 id="api-relay-heading">{{ t('apiRelay.headline') }}</h3>
+-            </div>
+-          </div>
+-          <p>{{ t('apiRelay.description') }}</p>
+-          <NButton
+-            class="api-relay-action"
+-            tag="a"
+-            href="https://apikey.fan/register?aff=LIBAPI"
+-            target="_blank"
+-            rel="noopener noreferrer"
+-            size="small"
+-            type="primary"
+-          >
+-            {{ t('apiRelay.viewNow') }}
+-          </NButton>
+-          <div class="api-relay-features">
+-            <span>Claude</span>
+-            <span>ChatGPT</span>
+-            <span>Grok</span>
+-            <span>Gemini</span>
+-            <span>{{ t('apiRelay.zhipu') }}</span>
+-            <span>Kimi</span>
+-            <span>DeepSeek</span>
+-            <span>MiniMax</span>
+-            <span>{{ t('apiRelay.apiCompatible') }}</span>
+-          </div>
+-        </div>
+-      </section>
+-      <section v-if="accounts.length || loadFailed" class="api-relay-usage" aria-labelledby="api-relay-usage-heading" :aria-busy="usageLoading">
+-        <div class="api-relay-usage-header">
+-          <div>
+-            <h3 id="api-relay-usage-heading">{{ t('apiRelay.usageTitle') }}</h3>
+-            <p>{{ t('apiRelay.usageScope') }}</p>
+-          </div>
+-          <NButton size="small" secondary :loading="usageLoading" @click="loadUsage">
+-            {{ t('usage.refresh') }}
+-          </NButton>
+-        </div>
+-        <p v-if="loadFailed" class="api-relay-usage-message" role="status">{{ t('apiRelay.loadFailed') }}</p>
+-        <div v-else-if="accounts.length" class="api-relay-usage-grid">
+-          <ApiRelayUsageCard v-for="account in accounts" :key="account.id" :account="account" />
+-        </div>
+-      </section>
+-    </div>
+-  </PageLoading>
+-</template>
+-
+-<style scoped lang="scss">
+-@use '@/styles/variables' as *;
+-@use '@/styles/promo-hero' as *;
+-
+-.api-relay-view {
+-  height: 100%;
+-  min-height: 0;
+-  display: flex;
+-  flex-direction: column;
+-  background: $bg-main-surface;
+-}
+-
+-.api-relay-content {
+-  flex: 1 1 auto;
+-  min-height: 0;
+-  padding: 20px;
+-  overflow: auto;
+-  background: linear-gradient(180deg, rgba(var(--accent-primary-rgb), 0.025), transparent 52%);
+-}
+-
+-.api-relay-hero {
+-  @include promo-hero;
+-  width: 100%;
+-  max-width: 1180px;
+-  margin: 0 auto;
+-}
+-
+-.api-relay-intro {
+-  position: relative;
+-  z-index: 1;
+-  max-width: 600px;
+-
+-  > p {
+-    max-width: 560px;
+-    margin: 18px 0 0;
+-    color: $text-secondary;
+-    font-size: 14px;
+-    line-height: 22px;
+-  }
+-}
+-
+-.api-relay-brand {
+-  display: flex;
+-  align-items: center;
+-  gap: 14px;
+-
+-  span {
+-    display: block;
+-    margin-bottom: 2px;
+-    color: $text-muted;
+-    font-size: 10px;
+-    font-weight: 650;
+-    letter-spacing: 0.09em;
+-    line-height: 16px;
+-  }
+-
+-  h3 {
+-    margin: 0;
+-    color: $text-primary;
+-    font-size: clamp(21px, 2.5vw, 28px);
+-    font-weight: 650;
+-    letter-spacing: -0.03em;
+-    line-height: 1.2;
+-  }
+-}
+-
+-.api-relay-logo {
+-  display: block;
+-  flex: 0 0 auto;
+-  object-fit: contain;
+-  border-radius: 6px;
+-}
+-
+-.api-relay-action { margin-top: 14px; }
+-
+-.api-relay-usage { width: 100%; max-width: 1180px; margin: 24px auto 0; }
+-.api-relay-usage-header {
+-  display: flex;
+-  align-items: flex-start;
+-  justify-content: space-between;
+-  gap: 16px;
+-  margin-bottom: 16px;
+-  h3 { margin: 0; color: $text-primary; font-size: 16px; font-weight: 600; }
+-  p { margin: 6px 0 0; color: $text-muted; font-size: 12px; line-height: 1.6; }
+-  :deep(.n-button) { flex-shrink: 0; }
+-}
+-.api-relay-usage-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+-.api-relay-usage-message { padding: 20px; margin: 0; color: $text-secondary; background: $bg-card; border: 1px solid $border-color; border-radius: 12px; font-size: 13px; }
+-
+-.api-relay-features {
+-  display: flex;
+-  align-items: center;
+-  flex-wrap: wrap;
+-  margin-top: 18px;
+-  gap: 7px;
+-
+-  span {
+-    padding: 5px 9px;
+-    color: $text-secondary;
+-    background: $bg-secondary;
+-    border: 1px solid $border-light;
+-    border-radius: 999px;
+-    font-size: 10px;
+-    line-height: 14px;
+-  }
+-}
+-
+-@media (max-width: $breakpoint-mobile) {
+-  .api-relay-content { padding: 12px; }
+-  .api-relay-hero { padding: 20px; }
+-  .api-relay-usage-grid { grid-template-columns: minmax(0, 1fr); }
+-}
+-</style>
+diff --git a/packages/server/src/modules/hermes/controllers/api-relay.ts b/packages/server/src/modules/hermes/controllers/api-relay.ts
+deleted file mode 100644
+index f46aac2fb..000000000
+--- a/packages/server/src/modules/hermes/controllers/api-relay.ts
++++ /dev/null
+@@ -1,20 +0,0 @@
+-import type { Context } from 'koa'
+-import { listUserProfiles } from '../../studio/public/users'
+-import { listProfileNamesFromDisk } from '../services/profiles/profile'
+-import { getApiRelayUsage } from '../services/providers/api-relay-usage'
+-
+-export async function getRelayUsage(ctx: Context): Promise<void> {
+-  const user = ctx.state.user
+-  if (!user) {
+-    ctx.status = 401
+-    ctx.body = { error: 'Authentication required' }
+-    return
+-  }
+-  const allowed = user.role === 'super_admin' ? null : new Set(listUserProfiles(user.id).map(item => item.profile_name))
+-  const profiles = listProfileNamesFromDisk().filter(profile => !allowed || allowed.has(profile))
+-  ctx.set('Cache-Control', 'no-store')
+-  try { ctx.body = await getApiRelayUsage(profiles) } catch {
+-    ctx.status = 500
+-    ctx.body = { error: 'Unable to read API relay configuration', code: 'API_RELAY_CONFIG_FAILED' }
+-  }
+-}
+diff --git a/packages/server/src/modules/hermes/routes/providers.ts b/packages/server/src/modules/hermes/routes/providers.ts
+index db12856ad..d7b6b68c6 100644
+--- a/packages/server/src/modules/hermes/routes/providers.ts
++++ b/packages/server/src/modules/hermes/routes/providers.ts
+@@ -1,13 +1,9 @@
+ import Router from '@koa/router'
+ import * as ctrl from '../controllers/providers'
+ import { requireAdmin, requireUserProfile } from '../../studio/public/auth'
+-import * as apiRelayCtrl from '../controllers/api-relay'
+ 
+ export const providerRoutes = new Router()
+ 
+-/** Read APIKEY.FAN usage, deduplicated across the current user's accessible profiles. */
+-providerRoutes.get('/api/hermes/api-relay/usage', apiRelayCtrl.getRelayUsage)
+-
+ providerRoutes.post('/api/hermes/config/providers', ctrl.create)
+ // Backward-compatible legacy update route. New clients should use the editor
+ // resource below for field capabilities and revision-checked writes.
+diff --git a/packages/server/src/modules/hermes/services/providers/api-relay-usage.ts b/packages/server/src/modules/hermes/services/providers/api-relay-usage.ts
+deleted file mode 100644
+index e28d2484c..000000000
+--- a/packages/server/src/modules/hermes/services/providers/api-relay-usage.ts
++++ /dev/null
+@@ -1,176 +0,0 @@
+-import { createHash } from 'node:crypto'
+-import { readFile } from 'node:fs/promises'
+-import { join } from 'node:path'
+-import { parseEnv } from 'node:util'
+-import { getCompatibleCustomProviders } from '../../../studio/contracts/provider-compat'
+-import { PROVIDER_PRESETS } from '../../../studio/contracts/providers'
+-import type { ApiRelayAccount, ApiRelayPeriodUsage, ApiRelaySource, ApiRelayUsage, ApiRelayUsageResult } from '../../../studio/contracts/api-relay'
+-import { PROVIDER_ENV_MAP, readConfigYamlForProfile } from '../../../studio/public/profile-config'
+-import { getProfileDir } from '../profiles/profile'
+-
+-interface CredentialTarget {
+-  endpoint: string
+-  apiKey: string
+-  sources: ApiRelaySource[]
+-}
+-
+-// Secrets and their fingerprints remain on the server. Only statistics are shared.
+-const inflight = new Map<string, Promise<Pick<ApiRelayAccount, 'status' | 'usage' | 'error'>>>()
+-
+-export function apiRelayUsageEndpoint(baseUrl: string): string | null {
+-  try {
+-    const url = new URL(baseUrl)
+-    if (url.protocol !== 'https:' || url.username || url.password || (url.port && url.port !== '443')) return null
+-    if (url.hostname !== 'apikey.fan' && !url.hostname.endsWith('.apikey.fan')) return null
+-    url.pathname = url.pathname.replace(/\/+$/, '').replace(/\/v1$/, '') + '/v1/usage'
+-    url.search = ''
+-    url.hash = ''
+-    return url.href
+-  } catch { return null }
+-}
+-
+-function credentialIdentity(endpoint: string, apiKey: string): string {
+-  return createHash('sha256').update(JSON.stringify([endpoint, apiKey])).digest('hex')
+-}
+-
+-async function collectTargets(profiles: string[]): Promise<CredentialTarget[]> {
+-  const targets = new Map<string, CredentialTarget>()
+-  const add = (baseUrl: string, credential: string, source: ApiRelaySource) => {
+-    const endpoint = apiRelayUsageEndpoint(baseUrl)
+-    const apiKey = credential.trim()
+-    if (!endpoint || !apiKey || /[\r\n]/.test(apiKey)) return
+-    const identity = credentialIdentity(endpoint, apiKey)
+-    let target = targets.get(identity)
+-    if (!target) {
+-      target = { endpoint, apiKey, sources: [] }
+-      targets.set(identity, target)
+-    }
+-    if (!target.sources.some(item => item.profile === source.profile && item.provider === source.provider)) {
+-      target.sources.push(source)
+-    }
+-  }
+-
+-  for (const profile of [...new Set(profiles)].sort()) {
+-    let rawEnv = ''
+-    try { rawEnv = await readFile(join(getProfileDir(profile), '.env'), 'utf8') } catch (error: any) {
+-      if (error.code !== 'ENOENT') throw error
+-    }
+-    const env = parseEnv(rawEnv)
+-    const config = await readConfigYamlForProfile(profile)
+-    for (const preset of PROVIDER_PRESETS) {
+-      const mapping = PROVIDER_ENV_MAP[preset.value]
+-      if (!mapping?.api_key_env) continue
+-      add(
+-        (mapping.base_url_env && env[mapping.base_url_env]) || preset.base_url,
+-        env[mapping.api_key_env] || '',
+-        { profile, provider: preset.value, label: preset.label },
+-      )
+-    }
+-    for (const provider of getCompatibleCustomProviders(config)) {
+-      add(provider.base_url, (provider.key_env ? env[provider.key_env] : provider.api_key) || '', {
+-        profile,
+-        provider: `custom:${provider.name.trim().toLowerCase().replace(/ /g, '-')}`,
+-        label: provider.name,
+-      })
+-    }
+-    // Legacy inline custom model credentials may predate the provider editor.
+-    if (config.model && typeof config.model === 'object' && config.model.base_url && config.model.api_key) {
+-      const provider = String(config.model.provider || 'custom')
+-      add(String(config.model.base_url), String(config.model.api_key), { profile, provider, label: provider })
+-    }
+-  }
+-  return [...targets.values()]
+-}
+-
+-function record(value: unknown): Record<string, unknown> | undefined {
+-  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined
+-}
+-
+-function numeric(value: unknown): number | undefined {
+-  if (typeof value !== 'number' && (typeof value !== 'string' || !value.trim())) return undefined
+-  const number = Number(value)
+-  return Number.isFinite(number) ? number : undefined
+-}
+-
+-function periodUsage(value: unknown): ApiRelayPeriodUsage | undefined {
+-  const data = record(value)
+-  if (!data) return undefined
+-  const result: ApiRelayPeriodUsage = {}
+-  for (const key of ['requests', 'total_tokens', 'input_tokens', 'output_tokens', 'cache_read_tokens', 'cache_creation_tokens', 'cost', 'actual_cost'] as const) {
+-    const value = numeric(data[key])
+-    if (value !== undefined) result[key] = value
+-  }
+-  return Object.keys(result).length ? result : undefined
+-}
+-
+-export function extractApiRelayUsage(response: unknown): ApiRelayUsage {
+-  const data = record(response)
+-  if (!data || !['remaining', 'quota', 'balance', 'is_active', 'isValid', 'usage'].some(key => key in data)) {
+-    throw new Error('Invalid usage response')
+-  }
+-  const quota = record(data.quota)
+-  const usage = record(data.usage)
+-  const active = data.is_active ?? data.isValid ?? true
+-  const unit = data.unit ?? quota?.unit ?? 'USD'
+-  return {
+-    isValid: active !== false && active !== 0 && active !== 'false',
+-    remaining: numeric(data.remaining ?? quota?.remaining ?? data.balance) ?? null,
+-    unit: typeof unit === 'string' && unit.trim() ? unit.slice(0, 32) : 'USD',
+-    ...(typeof data.planName === 'string' ? { planName: data.planName.slice(0, 256) } : {}),
+-    today: periodUsage(usage?.today),
+-    total: periodUsage(usage?.total),
+-    rpm: numeric(usage?.rpm),
+-    tpm: numeric(usage?.tpm),
+-    modelStats: Array.isArray(data.model_stats) ? data.model_stats.slice(0, 1000).flatMap(item => {
+-      const model = record(item)
+-      return model && typeof model.model === 'string'
+-        ? [{ ...periodUsage(model), model: model.model.slice(0, 256) }]
+-        : []
+-    }) : [],
+-  }
+-}
+-
+-async function queryTarget(target: CredentialTarget): Promise<Pick<ApiRelayAccount, 'status' | 'usage' | 'error'>> {
+-  const identity = credentialIdentity(target.endpoint, target.apiKey)
+-  const pending = inflight.get(identity)
+-  if (pending) return pending
+-  const request = (async (): Promise<Pick<ApiRelayAccount, 'status' | 'usage' | 'error'>> => {
+-    try {
+-      const response = await fetch(target.endpoint, {
+-        method: 'GET',
+-        headers: { Authorization: `Bearer ${target.apiKey}`, Accept: 'application/json' },
+-        redirect: 'error',
+-        signal: AbortSignal.timeout(15_000),
+-      })
+-      if (!response.ok) {
+-        return { status: 'error', error: response.status === 401 || response.status === 403 ? 'unauthorized' : 'unavailable' }
+-      }
+-      const body = await response.json().catch((error: unknown) => {
+-        if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')) throw error
+-        return null
+-      })
+-      try { return { status: 'ready', usage: extractApiRelayUsage(body) } } catch {
+-        return { status: 'error', error: 'invalid_response' }
+-      }
+-    } catch (error: any) {
+-      return { status: 'error', error: error?.name === 'TimeoutError' || error?.name === 'AbortError' ? 'timeout' : 'unavailable' }
+-    }
+-  })()
+-  inflight.set(identity, request)
+-  try { return await request } finally { inflight.delete(identity) }
+-}
+-
+-export async function getApiRelayUsage(profiles: string[]): Promise<ApiRelayUsageResult> {
+-  const targets = await collectTargets(profiles)
+-  const accounts: ApiRelayAccount[] = []
+-  // Limit outbound concurrency when a user has many separate keys.
+-  for (let offset = 0; offset < targets.length; offset += 4) {
+-    accounts.push(...await Promise.all(targets.slice(offset, offset + 4).map(async (target, index) => ({
+-      id: `credential-${offset + index + 1}`,
+-      endpoint: target.endpoint,
+-      sources: target.sources,
+-      ...await queryTarget(target),
+-    }))))
+-  }
+-  return { configured: accounts.length > 0, checkedAt: new Date().toISOString(), accounts }
+-}
+diff --git a/packages/server/src/modules/studio/contracts/api-relay.ts b/packages/server/src/modules/studio/contracts/api-relay.ts
+deleted file mode 100644
+index b7c814ae3..000000000
+--- a/packages/server/src/modules/studio/contracts/api-relay.ts
++++ /dev/null
+@@ -1,43 +0,0 @@
+-export interface ApiRelaySource {
+-  profile: string
+-  provider: string
+-  label: string
+-}
+-
+-export interface ApiRelayPeriodUsage {
+-  requests?: number
+-  total_tokens?: number
+-  input_tokens?: number
+-  output_tokens?: number
+-  cache_read_tokens?: number
+-  cache_creation_tokens?: number
+-  cost?: number
+-  actual_cost?: number
+-}
+-
+-export interface ApiRelayUsage {
+-  isValid: boolean
+-  remaining: number | null
+-  unit: string
+-  planName?: string
+-  today?: ApiRelayPeriodUsage
+-  total?: ApiRelayPeriodUsage
+-  rpm?: number
+-  tpm?: number
+-  modelStats: Array<ApiRelayPeriodUsage & { model: string }>
+-}
+-
+-export interface ApiRelayAccount {
+-  id: string
+-  endpoint: string
+-  sources: ApiRelaySource[]
+-  status: 'ready' | 'error'
+-  usage?: ApiRelayUsage
+-  error?: 'unauthorized' | 'timeout' | 'unavailable' | 'invalid_response'
+-}
+-
+-export interface ApiRelayUsageResult {
+-  configured: boolean
+-  checkedAt: string
+-  accounts: ApiRelayAccount[]
+-}
+diff --git a/tests/e2e/api-relay.spec.ts b/tests/e2e/api-relay.spec.ts
+deleted file mode 100644
+index ddb213401..000000000
+--- a/tests/e2e/api-relay.spec.ts
++++ /dev/null
+@@ -1,200 +0,0 @@
+-import { expect, test } from '@playwright/test'
+-import { authenticate, mockChatSocket, mockHermesApi } from './fixtures'
+-
+-test.beforeEach(async ({ page }) => {
+-  await authenticate(page, undefined, 'research')
+-  await mockChatSocket(page)
+-  await mockHermesApi(page)
+-  await page.route('**/api/hermes/api-relay/usage', route => route.fulfill({ json: { configured: false, checkedAt: '2026-10-02T08:00:00Z', accounts: [] } }))
+-  await page.route('**/api/studio/sessions/hermes/groups**', route => route.fulfill({ json: { groups: [], included: [] } }))
+-  await page.route('**/api/hermes/write-gate/pending**', route => route.fulfill({ json: { pending: [] } }))
+-})
+-
+-test('opens the partner page below Models and visits the website only from its action', async ({ page, context }) => {
+-  await page.goto('/#/hermes/chat')
+-  const rail = page.locator('.studio-navigation-rail')
+-  const relay = rail.getByRole('link', { name: 'API Relay', exact: true })
+-  await expect(relay).toHaveAttribute('href', '#/hermes/api-relay')
+-  expect(await relay.evaluate(el => el.previousElementSibling?.getAttribute('href'))).toBe('#/hermes/models')
+-  await relay.click()
+-  await expect(page).toHaveURL(/#\/hermes\/api-relay$/)
+-  await expect(relay).toHaveAttribute('aria-current', 'page')
+-  expect(context.pages()).toHaveLength(1)
+-  await expect(page.locator('aside.sidebar, .session-list')).toHaveCount(0)
+-  await expect(page.getByRole('heading', { name: 'Leading AI models, one gateway' })).toBeVisible()
+-  const card = page.locator('.api-relay-hero')
+-  await expect(card).toHaveCount(1)
+-  await expect(card).toContainText('Ekko Studio’s partner API gateway')
+-  await expect(card).not.toContainText(/Codex|Claude Code|Hermes/)
+-  for (const provider of ['Claude', 'ChatGPT', 'Grok', 'Gemini', 'Zhipu', 'Kimi', 'DeepSeek', 'MiniMax']) {
+-    await expect(card.locator('.api-relay-features')).toContainText(provider)
+-  }
+-  await expect.poll(() => card.locator('img').evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true)
+-  await expect(card.locator('img')).toHaveCSS('border-radius', '6px')
+-
+-  const cardStyle = () => ({
+-    borderRadius: getComputedStyle(document.querySelector('section.api-relay-hero, section.app-download-hero')!).borderRadius,
+-    backgroundImage: getComputedStyle(document.querySelector('section.api-relay-hero, section.app-download-hero')!).backgroundImage,
+-    padding: getComputedStyle(document.querySelector('section.api-relay-hero, section.app-download-hero')!).padding,
+-  })
+-  const relayStyle = await page.evaluate(cardStyle)
+-  await page.goto('/#/hermes/connections?view=download')
+-  await expect(page.locator('.app-download-hero')).toBeVisible()
+-  expect(await page.evaluate(cardStyle)).toEqual(relayStyle)
+-  await page.goto('/#/hermes/api-relay')
+-  const action = page.getByRole('link', { name: 'View now', exact: true })
+-  await expect(action).toHaveAttribute('href', 'https://apikey.fan/register?aff=LIBAPI')
+-  await expect(action).toHaveAttribute('target', '_blank')
+-  await expect(action).toHaveAttribute('rel', 'noopener noreferrer')
+-  await context.route('https://apikey.fan/**', route => route.fulfill({ contentType: 'text/html', body: '<title>APIKEY.FAN</title>' }))
+-  const popupPromise = page.waitForEvent('popup')
+-  await action.click()
+-  const popup = await popupPromise
+-  await popup.waitForLoadState()
+-  await expect(popup).toHaveURL('https://apikey.fan/register?aff=LIBAPI')
+-  await popup.close()
+-})
+-
+-test('closes mobile navigation on the partner page and keeps the card within the viewport', async ({ page }) => {
+-  await page.setViewportSize({ width: 390, height: 800 })
+-  await page.goto('/#/hermes/chat')
+-  await page.getByRole('button', { name: 'Menu', exact: true }).click()
+-  const drawer = page.locator('.studio-mobile-drawer')
+-  await drawer.getByRole('link', { name: 'API Relay', exact: true }).click()
+-  await expect(page).toHaveURL(/#\/hermes\/api-relay$/)
+-  await expect(drawer).not.toBeVisible()
+-  await expect(page.locator('.api-relay-hero')).toBeVisible()
+-  await expect(page.getByRole('link', { name: 'View now', exact: true })).toBeInViewport()
+-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+-  await page.reload()
+-  await expect(page.locator('.api-relay-hero')).toBeVisible()
+-  await page.getByRole('button', { name: 'Menu', exact: true }).click()
+-  await expect(drawer).toHaveCSS('width', '64px')
+-  await expect(drawer.getByRole('link', { name: 'API Relay', exact: true })).toHaveAttribute('aria-current', 'page')
+-})
+-
+-test('shows the shared page loading surface until the partner logo is ready', async ({ page }) => {
+-  let releaseLogo!: () => void
+-  const logoGate = new Promise<void>(resolve => { releaseLogo = resolve })
+-  await page.route('**/relay-logo.png', async route => {
+-    await logoGate
+-    await route.continue()
+-  })
+-  await page.goto('/#/hermes/api-relay', { waitUntil: 'domcontentloaded' })
+-  const surface = page.locator('.api-relay-view')
+-  await expect(surface).toHaveAttribute('aria-busy', 'true')
+-  await expect(surface.locator('.page-loading-overlay')).toBeVisible()
+-  await expect(surface.locator('.api-relay-hero')).not.toBeVisible()
+-  releaseLogo()
+-  await expect(surface).toHaveAttribute('aria-busy', 'false')
+-  await expect(surface.locator('.page-loading-overlay')).toHaveCount(0)
+-  await expect(surface.locator('.api-relay-hero')).toBeVisible()
+-})
+-
+-test('reveals the partner card when the logo cannot load', async ({ page }) => {
+-  await page.route('**/relay-logo.png', route => route.abort('failed'))
+-  await page.goto('/#/hermes/api-relay')
+-  await expect(page.locator('.api-relay-view')).toHaveAttribute('aria-busy', 'false')
+-  await expect(page.locator('.api-relay-hero')).toBeVisible()
+-  await expect(page.getByRole('link', { name: 'View now', exact: true })).toBeInViewport()
+-})
+-
+-const relayUsage = {
+-  isValid: true,
+-  remaining: 12.25,
+-  unit: 'USD',
+-  today: { requests: 8, total_tokens: 1234, actual_cost: 0.15 },
+-  total: { requests: 42, total_tokens: 50000, cost: 2.5 },
+-  rpm: 2,
+-  tpm: 200,
+-  modelStats: [{ model: 'gpt-test', requests: 42, total_tokens: 50000, cost: 2.5 }],
+-}
+-
+-const relayAccount = {
+-  id: 'credential-1',
+-  endpoint: 'https://api.apikey.fan/v1/usage',
+-  sources: [
+-    { profile: 'default', provider: 'custom:codex', label: 'Codex-apikey.fan' },
+-    { profile: 'research', provider: 'custom:codex', label: 'Codex-apikey.fan' },
+-  ],
+-  status: 'ready',
+-  usage: relayUsage,
+-}
+-
+-test('shows separate keys with merged profile sources, zero balance and model usage', async ({ page }) => {
+-  await page.route('**/api/hermes/api-relay/usage', route => route.fulfill({ json: {
+-    configured: true,
+-    checkedAt: '2026-10-02T08:00:00Z',
+-    accounts: [relayAccount, { ...relayAccount, id: 'credential-2', sources: [{ profile: 'research', provider: 'deepseek', label: 'DeepSeek' }], usage: { ...relayUsage, remaining: 0, isValid: false } }],
+-  } }))
+-  await page.goto('/#/hermes/api-relay')
+-  const cards = page.locator('.relay-usage-card')
+-  await expect(cards).toHaveCount(2)
+-  await expect(cards.first()).toContainText('default / Codex-apikey.fan')
+-  await expect(cards.first()).toContainText('research / Codex-apikey.fan')
+-  await expect(cards.first().locator('.relay-balance strong')).toHaveText('12.25 USD')
+-  await expect(cards.first().getByRole('row', { name: /Today/ })).toContainText('1,234')
+-  await expect(cards.first().getByRole('row', { name: /^Total / })).toContainText('50,000')
+-  await expect(cards.last().locator('.relay-balance strong')).toHaveText('0 USD')
+-  await expect(cards.last()).toContainText('Key inactive')
+-  await cards.first().locator('summary').click()
+-  await expect(cards.first().getByRole('row', { name: /gpt-test/ })).toBeVisible()
+-  await page.setViewportSize({ width: 390, height: 800 })
+-  await cards.last().scrollIntoViewIfNeeded()
+-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+-})
+-
+-test('keeps shared loading until usage is fetched and only shows the partner card without keys', async ({ page }) => {
+-  let releaseUsage!: () => void
+-  const gate = new Promise<void>(resolve => { releaseUsage = resolve })
+-  await page.route('**/api/hermes/api-relay/usage', async route => {
+-    await gate
+-    await route.fulfill({ json: { configured: false, accounts: [] } })
+-  })
+-  await page.goto('/#/hermes/api-relay', { waitUntil: 'domcontentloaded' })
+-  await expect(page.locator('.api-relay-view')).toHaveAttribute('aria-busy', 'true')
+-  await expect(page.locator('.api-relay-hero')).not.toBeVisible()
+-  releaseUsage()
+-  await expect(page.locator('.api-relay-view')).toHaveAttribute('aria-busy', 'false')
+-  await expect(page.locator('.api-relay-hero')).toBeVisible()
+-  await expect(page.locator('.api-relay-usage')).toHaveCount(0)
+-  await expect(page.getByRole('heading', { name: 'Key usage', exact: true })).toHaveCount(0)
+-  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toHaveCount(0)
+-  await expect(page.locator('.relay-usage-card')).toHaveCount(0)
+-  await page.setViewportSize({ width: 390, height: 800 })
+-  await expect(page.locator('.api-relay-hero')).toBeVisible()
+-  await expect(page.locator('.api-relay-usage')).toHaveCount(0)
+-})
+-
+-test('hides the usage section after refresh confirms all keys have been removed', async ({ page }) => {
+-  let attempts = 0
+-  await page.route('**/api/hermes/api-relay/usage', route => route.fulfill({ json: ++attempts === 1
+-    ? { configured: true, accounts: [relayAccount] }
+-    : { configured: false, accounts: [] },
+-  }))
+-  await page.goto('/#/hermes/api-relay')
+-  await expect(page.locator('.relay-usage-card')).toBeVisible()
+-  await page.getByRole('button', { name: 'Refresh', exact: true }).click()
+-  await expect(page.locator('.api-relay-usage')).toHaveCount(0)
+-  await expect(page.locator('.api-relay-hero')).toBeVisible()
+-})
+-
+-test('shows request failure, recovers on refresh and keeps successful keys on partial failure', async ({ page }) => {
+-  let attempts = 0
+-  await page.route('**/api/hermes/api-relay/usage', route => {
+-    if (++attempts === 1) return route.fulfill({ status: 500, json: { error: 'Unable to load usage' } })
+-    return route.fulfill({ json: { configured: true, accounts: [relayAccount, {
+-      ...relayAccount, id: 'credential-2', status: 'error', error: 'unauthorized', usage: undefined,
+-      sources: [{ profile: 'research', provider: 'deepseek', label: 'DeepSeek' }],
+-    }] } })
+-  })
+-  await page.goto('/#/hermes/api-relay')
+-  await expect(page.locator('.api-relay-view')).toHaveAttribute('aria-busy', 'false')
+-  await expect(page.getByRole('status')).toHaveText('Unable to load usage. Refresh to try again.')
+-  await page.getByRole('button', { name: 'Refresh', exact: true }).click()
+-  await expect(page.locator('.relay-usage-card')).toHaveCount(2)
+-  await expect(page.locator('.relay-usage-card').first().locator('.relay-balance')).toContainText('12.25')
+-  await expect(page.locator('.relay-usage-card').last()).toContainText('Key authentication failed')
+-  await expect(page.locator('.relay-usage-card').last().locator('.relay-balance')).toHaveCount(0)
+-  await expect(page.locator('.api-relay-view')).toHaveAttribute('aria-busy', 'false')
+-})
+diff --git a/tests/server/api-relay-usage.test.ts b/tests/server/api-relay-usage.test.ts
+deleted file mode 100644
+index 9b886e46a..000000000
+--- a/tests/server/api-relay-usage.test.ts
++++ /dev/null
+@@ -1,170 +0,0 @@
+-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+-import { tmpdir } from 'node:os'
+-import { join } from 'node:path'
+-import yaml from 'js-yaml'
+-
+-const mocks = vi.hoisted(() => ({ root: '', profiles: ['default', 'research', 'private'], listUserProfiles: vi.fn() }))
+-vi.mock('../../packages/server/src/modules/hermes/services/profiles/profile', () => ({
+-  getProfileDir: (profile: string) => join(mocks.root, profile),
+-  listProfileNamesFromDisk: () => mocks.profiles,
+-}))
+-vi.mock('../../packages/server/src/modules/studio/public/profile-config', () => ({
+-  PROVIDER_ENV_MAP: { deepseek: { api_key_env: 'DEEPSEEK_API_KEY', base_url_env: 'DEEPSEEK_BASE_URL' } },
+-  readConfigYamlForProfile: async (profile: string) => yaml.load(readFileSync(join(mocks.root, profile, 'config.yaml'), 'utf8')) || {},
+-}))
+-vi.mock('../../packages/server/src/modules/studio/public/users', () => ({ listUserProfiles: mocks.listUserProfiles }))
+-
+-import { apiRelayUsageEndpoint, extractApiRelayUsage, getApiRelayUsage } from '../../packages/server/src/modules/hermes/services/providers/api-relay-usage'
+-import { getRelayUsage as getUsage } from '../../packages/server/src/modules/hermes/controllers/api-relay'
+-
+-function profile(name: string, config: object = {}, env = '') {
+-  const dir = join(mocks.root, name)
+-  mkdirSync(dir, { recursive: true })
+-  writeFileSync(join(dir, 'config.yaml'), yaml.dump(config))
+-  writeFileSync(join(dir, '.env'), env)
+-}
+-
+-function provider(name: string, api_key: string, base_url = 'https://api.apikey.fan/v1') {
+-  return { name, api_key, base_url, model: 'test-model' }
+-}
+-
+-beforeEach(() => {
+-  mocks.root = mkdtempSync(join(tmpdir(), 'api-relay-usage-'))
+-  vi.clearAllMocks()
+-  for (const name of mocks.profiles) profile(name)
+-})
+-afterEach(() => { vi.unstubAllGlobals(); rmSync(mocks.root, { recursive: true, force: true }) })
+-
+-describe('API relay usage', () => {
+-  it('deduplicates the same key across profiles and provider schemas, keeping different keys separate', async () => {
+-    profile('default', { custom_providers: [provider('codex', 'shared-test-key', 'https://api.apikey.fan/')] })
+-    profile('research', { providers: {
+-      codex: { base_url: 'https://api.apikey.fan/v1/', key_env: 'CODEX_KEY', default_model: 'gpt-test' },
+-      deepseek: provider('deepseek', 'different-test-key'),
+-    } }, 'CODEX_KEY="shared-test-key"\n')
+-    const fetcher = vi.fn(async () => new Response(JSON.stringify({ remaining: 0, isValid: true, usage: { today: { requests: 0, total_tokens: 0 } } })))
+-    vi.stubGlobal('fetch', fetcher)
+-    const result = await getApiRelayUsage(['default', 'research', 'research'])
+-    expect(fetcher).toHaveBeenCalledTimes(2)
+-    expect(result.accounts).toHaveLength(2)
+-    expect(result.accounts[0].sources).toEqual([
+-      { profile: 'default', provider: 'custom:codex', label: 'codex' },
+-      { profile: 'research', provider: 'custom:codex', label: 'codex' },
+-    ])
+-    expect(result.accounts[1].sources[0].label).toBe('deepseek')
+-    expect(result.accounts[0].usage?.remaining).toBe(0)
+-    expect(fetcher.mock.calls.every(([url]) => url === 'https://api.apikey.fan/v1/usage')).toBe(true)
+-    expect(fetcher).toHaveBeenCalledWith('https://api.apikey.fan/v1/usage', expect.objectContaining({
+-      method: 'GET', redirect: 'error', headers: { Authorization: 'Bearer shared-test-key', Accept: 'application/json' },
+-    }))
+-    expect(JSON.stringify(result)).not.toContain('shared-test-key')
+-    expect(JSON.stringify(result)).not.toContain('different-test-key')
+-  })
+-
+-  it('reads builtin env and legacy inline credentials without conflating services', async () => {
+-    profile('research', { model: { provider: 'custom', base_url: 'https://api.apikey.fan', api_key: 'same-test-key' } },
+-      "DEEPSEEK_API_KEY='same-test-key'\nDEEPSEEK_BASE_URL=https://api.apikey.fan/v1\n")
+-    const fetcher = vi.fn(async () => new Response('{"balance":12}'))
+-    vi.stubGlobal('fetch', fetcher)
+-    const result = await getApiRelayUsage(['research'])
+-    expect(fetcher).toHaveBeenCalledTimes(1)
+-    expect(result.accounts[0].sources.map(source => source.provider)).toEqual(['deepseek', 'custom'])
+-    expect(result.accounts[0].usage).toMatchObject({ remaining: 12, unit: 'USD', isValid: true })
+-  })
+-
+-  it('does not query when keys are absent or configured for a different provider domain', async () => {
+-    profile('research', { custom_providers: [provider('no-key', ''), provider('official-deepseek', 'official-key', 'https://api.deepseek.com/v1')] })
+-    const fetcher = vi.fn()
+-    vi.stubGlobal('fetch', fetcher)
+-    expect(await getApiRelayUsage(['research'])).toMatchObject({ configured: false, accounts: [] })
+-    expect(fetcher).not.toHaveBeenCalled()
+-  })
+-
+-  it('normalizes the supplied extractor aliases and preserves false, zero, and missing values', () => {
+-    expect(extractApiRelayUsage({ is_active: false, remaining: 0, balance: 100, unit: 'CNY' })).toMatchObject({ isValid: false, remaining: 0, unit: 'CNY' })
+-    expect(extractApiRelayUsage({ quota: { remaining: '2.25', unit: 'USD' } })).toMatchObject({ isValid: true, remaining: 2.25, unit: 'USD' })
+-    expect(extractApiRelayUsage({ isValid: false })).toMatchObject({ isValid: false, remaining: null, unit: 'USD' })
+-    expect(() => extractApiRelayUsage({ error: 'failed' })).toThrow()
+-    expect(() => extractApiRelayUsage(null)).toThrow()
+-  })
+-
+-  it('includes known request, token, cost, rate, and model fields while stripping other upstream fields', () => {
+-    const result = extractApiRelayUsage({ remaining: 1, secret: 'never-return-this', usage: {
+-      today: { requests: 3, total_tokens: 42, actual_cost: 0, cost: 4, api_key: 'hidden' },
+-      total: { requests: 11 }, rpm: 2, tpm: 17,
+-    }, model_stats: [{ model: 'deepseek-test', requests: 3, secret: 'hidden' }] })
+-    expect(result).toMatchObject({ today: { requests: 3, total_tokens: 42, actual_cost: 0 }, total: { requests: 11 }, rpm: 2, tpm: 17, modelStats: [{ model: 'deepseek-test', requests: 3 }] })
+-    expect(JSON.stringify(result)).not.toMatch(/secret|hidden|never-return/)
+-  })
+-
+-  it('keeps partial successes and sanitizes authentication, timeout, and malformed responses', async () => {
+-    profile('research', { custom_providers: ['good', 'invalid', 'timeout', 'malformed'].map(name => provider(name, `${name}-test-key`)) })
+-    vi.stubGlobal('fetch', vi.fn()
+-      .mockResolvedValueOnce(new Response('{"remaining":4}'))
+-      .mockResolvedValueOnce(new Response('invalid-test-key', { status: 401 }))
+-      .mockRejectedValueOnce(new DOMException('timeout-test-key', 'TimeoutError'))
+-      .mockResolvedValueOnce(new Response('{"error":"malformed-test-key"}')))
+-    const result = await getApiRelayUsage(['research'])
+-    expect(result.accounts.map(account => account.error ?? account.status)).toEqual(['ready', 'unauthorized', 'timeout', 'invalid_response'])
+-    expect(result.accounts[1].usage).toBeUndefined()
+-    expect(JSON.stringify(result)).not.toContain('-test-key')
+-  })
+-
+-  it('shares in-flight requests without retaining completed statistics', async () => {
+-    profile('research', { custom_providers: [provider('codex', 'concurrent-test-key')] })
+-    let complete!: (value: Response) => void
+-    const pending = new Promise<Response>(resolve => { complete = resolve })
+-    const fetcher = vi.fn().mockReturnValueOnce(pending).mockResolvedValue(new Response('{"remaining":3}'))
+-    vi.stubGlobal('fetch', fetcher)
+-    const first = getApiRelayUsage(['research'])
+-    const second = getApiRelayUsage(['research'])
+-    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1))
+-    complete(new Response('{"remaining":2}'))
+-    expect((await first).accounts[0].usage?.remaining).toBe(2)
+-    expect((await second).accounts[0].usage?.remaining).toBe(2)
+-    expect((await getApiRelayUsage(['research'])).accounts[0].usage?.remaining).toBe(3)
+-    expect(fetcher).toHaveBeenCalledTimes(2)
+-  })
+-
+-  it('handles a timeout while reading the response body as a timeout', async () => {
+-    profile('research', { custom_providers: [provider('codex', 'body-timeout-key')] })
+-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.reject(new DOMException('Request timed out', 'TimeoutError')) }))
+-    expect((await getApiRelayUsage(['research'])).accounts[0]).toMatchObject({ status: 'error', error: 'timeout' })
+-  })
+-
+-  it.each(['http://api.apikey.fan', 'https://apikey.fan.evil.test', 'https://api.apikey.fan:8443', 'https://user:pass@api.apikey.fan'])('rejects unsafe relay addresses: %s', baseUrl => {
+-    expect(apiRelayUsageEndpoint(baseUrl)).toBeNull()
+-  })
+-})
+-
+-describe('API relay profile authorization', () => {
+-  it.each(['admin', 'member'])('queries only assigned profiles for a %s, including no inaccessible sources', async role => {
+-    profile('research', { custom_providers: [provider('codex', 'permitted-key')] })
+-    profile('private', { custom_providers: [provider('private', 'permitted-key'), provider('secret', 'forbidden-key')] })
+-    mocks.listUserProfiles.mockReturnValue([{ profile_name: 'research' }])
+-    const fetcher = vi.fn(async () => new Response('{"remaining":5}'))
+-    vi.stubGlobal('fetch', fetcher)
+-    const ctx = { state: { user: { id: 2, role } }, set: vi.fn() } as any
+-    await getUsage(ctx)
+-    expect(fetcher).toHaveBeenCalledTimes(1)
+-    expect(ctx.body.accounts[0].sources).toEqual([{ profile: 'research', provider: 'custom:codex', label: 'codex' }])
+-    expect(JSON.stringify(ctx.body)).not.toContain('private')
+-    expect(ctx.set).toHaveBeenCalledWith('Cache-Control', 'no-store')
+-  })
+-
+-  it('allows a super admin to deduplicate across all profiles and rejects unauthenticated callers', async () => {
+-    profile('research', { custom_providers: [provider('codex', 'admin-key')] })
+-    profile('private', { custom_providers: [provider('codex', 'admin-key')] })
+-    const fetcher = vi.fn(async () => new Response('{"remaining":5}'))
+-    vi.stubGlobal('fetch', fetcher)
+-    const ctx = { state: { user: { id: 1, role: 'super_admin' } }, set: vi.fn() } as any
+-    await getUsage(ctx)
+-    expect(ctx.body.accounts[0].sources).toHaveLength(2)
+-    expect(fetcher).toHaveBeenCalledTimes(1)
+-    const unauthenticated = { state: {} } as any
+-    await getUsage(unauthenticated)
+-    expect(unauthenticated.status).toBe(401)
+-    expect(fetcher).toHaveBeenCalledTimes(1)
+-  })
+-})
+diff --git a/vitest.config.ts b/vitest.config.ts
+index dd913938b..16c1a1d89 100644
+--- a/vitest.config.ts
++++ b/vitest.config.ts
+@@ -11,7 +11,6 @@ export default defineConfig({
+       'dbus-next': resolve(__dirname, 'tests/mocks/dbus-next.ts'),
+       'electron-updater': resolve(__dirname, 'tests/mocks/electron-updater.ts'),
+       '/logo.png': resolve(__dirname, 'packages/client/public/logo.png'),
+-      '/relay-logo.png': resolve(__dirname, 'packages/client/public/relay-logo.png'),
+     },
+   },
+   test: {
+-- 
+2.53.0
+

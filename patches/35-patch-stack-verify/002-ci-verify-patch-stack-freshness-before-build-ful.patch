@@ -1,0 +1,36 @@
+From 6088b07e2afcdd33d649b5a9ddba84ef39ade6ad Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 7 Oct 2026 00:31:13 +0800
+Subject: [PATCH] ci: verify patch stack freshness before build (full-history
+ checkout)
+
+---
+ .github/workflows/build.yml | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
+index 4dc3f3e70..88cb46ee2 100644
+--- a/.github/workflows/build.yml
++++ b/.github/workflows/build.yml
+@@ -24,6 +24,10 @@ jobs:
+     steps:
+       - name: Checkout repository
+         uses: actions/checkout@v4
++        with:
++          # Full history so the patch-stack verifier can resolve the `main`
++          # baseline (it is only present as origin/main after a shallow checkout).
++          fetch-depth: 0
+ 
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+@@ -40,6 +44,10 @@ jobs:
+       - name: Check repository harness
+         run: npm run harness:check
+ 
++      - name: Verify patch stack freshness
++        # 补丁串必须能从 main 干净重放并与 custom 源码树逐字节一致（否则有改动漏回写 patches/）
++        run: bash scripts/verify-patch-stack.sh
++
+       - name: Build
+         run: npm run build
+ 

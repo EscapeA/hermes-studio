@@ -1,0 +1,75 @@
+From bcd83f1315d5985610c48f40b1ac2d060630b431 Mon Sep 17 00:00:00 2001
+From: EscapeA <EscapeA@users.noreply.github.com>
+Date: Mon, 20 Jul 2026 18:28:26 +0800
+Subject: [PATCH] feat(chat): dual-select session model picker and mobile
+ sidebar stacking
+
+Replace the full provider/model list in the session model switcher with
+provider + model NSelects (aligned with new-chat), show the current model
+label next to the mobile input button, and use fixed stacking so the
+session drawer covers the global hamburger icon.
+---
+ packages/client/src/components/hermes/chat/ChatInput.vue | 6 +++---
+ packages/client/src/components/hermes/chat/ChatPanel.vue | 9 ++++++---
+ 2 files changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index 1e38af0ab..87b5953cd 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -2129,13 +2129,13 @@ function openAttachmentPreview(attachment: Attachment) {
+   }
+ 
+   .input-model-button {
+-    min-width: 35px;
+-    max-width: 35px;
++    min-width: 0;
++    max-width: min(160px, 42vw);
+     padding: 0 4px 0 6px;
+   }
+ 
+   .input-model-label {
+-    display: none;
++    display: inline-block;
+   }
+ 
+   .input-settings-button {
+diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
+index b9c9d2c98..39281d0a8 100644
+--- a/packages/client/src/components/hermes/chat/ChatPanel.vue
++++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
+@@ -3257,14 +3257,17 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+   }
+ 
+   @media (max-width: $breakpoint-mobile) {
++    // Upstream 0.7.26 made the sidebar flush (no card margin/radius); keep its
++    // absolute placement but stay above the global .hamburger-btn (z-index 99).
+     position: absolute;
+     left: 0;
+     top: 0;
+     bottom: 0;
+     height: auto;
+     margin: 0;
+-    z-index: 120;
++    z-index: 1000;
+     width: $sidebar-width;
++    padding-top: env(safe-area-inset-top, 0px);
+ 
+     &.collapsed {
+       transform: translateX(-100%);
+@@ -3275,10 +3278,10 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+ 
+ @media (max-width: $breakpoint-mobile) {
+   .session-backdrop {
+-    position: absolute;
++    position: fixed;
+     inset: 0;
+     background: rgba(0, 0, 0, 0.4);
+-    z-index: 110;
++    z-index: 999;
+     opacity: 0;
+     pointer-events: none;
+     transition: opacity $transition-fast;
+-- 
+2.53.0
+
