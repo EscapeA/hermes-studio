@@ -57,7 +57,9 @@ describe('i18n lazy loading', () => {
     const { i18nReady } = await import('@/i18n')
     const i18n = await i18nReady
 
-    expect(i18n.global.availableLocales).toEqual(['en', 'tr'])
+    // The fork merges the English fallback into each locale chunk at build time
+    // (vite `locale-merge` plugin), so only the active locale is registered.
+    expect(i18n.global.availableLocales).toEqual(['tr'])
     expect(i18n.global.locale.value).toBe('tr')
     expect(document.documentElement.lang).toBe('tr')
     expect(document.documentElement.dir).toBe('ltr')
