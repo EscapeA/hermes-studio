@@ -49,6 +49,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 39-chat-compression-timer | 压缩完成自动清除改为 per-session 跟踪 timer（设置新压缩状态即取消旧 timer，避免旧 timer 清掉新状态；两处 compression.completed 共用 helper） | 001 |
 | 40-message-list-parse-cache | `MessageList` filter 的 `parseThinking` 按消息对象缓存（内容引用不变即复用，仅流式那行未命中；实测每重算 300 行 1.06ms→0.029ms） | 001 |
 | 41-audit-l-cleanups | 审计 L 级（空会话默认 Hermes 而非遗留 Ekko；live reasoning 用稳定 `:key` 不再每 token 重挂载；`cacheHitRatePercent`→`cacheReadSharePercent` 命名对齐实际语义） | 001-003 |
+| 42-0.7.34-adapt | 0.7.34 升级适配（从上游新增的 **Turkish locale** 里删掉 fork 已移除功能的 i18n 键：`groupChat.*`/`workflow.*`/`sidebar.apiRelay|workflow|singleChat|groupChat`/`chat.runUsageCost`，否则 `i18n-coverage` 逐键比对 English 必红；`i18n-lazy-loading` 的 Turkish 启动用例适配 fork 的 build-time en 合并＝只注册当前 locale） | 001-002 |
 
 > **0.7.32 升级（2026-10-09）**：补丁串重建为 **124** 个 —— `30-bridge-clarify-contract` 因上游 #3330 已原生实现同一 clarify 契约而作废删除，
 > 新增 `35-patch-stack-verify/003·004`（校验脚本支持 ORDER + 补丁以未跟踪文件落盘，避免自引用补丁失败）。

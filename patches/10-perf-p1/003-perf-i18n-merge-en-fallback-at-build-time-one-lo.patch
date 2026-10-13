@@ -1,4 +1,4 @@
-From b1af3dc75913b2db532da8cb924cbc8e7a6fa62f Mon Sep 17 00:00:00 2001
+From c9d34018a9b4947a8275e58d9eef28b01806c997 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
 Subject: [PATCH] perf(i18n): merge en fallback at build time, one locale chunk
@@ -12,9 +12,9 @@ wire for zh users).
 ---
  packages/client/src/i18n/index.ts     | 27 +++--------
  packages/client/src/i18n/locales.d.ts |  8 ++++
- packages/client/src/i18n/messages.ts  | 22 ++++-----
+ packages/client/src/i18n/messages.ts  | 24 +++++-----
  vite.config.ts                        | 65 ++++++++++++++++++++++++++-
- 4 files changed, 88 insertions(+), 34 deletions(-)
+ 4 files changed, 89 insertions(+), 35 deletions(-)
  create mode 100644 packages/client/src/i18n/locales.d.ts
 
 diff --git a/packages/client/src/i18n/index.ts b/packages/client/src/i18n/index.ts
@@ -82,10 +82,10 @@ index 000000000..d3d42d66d
 +  export default messages
 +}
 diff --git a/packages/client/src/i18n/messages.ts b/packages/client/src/i18n/messages.ts
-index 0abd2e93b..e16613e36 100644
+index 1c22efd55..3f0768854 100644
 --- a/packages/client/src/i18n/messages.ts
 +++ b/packages/client/src/i18n/messages.ts
-@@ -24,17 +24,17 @@ export function mergeMessagesWithFallback(
+@@ -24,18 +24,18 @@ export function mergeMessagesWithFallback(
  }
  
  const localeLoaders: Record<SupportedLocale, () => Promise<{ default: LocaleMessages }>> = {
@@ -100,6 +100,7 @@ index 0abd2e93b..e16613e36 100644
 -  pt: () => import('./locales/pt'),
 -  ru: () => import('./locales/ru'),
 -  ar: () => import('./locales/ar'),
+-  tr: () => import('./locales/tr'),
 +  en: () => import('@locales/en'),
 +  zh: () => import('@locales/zh'),
 +  'zh-TW': () => import('@locales/zh-TW'),
@@ -111,6 +112,7 @@ index 0abd2e93b..e16613e36 100644
 +  pt: () => import('@locales/pt'),
 +  ru: () => import('@locales/ru'),
 +  ar: () => import('@locales/ar'),
++  tr: () => import('@locales/tr'),
  }
  
  const localeMessagePromises = new Map<SupportedLocale, Promise<LocaleMessages>>()
@@ -201,3 +203,6 @@ index c9308a5b8..7e589a935 100644
    define: {
      __APP_VERSION__: JSON.stringify(pkg.version),
    },
+-- 
+2.53.0
+

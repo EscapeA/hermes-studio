@@ -1,4 +1,4 @@
-From 617f109311b70c778e6a154a7f2a49144eb4d0ed Mon Sep 17 00:00:00 2001
+From c2b23020e1eec9e530b36150af027377e86793cd Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:29 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after group chat
@@ -42,7 +42,7 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  tests/client/group-chat-room-drafts.test.ts   |  104 -
  .../client/group-chat-store-baseline.test.ts  | 1471 ------------
  .../client/group-chat-store-streaming.test.ts | 1203 ----------
- .../client/group-chat-store-workspace.test.ts |  131 --
+ .../client/group-chat-store-workspace.test.ts |  131 -
  tests/client/group-chat-view-settings.test.ts |   65 -
  .../client/group-chat-workspace-diff.test.ts  |  449 ----
  .../group-message-item-highlight.test.ts      |  292 ---
@@ -58,11 +58,11 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  tests/desktop/group-chat-agent-popup.test.ts  |   63 -
  tests/e2e/desktop-window-chrome.spec.ts       |    6 -
  tests/e2e/fixtures.ts                         |   10 -
- tests/e2e/group-chat-room-deeplink.spec.ts    | 2056 -----------------
+ tests/e2e/group-chat-room-deeplink.spec.ts    | 2137 -----------------
  tests/e2e/group-chat-share.spec.ts            |  448 ----
  tests/e2e/history-session-deeplink.spec.ts    |   42 +-
  tests/e2e/theme.spec.ts                       |   18 -
- 48 files changed, 33 insertions(+), 8980 deletions(-)
+ 48 files changed, 33 insertions(+), 9061 deletions(-)
  delete mode 100644 tests/client/group-agent-avatar.test.ts
  delete mode 100644 tests/client/group-agent-presets-source.test.ts
  delete mode 100644 tests/client/group-agent-presets.test.ts
@@ -117,10 +117,10 @@ index e8e6f49d6..fe32f5f47 100644
      expect(resolveAgentStatusId('claude')).toBe('claude-code')
      expect(resolveAgentStatusId('codex')).toBe('codex')
 diff --git a/tests/client/api.test.ts b/tests/client/api.test.ts
-index bafda2619..697c1e1d1 100644
+index e16ade21f..bc2cca44e 100644
 --- a/tests/client/api.test.ts
 +++ b/tests/client/api.test.ts
-@@ -212,15 +212,15 @@ describe('API Client', () => {
+@@ -230,15 +230,15 @@ describe('API Client', () => {
          status: 409,
          statusText: 'Conflict',
          text: () => Promise.resolve(JSON.stringify({
@@ -1780,7 +1780,7 @@ index 59e07acf6..000000000
 -})
 diff --git a/tests/client/group-chat-panel-workspace-source.test.ts b/tests/client/group-chat-panel-workspace-source.test.ts
 deleted file mode 100644
-index f1e54819e..000000000
+index 4e7bacd95..000000000
 --- a/tests/client/group-chat-panel-workspace-source.test.ts
 +++ /dev/null
 @@ -1,572 +0,0 @@
@@ -2323,13 +2323,13 @@ index f1e54819e..000000000
 -    const selection = readFileSync('packages/client/src/utils/coding-agent-mode.ts', 'utf8')
 -    expect(selection).toContain("agentMode: input.usesGlobal ? 'global' : 'scoped'")
 -    expect(selection).toContain("provider: input.usesGlobal ? '' : input.provider")
--    expect(selection).toContain("model: input.usesGlobal ? '' : input.model")
+-    expect(selection).toContain("model: input.usesGlobal ? input.nativeModel || '' : input.model")
 -    expect(source).toContain("apiMode: selectedAgentType.value === 'hermes' || usesGlobalAgentMode.value ? undefined : selectedAgentApiMode.value")
--    expect(source).toContain("reasoningEffort: usesGlobalAgentMode.value ? '' : selectedAgentReasoningEffort.value")
+-    expect(source).toContain("reasoningEffort: usesGlobalAgentMode.value ? nativeAgentSelection.value.reasoningEffort : selectedAgentReasoningEffort.value")
 -    for (const modelSource of [source, linkView]) {
--      expect(modelSource).toContain('function handleAgentModelChange(model: string)')
+-      expect(modelSource).toContain(modelSource === source ? 'function handleAgentModelSelect(' : 'function handleAgentModelChange(model: string)')
 -      expect(modelSource).toContain("selectedAgentReasoningEffort.value = ''")
--      expect(modelSource).toContain('@update:value="handleAgentModelChange"')
+-      expect(modelSource).toContain(modelSource === source ? '@select="handleAgentModelSelect"' : '@update:value="handleAgentModelChange"')
 -    }
 -    expect(source).toContain('inferCodingAgentApiMode(')
 -    expect(source).toContain('normalizeCodingAgentApiMode(')
@@ -6672,10 +6672,10 @@ index 42c15835e..000000000
 -  })
 -})
 diff --git a/tests/client/i18n-coverage.test.ts b/tests/client/i18n-coverage.test.ts
-index 7bdd043a1..ba202a04b 100644
+index 8fbbfd51f..7aafd9ec1 100644
 --- a/tests/client/i18n-coverage.test.ts
 +++ b/tests/client/i18n-coverage.test.ts
-@@ -239,54 +239,6 @@ const REASONING_EFFORT_LOCALIZED_KEYS = [
+@@ -264,54 +264,6 @@ const REASONING_EFFORT_LOCALIZED_KEYS = [
    'chat.reasoningEffort.options.ultra',
  ]
  
@@ -6730,7 +6730,7 @@ index 7bdd043a1..ba202a04b 100644
  const PLATFORM_SETTINGS_LOCALE_SPECIFIC_LOCALIZED_KEYS: Record<string, string[]> = {
    de: ['platform.qqAppId', 'platform.qqAppSecret'],
    ja: ['platform.homeserver', 'platform.accountId'],
-@@ -450,31 +402,6 @@ describe('i18n locale coverage', () => {
+@@ -475,31 +427,6 @@ describe('i18n locale coverage', () => {
      expect(missing).toEqual([])
    })
  
@@ -6762,7 +6762,7 @@ index 7bdd043a1..ba202a04b 100644
    it('compiles every changelog message in every locale', () => {
      for (const [locale, localeMessages] of Object.entries(rawMessages)) {
        const i18n = createI18n({
-@@ -574,20 +501,6 @@ describe('i18n locale coverage', () => {
+@@ -599,20 +526,6 @@ describe('i18n locale coverage', () => {
      expect(missing).toEqual([])
    })
  
@@ -7108,10 +7108,10 @@ index dad3635df..000000000
 -  })
 -})
 diff --git a/tests/e2e/desktop-window-chrome.spec.ts b/tests/e2e/desktop-window-chrome.spec.ts
-index 2df01550d..89ba43367 100644
+index 56808b049..bad3ea91d 100644
 --- a/tests/e2e/desktop-window-chrome.spec.ts
 +++ b/tests/e2e/desktop-window-chrome.spec.ts
-@@ -333,12 +333,6 @@ test('keeps chat and group actions below the shared macOS header', async ({ page
+@@ -359,12 +359,6 @@ test('keeps chat and group actions below the shared macOS header', async ({ page
    expect((await newChat.boundingBox())?.x).toBeGreaterThanOrEqual(64)
    expect((await page.locator('.studio-navigation-rail .page-sidebar-account-btn').boundingBox())?.y).toBeGreaterThanOrEqual(44)
  
@@ -7125,10 +7125,10 @@ index 2df01550d..89ba43367 100644
  
  test('renders a native-chrome desktop chat route with only messages and input', async ({ page }) => {
 diff --git a/tests/e2e/fixtures.ts b/tests/e2e/fixtures.ts
-index c3b76cb0a..bae7f4541 100644
+index 010f05791..1c92382fb 100644
 --- a/tests/e2e/fixtures.ts
 +++ b/tests/e2e/fixtures.ts
-@@ -968,16 +968,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
+@@ -989,16 +989,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
        return
      }
  
@@ -7147,10 +7147,10 @@ index c3b76cb0a..bae7f4541 100644
        return
 diff --git a/tests/e2e/group-chat-room-deeplink.spec.ts b/tests/e2e/group-chat-room-deeplink.spec.ts
 deleted file mode 100644
-index fcb7040a9..000000000
+index 952534527..000000000
 --- a/tests/e2e/group-chat-room-deeplink.spec.ts
 +++ /dev/null
-@@ -1,2056 +0,0 @@
+@@ -1,2137 +0,0 @@
 -import { expect, test, type Page, type Route } from '@playwright/test'
 -import { authenticate, TEST_MODEL_GROUP } from './fixtures'
 -
@@ -7886,10 +7886,10 @@ index fcb7040a9..000000000
 -      await expect(addDrawer).toBeVisible({ timeout: 1000 })
 -      await expect(addDrawer.locator('.agent-form-loading')).toBeVisible()
 -      await expect(addDrawer.getByRole('button', { name: 'Add', exact: true })).toBeDisabled()
--      await addDrawer.getByPlaceholder('Custom name (leave empty to use profile name)').fill('Draft while loading')
 -      if (endpoint === '/api/hermes/profiles') {
--        await page.screenshot({ path: test.info().outputPath('agent-drawer-loading.png'), animations: 'disabled' })
+-        await addDrawer.screenshot({ path: test.info().outputPath('agent-drawer-loading.png'), animations: 'disabled' })
 -      }
+-      await addDrawer.getByPlaceholder('Custom name (leave empty to use profile name)').fill('Draft while loading')
 -      await addDrawer.getByRole('button', { name: 'Cancel', exact: true }).click()
 -      await expect(addDrawer).toBeHidden()
 -
@@ -9207,6 +9207,87 @@ index fcb7040a9..000000000
 -  await expect.poll(async () => (await page.locator('.n-base-select-option__content:visible').allTextContents())
 -    .map(label => label.split(' · ')[0])).toEqual(['Ekko', 'Codex', 'Qwen Code'])
 -})
+-
+-for (const mobile of [false, true]) test(`group-chat ${mobile ? 'mobile' : 'desktop'} uses the shared dialog for scoped and global native model and effort`, async ({ page }) => {
+-  if (mobile) await page.setViewportSize({ width: 390, height: 844 })
+-  const api = await setup(page, '/#/hermes/group-chat/room/room-alpha')
+-  let discoveries = 0
+-  let finishRefresh: (() => void) | undefined
+-  await page.route('**/api/coding-agents/models?*', async route => {
+-    discoveries++
+-    if (discoveries > 1) await new Promise<void>(resolve => { finishRefresh = resolve })
+-    await route.fulfill({ json: { agents: [{ agentId: 'codex', name: 'Codex', status: 'ready', source: 'cli',
+-      models: [{ id: 'native-review', name: 'Native Review', reasoningEfforts: ['low', 'high'] }] }] } })
+-  })
+-  await page.locator('.agent-avatar-rail-add').click()
+-  const drawer = page.locator('.n-drawer').filter({ hasText: 'Add Agent' })
+-  await expect(drawer.locator('.agent-form-loading')).toBeHidden()
+-  await drawer.locator('.n-select').first().click()
+-  await page.getByText('Codex', { exact: true }).last().click()
+-  await drawer.locator('.model-trigger').click()
+-  const menu = page.locator('.model-cascader:visible')
+-  await expect(menu).toBeVisible()
+-  await menu.getByRole('menuitemradio', { name: 'test-model', exact: true }).click()
+-  const mode = drawer.locator('.form-group').filter({ has: page.locator('.form-label', { hasText: 'Launch mode' }) }).locator('.n-select')
+-  await expect(mode).toContainText('Model')
+-  await mode.click()
+-  await page.getByText('Global', { exact: true }).last().click()
+-  await drawer.locator('.native-model-trigger').click()
+-  await menu.getByRole('menuitemradio', { name: 'Native Review', exact: true }).click()
+-  const effortField = drawer.locator('.form-group').filter({ has: page.locator('.native-reasoning-effort') })
+-  await expect(effortField.locator('.form-label')).toHaveText('Reasoning effort')
+-  await expect(effortField.locator('.native-model-trigger')).toHaveCount(0)
+-  await effortField.locator('.native-reasoning-effort').click()
+-  await page.getByText('High', { exact: true }).last().click()
+-  await mode.click()
+-  await page.getByText('Model', { exact: true }).last().click()
+-  await expect(drawer.locator('.model-trigger')).toContainText('test-model')
+-  await mode.click()
+-  await page.getByText('Global', { exact: true }).last().click()
+-  await expect(drawer.locator('.native-model-trigger')).toHaveText('Native Review')
+-  await expect(drawer.locator('.native-reasoning-effort')).toContainText('High')
+-  await drawer.getByPlaceholder('Custom name (leave empty to use profile name)').fill('Native Reviewer')
+-  await drawer.getByRole('button', { name: 'Add', exact: true }).click()
+-  await expect.poll(() => api.addedAgents.length).toBe(1)
+-  expect(api.addedAgents[0].body).toMatchObject({ agent: 'codex', agentMode: 'global', provider: '', model: 'native-review', reasoningEffort: 'high' })
+-  expect(api.addedAgents[0].body.apiMode).toBeUndefined()
+-  await page.getByRole('button', { name: 'Native Reviewer', exact: true }).click()
+-  const edit = page.locator('.n-drawer').filter({ hasText: 'Edit Native Reviewer' })
+-  await expect(edit.locator('.native-model-trigger')).toHaveText('Native Review')
+-  await expect(edit.locator('.native-reasoning-effort')).toContainText('High')
+-  await edit.locator('.native-model-trigger').click()
+-  await expect(menu.getByRole('menuitemradio', { name: 'Native Review', exact: true })).toBeVisible()
+-  await expect.poll(() => Boolean(finishRefresh)).toBe(true)
+-  finishRefresh!()
+-  await menu.getByRole('button', { name: 'Close', exact: true }).click()
+-})
+-
+-test('group-chat applies a global native preset and uses edited effort instead of the preset snapshot', async ({ page }) => {
+-  const api = await setup(page, '/#/hermes/group-chat/room/room-alpha')
+-  await page.route('**/api/studio/group-chat/agent-presets', route => route.fulfill({ json: { presets: [{
+-    id: 'native-preset', agent: 'codex', agentMode: 'global', profile: 'default', provider: '', model: 'native-review',
+-    apiMode: '', reasoningEffort: 'high', name: 'Native preset', description: '', avatar: '', available: true,
+-  }] } }))
+-  await page.route('**/api/coding-agents/models?*', route => route.fulfill({ json: { agents: [{
+-    agentId: 'codex', name: 'Codex', status: 'ready', source: 'cli',
+-    models: [{ id: 'native-review', name: 'Native Review', reasoningEfforts: ['low', 'high'] }],
+-  }] } }))
+-  await page.locator('.agent-avatar-rail-add').click()
+-  const drawer = page.locator('.n-drawer').filter({ hasText: 'Add Agent' })
+-  await expect(drawer.locator('.agent-form-loading')).toBeHidden()
+-  await drawer.getByRole('button', { name: 'Choose preset', exact: true }).click()
+-  const presets = page.locator('.agent-preset-dialog').filter({ hasText: 'Choose preset' })
+-  await presets.getByRole('button', { name: /Native preset/ }).click()
+-  await presets.getByRole('button', { name: 'Apply', exact: true }).click()
+-  await expect(drawer.locator('.native-model-trigger')).toHaveText('Native Review')
+-  await expect(drawer.locator('.native-reasoning-effort')).toContainText('High')
+-  await drawer.locator('.native-reasoning-effort').click()
+-  await page.getByText('Low', { exact: true }).last().click()
+-  await drawer.getByRole('button', { name: 'Add', exact: true }).click()
+-  await expect.poll(() => api.addedAgents.length).toBe(1)
+-  expect(api.addedAgents[0].body).toMatchObject({ agentMode: 'global', model: 'native-review', reasoningEffort: 'low' })
+-  expect(api.addedAgents[0].body.presetId).toBeUndefined()
+-})
 diff --git a/tests/e2e/group-chat-share.spec.ts b/tests/e2e/group-chat-share.spec.ts
 deleted file mode 100644
 index 83cd30f88..000000000
@@ -9662,7 +9743,7 @@ index 83cd30f88..000000000
 -  await expect(cards).toContainText('1/2 completed')
 -})
 diff --git a/tests/e2e/history-session-deeplink.spec.ts b/tests/e2e/history-session-deeplink.spec.ts
-index e5b887504..12d7371ea 100644
+index 1c01c4ec6..77a4e4808 100644
 --- a/tests/e2e/history-session-deeplink.spec.ts
 +++ b/tests/e2e/history-session-deeplink.spec.ts
 @@ -132,12 +132,7 @@ function detailFor(id: string, sessions = historySessions) {
@@ -9757,3 +9838,6 @@ index 9cb529af8..d97e868e3 100644
    await page.goto('/#/hermes/petdex')
    await expect(page.locator('.petdex-view')).toHaveCSS(
      'background-color',
+-- 
+2.53.0
+

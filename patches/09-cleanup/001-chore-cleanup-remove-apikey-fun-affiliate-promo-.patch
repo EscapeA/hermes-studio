@@ -1,4 +1,4 @@
-From 5afa7d24a6884e66770e04617e2c019c29ee3111 Mon Sep 17 00:00:00 2001
+From 3b42ca0478d79b3eb58ef98da4769aa3091290a2 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 6 Sep 2026 09:25:42 +0800
 Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
@@ -84,22 +84,22 @@ z&F}Znbu}qxS4v9DF8be_FfS(QkmGfDCKEpUwr~4Z#{LBX<E1-_go$tf0000<MNUMn
 GLSTX!^7c;v
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index 98e8c1c73..092b9086d 100644
+index 97c84ba85..7321ec58b 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
 @@ -133,7 +133,7 @@ provide(mobileNavigationKey, {
    target: computed(() => !isWideViewport.value && hasNavigationRail.value ? mobileSidebarHost.value : null),
  });
  const hasMobileContextSidebar = computed(() =>
--  !['hermes.connections', 'hermes.agentManager', 'hermes.models', 'hermes.apiRelay'].includes(String(route.name)),
-+  !['hermes.connections', 'hermes.agentManager', 'hermes.models'].includes(String(route.name)),
+-  !['hermes.connections', 'hermes.agentManager', 'hermes.models', 'hermes.usage', 'hermes.apiRelay'].includes(String(route.name)),
++  !['hermes.connections', 'hermes.agentManager', 'hermes.models', 'hermes.usage'].includes(String(route.name)),
  );
  watch([hasNavigationRail, isWideViewport], () => { mobileNavigationOpen.value = false; });
  watch(sessionSearchOpen, (open) => { if (open) mobileNavigationOpen.value = false; });
-@@ -152,7 +152,6 @@ const usesPageSidebar = computed(() =>
-     "hermes.connections",
+@@ -153,7 +153,6 @@ const usesPageSidebar = computed(() =>
      "hermes.agentManager",
      "hermes.models",
+     "hermes.usage",
 -    "hermes.apiRelay",
      "hermes.history",
      "hermes.historySession",
@@ -327,19 +327,19 @@ index 6a0b53681..0bf710d83 100644
    display: flex;
    justify-content: flex-end;
 diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
-index 1fde59255..919eaad84 100644
+index 2d8fa9669..18529418b 100644
 --- a/packages/client/src/components/layout/PageSidebarNav.vue
 +++ b/packages/client/src/components/layout/PageSidebarNav.vue
 @@ -8,7 +8,7 @@ import { useSessionSearch } from '@/composables/useSessionSearch'
  import DesktopUpdateDownloadTab from './DesktopUpdateDownloadTab.vue'
  import { useNavigationRail } from '@/composables/useNavigationRail'
  
--type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'apiRelay' | 'group' | 'global' | 'workflow'
-+type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'group' | 'global' | 'workflow'
+-type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'usage' | 'apiRelay' | 'group' | 'global' | 'workflow'
++type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'usage' | 'group' | 'global' | 'workflow'
  
  const props = defineProps<{
    active: ActiveSection
-@@ -61,11 +61,6 @@ function openWorkflow() {
+@@ -66,11 +66,6 @@ function openWorkflow() {
    if (props.active === 'workflow') return
    void router.push({ name: 'hermes.workflow' })
  }
@@ -351,9 +351,9 @@ index 1fde59255..919eaad84 100644
  </script>
  
  <template>
-@@ -184,10 +179,6 @@ function openApiRelay() {
+@@ -197,10 +192,6 @@ function openApiRelay() {
          </svg>
-         <span>{{ t('sidebar.models') }}</span>
+         <span>{{ t('sidebar.usage') }}</span>
        </button>
 -      <button v-if="!hasNavigationRail" class="page-sidebar-tab" :class="{ active: active === 'apiRelay' }" type="button" :aria-current="active === 'apiRelay' ? 'page' : undefined" @click="openApiRelay">
 -        <img class="api-relay-logo" src="/relay-logo.png" width="18" height="18" alt="" aria-hidden="true" />
@@ -362,7 +362,7 @@ index 1fde59255..919eaad84 100644
      </div>
      <div v-if="!hasNavigationRail" class="conversation-switch conversation-switch--four" role="tablist" aria-label="Conversation type">
        <NTooltip trigger="hover" placement="top">
-@@ -315,8 +306,6 @@ function openApiRelay() {
+@@ -328,8 +319,6 @@ function openApiRelay() {
    .page-sidebar-primary span { display: none; }
  }
  
@@ -372,10 +372,10 @@ index 1fde59255..919eaad84 100644
    width: 100%;
    min-width: 0;
 diff --git a/packages/client/src/components/layout/StudioNavigationRail.vue b/packages/client/src/components/layout/StudioNavigationRail.vue
-index a41890e78..7a4be328b 100644
+index 630c07520..4f487e3b6 100644
 --- a/packages/client/src/components/layout/StudioNavigationRail.vue
 +++ b/packages/client/src/components/layout/StudioNavigationRail.vue
-@@ -26,7 +26,6 @@ const activeKey = computed(() => {
+@@ -27,7 +27,6 @@ const activeKey = computed(() => {
    if (['hermes.chat', 'hermes.session', 'hermes.globalAgent', 'hermes.globalAgentSession'].includes(name)) return 'chat'
    if (name.startsWith('hermes.groupChat')) return 'group'
    if (name.startsWith('hermes.history')) return 'history'
@@ -383,7 +383,7 @@ index a41890e78..7a4be328b 100644
    return entries.value.find(entry => entry.route === name)?.key || 'settings'
  })
  const mobileNavigation = useMobileNavigation()
-@@ -49,14 +48,6 @@ function handleNavigate(key: string) {
+@@ -50,14 +49,6 @@ function handleNavigate(key: string) {
          </template>
          {{ t(entry.label) }}
        </NTooltip>
@@ -398,7 +398,7 @@ index a41890e78..7a4be328b 100644
      </nav>
      <div class="studio-navigation-rail__bottom">
        <NTooltip placement="right" trigger="hover">
-@@ -100,9 +91,7 @@ function handleNavigate(key: string) {
+@@ -101,9 +92,7 @@ function handleNavigate(key: string) {
    overflow-y: auto;
    scrollbar-width: none;
  }
@@ -410,7 +410,7 @@ index a41890e78..7a4be328b 100644
    place-items: center;
    flex: 0 0 44px;
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 39a1e6b4f..acc0f8735 100644
+index c1cd49aae..88bb9f5a5 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -468,35 +468,6 @@ export default {
@@ -458,7 +458,7 @@ index 39a1e6b4f..acc0f8735 100644
      jobs: 'المهام المجدولة',
      kanban: 'كانبان',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index bf6cf51b6..47ae1c37f 100644
+index 33f6b005a..bb544b37e 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -480,35 +480,6 @@ export default {
@@ -506,7 +506,7 @@ index bf6cf51b6..47ae1c37f 100644
      jobs: 'Geplante Aufgaben',
      models: 'Modelle',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index b79de16fd..45997594c 100644
+index 82cc2f21e..9d036a598 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -468,35 +468,6 @@ export default {
@@ -554,7 +554,7 @@ index b79de16fd..45997594c 100644
      jobs: 'Jobs',
      kanban: 'Kanban',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 2f0b0229b..22fc44c27 100644
+index b7b9b8dbb..3e4881460 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -480,35 +480,6 @@ export default {
@@ -602,7 +602,7 @@ index 2f0b0229b..22fc44c27 100644
      jobs: 'Tareas programadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index a0f8007a1..e336250a0 100644
+index 32b8b5494..640a37aa1 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -480,35 +480,6 @@ export default {
@@ -650,7 +650,7 @@ index a0f8007a1..e336250a0 100644
      jobs: 'Taches planifiees',
      models: 'Modeles',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 64e007eb9..65598b566 100644
+index 1ab39ece6..6b76b852c 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -481,34 +481,6 @@ export default {
@@ -697,7 +697,7 @@ index 64e007eb9..65598b566 100644
      jobs: 'ジョブ',
      models: 'モデル',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 9e581552f..8e77ca1d9 100644
+index 0dfc5df52..b7e91a84f 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -481,34 +481,6 @@ export default {
@@ -744,7 +744,7 @@ index 9e581552f..8e77ca1d9 100644
      jobs: '예약 작업',
      models: '모델',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 5a8444831..1fe38ad4a 100644
+index 0436d9df8..be3b9d339 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -480,35 +480,6 @@ export default {
@@ -792,7 +792,7 @@ index 5a8444831..1fe38ad4a 100644
      jobs: 'Tarefas agendadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index fdcf62dfe..97d4f86ba 100644
+index e340bad76..97fb7db3d 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -361,7 +361,6 @@ export default {
@@ -846,7 +846,7 @@ index fdcf62dfe..97d4f86ba 100644
      history: 'История',
      jobs: 'Задачи',
      kanban: 'Канбан',
-@@ -911,7 +881,6 @@ export default {
+@@ -914,7 +884,6 @@ export default {
      pinned: 'Закреплено',
    },
  
@@ -854,7 +854,7 @@ index fdcf62dfe..97d4f86ba 100644
    drawer: {
      terminal: 'Терминал',
      files: 'Рабочая область',
-@@ -932,7 +901,6 @@ export default {
+@@ -935,7 +904,6 @@ export default {
      hint: { idle: 'Нажмите в центре, чтобы начать голосовую реплику', paused: 'Включите микрофон, когда будете готовы', listening: 'Сделайте паузу для отправки или нажмите для завершения', listeningManual: 'Идет запись. Нажмите в центре еще раз, чтобы остановить и распознать речь', processing: 'Преобразую речь в текст', thinking: 'Сообщение отправлено в текущий разговор', speaking: 'Ответ можно прервать в любое время', error: 'Нажмите в центре, чтобы повторить' },
    },
  
@@ -862,7 +862,7 @@ index fdcf62dfe..97d4f86ba 100644
    chat: {
      screenshot: {
        shortcut: {
-@@ -1300,7 +1268,6 @@ export default {
+@@ -1305,7 +1273,6 @@ export default {
      speechNotSupported: 'Этот браузер не поддерживает воспроизведение речи',
    },
  
@@ -870,7 +870,7 @@ index fdcf62dfe..97d4f86ba 100644
    workflow: {
      listActions: 'Действия со списком рабочих процессов',
      quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
-@@ -1566,7 +1533,6 @@ export default {
+@@ -1571,7 +1538,6 @@ export default {
      newNodeTitle: 'Узел {count}',
    },
  
@@ -878,7 +878,7 @@ index fdcf62dfe..97d4f86ba 100644
    kanban: {
      title: 'Канбан',
      createTask: 'Создать задачу',
-@@ -1702,7 +1668,6 @@ export default {
+@@ -1707,7 +1673,6 @@ export default {
      },
    },
  
@@ -886,7 +886,7 @@ index fdcf62dfe..97d4f86ba 100644
    scheduleBuilder: { time: 'Время', hour: 'Час', minute: 'Минута', weekday: 'День недели', monthDay: 'День месяца' },
    jobs: {
      title: 'Периодические задачи',
-@@ -1790,7 +1755,6 @@ export default {
+@@ -1795,7 +1760,6 @@ export default {
      },
    },
  
@@ -894,7 +894,7 @@ index fdcf62dfe..97d4f86ba 100644
    skills: {
      filterBySource: "Фильтр по источнику",
      title: 'Навыки',
-@@ -1853,7 +1817,6 @@ export default {
+@@ -1858,7 +1822,6 @@ export default {
      writeApprovalRemoveFile: 'Это подтверждение удалит {file} из skill {skill}.',
    },
  
@@ -902,7 +902,7 @@ index fdcf62dfe..97d4f86ba 100644
    plugins: {
      title: 'Плагины',
      refresh: 'Обновить',
-@@ -1924,7 +1887,6 @@ export default {
+@@ -1929,7 +1892,6 @@ export default {
      },
    },
  
@@ -910,7 +910,7 @@ index fdcf62dfe..97d4f86ba 100644
    petdex: {
      title: 'Petdex Pets',
      subtitle: 'Browse the public petdex catalog used by Hermes desktop pets.',
-@@ -1963,7 +1925,6 @@ export default {
+@@ -1968,7 +1930,6 @@ export default {
      soulPlaceholder: 'Введите конфигурацию души...',
    },
  
@@ -918,7 +918,7 @@ index fdcf62dfe..97d4f86ba 100644
    models: {
      providerColumn: 'Провайдер',
      title: 'Модели',
-@@ -2208,7 +2169,6 @@ export default {
+@@ -2213,7 +2174,6 @@ export default {
      fetchFailed: 'Не удалось получить модели',
    },
  
@@ -926,7 +926,7 @@ index fdcf62dfe..97d4f86ba 100644
    profiles: {
      title: 'Профили',
      create: 'Создать профиль',
-@@ -2292,7 +2252,6 @@ export default {
+@@ -2297,7 +2257,6 @@ export default {
      },
    },
  
@@ -934,7 +934,7 @@ index fdcf62dfe..97d4f86ba 100644
    logs: {
      file: "Файл журнала",
      level: "Уровень журнала",
-@@ -2305,7 +2264,6 @@ export default {
+@@ -2310,7 +2269,6 @@ export default {
      noEntries: 'Нет записей',
    },
  
@@ -942,7 +942,7 @@ index fdcf62dfe..97d4f86ba 100644
    theme: {
      title: 'Тема',
      saved: 'Тема сохранена',
-@@ -2872,12 +2830,10 @@ export default {
+@@ -2877,12 +2835,10 @@ export default {
        providerEdge: 'Edge TTS (бесплатно, не требует API-ключа)',
        providerMimo: 'MiMo TTS',
  
@@ -955,7 +955,7 @@ index fdcf62dfe..97d4f86ba 100644
        openaiKey: 'API-ключ',
        openaiKeyHint: 'API-ключ OpenAI с правами TTS',
        openaiUrl: 'Базовый URL API',
-@@ -2887,7 +2843,6 @@ export default {
+@@ -2892,7 +2848,6 @@ export default {
        openaiVoice: 'Тембр',
        openaiVoiceHint: 'Тембр для синтеза речи',
  
@@ -963,7 +963,7 @@ index fdcf62dfe..97d4f86ba 100644
        customHint: 'Поддерживается любая служба TTS, совместимая с OpenAI, включая GPT-SoVITS, CosyVoice и т.п.',
        customUrl: 'URL API',
        customUrlHint: 'Полный базовый URL службы TTS',
-@@ -2907,7 +2862,6 @@ export default {
+@@ -2912,7 +2867,6 @@ export default {
        edgePitch: 'Высота тона',
        edgePitchHint: 'Регулировка высоты тона (–20 … +20 Гц)',
  
@@ -971,7 +971,7 @@ index fdcf62dfe..97d4f86ba 100644
        testTitle: 'Тестовое прослушивание',
        testText: 'Тестовый текст',
        testTextPlaceholder: 'Введите тестовый текст...',
-@@ -2916,7 +2870,6 @@ export default {
+@@ -2921,7 +2875,6 @@ export default {
        testButtonPlaying: 'Воспроизведение...',
        testFailed: 'Ошибка теста: {error}',
  
@@ -979,7 +979,7 @@ index fdcf62dfe..97d4f86ba 100644
        mimoHint: 'MiMo TTS от Xiaomi. Поддерживает три режима: предустановленные тембры, дизайн тембра и клонирование тембра.',
        mimoApiKey: 'API-ключ',
        mimoApiKeyHint: 'Получите его на platform.xiaomimimo.com',
-@@ -2943,7 +2896,6 @@ export default {
+@@ -2948,7 +2901,6 @@ export default {
      },
    },
  
@@ -987,7 +987,7 @@ index fdcf62dfe..97d4f86ba 100644
    platform: {
      requireMention: "Требуется упоминание {'@'}",
      requireMentionGroup: "В группе требуется упоминание {'@'}бота для ответа",
-@@ -3036,7 +2988,6 @@ export default {
+@@ -3041,7 +2993,6 @@ export default {
      qqQrScanHint: 'Отсканируйте QR-код с помощью QQ или откройте ссылку на телефоне, чтобы завершить привязку',
    },
  
@@ -995,7 +995,7 @@ index fdcf62dfe..97d4f86ba 100644
    gateways: {
      title: 'Шлюзы',
      running: 'Работает',
-@@ -3046,7 +2997,6 @@ export default {
+@@ -3051,7 +3002,6 @@ export default {
      stopFailed: 'Ошибка остановки',
    },
  
@@ -1003,7 +1003,7 @@ index fdcf62dfe..97d4f86ba 100644
    language: {
      label: 'Язык',
      zh: 'Китайский',
-@@ -3054,7 +3004,6 @@ export default {
+@@ -3059,7 +3009,6 @@ export default {
      ru: 'Русский',
    },
  
@@ -1011,7 +1011,7 @@ index fdcf62dfe..97d4f86ba 100644
    terminal: {
      sessions: 'Сеансы',
      newTab: 'Новая вкладка терминала',
-@@ -3067,7 +3016,6 @@ export default {
+@@ -3072,7 +3021,6 @@ export default {
      connectionError: 'Ошибка соединения с терминалом',
    },
  
@@ -1019,16 +1019,16 @@ index fdcf62dfe..97d4f86ba 100644
    groupChat: {
      routingHandoffIncomplete: 'Информация для передачи может быть неполной.',
      routingLoopDetected: 'Возможно повторное хождение по кругу.',
-@@ -3296,7 +3244,6 @@ export default {
+@@ -3301,7 +3249,6 @@ export default {
      summaryLoadFailed: 'Не удалось загрузить резюме комнаты',
    },
  
 -
    usage: {
-     costStates: {
-       unknown: "Не записано",
+     dashboard: {
+       profile: "Профиль",
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index e5a947d31..a547716af 100644
+index 7aff2c5d4..ab3a7e144 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -469,34 +469,6 @@ export default {
@@ -1075,7 +1075,7 @@ index e5a947d31..a547716af 100644
      jobs: '任務',
      kanban: '看板',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 4eabfed00..67959cd19 100644
+index b7211d7fd..e816b22b4 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -469,34 +469,6 @@ export default {
@@ -1642,7 +1642,7 @@ index b7c814ae3..000000000
 -}
 diff --git a/tests/e2e/api-relay.spec.ts b/tests/e2e/api-relay.spec.ts
 deleted file mode 100644
-index ddb213401..000000000
+index 3fae95caa..000000000
 --- a/tests/e2e/api-relay.spec.ts
 +++ /dev/null
 @@ -1,200 +0,0 @@
@@ -1658,12 +1658,12 @@ index ddb213401..000000000
 -  await page.route('**/api/hermes/write-gate/pending**', route => route.fulfill({ json: { pending: [] } }))
 -})
 -
--test('opens the partner page below Models and visits the website only from its action', async ({ page, context }) => {
+-test('opens the partner page below Usage and visits the website only from its action', async ({ page, context }) => {
 -  await page.goto('/#/hermes/chat')
 -  const rail = page.locator('.studio-navigation-rail')
 -  const relay = rail.getByRole('link', { name: 'API Relay', exact: true })
 -  await expect(relay).toHaveAttribute('href', '#/hermes/api-relay')
--  expect(await relay.evaluate(el => el.previousElementSibling?.getAttribute('href'))).toBe('#/hermes/models')
+-  expect(await relay.evaluate(el => el.previousElementSibling?.getAttribute('href'))).toBe('#/hermes/usage')
 -  await relay.click()
 -  await expect(page).toHaveURL(/#\/hermes\/api-relay$/)
 -  await expect(relay).toHaveAttribute('aria-current', 'page')

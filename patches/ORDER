@@ -121,3 +121,5 @@
 121 41-audit-l-cleanups/003-refactor-chat-rename-cachehitratepercent-to.patch
 122 35-patch-stack-verify/003-verify-patch-stack-honours-order.patch
 123 35-patch-stack-verify/004-verify-patch-stack-materialises-patches-untracked.patch
+124 42-0.7.34-adapt/001-fix-i18n-drop-turkish-keys-for-fork-removed-f.patch
+125 42-0.7.34-adapt/002-test-client-adapt-i18n-lazy-loading-suite-to-the-.patch

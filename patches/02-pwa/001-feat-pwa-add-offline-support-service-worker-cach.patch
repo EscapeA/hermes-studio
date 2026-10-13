@@ -1,4 +1,4 @@
-From d00f4a8d202d364729705c91b7a0fb235a38fbdb Mon Sep 17 00:00:00 2001
+From 544d54da79d92f92c187fadcfec15f6655dd5608 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 7 Jul 2026 10:11:13 +0800
 Subject: [PATCH] feat(pwa): add offline support, service worker caching, and
@@ -8927,7 +8927,7 @@ index 000000000..b775142ab
 +  return cached || fetchPromise;
 +}
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index 54058db68..91b0bdb95 100644
+index be771dfd0..84290011e 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
 @@ -35,6 +35,7 @@ import { navigationRailKey } from "@/composables/useNavigationRail";
@@ -8938,7 +8938,7 @@ index 54058db68..91b0bdb95 100644
  
  const StudioNavigationRail = defineAsyncComponent(
    async () => (await import("@/components/layout/StudioNavigationRail.vue")).default,
-@@ -284,6 +285,7 @@ onUnmounted(() => {
+@@ -285,6 +286,7 @@ onUnmounted(() => {
  });
  
  useKeyboard();
@@ -9067,24 +9067,24 @@ index 000000000..1ee3936c6
 +  return { updateAvailable, applyUpdate }
 +}
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 7b93c3427..5676352fb 100644
+index 4bc544b0b..af5fc5d2d 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -3825,4 +3825,7 @@ export default {
-     new_0_7_31_4: 'Fixed context queries for custom endpoints in the App and added model aliases and reasoning options to shared sessions (#3299)',
-     new_0_7_31_5: 'Fixed Comic theme preferences being lost after refresh or restart; saved theme styles now return during loading (#3302)',
+@@ -3873,4 +3873,7 @@ export default {
+     new_0_7_32_7: 'Fixed Linux desktop Open at Login and improved error messages and diagnostics for desktop startup failures (#3307, #3308)',
+     new_0_7_32_8: 'Removed the outdated group chat upgrade notice (#3306)',
    },
 +  pwa: {
 +    install: 'Install App',
 +  },
  }
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 33976a12b..71ea5d15e 100644
+index afeb9dffc..9fe2a908d 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -3873,4 +3873,7 @@ export default {
-     new_0_7_31_4: '修复 App 自定义接口的上下文查询，并为共享会话补充模型别名与推理选项 (#3299)',
-     new_0_7_31_5: '修复刷新或重启后丢失漫画主题选择的问题，加载时恢复已保存的主题风格 (#3302)',
+@@ -3921,4 +3921,7 @@ export default {
+     new_0_7_32_7: '修复 Linux 桌面端开机自启，并完善桌面启动失败时的错误提示与诊断信息 (#3307、#3308)',
+     new_0_7_32_8: '移除群聊中已过时的升级提示 (#3306)',
    },
 +  pwa: {
 +    install: '安装应用',

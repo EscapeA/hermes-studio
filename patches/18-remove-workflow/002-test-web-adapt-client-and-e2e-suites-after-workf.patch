@@ -1,4 +1,4 @@
-From aa2aa73534b3be6cf52284e1be39c97ad8bada01 Mon Sep 17 00:00:00 2001
+From 3296804bc15a23419d764c36aafd9ad21bd8863a Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
@@ -41,9 +41,9 @@ Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
  tests/client/workflow-socket.test.ts          |   79 -
  tests/e2e/desktop-window-chrome.spec.ts       |   10 -
  tests/e2e/fixtures.ts                         |  126 +-
- tests/e2e/workflow-cursor-mode.spec.ts        |   65 -
+ tests/e2e/workflow-cursor-mode.spec.ts        |   70 -
  tests/e2e/workflow-ui.spec.ts                 | 1618 -----------------
- 29 files changed, 15 insertions(+), 3631 deletions(-)
+ 29 files changed, 15 insertions(+), 3636 deletions(-)
  delete mode 100644 tests/client/workflow-approval-key.test.ts
  delete mode 100644 tests/client/workflow-canvas.test.ts
  delete mode 100644 tests/client/workflow-edge-authoring.test.ts
@@ -64,10 +64,10 @@ Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
  delete mode 100644 tests/e2e/workflow-ui.spec.ts
 
 diff --git a/tests/client/api.test.ts b/tests/client/api.test.ts
-index 697c1e1d1..53e7506f5 100644
+index bc2cca44e..0bab81bb0 100644
 --- a/tests/client/api.test.ts
 +++ b/tests/client/api.test.ts
-@@ -212,15 +212,15 @@ describe('API Client', () => {
+@@ -230,15 +230,15 @@ describe('API Client', () => {
          status: 409,
          statusText: 'Conflict',
          text: () => Promise.resolve(JSON.stringify({
@@ -357,10 +357,10 @@ index e971c5494..515361c9b 100644
 -  })
  })
 diff --git a/tests/client/i18n-coverage.test.ts b/tests/client/i18n-coverage.test.ts
-index ba202a04b..1c13401f4 100644
+index 7aafd9ec1..a5226d1bd 100644
 --- a/tests/client/i18n-coverage.test.ts
 +++ b/tests/client/i18n-coverage.test.ts
-@@ -246,55 +246,6 @@ const PLATFORM_SETTINGS_LOCALE_SPECIFIC_LOCALIZED_KEYS: Record<string, string[]>
+@@ -271,55 +271,6 @@ const PLATFORM_SETTINGS_LOCALE_SPECIFIC_LOCALIZED_KEYS: Record<string, string[]>
    ru: ['platform.weixinToken'],
  }
  
@@ -416,7 +416,7 @@ index ba202a04b..1c13401f4 100644
  const PLATFORM_SETTINGS_LOCALIZED_KEYS = [
    'platform.requireMention',
    'platform.requireMentionGroup',
-@@ -501,27 +452,6 @@ describe('i18n locale coverage', () => {
+@@ -526,27 +477,6 @@ describe('i18n locale coverage', () => {
      expect(missing).toEqual([])
    })
  
@@ -1608,7 +1608,7 @@ index 73b2fdd50..000000000
 \ No newline at end of file
 diff --git a/tests/client/workflow-reasoning-effort.test.ts b/tests/client/workflow-reasoning-effort.test.ts
 deleted file mode 100644
-index 95421a07e..000000000
+index 0be3efeca..000000000
 --- a/tests/client/workflow-reasoning-effort.test.ts
 +++ /dev/null
 @@ -1,60 +0,0 @@
@@ -1628,7 +1628,7 @@ index 95421a07e..000000000
 -    expect(types).toMatch(/WorkflowAgentNodeEditableData[^\n]+reasoningEffort/)
 -    expect(node).toContain(':value="data.reasoningEffort"')
 -    expect(node).toContain("updateField('reasoningEffort'")
--    expect(view).toContain("reasoningEffort: data.reasoningEffort || 'default'")
+-    expect(view).toContain("reasoningEffort: hasLegacyGlobalSelection ? 'default' : data.reasoningEffort || 'default'")
 -    expect(view).toContain('reasoningEffort: node.data.reasoningEffort')
 -    expect(view).toContain("reasoningEffort: typeof data.reasoningEffort === 'string'")
 -  })
@@ -2195,7 +2195,7 @@ index bad3ea91d..5b43f605b 100644
    await openDesktopPageSidebar(page, 'win32', '/#/hermes/chat')
  
 diff --git a/tests/e2e/fixtures.ts b/tests/e2e/fixtures.ts
-index 55f0dbde4..0228c1b6c 100644
+index 1c92382fb..ef3f6773e 100644
 --- a/tests/e2e/fixtures.ts
 +++ b/tests/e2e/fixtures.ts
 @@ -53,15 +53,6 @@ interface MockHermesApiOptions {
@@ -2222,7 +2222,7 @@ index 55f0dbde4..0228c1b6c 100644
    const skillBundles = [...(options.bundles ?? [])]
    let channelCredentialsPresent = options.channelCredentials ?? false
    let delegationModel: Record<string, string> = {}
-@@ -385,113 +375,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
+@@ -397,113 +387,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
        return
      }
  
@@ -2336,7 +2336,7 @@ index 55f0dbde4..0228c1b6c 100644
      if (pathname === '/api/studio/sessions') {
        await route.fulfill(jsonResponse({ sessions: options.sessions ?? [] }, tokenValidationStatus))
        return
-@@ -1066,14 +949,7 @@ function makeSocket(url, options) {
+@@ -1084,14 +967,7 @@ function makeSocket(url, options) {
      emit(event, payload, ack) {
        state.emitted.push({ event, payload })
        if ((event === 'run' || event === 'resume') && payload?.session_id) this.rooms.add(payload.session_id)
@@ -2354,10 +2354,10 @@ index 55f0dbde4..0228c1b6c 100644
            messages: [],
 diff --git a/tests/e2e/workflow-cursor-mode.spec.ts b/tests/e2e/workflow-cursor-mode.spec.ts
 deleted file mode 100644
-index 385126163..000000000
+index 5457b6526..000000000
 --- a/tests/e2e/workflow-cursor-mode.spec.ts
 +++ /dev/null
-@@ -1,65 +0,0 @@
+@@ -1,70 +0,0 @@
 -import { expect, test } from '@playwright/test'
 -import { authenticate, mockHermesApi, TEST_ACCESS_KEY } from './fixtures'
 -
@@ -2408,6 +2408,9 @@ index 385126163..000000000
 -    await expect(node.locator('.n-select').first()).toContainText(target.label)
 -    if (target.mode === 'scoped') {
 -      await expect(node.locator('.model-trigger')).toContainText('test-model')
+-    } else {
+-      // The legacy Global node's Studio provider/model was never a native choice.
+-      await expect(node.locator('.native-model-trigger')).toHaveText('Agent default model')
 -    }
 -
 -    await page.locator('.header-actions').getByRole('button', { name: 'Save', exact: true }).click()
@@ -2417,7 +2420,9 @@ index 385126163..000000000
 -    await expect.poll(() => saves().length).toBe(1)
 -    const data = JSON.parse(saves()[0].postData || '{}').nodes[0].data
 -    expect(data).toMatchObject({
--      agent: target.agent, agentMode: target.mode, provider: 'test-provider', model: 'test-model',
+-      agent: target.agent, agentMode: target.mode,
+-      provider: target.mode === 'global' ? '' : 'test-provider',
+-      model: target.mode === 'global' ? '' : 'test-model',
 -    })
 -    expect(data.priorAgentMode).toBeUndefined()
 -    expect(api.unexpectedRequests).toEqual([])
