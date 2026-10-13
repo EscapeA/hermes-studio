@@ -1,0 +1,174 @@
+From 91226e5afa941cd292062525f0cf4b72f83f5d14 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Tue, 13 Oct 2026 18:04:05 +0800
+Subject: [PATCH] fix(chat): finish the agent deployment when the fork has no
+ landing target
+
+Upstream #3378 flies the new-chat Agent card into the run indicator's thinking
+avatar and masks the session until it lands. The fork's run indicator is
+text-only (patches/05-chat/019), so no [data-agent-deployment-target] is ever
+rendered: the card hovered under the shade until the next message. Bail out
+right after the takeoff window when no target exists; a target that exists but
+has not finished loading still waits, exactly like upstream.
+
+The upstream e2e spec is adapted to the same reality (overlay clears, no
+avatar, scrolled-card centring kept).
+---
+ .../hermes/chat/agentDeployment.mjs           |  6 ++
+ tests/e2e/agent-deployment.spec.ts            | 89 ++++++-------------
+ 2 files changed, 31 insertions(+), 64 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/agentDeployment.mjs b/packages/client/src/components/hermes/chat/agentDeployment.mjs
+index ce813b9c1..43065b42c 100644
+--- a/packages/client/src/components/hermes/chat/agentDeployment.mjs
++++ b/packages/client/src/components/hermes/chat/agentDeployment.mjs
+@@ -215,6 +215,12 @@ function captureDeployment(source) {
+       overlay.dataset.phase = 'waiting';
+       const hover = (elapsed - 1400) / 1000;
+       pose = { ...pose, y: cy - Math.sin(hover * 2.4) * 3, ry: Math.sin(hover * 1.6) * 1.5 };
++      // Fork: the run indicator is text-only (no thinking avatar), so this
++      // session never renders a landing target. Upstream would hover the card
++      // under the shade forever waiting for one; bail out after the takeoff
++      // window instead of leaving the overlay on screen. A target that exists
++      // but has not finished loading still waits, exactly like upstream.
++      if (!target) { fadeStarted = now; overlay.dataset.phase = 'finishing'; }
+     }
+     glow.style.opacity = String(.8 * clamp((elapsed - 120) / 360, 0, 1));
+     floor.style.opacity = String(.8 * clamp((elapsed - 120) / 360, 0, 1) * (1 - clamp((elapsed - 950) / 240, 0, 1)));
+diff --git a/tests/e2e/agent-deployment.spec.ts b/tests/e2e/agent-deployment.spec.ts
+index c7efeaf70..87e968f19 100644
+--- a/tests/e2e/agent-deployment.spec.ts
++++ b/tests/e2e/agent-deployment.spec.ts
+@@ -8,6 +8,11 @@ import { mergeMessagesWithFallback } from '../../packages/client/src/i18n/messag
+ 
+ const messages = { en, tr: mergeMessagesWithFallback(en, tr) as typeof en }
+ 
++// The fork's run indicator is text-only (no thinking avatar, see
++// patches/05-chat/019), so a deployment has no landing target here. The
++// deployment still animates, then has to clear itself instead of hovering under
++// the shade forever — that bail-out is asserted below.
++
+ async function openDraft(page: Page, mobile: boolean, locale: 'en' | 'tr' = 'en') {
+   await page.setViewportSize(mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 })
+   await page.addInitScript(locale => localStorage.setItem('hermes_locale', locale), locale)
+@@ -27,46 +32,20 @@ async function openDraft(page: Page, mobile: boolean, locale: 'en' | 'tr' = 'en'
+ }
+ 
+ for (const locale of ['en', 'tr'] as const) for (const mobile of [false, true]) for (const agent of ['Ekko', 'Codex']) {
+-  test(`${agent} deployment lands in the thinking avatar (${locale}, ${mobile ? 'mobile' : 'desktop'})`, async ({ page }) => {
++  test(`${agent} deployment clears the overlay without a thinking avatar (${locale}, ${mobile ? 'mobile' : 'desktop'})`, async ({ page }) => {
+     const errors: string[] = []
+     page.on('pageerror', error => errors.push(String(error)))
+     await openDraft(page, mobile, locale)
+     if (agent === 'Codex') await selectNewChatAgent(page, agent)
+-    // Record geometry through the real route change and live status rendering.
+-    await page.evaluate(() => {
+-      const state = { frames: [] as any[], until: performance.now() + 4200 }
+-      ;(window as any).deploymentFrames = state
+-      const sample = () => {
+-        const overlay = document.querySelector<HTMLElement>('.agent-deployment-overlay')
+-        const hero = overlay?.querySelector<HTMLElement>('.agent-deployment-hero')
+-        const target = document.querySelector<HTMLElement>('[data-agent-deployment-target]:not([data-agent-deployment-target=""])')
+-        if (hero && target) {
+-          const h = hero.getBoundingClientRect(), t = target.getBoundingClientRect()
+-          state.frames.push({ phase: overlay!.dataset.phase, opacity: hero.style.opacity, targetOpacity: target.style.opacity,
+-            dx: h.x + h.width / 2 - t.x - t.width / 2, dy: h.y + h.height / 2 - t.y - t.height / 2,
+-            height: h.height, targetHeight: t.height, shade: overlay!.querySelector<HTMLElement>('.agent-deployment-shade')!.style.opacity })
+-        }
+-        if (performance.now() < state.until) requestAnimationFrame(sample)
+-      }
+-      requestAnimationFrame(sample)
+-    })
+     await page.locator('.new-chat-page textarea').fill('Deploy my agent')
+     await page.getByRole('button', { name: messages[locale].chat.send, exact: true }).click()
+     await expect(page.locator('.agent-deployment-overlay')).toHaveCount(1)
+     await expect(page).toHaveURL(/#\/hermes\/session\//)
+-    const id = new URL(page.url()).hash.split('/').pop()!
+-    await expect(page.locator(`[data-agent-deployment-target="${id}"]`)).toBeVisible()
+     await expect(page.locator('.thinking-status-label')).toHaveText(messages[locale].chat.thinkingInProgress)
++    // The fork renders no landing target for this deployment. The overlay must
++    // still finish on its own shortly after the takeoff window.
++    await expect(page.locator('[data-agent-deployment-target]:not([data-agent-deployment-target=""])')).toHaveCount(0)
+     await expect(page.locator('.agent-deployment-overlay')).toHaveCount(0, { timeout: 4000 })
+-    const frames = await page.evaluate(() => (window as any).deploymentFrames.frames)
+-    expect(frames.filter((f: any) => f.phase === 'summoning').every((f: any) => f.shade === '1')).toBe(true)
+-    expect(frames.some((f: any) => f.phase === 'landing' && f.targetOpacity === '0')).toBe(true)
+-    const landing = frames.find((f: any) => f.phase === 'landing' && f.targetOpacity !== '0' && f.opacity === '1')
+-    expect(landing, JSON.stringify(frames.slice(-12))).toBeDefined()
+-    expect(Math.abs(landing.dx)).toBeLessThan(1)
+-    expect(Math.abs(landing.dy)).toBeLessThan(1)
+-    expect(Math.abs(landing.height - landing.targetHeight)).toBeLessThan(1)
+-    expect(await page.locator(`[data-agent-deployment-target="${id}"]`).evaluate(el => (el as HTMLElement).style.opacity)).toBe('')
+     expect(await page.evaluate(() => (window as any).__PW_CHAT_SOCKET__.emitted.filter((item: any) => item.event === 'run').length)).toBe(1)
+     expect(errors).toEqual([])
+   })
+@@ -79,21 +58,14 @@ test('reduced motion sends the first message without a deployment overlay', asyn
+   await page.getByRole('button', { name: 'Send', exact: true }).click()
+   await expect(page).toHaveURL(/#\/hermes\/session\//)
+   await expect(page.locator('.agent-deployment-overlay')).toHaveCount(0)
+-  await expect(page.locator('.thinking-avatar')).toBeVisible()
++  await expect(page.locator('.thinking-status-label')).toBeVisible()
+   expect(await page.evaluate(() => (window as any).__PW_CHAT_SOCKET__.emitted.filter((item: any) => item.event === 'run').length)).toBe(1)
+ })
+ 
+-for (const mobile of [false, true]) for (const outcome of ['load', 'error'] as const) {
+-  test(`deployment centres a scrolled card before avatar ${outcome} (${mobile ? 'mobile' : 'desktop'})`, async ({ page }) => {
+-    let releaseImage!: () => void
+-    const imageGate = new Promise<void>(resolve => { releaseImage = resolve })
++for (const mobile of [false, true]) {
++  test(`deployment centres a scrolled card and still clears (${mobile ? 'mobile' : 'desktop'})`, async ({ page }) => {
+     await openDraft(page, mobile, 'tr')
+-    await page.route(/thinking[^/]*\.gif/, async route => {
+-      await imageGate
+-      if (outcome === 'load') await route.continue()
+-      else await route.abort()
+-    })
+-    await page.locator('.new-chat-page textarea').fill('Deploy with a slow avatar')
++    await page.locator('.new-chat-page textarea').fill('Deploy with a scrolled card')
+     await page.locator('.agent-card-viewport').evaluate(el => {
+       (el as HTMLElement).style.scrollSnapType = 'none'
+       el.scrollLeft += 60
+@@ -103,28 +75,17 @@ for (const mobile of [false, true]) for (const outcome of ['load', 'error'] as c
+       return Math.abs(card.x + card.width / 2 - row.x - row.width / 2)
+     })).toBeGreaterThan(30)
+     await page.getByRole('button', { name: messages.tr.chat.send, exact: true }).click()
+-    const target = page.locator('[data-agent-deployment-target]:not([data-agent-deployment-target=""])')
+-    try {
+-      await expect(target).toHaveAttribute('data-agent-deployment-image', 'pending')
+-      await page.waitForTimeout(3100)
+-      await expect(page.locator('.agent-deployment-overlay')).toHaveAttribute('data-phase', 'waiting')
+-      expect(await target.evaluate(el => (el as HTMLElement).style.opacity)).toBe('0')
+-      expect(await page.locator('.agent-deployment-shade').evaluate(el => (el as HTMLElement).style.opacity)).toBe('1')
+-      // The request has already been dispatched while the visual waits.
+-      expect(await page.evaluate(() => (window as any).__PW_CHAT_SOCKET__.emitted.filter((item: any) => item.event === 'run').length)).toBe(1)
+-      const centreError = await page.locator('.agent-deployment-hero').evaluate(el => {
+-        const h = el.getBoundingClientRect(), board = document.querySelector('[data-agent-deployment-surface]')!.getBoundingClientRect()
+-        const top = Math.max(0, board.top), bottom = Math.min(innerHeight, board.bottom)
+-        const left = Math.max(0, board.left), right = Math.min(innerWidth, board.right)
+-        return { x: h.x + h.width / 2 - (left + right) / 2, y: h.y + h.height / 2 - (top + bottom) / 2 }
+-      })
+-      expect(Math.abs(centreError.x)).toBeLessThan(2)
+-      expect(Math.abs(centreError.y)).toBeLessThan(4)
+-      if (outcome === 'load') await page.screenshot({ path: `/tmp/studio-agent-deployment-centred-${mobile ? 'mobile' : 'desktop'}.png` })
+-      releaseImage()
+-      await expect(target).toHaveAttribute('data-agent-deployment-image', outcome === 'load' ? 'ready' : 'error')
+-      await expect(page.locator('.agent-deployment-overlay')).toHaveCount(0, { timeout: 3000 })
+-      expect(await target.evaluate(el => (el as HTMLElement).style.opacity)).toBe('')
+-    } finally { releaseImage() }
++    // The request is dispatched while the visual still plays.
++    expect(await page.evaluate(() => (window as any).__PW_CHAT_SOCKET__.emitted.filter((item: any) => item.event === 'run').length)).toBe(1)
++    await page.waitForTimeout(1200)
++    const centreError = await page.locator('.agent-deployment-hero').evaluate(el => {
++      const h = el.getBoundingClientRect(), board = document.querySelector('[data-agent-deployment-surface]')!.getBoundingClientRect()
++      const top = Math.max(0, board.top), bottom = Math.min(innerHeight, board.bottom)
++      const left = Math.max(0, board.left), right = Math.min(innerWidth, board.right)
++      return { x: h.x + h.width / 2 - (left + right) / 2, y: h.y + h.height / 2 - (top + bottom) / 2 }
++    })
++    expect(Math.abs(centreError.x)).toBeLessThan(2)
++    expect(Math.abs(centreError.y)).toBeLessThan(4)
++    await expect(page.locator('.agent-deployment-overlay')).toHaveCount(0, { timeout: 4000 })
+   })
+ }
+-- 
+2.53.0
+

@@ -1,0 +1,41 @@
+From 0611d11ca368fdea492aadd194a438f84ec3f011 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 4 Oct 2026 13:21:44 +0800
+Subject: [PATCH] feat(chat): keep Hermes as the default agent for new chats
+
+---
+ packages/client/src/components/hermes/chat/ChatPanel.vue | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
+index b4e59fbf1..e32e62ed0 100644
+--- a/packages/client/src/components/hermes/chat/ChatPanel.vue
++++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
+@@ -861,12 +861,14 @@ function handleNewChatEscape(event: KeyboardEvent) {
+ 
+ watch(() => router.currentRoute.value.fullPath, () => closeNewChatPage());
+ const NEW_CHAT_AGENT_STORAGE_KEY = "hermes_new_chat_agent_v1";
++// fork: Hermes stays the default for new chats; the last explicit pick wins afterwards.
++const DEFAULT_NEW_CHAT_AGENT = "hermes";
+ function loadNewChatAgent(): "hermes" | ChatCodingAgentId {
+   try {
+     const saved = localStorage.getItem(NEW_CHAT_AGENT_STORAGE_KEY);
+-    return AGENT_OPTIONS.find(option => option.value === saved)?.value || AGENT_OPTIONS[0].value;
++    return AGENT_OPTIONS.find(option => option.value === saved)?.value || DEFAULT_NEW_CHAT_AGENT;
+   } catch {
+-    return AGENT_OPTIONS[0].value;
++    return DEFAULT_NEW_CHAT_AGENT;
+   }
+ }
+ let preferredNewChatAgent = loadNewChatAgent();
+@@ -1224,6 +1226,7 @@ async function refreshNewChatAgentAvailability(sequence: number) {
+     if (!isCurrentNewChatOptionsLoad(sequence)) return;
+     newChatAgentAvailability.value = availability;
+     newChatAgent.value = newChatAgentOptions.value.find(option => option.value === preferredNewChatAgent)?.value
++      || newChatAgentOptions.value.find(option => option.value === DEFAULT_NEW_CHAT_AGENT)?.value
+       || newChatAgentOptions.value[0]?.value || AGENT_OPTIONS[0].value;
+   } catch {
+     if (isCurrentNewChatOptionsLoad(sequence) && !newChatAgentAvailability.value) {
+-- 
+2.53.0
+

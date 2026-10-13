@@ -1,0 +1,28 @@
+From 2921023d98e4c5feb988e497bb991b549d3c93d7 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Tue, 13 Oct 2026 16:39:12 +0800
+Subject: [PATCH] test(client): adapt i18n lazy-loading suite to the build-time
+ en merge
+
+---
+ tests/client/i18n-lazy-loading.test.ts | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/tests/client/i18n-lazy-loading.test.ts b/tests/client/i18n-lazy-loading.test.ts
+index 54f2025c6..28f43b6fe 100644
+--- a/tests/client/i18n-lazy-loading.test.ts
++++ b/tests/client/i18n-lazy-loading.test.ts
+@@ -57,7 +57,9 @@ describe('i18n lazy loading', () => {
+     const { i18nReady } = await import('@/i18n')
+     const i18n = await i18nReady
+ 
+-    expect(i18n.global.availableLocales).toEqual(['en', 'tr'])
++    // The fork merges the English fallback into each locale chunk at build time
++    // (vite `locale-merge` plugin), so only the active locale is registered.
++    expect(i18n.global.availableLocales).toEqual(['tr'])
+     expect(i18n.global.locale.value).toBe('tr')
+     expect(document.documentElement.lang).toBe('tr')
+     expect(document.documentElement.dir).toBe('ltr')
+-- 
+2.53.0
+

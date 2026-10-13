@@ -1,0 +1,30 @@
+From 5c143efe2d7783c5eb59d52148dbdd36c28a8f20 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 4 Oct 2026 12:30:06 +0800
+Subject: [PATCH] test(client): adapt native coding agent suite to avatar
+ removal
+
+---
+ tests/client/native-coding-agents.test.ts | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/tests/client/native-coding-agents.test.ts b/tests/client/native-coding-agents.test.ts
+index 17499e207..cf8c49882 100644
+--- a/tests/client/native-coding-agents.test.ts
++++ b/tests/client/native-coding-agents.test.ts
+@@ -3,7 +3,6 @@ import catalog from '../../config/agents.json'
+ import { AGENT_OPTIONS, GROUP_AGENT_OPTIONS } from '../../packages/client/src/utils/agent-options'
+ import { NATIVE_CODING_AGENT_IDS, agentMetadata, isGlobalOnlyCodingAgent } from '../../packages/client/src/utils/agent-catalog'
+ import { nextCodingAgentMode, workflowSavedAgentFields } from '../../packages/client/src/utils/coding-agent-mode'
+-import { chatSessionAgentAvatar } from '../../packages/client/src/utils/chat-agent-avatar'
+ import { sessionAgentFields } from '../../packages/client/src/utils/hermes/session-agent'
+ 
+ describe('native runtime catalog and client selection', () => {
+@@ -13,7 +12,6 @@ describe('native runtime catalog and client selection', () => {
+     expect(isGlobalOnlyCodingAgent(id)).toBe(id === 'qoder')
+     expect(AGENT_OPTIONS.find(agent => agent.value === id)?.label).toBe(agentMetadata(id)?.name)
+     expect(GROUP_AGENT_OPTIONS.find(agent => agent.value === id)).toBeDefined()
+-    expect(chatSessionAgentAvatar({ source: 'coding_agent', agent: id }).src).toBe(new URL(agentMetadata(id)!.icon).pathname)
+     expect(sessionAgentFields({ source: 'coding_agent', agent: id, agent_mode: 'global' } as any)).toMatchObject({ codingAgentId: id, codingAgentMode: 'global' })
+     const entered = nextCodingAgentMode({ previousAgent: 'codex', nextAgent: id, agentMode: 'scoped' })
+     expect(entered).toEqual(id === 'qoder' ? { agentMode: 'global', priorAgentMode: 'scoped' } : { agentMode: 'scoped', priorAgentMode: undefined })
