@@ -215,6 +215,12 @@ function captureDeployment(source) {
       overlay.dataset.phase = 'waiting';
       const hover = (elapsed - 1400) / 1000;
       pose = { ...pose, y: cy - Math.sin(hover * 2.4) * 3, ry: Math.sin(hover * 1.6) * 1.5 };
+      // Fork: the run indicator is text-only (no thinking avatar), so this
+      // session never renders a landing target. Upstream would hover the card
+      // under the shade forever waiting for one; bail out after the takeoff
+      // window instead of leaving the overlay on screen. A target that exists
+      // but has not finished loading still waits, exactly like upstream.
+      if (!target) { fadeStarted = now; overlay.dataset.phase = 'finishing'; }
     }
     glow.style.opacity = String(.8 * clamp((elapsed - 120) / 360, 0, 1));
     floor.style.opacity = String(.8 * clamp((elapsed - 120) / 360, 0, 1) * (1 - clamp((elapsed - 950) / 240, 0, 1)));
