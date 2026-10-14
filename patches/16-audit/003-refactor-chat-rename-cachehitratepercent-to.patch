@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 7 Oct 2026 00:26:54 +0800
+Subject: [PATCH] refactor(chat): rename cacheHitRatePercent to
+ cacheReadSharePercent
+
+---
+ packages/client/src/components/hermes/chat/ChatInput.vue | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index 3c520f81d..3df6ec3c1 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -912,7 +912,7 @@ const showSessionTokensUsed = computed(() => {
+   const u = sessionUsageTotal.value
+   return !!chatStore.activeSession && !!u && sessionTotalTokens.value > 0
+ })
+-const cacheHitRatePercent = computed(() => {
++const cacheReadSharePercent = computed(() => {
+   const u = sessionUsageTotal.value
+   if (!u || sessionTotalTokens.value <= 0) return '0.00'
+   return ((u.cacheRead / sessionTotalTokens.value) * 100).toFixed(2)
+@@ -1280,7 +1280,7 @@ function openAttachmentPreview(attachment: Attachment) {
+           placement="bottom-start"
+         >
+           <template #trigger>
+-            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · <span class="session-percent">{{ cacheHitRatePercent }}%</span></span>
++            <span class="session-tokens-used">{{ t('chat.sessionTokensUsed') }} {{ formatTokens(sessionTotalTokens) }} · <span class="session-percent">{{ cacheReadSharePercent }}%</span></span>
+           </template>
+           <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
+         </NPopover>
