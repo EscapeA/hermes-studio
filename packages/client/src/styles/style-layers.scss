@@ -304,6 +304,13 @@ html.dark.blueprint body::after {
     linear-gradient(90deg, rgba(125, 200, 255, 0.13) 1px, transparent 1px);
 }
 
+// 蓝图：网格只铺页面底层（.app-shell/.app-layout），不叠加到内容之上 ——
+// body::after 是 z-index:3 的全屏层，会把网格压在文字与气泡上，观感发脏。
+html.blueprint body::after,
+html.dark.blueprint body::after {
+  background-image: none;
+}
+
 // warm carries only the vignette at page level (see its block above); graphite
 // gets no overlay at all, which is the point of that style.
 html.warm body::after {

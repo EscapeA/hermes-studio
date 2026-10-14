@@ -2152,6 +2152,7 @@ export default {
     styleHint: '인터페이스 분위기 선택',
     styleInk: '수묵',
     styleComic: '코믹',
+    styleBlueprint: '블루프린트',
     fontSize: '텍스트 크기',
     fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',
     textColor: '텍스트 색상',
