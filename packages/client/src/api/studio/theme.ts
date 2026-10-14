@@ -9,7 +9,7 @@ import {
 export interface UserThemeSettings {
   activePresetId?: string
   brightness?: 'system' | 'light' | 'dark'
-  style?: 'ink' | 'comic'
+  style?: 'ink' | 'comic' | 'blueprint'
   fontSize: number
   textColor: string | null
   accentColor: string | null
