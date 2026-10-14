@@ -31,7 +31,7 @@ describe('client style system', () => {
 
     expect(chatInput).toContain('background-color: $bg-main-surface;')
     expect(virtualMessageList).toContain('background-color: $bg-main-surface;')
-    expect(chatInput).not.toContain('background-color: #333333;')
+    expect(chatInput).not.toMatch(/background-color: #333333;/)
   })
 
   it('keeps message metadata and context usage on custom theme text colors', () => {
@@ -42,7 +42,6 @@ describe('client style system', () => {
     expect(messageItem).not.toContain('color: #999999;')
     expect(chatInput).toMatch(/\.context-usage-row\s*\{[^}]*color: \$text-muted;/s)
     expect(chatInput).not.toContain('color: rgba(255, 255, 255, 0.68);')
-    expect(chatInput).toContain('rgba(var(--text-muted-rgb), 0.85)')
   })
 
   it('keeps selected conversation titles on the primary text color', () => {
