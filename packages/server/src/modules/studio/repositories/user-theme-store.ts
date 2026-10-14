@@ -12,7 +12,7 @@ export interface UserThemeRecord {
   userId: number
   activePresetId: string | null
   brightness: 'system' | 'light' | 'dark' | null
-  style: 'ink' | 'comic' | null
+  style: 'ink' | 'comic' | 'blueprint' | null
   fontSize: number
   textColor: string | null
   accentColor: string | null
@@ -198,7 +198,7 @@ export function saveUserTheme(userIdValue: unknown, patch: UserThemePatch): User
   }
   assertActiveTheme(userId, patch.presetId)
   const brightness = patch.brightness === undefined ? current.brightness : normalizeChoice(patch.brightness, ['system', 'light', 'dark'] as const)
-  const style = patch.style === undefined ? current.style : normalizeChoice(patch.style, ['ink', 'comic'] as const)
+  const style = patch.style === undefined ? current.style : normalizeChoice(patch.style, ['ink', 'comic', 'blueprint'] as const)
   return writeTheme({ ...current, fontSize, textColor, accentColor, appearance, brightness, style })
 }
 
@@ -319,7 +319,7 @@ export function normalizeImportedTheme(value: unknown): ThemeArchiveSettings {
   catch (error) { throw new UserThemeValidationError((error as Error).message) }
   return {
     brightness: normalizeChoice(settings.brightness, ['system', 'light', 'dark'] as const),
-    style: normalizeChoice(settings.style, ['ink', 'comic'] as const),
+    style: normalizeChoice(settings.style, ['ink', 'comic', 'blueprint'] as const),
     fontSize: normalizeFontSize(settings.fontSize),
     textColor: normalizeColor(settings.textColor, 'Text color'),
     accentColor: normalizeColor(settings.accentColor, 'Accent color'),
@@ -337,7 +337,7 @@ export function importThemePreset(
   const name = normalizeName(input.name)
   const settings = normalizeImportedTheme(input.settings)
   const brightness = normalizeChoice(preferences.brightness ?? 'system', ['system', 'light', 'dark'] as const)
-  const style = normalizeChoice(preferences.style ?? 'ink', ['ink', 'comic'] as const)
+  const style = normalizeChoice(preferences.style ?? 'ink', ['ink', 'comic', 'blueprint'] as const)
   const db = requireDb()
   db.exec('SAVEPOINT theme_import')
   try {
@@ -375,7 +375,7 @@ export function createThemePreset(userIdValue: unknown, input: { name?: unknown;
   const userId = normalizeUserId(userIdValue)
   const name = normalizeName(input.name)
   const brightness = normalizeChoice(input.brightness ?? 'system', ['system', 'light', 'dark'] as const)
-  const style = normalizeChoice(input.style ?? 'ink', ['ink', 'comic'] as const)
+  const style = normalizeChoice(input.style ?? 'ink', ['ink', 'comic', 'blueprint'] as const)
   if (input.sourceId !== undefined) getThemePreset(userId, input.sourceId)
   const db = requireDb()
   db.exec('SAVEPOINT theme_create')
