@@ -1,0 +1,43 @@
+From 0d0881cf6c330dbfbd058632c96971417edbb60e Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 7 Oct 2026 00:24:13 +0800
+Subject: [PATCH] perf(chat): memoize per-message thinking parse in MessageList
+ filter
+
+---
+ .../components/hermes/chat/MessageList.vue    | 21 ++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
+index 23358b89c..826405c0a 100644
+--- a/packages/client/src/components/hermes/chat/MessageList.vue
++++ b/packages/client/src/components/hermes/chat/MessageList.vue
+@@ -325,8 +325,27 @@ const emptyState = computed(() => {
+   };
+ });
+ 
++// Perf: `hasRenderableAssistantContent` runs `parseThinking` (regex-heavy) over
++// every assistant row on each `displayMessages` recompute. While streaming, the
++// computed re-runs on every token delta, so a 300-row transcript meant 300 full
++// parses per token. Cache the parsed body per message object, keyed by content
++// identity (strings are immutable, so an identical reference implies an
++// identical value) plus the streaming flag. Only the in-flight row — whose
++// content grows each token — misses the cache; every settled row hits it.
++// simplified: WeakMap keyed by object identity; a message replaced by a fresh
++// object simply re-parses once and is cached again.
++const assistantBodyCache = new WeakMap<Message, { content: string; streaming: boolean; body: string }>();
++
+ function assistantMessageBody(message: Message): string {
+-  return parseThinking(message.content || "", { streaming: !!message.isStreaming }).body.trim();
++  const content = message.content || "";
++  const streaming = !!message.isStreaming;
++  const cached = assistantBodyCache.get(message);
++  if (cached && cached.content === content && cached.streaming === streaming) {
++    return cached.body;
++  }
++  const body = parseThinking(content, { streaming }).body.trim();
++  assistantBodyCache.set(message, { content, streaming, body });
++  return body;
+ }
+ 
+ function hasRenderableAssistantContent(message: Message): boolean {
