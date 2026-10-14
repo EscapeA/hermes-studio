@@ -16,7 +16,8 @@ import { useChatStore } from "@/stores/hermes/chat";
 import { useFilesStore } from "@/stores/hermes/files";
 import { useToolPanelStore } from "@/stores/hermes/tool-panel";
 import { useSettingsStore } from "@/stores/hermes/settings";
-import { chatSessionAgentAvatar, type ChatAgentAvatar } from "@/utils/chat-agent-avatar";import TaskPlanCard from './TaskPlanCard.vue';
+import { chatSessionAgentLabel, type ChatAgentLabel } from "@/utils/chat-agent-label";
+import TaskPlanCard from './TaskPlanCard.vue';
 import ToolChangeCard from "./ToolChangeCard.vue";
 import {
   copyTextToClipboard,
@@ -32,8 +33,7 @@ import { formatChatTimestamp } from "@/utils/chat-timestamp";
 import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
 import type { WorkspaceRunChangeSummary } from "@/api/studio/sessions";
 import { isServerTtsProvider } from "@/api/studio/tts";
-import type { ProfileAvatar as ProfileAvatarData } from "@/api/hermes/profiles";
-import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";import ImagePreviewOverlay from "./ImagePreviewOverlay.vue";
+import ImagePreviewOverlay from "./ImagePreviewOverlay.vue";
 import MarkdownRenderer from "./MarkdownRenderer.vue";
 
 const TOOL_PAYLOAD_DISPLAY_LIMIT = 1000;
@@ -234,7 +234,7 @@ const toolPanelStore = useToolPanelStore();
 const settingsStore = useSettingsStore();
 const speech = useGlobalSpeech();
 const voiceSettings = useVoiceSettings();
-const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
+const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentLabel(chatStore.activeSession));
 // Copy entire bubble content
 const copyableContent = computed(() => {
   if (props.message.role === 'tool') return null
@@ -1022,12 +1022,7 @@ onBeforeUnmount(() => {
             <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
           </div>
           <div v-if="message.role === 'assistant'" class="message-author assistant-message-author">
-            <img
-              class="msg-avatar"
-              :src="assistantAgent.src"
-              :alt="assistantAgent.label"
-              draggable="false"
-            >            <span class="message-author-name" dir="auto">{{ assistantAgent.label }}</span>
+            <span class="message-author-name" dir="auto">{{ assistantAgent.label }}</span>
           </div>
           <div
             class="message-bubble"

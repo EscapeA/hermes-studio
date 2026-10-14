@@ -2,22 +2,35 @@
 import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import thinkingImage from '@/assets/thinking.gif'
-import type { ChatAgentAvatar } from '@/utils/chat-agent-avatar'
+import type { ChatAgentLabel } from '@/utils/chat-agent-label'
+
+const AGENT_LOGOS: Record<string, string> = {
+  Hermes: '/coding-agents/hermes.png',
+  Ekko: '/coding-agents/ekko-agent.png',
+  Claude: '/coding-agents/claude-code.svg',
+  Codex: '/coding-agents/codex-openai.png',
+  Pi: '/coding-agents/pi.svg',
+  Grok: '/coding-agents/grok.svg',
+  OpenCode: '/coding-agents/opencode.png',
+  'DeepSeek Harness': '/coding-agents/deepseek.svg',
+}
 const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
 
 const props = withDefaults(defineProps<{
   reasoning?: string | null
   reasoningId?: string | number | null
   elapsed: string
+  agent?: ChatAgentLabel
   deploymentSessionId?: string
   /** Decode speed of the run's latest finished call, e.g. `当前：94 tok/s`; hidden when null. */
   speed?: string | null
   /** Run-wide average decode speed, e.g. `平均：88 tok/s`; hidden when null. */
   averageSpeed?: string | null
 }>(), {
-  agent: () => ({ label: 'Hermes', src: '/coding-agents/hermes.png' }),
+  agent: () => ({ label: 'Hermes' }),
 })
-const isEkko = computed(() => props.agent.label === 'Ekko')
+const agentLogoSrc = computed(() => AGENT_LOGOS[props.agent?.label || 'Hermes'] || '/coding-agents/hermes.png')
+const isEkko = computed(() => props.agent?.label === 'Ekko')
 
 const { t } = useI18n()
 
@@ -41,8 +54,8 @@ watch(
   <div class="live-reasoning-status">
     <div class="thinking-status">
       <img
-        :key="isEkko ? thinkingImage : agent.src"
-        :src="isEkko ? thinkingImage : agent.src"
+        :key="isEkko ? thinkingImage : agentLogoSrc"
+        :src="isEkko ? thinkingImage : agentLogoSrc"
         data-agent-deployment-image="pending"
         @load="($event.target as HTMLImageElement).dataset.agentDeploymentImage = 'ready'"
         @error="($event.target as HTMLImageElement).dataset.agentDeploymentImage = 'error'"
