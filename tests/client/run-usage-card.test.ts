@@ -15,7 +15,11 @@ describe('run usage visibility', () => {
     const usage = { runId: 'run-1', inputTokens: 1200, outputTokens: 200, costUsd: 0.0123 }
     const wrapper = mount(RunUsageCard, { props: { usage } })
 
-    expect(wrapper.get('.run-usage-card').text()).toContain('$0.0123')
+    // The fork trims the card to four metrics (see patches/29-usage-card-trim),
+    // so the cost value never renders even while the Show Cost gate keeps the
+    // card itself visible. The gate still hides the whole card when disabled.
+    expect(wrapper.get('.run-usage-card').text()).not.toContain('$0.0123')
+    expect(wrapper.get('.run-usage-card').text()).toContain('200')
     settings.updateLocal('display', { show_cost: false })
     await nextTick()
     expect(wrapper.find('.run-usage-card').exists()).toBe(false)
@@ -23,7 +27,7 @@ describe('run usage visibility', () => {
 
     settings.updateLocal('display', { show_cost: true })
     await nextTick()
-    expect(wrapper.get('.run-usage-card').text()).toContain('$0.0123')
+    expect(wrapper.get('.run-usage-card').text()).toContain('200')
   })
 
   it('hides persisted summaries when the setting is disabled before mounting', () => {
