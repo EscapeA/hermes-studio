@@ -860,7 +860,6 @@ const totalTokens = computed(() => {
 const showContextUsage = computed(() => !!composerSession.value)
 const showContextLimit = computed(() => !showSessionUsage.value)
 
-const remainingTokens = computed(() => Math.max(0, contextLength.value - totalTokens.value))
 
 const usagePercent = computed(() =>
   Math.min((totalTokens.value / contextLength.value) * 100, 100),
