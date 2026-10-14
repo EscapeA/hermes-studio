@@ -27,7 +27,7 @@ export GIT_COMMITTER_NAME="${GIT_COMMITTER_NAME:-verify-patch-stack}"
 export GIT_COMMITTER_EMAIL="${GIT_COMMITTER_EMAIL:-verify-patch-stack@localhost}"
 
 BASE_REF="${BASE_REF:-main}"          # 上游同步基线（纯 upstream/main）
-STACK_REF="${STACK_REF:-custom}"      # 补丁串部署/集成分支
+STACK_REF="${STACK_REF:-custom-2}" # 补丁串部署/集成分支（custom-2 为当前唯一集成线）
 VERIFY_TAG="refs/verify-patch-stack-base"  # 临时引用前缀
 WORK_BRANCH="refs/verify-patch-stack-work"
 
