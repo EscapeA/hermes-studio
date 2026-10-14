@@ -100,6 +100,7 @@ const {
   customization,
   hasCustomBackground,
   syncThemeFromServer,
+  isBlueprint,
 } = useTheme();
 const { t, locale } = useI18n();
 const naiveLocale = computed(() => naiveLocaleFor(locale.value));
@@ -110,7 +111,13 @@ const route = useRoute();
 const { sessionSearchOpen } = useSessionSearch();
 
 const themeOverrides = computed(() =>
-  getThemeOverrides(isDark.value, isComic.value, customization.value, hasCustomBackground.value),
+  getThemeOverrides(
+    isDark.value,
+    isComic.value,
+    customization.value,
+    hasCustomBackground.value,
+    isBlueprint.value,
+  ),
 );
 const naiveTheme = computed(() => (isDark.value ? darkTheme : null));
 

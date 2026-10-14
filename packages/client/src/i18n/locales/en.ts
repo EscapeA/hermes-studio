@@ -2290,6 +2290,7 @@ export default {
     styleHint: 'Choose the interface character',
     styleInk: 'Ink',
     styleComic: 'Comic',
+    styleBlueprint: 'Blueprint',
     fontSize: 'Text size',
     fontSizeHint: 'Base interface and conversation text size',
     textColor: 'Text color',
