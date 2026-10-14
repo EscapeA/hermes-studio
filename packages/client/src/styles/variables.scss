@@ -176,6 +176,97 @@
   --comic-shadow: 3px 3px 0px rgba(255, 255, 255, 0.08);
 }
 
+
+// ─── 蓝图 (blueprint) ───────────────────────────────────────────
+// 制图网格：16px 细网格 + 80px 模块网格，墨蓝线；浅/暗只差线透明度。
+.blueprint {
+  // 冷白蓝图纸面 + 墨蓝主色
+  --bg-primary: #f4f7fb;
+  --bg-primary-rgb: 244, 247, 251;
+  --bg-secondary: #eaf0f7;
+  --bg-sidebar: #eaf0f7;
+  // 半透明卡面（style-layers 的设计契约：材质层要透出来，卡面必须半透明）
+  --bg-card: rgba(255, 255, 255, 0.72);
+  --bg-card-rgb: 255, 255, 255;
+  --bg-card-hover: rgba(244, 247, 251, 0.90);
+  --bg-input: rgba(255, 255, 255, 0.92);
+  --bg-main-surface: rgba(255, 255, 255, 0.72);
+  --bg-main-surface-rgb: 255, 255, 255;
+  --bg-sidebar-surface: rgba(255, 255, 255, 0.72);
+  --bg-sidebar-surface-rgb: 255, 255, 255;
+  --border-color: #cfdcea;
+  --border-light: #dde8f3;
+  --accent-primary: #0b6bcb;
+  --accent-hover: #0f82f0;
+  --accent-muted: #7c93ab;
+  --accent-primary-rgb: 11, 107, 203;
+  --text-primary: #10233a;
+  --text-primary-rgb: 16, 35, 58;
+  --text-secondary: #46617f;
+  --text-muted: #7c93ab;
+  --blueprint-line-weak: rgba(11, 107, 203, 0.11);
+  --blueprint-line-strong: rgba(11, 107, 203, 0.20);
+  // 气泡半透明，令底层制图网格透出（上游气泡默认不透明会整片盖住）
+  --msg-user-bg: rgba(248, 250, 253, 0.62);
+  --msg-assistant-bg: rgba(248, 250, 253, 0.62);
+}
+
+.dark.blueprint {
+  // 深海军蓝纸面 + 天蓝主色
+  --bg-primary: #0d1b2a;
+  --bg-primary-rgb: 13, 27, 42;
+  --bg-secondary: #0f1f2f;
+  --bg-sidebar: #0b1725;
+  --bg-card: rgba(18, 36, 54, 0.74);
+  --bg-card-rgb: 18, 36, 54;
+  --bg-card-hover: rgba(22, 41, 58, 0.90);
+  --bg-input: rgba(18, 36, 54, 0.92);
+  --bg-main-surface: rgba(18, 36, 54, 0.74);
+  --bg-main-surface-rgb: 18, 36, 54;
+  --bg-sidebar-surface: rgba(18, 36, 54, 0.74);
+  --bg-sidebar-surface-rgb: 18, 36, 54;
+  --border-color: #1e3448;
+  --border-light: #16293a;
+  --accent-primary: #38bdf8;
+  --accent-hover: #7dd3fc;
+  --accent-muted: #62809b;
+  --accent-primary-rgb: 56, 189, 248;
+  --text-primary: #d7e6f5;
+  --text-primary-rgb: 215, 230, 245;
+  --text-secondary: #93aec7;
+  --text-muted: #62809b;
+  --blueprint-line-weak: rgba(125, 200, 255, 0.10);
+  --blueprint-line-strong: rgba(125, 200, 255, 0.18);
+  --msg-user-bg: rgba(24, 43, 63, 0.66);
+  --msg-assistant-bg: rgba(24, 43, 63, 0.66);
+}
+
+// 制图网格：铺在「滚动面」自身（气泡的下一层），内容与气泡浮在网格之上，
+// 文字不被网格切割；气泡半透明后网格在其内部也读得出来。
+html.blueprint .app-shell,
+html.blueprint .app-layout,
+html.blueprint .virtual-message-list,
+html.blueprint .chat-main-content,
+html.blueprint .session-list,
+html.blueprint .message-list-shell {
+  background-image:
+    linear-gradient(var(--blueprint-line-weak) 1px, transparent 1px),
+    linear-gradient(90deg, var(--blueprint-line-weak) 1px, transparent 1px),
+    linear-gradient(var(--blueprint-line-strong) 1px, transparent 1px),
+    linear-gradient(90deg, var(--blueprint-line-strong) 1px, transparent 1px);
+  background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
+  background-attachment: fixed, fixed, fixed, fixed;
+}
+
+html.blueprint .app-main {
+  background-color: transparent;
+}
+
+html.blueprint .chat-main,
+html.blueprint .session-list {
+  border-color: var(--blueprint-line-strong);
+}
+
 // ─── SCSS Variables (delegate to CSS custom properties) ────────
 
 // Backgrounds
