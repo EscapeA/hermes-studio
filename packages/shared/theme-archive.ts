@@ -8,7 +8,7 @@ export const MAX_THEME_MANIFEST_BYTES = 64 * 1024
 
 export interface ThemeArchiveSettings {
   brightness: 'system' | 'light' | 'dark'
-  style: 'ink' | 'comic'
+  style: 'ink' | 'comic' | 'blueprint'
   fontSize: number
   textColor: string | null
   accentColor: string | null

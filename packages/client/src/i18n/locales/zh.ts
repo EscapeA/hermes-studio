@@ -2314,6 +2314,7 @@ export default {
     styleHint: '选择界面的视觉风格',
     styleInk: '水墨',
     styleComic: '漫画',
+    styleBlueprint: '蓝图',
     fontSize: '文字大小',
     fontSizeHint: '界面和对话内容的基础字号',
     textColor: '文字颜色',
