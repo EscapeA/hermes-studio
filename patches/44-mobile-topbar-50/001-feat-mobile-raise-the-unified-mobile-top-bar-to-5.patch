@@ -1,0 +1,32 @@
+From 454ec287728d8ce3899be2eba939a1e52d0c8bf1 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 14 Oct 2026 17:41:45 +0800
+Subject: [PATCH] feat(mobile): raise the unified mobile top bar to 50px
+
+Aries tuned the bar height on device: 38px felt cramped, so the single
+$mobile-topbar-height now drives 50px for every mobile top bar (chat,
+history, terminal, the two-row kanban header and the global .page-header
+family). Symmetric vertical padding keeps the title text and the fixed
+hamburger on the same axis; measured on a 390x844 viewport the bar is
+50px, title gaps 13.3/14.3px and both the hamburger and the title center
+on ~25px.
+---
+ packages/client/src/styles/variables.scss | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/client/src/styles/variables.scss b/packages/client/src/styles/variables.scss
+index 80d3be1d6..845e9b4bb 100644
+--- a/packages/client/src/styles/variables.scss
++++ b/packages/client/src/styles/variables.scss
+@@ -855,7 +855,7 @@ $header-height: 60px;
+ // change: $mobile-topbar-content = tallest control in a bar (small button).
+ // Symmetric vertical padding + min-height keeps the bar content centered, and
+ // the fixed .hamburger-btn is centered on the same axis.
+-$mobile-topbar-height: 38px;
++$mobile-topbar-height: 50px;
+ $mobile-topbar-content: 32px;
+ $mobile-topbar-min-height: calc(#{$mobile-topbar-height} + env(safe-area-inset-top, 0px));
+ $mobile-topbar-padding: calc((#{$mobile-topbar-height} - #{$mobile-topbar-content}) / 2 + env(safe-area-inset-top, 0px)) 12px calc((#{$mobile-topbar-height} - #{$mobile-topbar-content}) / 2) 52px;
+-- 
+2.53.0
+

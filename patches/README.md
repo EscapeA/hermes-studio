@@ -22,7 +22,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 10-perf-p1 | P1 性能（highlight core、comic 字体 woff2、locale 构建期合并、logo 单请求） | 001-004 |
 | 11-socket-stall | socket 卡死防护（服务端 backlog 检测断连 + 前端 REST 兜底刷新） | 001-002 |
 | 12-tool-strip | 工具面板防闪烁（500ms 延迟显示）+ 折叠单行（正在调用 N 个工具）+ 运行中工具行展开详情 + toggle 与列表上下堆叠 + 展开详情解除高度限制 | 001-004 |
-| 13-mobile-nav | 移动端顶栏统一 38px（变量派生几何 + ☰ 与内容同轴）+ ☰ 由品牌图改为三条横线图标 + 去掉与 ☰ 重复的四宫格 ▦（Models/Workflow）+ 页面侧边栏抽屉打开时隐藏全局 ☰ | 001-002 |
+| 13-mobile-nav | 移动端顶栏统一高度（**变量派生几何 + ☰ 与内容同轴**；原始 38px，现由 44-组调到 50px）+ ☰ 由品牌图改为三条横线图标 + 去掉与 ☰ 重复的四宫格 ▦（Models/Workflow）+ 页面侧边栏抽屉打开时隐藏全局 ☰ | 001-002 |
 | 14-test-adapt | 上游测试套件适配（`tests/client/message-list-live-reasoning.test.ts` 断言 fork 行为：按用户轮折叠的 ToolRunCard、卸载重建的 live ticker） | 001 |
 | 15-mobile-models | 模型页移动端布局（辅助模型面板宽表格 → 两行卡片、summary 双列、动作按钮左对齐、页/面板内边距 20→12px，断点改用 `$breakpoint-mobile`） | 001 |
 | 16-agent-entry | 侧边栏「Agent 管理」入口可配置直达指定 Agent 设置页（本地 localStorage 偏好；默认保持 Agent 列表） | 001 |
@@ -51,6 +51,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 | 41-audit-l-cleanups | 审计 L 级（空会话默认 Hermes 而非遗留 Ekko；live reasoning 用稳定 `:key` 不再每 token 重挂载；`cacheHitRatePercent`→`cacheReadSharePercent` 命名对齐实际语义） | 001-003 |
 | 42-0.7.34-adapt | 0.7.34 升级适配（① 从上游新增的 **Turkish locale** 里删掉 fork 已移除功能的 i18n 键：`groupChat.*`/`workflow.*`/`sidebar.apiRelay|workflow|singleChat|groupChat`/`chat.runUsageCost`，否则 `i18n-coverage` 逐键比对 English 必红；② `i18n-lazy-loading` 的 Turkish 启动用例适配 fork 的 build-time en 合并＝只注册当前 locale；③ **Agent 部署动画无落点收尾** —— 上游 #3378 把新建会话的 Agent 卡片飞入思考头像，而 fork 的 run 指示器是纯文字（`05-chat/019`）⇒ 永不渲染 `data-agent-deployment-target`，遮罩会一直挡着；无落点时在起飞窗口后立即收尾，上游 e2e 同步适配） | 001-003 |
 | 43-0.7.35-adapt | 0.7.35 升级适配（上游 #3381 新增 `run-usage-card` 测试断言费用格渲染，与 fork 4 指标裁剪（29-组）冲突 ⇒ 按 fork 语义改写断言：费用值不渲染、开关仍控制整卡显隐） | 001 |
+| 44-mobile-topbar-50 | 移动端顶栏高度 38 → **50px**（Aries 实机验收拍板；只改 `$mobile-topbar-height` 一行，`$mobile-topbar-min-height`/`$mobile-topbar-padding` 与 ☰ 的 top 均由它推导 ⇒ 聊天/历史/终端顶栏、看板两行栏首行、全局 `.page-header` 一起变，实测 390×844：条高 50、标题上下留白 13.3/14.3、☰ 与标题中心同轴 ≈25）。⚠️ 该改动落在 variables.scss 上，而它被 22/24/28 组也改过 ⇒ 必须新开末组，不能回写 13-mobile-nav | 001 |
 
 > **0.7.32 升级（2026-10-09）**：补丁串重建为 **124** 个 —— `30-bridge-clarify-contract` 因上游 #3330 已原生实现同一 clarify 契约而作废删除，
 > 新增 `35-patch-stack-verify/003·004`（校验脚本支持 ORDER + 补丁以未跟踪文件落盘，避免自引用补丁失败）。
@@ -118,7 +119,7 @@ custom = main + patches/*.patch 线性重放（部署/集成分支，无 merge c
 - ⚠️ **生效需换新 worker 进程**（Python 不热重载，`_sync_*_patches()` 不含该方法）：回收 bridge worker 或重启 `hermes-web-ui-client.service`；
   且 **agent 自身就跑在 worker 里**，只能由用户在本轮结束后执行。离线契约对拍脚本与两个回收脚本见 skill
   `hermes-webui-development → references/clarify-capabilities.md`。
-- 当前补丁文件总数 = **123**（以 `find patches -type f -name '*.patch' | wc -l` 为准；111 = 35 组时点，其后新增审计整改六组 `36`–`41`）。
+- 当前补丁文件总数 = **128**（以 `find patches -type f -name '*.patch' | wc -l` 为准；123 = 0.7.34 时点，其后 0.7.35 适配 1 个 + 本轮顶栏高度 1 个；`44` 组为现行末组）。
 
 **2026-10-07 升级 0.7.31（main `8b2fd130a`；8 提交 / 83 文件 / +2712 −436）**：123 补丁重放 **4 个停点 / 6 条冲突路径**全部解毕并回写（**6 个补丁文件重写 / 117 个逐字节未变**；无新增补丁组）：
 
