@@ -181,14 +181,97 @@ export const darkThemeOverrides: GlobalThemeOverrides = {
   },
 }
 
+
+// ─── 蓝图 (blueprint) 调色板 ─────────────────────────────────────
+// Light-first: 冷白纸面 + 墨蓝主色；暗色为深海军蓝纸面 + 天蓝主色。
+const BLUEPRINT_LIGHT = {
+  primary: '#0b6bcb',
+  primaryHover: '#0f82f0',
+  primaryPressed: '#0955a3',
+  textOnPrimary: '#ffffff',
+  body: '#f4f7fb',
+  surface: '#ffffff',
+  action: '#eaf1f9',
+  sider: '#eaf0f7',
+  text1: '#10233a',
+  text2: '#46617f',
+  text3: '#7c93ab',
+  border: '#cfdcea',
+  hover: 'rgba(11, 107, 203, 0.06)',
+  menuActive: 'rgba(11, 107, 203, 0.10)',
+  menuActiveHover: 'rgba(11, 107, 203, 0.16)',
+}
+
+const BLUEPRINT_DARK = {
+  primary: '#38bdf8',
+  primaryHover: '#7dd3fc',
+  primaryPressed: '#0ea5e9',
+  textOnPrimary: '#04141f',
+  body: '#0d1b2a',
+  surface: '#122436',
+  action: '#0f1f2f',
+  sider: '#0b1725',
+  text1: '#d7e6f5',
+  text2: '#93aec7',
+  text3: '#62809b',
+  border: '#1e3448',
+  hover: 'rgba(120, 180, 240, 0.08)',
+  menuActive: 'rgba(56, 189, 248, 0.14)',
+  menuActiveHover: 'rgba(56, 189, 248, 0.24)',
+}
+
+function blueprintOverrides(isDark: boolean): GlobalThemeOverrides {
+  const p = isDark ? BLUEPRINT_DARK : BLUEPRINT_LIGHT
+  return {
+    common: {
+      primaryColor: p.primary,
+      primaryColorHover: p.primaryHover,
+      primaryColorPressed: p.primaryPressed,
+      primaryColorSuppl: p.primary,
+      bodyColor: p.body,
+      cardColor: p.surface,
+      modalColor: p.surface,
+      popoverColor: p.surface,
+      tableColor: p.surface,
+      inputColor: p.surface,
+      actionColor: p.action,
+      textColorBase: p.text1,
+      textColor1: p.text1,
+      textColor2: p.text2,
+      textColor3: p.text3,
+      dividerColor: p.border,
+      borderColor: p.border,
+      hoverColor: p.hover,
+    },
+    Layout: { color: p.body, siderColor: p.sider, headerColor: p.body },
+    Menu: {
+      itemTextColorActive: p.text1,
+      itemTextColorActiveHover: p.text1,
+      itemColorActive: p.menuActive,
+      itemColorActiveHover: p.menuActiveHover,
+      itemIconColorActiveHover: p.primaryHover,
+    },
+    Button: {
+      textColorPrimary: p.textOnPrimary,
+      colorPrimary: p.primary,
+      colorHoverPrimary: p.primaryHover,
+      colorPressedPrimary: p.primaryPressed,
+    },
+    Input: { color: p.surface, border: `1px solid ${p.border}` },
+  }
+}
+
 export function getThemeOverrides(
   isDark: boolean,
   isComic?: boolean,
   customization?: ThemeCustomization,
   hasCustomBackground = false,
+  isBlueprint?: boolean,
 ): GlobalThemeOverrides {
-  const base = isDark ? darkThemeOverrides : lightThemeOverrides
-  if (!isComic && !customization && !hasCustomBackground) return base
+  const base = isBlueprint
+    ? blueprintOverrides(isDark)
+    : isDark ? darkThemeOverrides : lightThemeOverrides
+  if (!isComic && !customization && !isBlueprint && !hasCustomBackground) return base
   const comicFont = "'Comic Neue', 'ZCOOL KuaiLe', 'Zen Maru Gothic', 'Gaegu', cursive, sans-serif"
   const custom = customization ? resolveThemeCustomization(customization, isDark) : null
   const common = {

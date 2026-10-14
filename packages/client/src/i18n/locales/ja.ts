@@ -2024,6 +2024,7 @@ export default {
     styleHint: '画面の雰囲気を選択',
     styleInk: '墨',
     styleComic: 'コミック',
+    styleBlueprint: 'ブループリント',
     fontSize: '文字サイズ',
     fontSizeHint: '画面と会話テキストの基本サイズ',
     textColor: '文字色',
