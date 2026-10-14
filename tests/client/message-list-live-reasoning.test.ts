@@ -101,15 +101,15 @@ describe('MessageList live reasoning', () => {
     vi.useRealTimers()
   })
 
-  it('keeps the thinking status without an avatar icon per the compact run indicator', async () => {
+  it('keeps the thinking status with the upstream agent logo target', async () => {
     const wrapper = mountMessageList([])
     const chatStore = useChatStore()
     for (const agent of ['hermes', 'codex', 'claude-code', 'ekko-agent', 'pi']) {
       chatStore.activeSession = { ...makeSession([]), agent }
       await nextTick()
-      // Custom fork: the run indicator intentionally drops the avatar icon
-      // (thinking.gif removal), so only the text status line remains.
-      expect(wrapper.find('.thinking-avatar').exists()).toBe(false)
+      // Upstream 0.7.35 keeps an agent-logo <img> here as the deployment
+      // animation target (the fork adopts it), so the avatar node stays.
+      expect(wrapper.find('.thinking-avatar').exists()).toBe(true)
       expect(wrapper.find('.thinking-status').exists()).toBe(true)
       expect(wrapper.find('.thinking-status-copy').text()).toContain('chat.thinkingInProgress')
     }

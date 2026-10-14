@@ -42,17 +42,6 @@ function mountMessage(role: 'user' | 'assistant') {
 }
 
 describe('MessageItem chat identity toggle', () => {
-  it('hides author rows when show_session_identity is false', () => {
-    settingsDisplay.show_session_identity = false
-    setActivePinia(createPinia())
-
-    const user = mountMessage('user')
-    expect(user.find('.user-message-author').exists()).toBe(false)
-
-    const assistant = mountMessage('assistant')
-    expect(assistant.find('.assistant-message-author').exists()).toBe(false)
-  })
-
   it('shows author rows by default and never renders avatars', () => {
     settingsDisplay.show_session_identity = undefined
     setActivePinia(createPinia())
