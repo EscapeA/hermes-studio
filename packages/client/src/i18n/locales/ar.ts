@@ -2298,6 +2298,7 @@ export default {
     styleHint: 'اختر طابع الواجهة',
     styleInk: 'حبري',
     styleComic: 'كوميك',
+    styleBlueprint: 'مخطط',
     fontSize: 'حجم النص',
     fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',
     textColor: 'لون النص',
