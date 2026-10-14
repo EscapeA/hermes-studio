@@ -10,7 +10,7 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 
 ⚠️ **本轮（2026-10-14）以 `custom-next` 为唯一集成分支**：`custom` 保留作历史对照，不再更新。
 
-## 分组总览（18 组 / 75 条）
+## 分组总览（19 组 / 77 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -32,6 +32,7 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 | 16-audit | 3 | 默认标签 Hermes、稳定 live key、命名对齐 |
 | 17-verify | 4 | 补丁串校验脚本 + CI 接入 + ORDER 支持 + 未跟踪落盘 |
 | 18-security | 3 | 头像 mime 白名单、meta.file 路径守卫、错误响应脱敏 |
+| 19-blueprint | 1 | 蓝图风格（淡冷纸面 + 墨蓝主色 + 16/80px 制图网格；暗色为深海军蓝 + 天蓝），插在上游 ink/comic 旁的最小增量 |
 
 ## ORDER 的语义
 
@@ -57,8 +58,8 @@ while read n p; do git am --3way "patches/$p"; done < patches/ORDER
 - 丢弃项对应的 i18n 键/组件已同步清理（tr locale 清键等），保证 `i18n-coverage` 逐键比对通过。
 - 合并：`08-server/002+003`、`23-run-speed-latest/001+002`、`35-patch-stack-verify/001..004`、
   `41-audit-l-cleanups/001..003` 等按「源码+测试同条」原则合并。
-- **延期重写**：原 `22-theme-styles`（表驱动 + neon/aurora/blueprint）不采用；蓝图风格待以「最小增量插在上游
-  ink/comic 旁」的方式另立一条补丁。原 `13-mobile-nav`（移动端顶栏变量体系）按决定不重做，故上游顶栏现状保留。
+- **已补回**：原 `22-theme-styles`（表驱动 + neon/aurora/blueprint）不采用；蓝图风格已按「最小增量插在上游
+  ink/comic 旁」重写为 `19-blueprint/001`（第 2 轮追加），neon/aurora/tech 升级与表驱动泛化仍未采纳。原 `13-mobile-nav`（移动端顶栏变量体系）按决定不重做，故上游顶栏现状保留。
 - 验证：`git am` 纯重放 **75/75 零冲突**，与 `custom-next` 树**逐字节一致**；`npm run build` 通过；
   客户端单测对照旧 custom 分支**无新增失败**。
 

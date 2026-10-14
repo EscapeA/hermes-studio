@@ -74,3 +74,4 @@
 074 05-chat/015-rebase-onto-upstream-0.7.35-structures.patch
 075 05-chat/016-adapt-suites-to-the-rebase-decisions.patch
 076 17-verify/005-point-the-patch-stack-verifier-and-docs-at-custom-next.patch
+077 19-blueprint/001-feat-theme-add-a-blueprint-style-beside-ink-and-comic.patch
