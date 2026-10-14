@@ -18,7 +18,7 @@ import {
 } from '@/styles/theme-customization'
 
 export type BrightnessMode = 'light' | 'dark' | 'system'
-export type ThemeStyle = 'ink' | 'comic'
+export type ThemeStyle = 'ink' | 'comic' | 'blueprint'
 
 const BRIGHTNESS_KEY = 'hermes_brightness'
 const STYLE_KEY = 'hermes_style'
@@ -88,9 +88,13 @@ const brightness = ref<BrightnessMode>(
   (localStorage.getItem(BRIGHTNESS_KEY) as BrightnessMode) || 'system',
 )
 // Keep this in sync with the pre-render theme in index.html.
-const style = ref<ThemeStyle>(localStorage.getItem(STYLE_KEY) === 'comic' ? 'comic' : 'ink')
+const storedStyle = localStorage.getItem(STYLE_KEY)
+const style = ref<ThemeStyle>(
+  storedStyle === 'comic' ? 'comic' : storedStyle === 'blueprint' ? 'blueprint' : 'ink',
+)
 const isDark = ref(false)
 const isComic = ref(false)
+const isBlueprint = ref(false)
 const activeUserId = ref<number | null>(storedUserId())
 const serverTheme = ref<UserThemeSettings>(loadCachedTheme(activeUserId.value))
 let committedTheme = serverTheme.value
@@ -140,8 +144,10 @@ function applyClasses() {
   const dark = resolveDark(brightness.value)
   isDark.value = dark
   isComic.value = style.value === 'comic'
+  isBlueprint.value = style.value === 'blueprint'
   document.documentElement.classList.toggle('dark', dark)
   document.documentElement.classList.toggle('comic', isComic.value)
+  document.documentElement.classList.toggle('blueprint', isBlueprint.value)
   applyCustomization()
 }
 
@@ -300,6 +306,7 @@ export function useTheme() {
     style,
     isDark,
     isComic,
+    isBlueprint,
     themeName,
     customization,
     fontSize: computed(() => serverTheme.value.fontSize),

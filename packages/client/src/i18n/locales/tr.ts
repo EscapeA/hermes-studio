@@ -346,7 +346,7 @@ export default {
   theme: {
     title: 'Tema', saved: 'Tema kaydedildi', saveFailed: 'Tema kaydedilemedi', reset: 'Varsayılanları geri yükle', resetSuccess: 'Varsayılan tema geri yüklendi',
     appearance: 'Görünüm', appearanceHint: 'Değişiklikler arayüz genelinde önizlenir', mode: 'Parlaklık', modeHint: 'Açık veya koyu palet seçin',
-    modeSystem: 'Sistemi takip et', modeLight: 'Açık', modeDark: 'Koyu', style: 'Stil', styleHint: 'Arayüz karakterini seçin', styleInk: 'Mürekkep', styleComic: 'Çizgi roman',
+    modeSystem: 'Sistemi takip et', modeLight: 'Açık', modeDark: 'Koyu', style: 'Stil', styleHint: 'Arayüz karakterini seçin', styleInk: 'Mürekkep', styleComic: 'Çizgi roman', styleBlueprint: 'Teknik Çizim',
     fontSize: 'Metin boyutu', fontSizeHint: 'Temel arayüz ve konuşma metni boyutu', textColor: 'Metin rengi', textColorHint: 'İkincil metin tonları otomatik oluşturulur',
     accentColor: 'Seçim rengi', accentColorHint: 'Etkin öğelerde, seçimlerde ve birincil düğmelerde kullanılır', background: 'Arka plan görseli',
     backgroundHint: 'Kişisel çalışma alanı arka planı yükleyin', backgroundTypeError: 'PNG, JPEG, WebP veya GIF görseli kullanın', backgroundSizeError: 'Arka plan görselleri en fazla 10 MB olabilir',
