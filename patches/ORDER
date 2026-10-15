@@ -75,3 +75,4 @@
 075 05-chat/016-adapt-suites-to-the-rebase-decisions.patch
 076 17-verify/005-point-the-patch-stack-verifier-and-docs-at-custom-next.patch
 077 19-blueprint/001-feat-theme-add-a-blueprint-style-beside-ink-and-comic.patch
+078 20-run-indicator/001-feat-usage-keep-the-live-decode-reading-on-one-l.patch
