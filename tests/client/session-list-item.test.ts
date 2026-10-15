@@ -137,6 +137,21 @@ describe('SessionListItem', () => {
     expect(wrapper.emitted('open-new')).toBeUndefined()
   })
 
+  it('shows the live-status indicator when streaming', () => {
+    const wrapper = mount(SessionListItem, {
+      props: {
+        session: { ...session, source: 'cli', agent: 'hermes' },
+        active: false,
+        pinned: false,
+        canDelete: true,
+        streaming: true,
+      },
+    })
+
+    const dot = wrapper.get('.session-item-live-dot')
+    expect(dot.attributes('title')).toBe('chat.sessionLive')
+  })
+
   it('does not show the live-status indicator when not streaming', () => {
     const wrapper = mount(SessionListItem, {
       props: {

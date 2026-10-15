@@ -1294,6 +1294,7 @@ export default {
     interactionCountdown: 'Quedan {time}',
     interactionCountdownElapsed: '00:00 · Esperando confirmación del servidor',
     deleteSession: 'Eliminar esta sesion?',
+    sessionLive: 'Sesion en curso',
     sessionListActions: 'Acciones de la lista de sesiones',
     filterByProfile: 'Filtrar por perfil',
     selectedSessions: '{count} seleccionadas',

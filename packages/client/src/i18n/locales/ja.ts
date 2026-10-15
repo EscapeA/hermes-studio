@@ -1295,6 +1295,7 @@ export default {
     interactionCountdown: '残り {time}',
     interactionCountdownElapsed: '00:00 · サーバー確認待ち',
     deleteSession: 'このセッションを削除しますか？',
+    sessionLive: 'セッション実行中',
     sessionListActions: 'セッション一覧の操作',
     filterByProfile: 'プロファイルで絞り込み',
     selectedSessions: '{count} 件選択中',
