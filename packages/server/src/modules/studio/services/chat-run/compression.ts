@@ -272,7 +272,10 @@ export async function buildCompressedHistory(
       ? Math.floor(currentInputTokens)
       : 0
     // Exact prompt size the provider reported for this session's latest Hermes call since the last
-    // compression. The local cl100k estimate can undercount it badly, so it is a floor for the decision.
+    // compression. This reading is authoritative for the decision: the endpoint counted the real
+    // request itself, whereas the local cl100k estimate over-counts what the wire carries (replayed
+    // assistant turns keep their stored reasoning here but ship as a 1-space pad, and tool results
+    // are truncated), so a local-only reading compresses long sessions far too early.
     // Usage from before the last history clear (ms cutoff on the session) describes deleted history.
     const contextStartMs = Math.max(snapshot?.updatedAt ?? 0, getSession(sessionId)?.history_cleared_at ?? 0)
     const lastUsage = getUsage(sessionId, 'hermes')
@@ -281,14 +284,20 @@ export async function buildCompressedHistory(
       : 0
     const estimateLocalContextTokens = async (messages: ChatMessage[], messageTokens: number) => {
       const localMessageTokens = Math.max(0, Math.floor(messageTokens))
-      const floor = messages.length > 0 ? realPromptTokens : 0
+      let localTokens = localMessageTokens
       try {
         const estimate = await contextTokenEstimator?.(messages, localMessageTokens)
-        if (typeof estimate === 'number' && Number.isFinite(estimate) && estimate > 0) return Math.max(Math.floor(estimate), floor)
+        if (typeof estimate === 'number' && Number.isFinite(estimate) && estimate > 0) {
+          localTokens = Math.max(Math.floor(estimate), localMessageTokens)
+        }
       } catch (err) {
         logger.warn(err, '[context-compress] session=%s: fixed context token estimate failed; using message-only estimate', sessionId)
       }
-      return Math.max(localMessageTokens, floor)
+      // Anchor on the provider's reading and add only what this turn appends on top of it. The local
+      // estimate remains the fallback for cold starts and for the turns right after a compression —
+      // the cutoff above drops readings that predate the summary, since they describe folded history.
+      if (realPromptTokens <= 0 || messages.length === 0) return localTokens
+      return realPromptTokens + currentRunInputTokens
     }
     const emitContextUsage = (contextTokens: number) => {
       cState.contextTokens = contextTokens

@@ -191,4 +191,97 @@ describe('compression decisions with the provider usage floor', () => {
     expect(getCompressionSnapshot('large')).toMatchObject({ summary: 'new summary', compressedThroughMessageId: largeCursor })
     expect(getCompressionSnapshot('large')?.updatedAt).toBeGreaterThan(200_000)
   })
+
+  it('anchors the decision on the provider reading when the local estimate over-counts the wire', async () => {
+    const { addMessage, createSession } = await import('../../packages/server/src/modules/studio/repositories/session-store')
+    const { getCompressionSnapshot } = await import('../../packages/server/src/modules/studio/repositories/compression-snapshot')
+    const { updateUsage } = await import('../../packages/server/src/modules/studio/repositories/usage-store')
+    createSession({ id: 'anchor', source: 'cli' })
+    // Stored history keeps full reasoning and un-truncated tool payload, so the local cl100k estimate
+    // reads far more than the endpoint actually received (replayed assistant turns ship a 1-space
+    // reasoning pad and tool results are truncated to 5.5k). A local-only reading compresses here.
+    const padding = Array.from({ length: 100_000 }, (_, index) => `row ${index}`).join('\n')
+    addMessage({ session_id: 'anchor', role: 'user', content: 'start', timestamp: 1 })
+    addMessage({ session_id: 'anchor', role: 'assistant', content: padding, timestamp: 2 })
+    addMessage({ session_id: 'anchor', role: 'user', content: 'next', timestamp: 3 })
+    addMessage({ session_id: 'anchor', role: 'assistant', content: 'ok', timestamp: 4 })
+    addMessage({ session_id: 'anchor', role: 'user', content: 'more', timestamp: 5 })
+    addMessage({ session_id: 'anchor', role: 'assistant', content: 'fine', timestamp: 6 })
+    addMessage({ session_id: 'anchor', role: 'user', content: 'current input', timestamp: 7 })
+    // The endpoint counted the real request: 50k, well under the 128k trigger (256k window x 0.5).
+    updateUsage('anchor', { source: 'hermes', inputTokens: 1_000, cacheReadTokens: 49_000, outputTokens: 10, createdAt: 2_000 })
+
+    await run('anchor')
+    expect(summarizerRun).not.toHaveBeenCalled()
+    expect(getCompressionSnapshot('anchor')).toBeFalsy()
+  })
+
+  it('adds only the current turn on top of the provider reading', async () => {
+    const { addMessage, createSession } = await import('../../packages/server/src/modules/studio/repositories/session-store')
+    const { getCompressionSnapshot } = await import('../../packages/server/src/modules/studio/repositories/compression-snapshot')
+    const { updateUsage } = await import('../../packages/server/src/modules/studio/repositories/usage-store')
+    const { buildCompressedHistory } = await import('../../packages/server/src/modules/studio/services/chat-run/compression')
+    createSession({ id: 'turn', source: 'cli' })
+    for (let index = 0; index < 6; index++) {
+      addMessage({ session_id: 'turn', role: index % 2 ? 'assistant' : 'user', content: `small ${index}`, timestamp: index + 1 })
+    }
+    addMessage({ session_id: 'turn', role: 'user', content: 'current input', timestamp: 9 })
+    // Reading plus this turn's input crosses the trigger; either alone would not.
+    updateUsage('turn', { source: 'hermes', inputTokens: 1_000, cacheReadTokens: 118_000, outputTokens: 10, createdAt: 2_000 })
+    const currentInput = 'x'.repeat(40_000)
+
+    await buildCompressedHistory('turn', 'default', '', undefined, vi.fn(), new Map(), { model: 'm', provider: 'p' },
+      undefined, currentInput.length / 4)
+
+    expect(summarizerRun).toHaveBeenCalledTimes(1)
+    expect(getCompressionSnapshot('turn')?.summary).toBe('new summary')
+  })
+
+  it('falls back to the local estimate when the reading predates the last compression', async () => {
+    const { addMessage, createSession } = await import('../../packages/server/src/modules/studio/repositories/session-store')
+    const { saveCompressionSnapshot } = await import('../../packages/server/src/modules/studio/repositories/compression-snapshot')
+    const { updateUsage } = await import('../../packages/server/src/modules/studio/repositories/usage-store')
+    const { buildCompressedHistory } = await import('../../packages/server/src/modules/studio/services/chat-run/compression')
+    createSession({ id: 'post-compress', source: 'cli' })
+    const ids = ['u', 'a', 'u', 'a', 'u', 'a'].map((role, index) => addMessage({
+      session_id: 'post-compress', role: role === 'u' ? 'user' : 'assistant',
+      content: 'detail '.repeat(4_000), timestamp: index + 1,
+    })!)
+    // A compression happened at t=1000; the 500k reading is older and describes folded history,
+    // so it must NOT anchor this decision. The fresh history alone is still small.
+    expect(saveCompressionSnapshot('post-compress', 'old summary', 1, 2, {
+      compressedThroughMessageId: ids[1], protectedHeadThroughMessageId: null, expectedHistoryRevision: 0,
+    })).toBe(true)
+    db.prepare('UPDATE chat_compression_snapshots SET updated_at = 1000 WHERE session_id = ?').run('post-compress')
+    updateUsage('post-compress', { source: 'hermes', inputTokens: 1_000, cacheReadTokens: 499_000, outputTokens: 10, createdAt: 900 })
+    addMessage({ session_id: 'post-compress', role: 'user', content: 'current input', timestamp: 20 })
+
+    await buildCompressedHistory('post-compress', 'default', '', undefined, vi.fn(), new Map(), { model: 'm', provider: 'p' })
+
+    // The stale 500k reading would sit at the 128k trigger; discarding it keeps the decision under.
+    expect(summarizerRun).not.toHaveBeenCalled()
+  })
+
+  it('anchors on a reading taken after the last compression', async () => {
+    const { addMessage, createSession } = await import('../../packages/server/src/modules/studio/repositories/session-store')
+    const { saveCompressionSnapshot } = await import('../../packages/server/src/modules/studio/repositories/compression-snapshot')
+    const { updateUsage } = await import('../../packages/server/src/modules/studio/repositories/usage-store')
+    const { buildCompressedHistory } = await import('../../packages/server/src/modules/studio/services/chat-run/compression')
+    createSession({ id: 'regrown', source: 'cli' })
+    const ids = ['u', 'a', 'u', 'a', 'u', 'a'].map((role, index) => addMessage({
+      session_id: 'regrown', role: role === 'u' ? 'user' : 'assistant', content: `small ${index}`, timestamp: index + 1,
+    })!)
+    expect(saveCompressionSnapshot('regrown', 'summary after compress', 1, 2, {
+      compressedThroughMessageId: ids[1], protectedHeadThroughMessageId: null, expectedHistoryRevision: 0,
+    })).toBe(true)
+    db.prepare('UPDATE chat_compression_snapshots SET updated_at = 1000 WHERE session_id = ?').run('regrown')
+    // Post-compression growth: the endpoint now reports a prompt over the 128k trigger.
+    updateUsage('regrown', { source: 'hermes', inputTokens: 4_000, cacheReadTokens: 140_000, outputTokens: 10, createdAt: 2_000 })
+    addMessage({ session_id: 'regrown', role: 'user', content: 'current input', timestamp: 20 })
+
+    await buildCompressedHistory('regrown', 'default', '', undefined, vi.fn(), new Map(), { model: 'm', provider: 'p' })
+
+    // Anchoring must still compress when the session genuinely regrows past the threshold.
+    expect(summarizerRun).toHaveBeenCalledTimes(1)
+  })
 })
