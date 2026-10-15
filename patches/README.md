@@ -22,7 +22,7 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 | 06-remove | 6 | 群聊整体移除、工作流整体移除、头像整体移除（各含测试适配） |
 | 07-sidebar | 2 | 页面侧栏扁平化 + 历史切换（含测试） |
 | 08-agent-entry | 1 | 侧栏 Agent 管理可配置直达 |
-| 09-nav | 6 | 0.7.26 导航外壳适配/材质、抽屉一级菜单合并、磨砂抽屉、图标栏尺寸 |
+| 09-nav | 6 | 抽屉去自有关闭行+幽灵入口、0.7.26 导航外壳适配/材质、抽屉一级菜单合并、磨砂抽屉、图标栏尺寸 |
 | 10-reconnect | 2 | socket 重连对账 run 态（含测试） |
 | 11-perf | 4 | highlight 按需注册、i18n 构建期合并、启动光晕单请求、locale 同级 import 解析 |
 | 12-adapt | 6 | 0.7.25 / 0.7.28 / 0.7.29 / 0.7.34 套件与 locale 适配 |
@@ -64,6 +64,22 @@ while read n p; do git am --3way "patches/$p"; done < patches/ORDER
   ink/comic 旁」重写为 `19-blueprint/001`（第 2 轮追加），neon/aurora/tech 升级与表驱动泛化仍未采纳。原 `13-mobile-nav`（移动端顶栏变量体系）按决定不重做，故上游顶栏现状保留。
 - 验证：`git am` 纯重放 **75/75 零冲突**，与 `custom-next` 树**逐字节一致**；`npm run build` 通过；
   客户端单测对照旧 custom 分支**无新增失败**。
+
+## 增量：09-nav/001 重写（2026-10-15）
+
+- 原 `001-fix-mobile-nav-adapt-the-0-7-26-nav-chrome-to-th` 整体重写为
+  `001-fix-mobile-nav-drop-the-drawer-close-row-and-ghost-entries`：Aries 决定丢弃其中的
+  抽屉顶部 inset 覆写（`--drawer-top-inset: 0px`）。该覆写当年为治 K60 壳双重 inset 死带，
+  但 web-to-app 壳切到「全屏 + 状态栏常驻 + 全透明」后窗口真 edge-to-edge、壳不再预留顶部
+  padding，`env(safe-area-inset-top)` 成为唯一正确 inset，覆写反而把抽屉第一行
+  （新建会话/搜索）埋进状态栏带无法点击。上游 inset 两行原样恢复。
+- 新 001 只保留三项非 inset delta：抽屉自有关闭行（按钮 + 死 CSS）移除、
+  StudioNavigationRail 幽灵入口（group-chat/workflow/connections、singleChat→chat）清理、
+  ChatPanel 移动端 page-sidebar 收紧。
+- `003`/`005` 的 pre-image 原本基于旧 001 输出；已用 --3way 全量重放验证新基线下
+  **79/79 零冲突**且重放树与源码树逐字节一致（`scripts/verify-patch-stack.sh`）。
+- 教训：**动补丁串中间任意一条，必须重放全量 ORDER**——孤立重放 003/004 会因缺少前置
+  补丁的中间态而假冲突（本次 004 在 main+001+003 上必败，全量序下才成立）。
 
 ## 修改补丁串的约定
 

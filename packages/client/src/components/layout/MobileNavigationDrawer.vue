@@ -63,11 +63,6 @@ const drawerWidth = computed(() =>
 @use '@/styles/variables' as *;
 
 .studio-mobile-navigation {
-  // Top inset shared by the drawer's two columns. The K60 WebView shell reports
-  // ~99px of top safe-area while drawing nothing in it, which read as a dead band
-  // above the session list; Aries settled on 0 (fully flush). Raise this single
-  // value if a device ever renders under the system bar / camera cutout.
-  --drawer-top-inset: 0px;
   display: flex;
   height: 100%;
   min-height: 0;
@@ -85,7 +80,7 @@ const drawerWidth = computed(() =>
   :deep(.studio-navigation-rail) {
     // Drop the rail's own opaque column so the container's glass shows through.
     background-color: transparent;
-    padding-top: var(--drawer-top-inset);
+    padding-top: max(12px, env(safe-area-inset-top, 0px));
     padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
   }
 }
@@ -96,13 +91,10 @@ const drawerWidth = computed(() =>
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  // Same shared inset as the rail, so the search row and the rail's first icon
-  // stay on one axis.
-  padding-top: var(--drawer-top-inset);
+  padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   border-inline-start: 1px solid $border-color;
 }
-
 .studio-mobile-navigation .studio-mobile-navigation__content {
   position: relative;
   display: flex;

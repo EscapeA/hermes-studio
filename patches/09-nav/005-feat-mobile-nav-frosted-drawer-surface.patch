@@ -38,7 +38,7 @@ index bf39dceb2..83a67d343 100644
    :deep(.studio-navigation-rail) {
 +    // Drop the rail's own opaque column so the container's glass shows through.
 +    background-color: transparent;
-     padding-top: var(--drawer-top-inset);
+     padding-top: max(12px, env(safe-area-inset-top, 0px));
      padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
    }
 @@ -115,6 +123,9 @@ const drawerWidth = computed(() =>

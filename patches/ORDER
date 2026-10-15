@@ -46,7 +46,7 @@
 046 04-usage/011-test-usage-cover-the-per-call-decode-reading.patch
 047 12-adapt/001-fix-test-add-a-locales-fallback-alias-to-the-vit.patch
 048 12-adapt/002-test-client-adapt-two-upstream-suites-to-the-for.patch
-049 09-nav/001-fix-mobile-nav-adapt-the-0-7-26-nav-chrome-to-th.patch
+049 09-nav/001-fix-mobile-nav-drop-the-drawer-close-row-and-ghost-entries.patch
 050 09-nav/002-feat-theme-cover-the-0-7-26-navigation-chrome-wi.patch
 051 09-nav/003-feat-mobile-nav-one-labelled-rail-with-the-app-l.patch
 052 09-nav/004-fix-mobile-nav-stop-rendering-the-app-level-list.patch

@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
-Date: Thu, 1 Oct 2026 12:05:54 +0800
-Subject: [PATCH] fix(mobile-nav): adapt the 0.7.26 nav chrome to the fork's
- feature set
+Date: Thu, 15 Oct 2026 12:00:00 +0800
+Subject: [PATCH] fix(mobile-nav): drop the drawer's own close row and the ghost
+ rail entries
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -12,17 +12,22 @@ Content-Transfer-Encoding: 8bit
   entry at the existing sidebar.chat key instead of the removed
   sidebar.singleChat one, so a raw key is never rendered.
 - MobileNavigationDrawer: the drawer's own 40px close row is gone (the page
-  sidebar's own close button is the affordance again, un-suppressed); the top
-  inset is a single variable (--drawer-top-inset, Aries picked 0) because the
-  K60 WebView shell reports ~99px of phantom top safe-area.
+  sidebar's own close button is the affordance again, un-suppressed).
 - ChatPanel: tighten the mobile page-sidebar header paddings now that the ☰ no
   longer floats over it.
----
- .../src/components/hermes/chat/ChatPanel.vue  | 13 +++++++
- .../layout/MobileNavigationDrawer.vue         | 36 +++++++------------
- .../layout/StudioNavigationRail.vue           |  8 ++---
- 3 files changed, 27 insertions(+), 30 deletions(-)
 
+The 0.7.26 version of this patch also overrode the drawer's top safe-area inset
+to a hardcoded 0 (the K60 shell then double-padded the content, which read as a
+dead band). That override is dropped here: with the web-to-app shell running
+fullscreen + persistent transparent status bar the window is truly edge-to-edge,
+the shell reserves no top padding, and env(safe-area-inset-top) is the only
+correct inset — overriding it buried the drawer's first row under the status
+bar. The upstream inset lines stand as they are.
+---
+ packages/client/src/components/hermes/chat/ChatPanel.vue | 13 +++++++
+ .../layout/MobileNavigationDrawer.vue         | 21 ++++-------------
+ .../layout/StudioNavigationRail.vue           |  8 ++---
+ 3 files changed, 16 insertions(+), 40 deletions(-)
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
 index 1052eaa55..1e4f83ffe 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
@@ -76,36 +81,7 @@ index d1b2ea1f5..f8354d2fa 100644
          <div :ref="element => emit('target', element as HTMLElement | null)" class="studio-mobile-navigation__content" />
        </section>
      </div>
-@@ -36,6 +31,11 @@ const { t } = useI18n()
- @use '@/styles/variables' as *;
- 
- .studio-mobile-navigation {
-+  // Top inset shared by the drawer's two columns. The K60 WebView shell reports
-+  // ~99px of top safe-area while drawing nothing in it, which read as a dead band
-+  // above the session list; Aries settled on 0 (fully flush). Raise this single
-+  // value if a device ever renders under the system bar / camera cutout.
-+  --drawer-top-inset: 0px;
-   display: flex;
-   height: 100%;
-   min-height: 0;
-@@ -45,7 +45,7 @@ const { t } = useI18n()
-   overflow: hidden;
- 
-   :deep(.studio-navigation-rail) {
--    padding-top: max(12px, env(safe-area-inset-top, 0px));
-+    padding-top: var(--drawer-top-inset);
-     padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
-   }
- }
-@@ -56,27 +56,13 @@ const { t } = useI18n()
-   flex-direction: column;
-   min-width: 0;
-   min-height: 0;
--  padding-top: env(safe-area-inset-top, 0px);
-+  // Same shared inset as the rail, so the search row and the rail's first icon
-+  // stay on one axis.
-+  padding-top: var(--drawer-top-inset);
-   padding-bottom: env(safe-area-inset-bottom, 0px);
+@@ -61,20 +61,3 @@ const drawerWidth = computed(() => {
    border-inline-start: 1px solid $border-color;
  }
 -.studio-mobile-navigation__close {
@@ -121,13 +97,11 @@ index d1b2ea1f5..f8354d2fa 100644
 -  color: $text-secondary;
 -  background: transparent;
 -  cursor: pointer;
- 
+-
 -  &:hover { color: $text-primary; }
 -  &:focus-visible { outline: 2px solid $accent-primary; }
 -}
  .studio-mobile-navigation .studio-mobile-navigation__content {
-   position: relative;
-   display: flex;
 @@ -104,7 +90,9 @@ const { t } = useI18n()
      pointer-events: auto;
    }
