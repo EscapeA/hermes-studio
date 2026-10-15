@@ -1,6 +1,5 @@
 {
   "version": 1,
-  "description": "Existing declarations at introduction of the UI harness; remove fixed entries, never add new UI debt.",
   "files": {
     "packages/client/src/App.vue": {
       "unowned-background | .app-shell | background-color: $bg-primary": 1,
@@ -15,9 +14,6 @@
       "literal-color | .node-warning-bar | background-color: #fef3c7": 1,
       "unowned-background | .node-warning-bar | background-color: #fef3c7": 1,
       "literal-color | .node-warning-bar | border-bottom: var(--border-width, 1px) solid #fde68a": 1
-    },
-    "packages/client/src/components/hermes/ApiRelayUsageCard.vue": {
-      "unowned-background | .relay-usage-sources li | background: $bg-secondary": 1
     },
     "packages/client/src/components/hermes/HermesDataDirectoryHint.vue": {
       "unowned-background | .data-directory-env-platform code | background: var(--hover-color)": 1
@@ -71,7 +67,9 @@
       "unowned-background | .dark .slash-command-dropdown | background: #2a2a2a": 1,
       "unowned-background | .skill-picker-item | background: $bg-secondary": 1,
       "literal-color | .bundle-picker-delete:hover, .bundle-picker-delete:focus-visible | background: rgba(239, 68, 68, 0.12)": 1,
-      "literal-color | .bundle-picker-delete:hover, .bundle-picker-delete:focus-visible | color: #ef4444": 1
+      "literal-color | .bundle-picker-delete:hover, .bundle-picker-delete:focus-visible | color: #ef4444": 1,
+      "literal-color | .context-percent.context-percent-danger | color: #e85d4a": 1,
+      "literal-color | .context-percent.context-percent-warn | color: #e8a735": 1
     },
     "packages/client/src/components/hermes/chat/ChatPanel.vue": {
       "literal-color | .session-backdrop | background: rgba(0, 0, 0, 0.4)": 1,
@@ -210,7 +208,11 @@
       "literal-color | .dark .tool-call-item | background: rgba(255, 255, 255, 0.06)": 1,
       "unowned-background | .dark .tool-call-item | background: rgba(255, 255, 255, 0.06)": 1,
       "literal-color | .tool-call-error-icon | color: #ff4d4f": 1,
-      "literal-color | .tool-call-success-icon | color: #52c41a": 1
+      "literal-color | .tool-call-success-icon | color: #52c41a": 1,
+      "literal-color | .dark .tool-strip-toggle | background: rgba(255, 255, 255, 0.06)": 1,
+      "literal-color | .tool-strip-toggle | background: rgba(0, 0, 0, 0.03)": 1,
+      "unowned-background | .dark .tool-strip-toggle | background: rgba(255, 255, 255, 0.06)": 1,
+      "unowned-background | .tool-strip-toggle | background: rgba(0, 0, 0, 0.03)": 1
     },
     "packages/client/src/components/hermes/chat/MessageQueueFloatPanel.vue": {
       "literal-color | .queue-float-panel | background: #ffffff": 1,
@@ -437,7 +439,13 @@
       "literal-color | 50% | box-shadow: 0 0 0 2px #ff9ff3, 0 0 10px rgba(255, 159, 243, 0.4), 0 0 20px rgba(255, 159, 243, 0.2)": 1,
       "literal-color | 66.66% | box-shadow: 0 0 0 2px #54a0ff, 0 0 10px rgba(84, 160, 255, 0.4), 0 0 20px rgba(84, 160, 255, 0.2)": 1,
       "literal-color | 83.33% | box-shadow: 0 0 0 2px #5f27cd, 0 0 10px rgba(95, 39, 205, 0.4), 0 0 20px rgba(95, 39, 205, 0.2)": 1,
-      "literal-color | 100% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1
+      "literal-color | 100% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
+      "literal-color | .dark .session-item-live-dot | background: #f5f5f5": 1,
+      "literal-color | .dark .session-item-live-dot | box-shadow: 0 0 0 2px rgba(245, 245, 245, 0.16), 0 0 10px rgba(255, 107, 107, 0.4)": 1,
+      "literal-color | .session-item-live-dot | background: #171717": 1,
+      "literal-color | .session-item-live-dot | box-shadow: 0 0 0 2px rgba(23, 23, 23, 0.12), 0 0 8px rgba(255, 107, 107, 0.35)": 1,
+      "unowned-background | .dark .session-item-live-dot | background: #f5f5f5": 1,
+      "unowned-background | .session-item-live-dot | background: #171717": 1
     },
     "packages/client/src/components/hermes/chat/SubagentStreamPanel.vue": {
       "literal-color | .subagent-live-tool | background: rgba(0, 0, 0, 0.03)": 1,
@@ -581,138 +589,6 @@
       "literal-color | .diff-add | color: #2da44e": 1,
       "literal-color | .diff-del | color: #cf222e": 1
     },
-    "packages/client/src/components/hermes/group-chat/GroupAgentMessageAvatar.vue": {
-      "literal-color | .message-agent-avatar > :deep(.profile-avatar-view) | border: var(--border-width, 1px) solid #fff": 1,
-      "literal-color | .message-agent-owner-badge | box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18)": 1
-    },
-    "packages/client/src/components/hermes/group-chat/GroupAgentRobotIcon.vue": {
-      "literal-color | .robot-head | fill: #6c63ff": 1,
-      "literal-color | .robot-head | stroke: #4338ca": 1,
-      "literal-color | .robot-antenna | stroke: #ff8a4c": 1,
-      "literal-color | .robot-antenna-tip | fill: #ffb020": 1,
-      "literal-color | .robot-ear | stroke: #19c6b3": 1,
-      "literal-color | .robot-eye | fill: #ffffff": 1,
-      "literal-color | .robot-mouth | stroke: #b9f6ff": 1
-    },
-    "packages/client/src/components/hermes/group-chat/GroupAgentRunCard.vue": {
-      "literal-color | .run-avatar-active::before | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "literal-color | 0% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "literal-color | 16.66% | box-shadow: 0 0 0 2px #feca57, 0 0 10px rgba(254, 202, 87, 0.4), 0 0 20px rgba(254, 202, 87, 0.2)": 1,
-      "literal-color | 33.33% | box-shadow: 0 0 0 2px #48dbfb, 0 0 10px rgba(72, 219, 251, 0.4), 0 0 20px rgba(72, 219, 251, 0.2)": 1,
-      "literal-color | 50% | box-shadow: 0 0 0 2px #ff9ff3, 0 0 10px rgba(255, 159, 243, 0.4), 0 0 20px rgba(255, 159, 243, 0.2)": 1,
-      "literal-color | 66.66% | box-shadow: 0 0 0 2px #54a0ff, 0 0 10px rgba(84, 160, 255, 0.4), 0 0 20px rgba(84, 160, 255, 0.2)": 1,
-      "literal-color | 83.33% | box-shadow: 0 0 0 2px #5f27cd, 0 0 10px rgba(95, 39, 205, 0.4), 0 0 20px rgba(95, 39, 205, 0.2)": 1,
-      "literal-color | 100% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "literal-color | .run-card | box-shadow: 0 4px 14px rgba(0, 0, 0, 0.035)": 1
-    },
-    "packages/client/src/components/hermes/group-chat/GroupChatInput.vue": {
-      "unowned-background | .attachment-preview | background-color: $bg-secondary": 1,
-      "literal-color | .attachment-thumb-button | background: linear-gradient(45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%)": 1,
-      "unowned-background | .attachment-thumb-button | background: linear-gradient(45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%)": 1,
-      "literal-color | .attachment-remove | background: rgba(0, 0, 0, 0.5)": 1,
-      "unowned-background | .attachment-remove | background: rgba(0, 0, 0, 0.5)": 1,
-      "literal-color | .input-wrapper | box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08)": 1,
-      "literal-color | .input-wrapper:focus-within | box-shadow: 0 10px 32px rgba(0, 0, 0, 0.11)": 1,
-      "literal-color | .dark .input-wrapper | box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32)": 1,
-      "literal-color | .send-button:disabled | background-color: #9f9f9f": 1,
-      "literal-color | .mention-dropdown | box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3)": 1
-    },
-    "packages/client/src/components/hermes/group-chat/GroupChatPanel.vue": {
-      "literal-color | .sidebar-backdrop | background: rgba(0, 0, 0, 0.4)": 1,
-      "unowned-background | .sidebar-backdrop | background: rgba(0, 0, 0, 0.4)": 1,
-      "literal-color | .approval-float-panel | background: #ffffff": 1,
-      "unowned-background | .approval-float-panel | background: #ffffff": 1,
-      "literal-color | .approval-float-panel | box-shadow: 0 14px 40px rgba(0, 0, 0, 0.14)": 1,
-      "literal-color | .dark .approval-float-panel | background: #262626": 1,
-      "unowned-background | .dark .approval-float-panel | background: #262626": 1,
-      "literal-color | .approval-float-command | background: rgba(255, 255, 255, 0.68)": 1,
-      "unowned-background | .approval-float-command | background: rgba(255, 255, 255, 0.68)": 1,
-      "literal-color | .dark .approval-float-command | background: rgba(255, 255, 255, 0.08)": 1,
-      "unowned-background | .dark .approval-float-command | background: rgba(255, 255, 255, 0.08)": 1,
-      "literal-color | .conversation-switch-tab.active | box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08)": 1,
-      "unowned-background | .manual-room-link-input | background: var(--bg-secondary)": 1,
-      "literal-color | .chat-main | box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1)": 1,
-      "unowned-background | .agent-avatar-rail-item | background: $bg-secondary": 1,
-      "literal-color | .agent-avatar-rail-agent .agent-avatar | border: var(--border-width, 1px) solid #fff": 1,
-      "literal-color | .agent-owner-avatar-badge | box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18)": 1,
-      "literal-color | .agent-avatar-stop:hover | color: #ffffff": 1,
-      "literal-color | 0% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "literal-color | 16.66% | box-shadow: 0 0 0 2px #feca57, 0 0 10px rgba(254, 202, 87, 0.4), 0 0 20px rgba(254, 202, 87, 0.2)": 1,
-      "literal-color | 33.33% | box-shadow: 0 0 0 2px #48dbfb, 0 0 10px rgba(72, 219, 251, 0.4), 0 0 20px rgba(72, 219, 251, 0.2)": 1,
-      "literal-color | 50% | box-shadow: 0 0 0 2px #ff9ff3, 0 0 10px rgba(255, 159, 243, 0.4), 0 0 20px rgba(255, 159, 243, 0.2)": 1,
-      "literal-color | 66.66% | box-shadow: 0 0 0 2px #54a0ff, 0 0 10px rgba(84, 160, 255, 0.4), 0 0 20px rgba(84, 160, 255, 0.2)": 1,
-      "literal-color | 83.33% | box-shadow: 0 0 0 2px #5f27cd, 0 0 10px rgba(95, 39, 205, 0.4), 0 0 20px rgba(95, 39, 205, 0.2)": 1,
-      "literal-color | 100% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "literal-color | .agent-avatar-rail-active | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "literal-color | .group-summary-inline-status | background: rgba(0, 0, 0, 0.03)": 1,
-      "unowned-background | .group-summary-inline-status | background: rgba(0, 0, 0, 0.03)": 1,
-      "literal-color | .group-summary-inline-status.is-success | color: #52c41a": 1,
-      "literal-color | .group-summary-inline-status.is-failed | color: #ff4d4f": 1,
-      "literal-color | .modal-backdrop | background: rgba(0, 0, 0, 0.4)": 1,
-      "unowned-background | .modal-backdrop | background: rgba(0, 0, 0, 0.4)": 1,
-      "literal-color | .modal | box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12)": 1,
-      "literal-color | .agent-pairing-header-button strong | color: #fff": 1,
-      "literal-color | .summary-config-required | color: #d97706": 1,
-      "literal-color | .summary-config-required | background: rgba(217, 119, 6, 0.1)": 1,
-      "unowned-background | .summary-config-required | background: rgba(217, 119, 6, 0.1)": 1,
-      "literal-color | .summary-status.is-success | color: #36ad6a": 1,
-      "literal-color | .summary-status.is-success | background: rgba(54, 173, 106, 0.12)": 1,
-      "unowned-background | .summary-status.is-success | background: rgba(54, 173, 106, 0.12)": 1,
-      "literal-color | .summary-status.is-failed | color: #d03050": 1,
-      "literal-color | .summary-status.is-failed | background: rgba(208, 48, 80, 0.12)": 1,
-      "unowned-background | .summary-status.is-failed | background: rgba(208, 48, 80, 0.12)": 1,
-      "literal-color | .summary-error | color: #d03050": 1,
-      "literal-color | .summary-error | background: rgba(208, 48, 80, 0.08)": 1,
-      "unowned-background | .summary-error | background: rgba(208, 48, 80, 0.08)": 1,
-      "literal-color | .summary-review.is-pass | border-color: #18a058": 1,
-      "literal-color | .summary-review.is-needs_improvement | border-color: #f0a020": 1
-    },
-    "packages/client/src/components/hermes/group-chat/GroupMessageItem.vue": {
-      "literal-color | .tool-line.expandable:hover | background: rgba(0, 0, 0, 0.03)": 1,
-      "literal-color | .tool-detail-code-block :deep(.code-header) | background: rgba(0, 0, 0, 0.02)": 1,
-      "unowned-background | .tool-detail-code-block :deep(.code-header) | background: rgba(0, 0, 0, 0.02)": 1,
-      "literal-color | .copy-bubble-btn:hover, .reference-bubble-btn:hover, .speech-bubble-btn:hover | background: rgba(0, 0, 0, 0.06)": 1,
-      "literal-color | 0% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "literal-color | 16.66% | box-shadow: 0 0 0 2px #feca57, 0 0 10px rgba(254, 202, 87, 0.4), 0 0 20px rgba(254, 202, 87, 0.2)": 1,
-      "literal-color | 33.33% | box-shadow: 0 0 0 2px #48dbfb, 0 0 10px rgba(72, 219, 251, 0.4), 0 0 20px rgba(72, 219, 251, 0.2)": 1,
-      "literal-color | 50% | box-shadow: 0 0 0 2px #ff9ff3, 0 0 10px rgba(255, 159, 243, 0.4), 0 0 20px rgba(255, 159, 243, 0.2)": 1,
-      "literal-color | 66.66% | box-shadow: 0 0 0 2px #54a0ff, 0 0 10px rgba(84, 160, 255, 0.4), 0 0 20px rgba(84, 160, 255, 0.2)": 1,
-      "literal-color | 83.33% | box-shadow: 0 0 0 2px #5f27cd, 0 0 10px rgba(95, 39, 205, 0.4), 0 0 20px rgba(95, 39, 205, 0.2)": 1,
-      "literal-color | 100% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "literal-color | .msg-content.speech-playing | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "literal-color | .msg-content :deep(.mention-highlight) | color: #409eff": 1,
-      "unowned-background | .msg-attachment | background-color: $bg-secondary": 1,
-      "literal-color | .msg-attachment.video | background: #000": 1,
-      "unowned-background | .msg-attachment.video | background: #000": 1,
-      "literal-color | .msg-attachment-video | background: #000": 1,
-      "unowned-background | .msg-attachment-video | background: #000": 1,
-      "unowned-background | .msg-attachment-video-footer | background: $bg-secondary": 1,
-      "literal-color | .thinking-block .thinking-header:hover | background: rgba(0, 0, 0, 0.03)": 1
-    },
-    "packages/client/src/components/hermes/group-chat/GroupMessageList.vue": {
-      "literal-color | .scroll-bottom-button | background: rgba(255, 255, 255, 0.94)": 1,
-      "unowned-background | .scroll-bottom-button | background: rgba(255, 255, 255, 0.94)": 1,
-      "literal-color | .scroll-bottom-button | box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16)": 1,
-      "literal-color | .dark .scroll-bottom-button | background: rgba(38, 38, 38, 0.94)": 1,
-      "unowned-background | .dark .scroll-bottom-button | background: rgba(38, 38, 38, 0.94)": 1,
-      "literal-color | .empty-agent-avatar | border: var(--border-width, 1px) solid #fff": 1,
-      "literal-color | .empty-agent-avatar | box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12)": 1,
-      "literal-color | .summary-anchor-divider-pill | box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05)": 1,
-      "literal-color | .history-loader-spinner | border: 2px solid rgba(0, 0, 0, 0.16)": 1,
-      "literal-color | .dark .history-loader-spinner | border-color: rgba(255, 255, 255, 0.18)": 1,
-      "literal-color | .routing-warning | border-color: #f0a020": 1
-    },
-    "packages/client/src/components/hermes/group-chat/GroupRoomAgentAvatar.vue": {
-      "unowned-background | .room-agent-grid | background: $bg-secondary": 1,
-      "literal-color | .room-agent-grid.is-active::after | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "literal-color | 0% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "literal-color | 16.66% | box-shadow: 0 0 0 2px #feca57, 0 0 10px rgba(254, 202, 87, 0.4), 0 0 20px rgba(254, 202, 87, 0.2)": 1,
-      "literal-color | 33.33% | box-shadow: 0 0 0 2px #48dbfb, 0 0 10px rgba(72, 219, 251, 0.4), 0 0 20px rgba(72, 219, 251, 0.2)": 1,
-      "literal-color | 50% | box-shadow: 0 0 0 2px #ff9ff3, 0 0 10px rgba(255, 159, 243, 0.4), 0 0 20px rgba(255, 159, 243, 0.2)": 1,
-      "literal-color | 66.66% | box-shadow: 0 0 0 2px #54a0ff, 0 0 10px rgba(84, 160, 255, 0.4), 0 0 20px rgba(84, 160, 255, 0.2)": 1,
-      "literal-color | 83.33% | box-shadow: 0 0 0 2px #5f27cd, 0 0 10px rgba(95, 39, 205, 0.4), 0 0 20px rgba(95, 39, 205, 0.2)": 1,
-      "literal-color | 100% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1
-    },
     "packages/client/src/components/hermes/kanban/KanbanTaskCard.vue": {
       "literal-color | .kanban-task-card | --kanban-card-status-color: #7f858d": 1,
       "literal-color | .kanban-task-card | box-shadow: 0 1px 2px rgba(0, 0, 0, 0.035)": 1,
@@ -802,9 +678,6 @@
       "literal-color | :global(.dark) .web-pet.desktop-window .web-pet-close, :global(.dark) .web-pet.desktop-window .web-pet-resize | background: rgba(25, 28, 35, 0.78)": 1,
       "unowned-background | :global(.dark) .web-pet.desktop-window .web-pet-close, :global(.dark) .web-pet.desktop-window .web-pet-resize | background: rgba(25, 28, 35, 0.78)": 1
     },
-    "packages/client/src/components/hermes/profiles/ProfileAvatar.vue": {
-      "unowned-background | .profile-avatar-view | background: var(--bg-secondary)": 1
-    },
     "packages/client/src/components/hermes/settings/WebhookSettings.vue": {
       "unowned-background | .payload-preview | background: $bg-secondary": 1
     },
@@ -879,41 +752,6 @@
     },
     "packages/client/src/components/hermes/usage/UsageOverviewInsights.vue": {
       "unowned-background | .rank-track | background: $bg-secondary": 1
-    },
-    "packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue": {
-      "literal-color | .workflow-agent-node | box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08)": 1,
-      "literal-color | .workflow-agent-node.selected | box-shadow: 0 0 0 3px rgba(var(--accent-info-rgb), 0.16), 0 12px 28px rgba(0, 0, 0, 0.12)": 1,
-      "literal-color | .node-status-dot | background: #9ca3af": 1,
-      "unowned-background | .node-status-dot | background: #9ca3af": 1,
-      "literal-color | .status-idle .node-status-dot | background: #9ca3af": 1,
-      "unowned-background | .status-idle .node-status-dot | background: #9ca3af": 1,
-      "literal-color | .status-queued .node-status-dot | background: #64748b": 1,
-      "unowned-background | .status-queued .node-status-dot | background: #64748b": 1,
-      "literal-color | .status-running .node-status-dot | background: #2563eb": 1,
-      "unowned-background | .status-running .node-status-dot | background: #2563eb": 1,
-      "literal-color | .status-running .node-status-dot | box-shadow: 0 0 8px rgba(37, 99, 235, 0.65)": 1,
-      "literal-color | .status-pending_approval .node-status-dot | background: #d97706": 1,
-      "unowned-background | .status-pending_approval .node-status-dot | background: #d97706": 1,
-      "literal-color | .status-pending_approval .node-status-dot | box-shadow: 0 0 8px rgba(217, 119, 6, 0.55)": 1,
-      "literal-color | .status-approval_rejected .node-status-dot | background: #b45309": 1,
-      "unowned-background | .status-approval_rejected .node-status-dot | background: #b45309": 1,
-      "literal-color | .status-completed .node-status-dot | background: #16a34a": 1,
-      "unowned-background | .status-completed .node-status-dot | background: #16a34a": 1,
-      "literal-color | .status-failed .node-status-dot | background: #dc2626": 1,
-      "unowned-background | .status-failed .node-status-dot | background: #dc2626": 1,
-      "literal-color | .status-canceled .node-status-dot | background: #f97316": 1,
-      "unowned-background | .status-canceled .node-status-dot | background: #f97316": 1,
-      "unowned-background | .image-preview | background: $bg-secondary": 1,
-      "literal-color | .image-remove | background: rgba(0, 0, 0, 0.5)": 1,
-      "unowned-background | .image-remove | background: rgba(0, 0, 0, 0.5)": 1,
-      "unowned-background | .file-path | background: $bg-secondary": 1,
-      "literal-color | .file-remove | background: rgba(0, 0, 0, 0.5)": 1,
-      "unowned-background | .file-remove | background: rgba(0, 0, 0, 0.5)": 1,
-      "literal-color | .image-preview-overlay | background: rgba(0, 0, 0, 0.85)": 1,
-      "unowned-background | .image-preview-overlay | background: rgba(0, 0, 0, 0.85)": 1
-    },
-    "packages/client/src/components/hermes/workflow/WorkflowConditionEdge.vue": {
-      "literal-color | .workflow-canvas-edge-label | box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12)": 1
     },
     "packages/client/src/components/layout/DesktopTitleBar.vue": {
       "literal-color | .desktop-titlebar | box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1)": 1,
@@ -1108,16 +946,6 @@
       "unowned-background | .agent-logo | background: rgba(255, 255, 255, 0.92)": 1,
       "literal-color | .agent-update-error | color: #c44": 1
     },
-    "packages/client/src/views/hermes/ApiRelayView.vue": {
-      "unowned-background | .api-relay-features span | background: $bg-secondary": 1
-    },
-    "packages/client/src/views/hermes/GroupChatLinkView.vue": {
-      "unowned-background | .group-chat-link-view | background: $bg-primary": 1,
-      "literal-color | .link-card | box-shadow: 0 22px 70px rgba(0, 0, 0, 0.16)": 1,
-      "unowned-background | .requesting-origin | background: $bg-primary": 1,
-      "unowned-background | .agent-config-form | background: $bg-primary": 1,
-      "unowned-background | .manual-agent-preview | background: $bg-primary": 1
-    },
     "packages/client/src/views/hermes/HistoryView.vue": {
       "literal-color | .session-backdrop | background: rgba(0, 0, 0, 0.4)": 1,
       "unowned-background | .session-backdrop | background: rgba(0, 0, 0, 0.4)": 1,
@@ -1175,13 +1003,6 @@
       "literal-color | .pet-preview | background: linear-gradient(45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%)": 1,
       "unowned-background | .pet-preview | background: linear-gradient(45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%)": 1
     },
-    "packages/client/src/views/hermes/SharedGroupChatView.vue": {
-      "literal-color | .agent-link-warning, .agent-link-error | background: rgba(208, 48, 80, 0.1)": 1,
-      "unowned-background | .agent-link-warning, .agent-link-error | background: rgba(208, 48, 80, 0.1)": 1,
-      "literal-color | .agent-link-status.is-connected | background: rgba(54, 173, 106, 0.1)": 1,
-      "unowned-background | .agent-link-status.is-connected | background: rgba(54, 173, 106, 0.1)": 1,
-      "literal-color | .invite-card | box-shadow: 0 24px 70px rgba(0, 0, 0, 0.14)": 1
-    },
     "packages/client/src/views/hermes/SkillsUsageView.vue": {
       "unowned-background | .floating-tooltip | background: $bg-secondary": 1,
       "literal-color | .floating-tooltip | box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35)": 1
@@ -1229,36 +1050,57 @@
       "literal-color | .background-name | background: rgba(0, 0, 0, 0.62)": 1,
       "unowned-background | .background-name | background: rgba(0, 0, 0, 0.62)": 1
     },
-    "packages/client/src/views/hermes/WorkflowView.vue": {
-      "literal-color | .workflow-main | box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1)": 1,
-      "literal-color | .workflow-list-avatar-wrap.streaming::before | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
-      "unowned-background | .workflow-evidence | background: var(--workflow-run-panel-bg, $bg-card)": 1,
-      "literal-color | .workflow-field-error | color: #dc2626": 1,
-      "literal-color | .workflow-run-snapshot-indicator | box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08)": 1,
-      "unowned-background | .workflow-runs-panel | background: var(--workflow-run-panel-bg, $bg-card)": 1,
-      "literal-color | .workflow-node-approval-panel | background: rgba(217, 119, 6, 0.08)": 1,
-      "unowned-background | .workflow-node-approval-panel | background: rgba(217, 119, 6, 0.08)": 1,
-      "literal-color | .workflow-run-status-dot | background: #9ca3af": 1,
-      "unowned-background | .workflow-run-status-dot | background: #9ca3af": 1,
-      "literal-color | .workflow-run-status.status-queued .workflow-run-status-dot | background: #64748b": 1,
-      "unowned-background | .workflow-run-status.status-queued .workflow-run-status-dot | background: #64748b": 1,
-      "literal-color | .workflow-run-status.status-running .workflow-run-status-dot | background: #2563eb": 1,
-      "unowned-background | .workflow-run-status.status-running .workflow-run-status-dot | background: #2563eb": 1,
-      "literal-color | .workflow-run-status.status-running .workflow-run-status-dot | box-shadow: 0 0 8px rgba(37, 99, 235, 0.65)": 1,
-      "literal-color | .workflow-run-status.status-completed .workflow-run-status-dot | background: #16a34a": 1,
-      "unowned-background | .workflow-run-status.status-completed .workflow-run-status-dot | background: #16a34a": 1,
-      "literal-color | .workflow-run-status.status-failed .workflow-run-status-dot | background: #dc2626": 1,
-      "unowned-background | .workflow-run-status.status-failed .workflow-run-status-dot | background: #dc2626": 1,
-      "literal-color | .workflow-run-status.status-canceled .workflow-run-status-dot | background: #f97316": 1,
-      "unowned-background | .workflow-run-status.status-canceled .workflow-run-status-dot | background: #f97316": 1,
-      "literal-color | .workflow-sidebar-backdrop | background: rgba(0, 0, 0, 0.4)": 1,
-      "unowned-background | .workflow-sidebar-backdrop | background: rgba(0, 0, 0, 0.4)": 1,
-      "literal-color | .workflow-runs-panel | box-shadow: -8px 0 24px rgba(0, 0, 0, 0.16)": 1,
-      "literal-color | .workflow-runs-panel:dir(rtl) | box-shadow: 8px 0 24px rgba(0, 0, 0, 0.16)": 1
-    },
     "packages/client/src/views/social-messages/SocialMessagesView.vue": {
       "literal-color | .push-qr img | background: #fff": 1,
       "unowned-background | .push-qr img | background: #fff": 1
+    },
+    "packages/client/src/components/layout/MobileNavigationDrawer.vue": {
+      "literal-color | .n-drawer-container:has(.studio-mobile-drawer) > .n-drawer-mask | background-color: rgba(0, 0, 0, 0.18)": 1,
+      "local-naive-fill | .n-drawer-container:has(.studio-mobile-drawer) .studio-mobile-drawer | --n-color: transparent": 1,
+      "unowned-background | .n-drawer-container:has(.studio-mobile-drawer) > .n-drawer-mask | background-color: rgba(0, 0, 0, 0.18)": 1,
+      "unowned-background | .studio-mobile-navigation | background-color: var(--glass-sidebar-bg)": 1
+    },
+    "packages/client/src/styles/style-layers.scss": {
+      "literal-color | html.aurora .app-layout | background-image: radial-gradient(40% 26% at 16% 10%, rgba(34, 211, 238, 0.34), transparent 70%), radial-gradient(44% 30% at 86% 6%, rgba(139, 92, 246, 0.38), transparent 72%), radial-gradient(52% 34% at 50% 98%, rgba(59, 130, 246, 0.30), transparent 74%)": 1,
+      "literal-color | html.aurora .chat-main, html.aurora .session-list | border-color: rgba(255, 255, 255, 0.14)": 1,
+      "literal-color | html.aurora .chat-main, html.aurora .session-list | box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 22px 52px -26px rgba(139, 92, 246, 0.85)": 1,
+      "literal-color | html.aurora body::after | background-image: radial-gradient(46% 30% at 14% 8%, rgba(34, 211, 238, 0.18), transparent 68%), radial-gradient(50% 34% at 88% 4%, rgba(139, 92, 246, 0.20), transparent 70%), radial-gradient(58% 38% at 50% 100%, rgba(59, 130, 246, 0.16), transparent 72%)": 1,
+      "literal-color | html.blueprint .app-layout | background-image: linear-gradient(rgba(11, 107, 203, 0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(11, 107, 203, 0.10) 1px, transparent 1px), linear-gradient(rgba(11, 107, 203, 0.20) 1px, transparent 1px), linear-gradient(90deg, rgba(11, 107, 203, 0.20) 1px, transparent 1px)": 1,
+      "literal-color | html.blueprint .chat-main, html.blueprint .session-list | border-color: rgba(11, 107, 203, 0.28)": 1,
+      "literal-color | html.blueprint .chat-main, html.blueprint .session-list | box-shadow: 0 10px 28px -20px rgba(16, 35, 58, 0.35)": 1,
+      "literal-color | html.blueprint body::after | background-image: linear-gradient(rgba(11, 107, 203, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(11, 107, 203, 0.07) 1px, transparent 1px), linear-gradient(rgba(11, 107, 203, 0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(11, 107, 203, 0.14) 1px, transparent 1px)": 1,
+      "literal-color | html.dark.blueprint .app-layout | background-image: linear-gradient(rgba(125, 200, 255, 0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(125, 200, 255, 0.09) 1px, transparent 1px), linear-gradient(rgba(125, 200, 255, 0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(125, 200, 255, 0.18) 1px, transparent 1px)": 1,
+      "literal-color | html.dark.blueprint .chat-main, html.dark.blueprint .session-list | border-color: rgba(56, 189, 248, 0.26)": 1,
+      "literal-color | html.dark.blueprint body::after | background-image: linear-gradient(rgba(125, 200, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(125, 200, 255, 0.07) 1px, transparent 1px), linear-gradient(rgba(125, 200, 255, 0.13) 1px, transparent 1px), linear-gradient(90deg, rgba(125, 200, 255, 0.13) 1px, transparent 1px)": 1,
+      "literal-color | html.graphite .chat-main | border-color: rgba(255, 255, 255, 0.10)": 1,
+      "literal-color | html.graphite .chat-main, html.graphite .session-list | border-color: rgba(255, 255, 255, 0.08)": 1,
+      "literal-color | html.neon .app-layout | background-image: radial-gradient(90% 60% at 100% 0%, rgba(255, 45, 149, 0.22), transparent 58%), radial-gradient(90% 60% at 0% 100%, rgba(0, 229, 255, 0.18), transparent 60%), repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.085) 0 1px, transparent 1px 3px)": 1,
+      "literal-color | html.neon .app-sidebar-header, html.neon .page-header-title | text-shadow: 0 0 12px rgba(0, 229, 255, 0.45)": 1,
+      "literal-color | html.neon .chat-main | border-color: rgba(0, 229, 255, 0.55)": 1,
+      "literal-color | html.neon .chat-main | box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.16), 0 0 30px -2px rgba(0, 229, 255, 0.6), 0 18px 44px -26px rgba(0, 0, 0, 0.95)": 1,
+      "literal-color | html.neon .chat-main, html.neon .session-list | border-color: rgba(0, 229, 255, 0.45)": 1,
+      "literal-color | html.neon .chat-main, html.neon .session-list | box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.12), 0 0 26px -4px rgba(0, 229, 255, 0.55), 0 18px 44px -26px rgba(0, 0, 0, 0.95)": 1,
+      "literal-color | html.neon body::after | background-image: radial-gradient(80% 50% at 100% 0%, rgba(255, 45, 149, 0.14), transparent 56%), radial-gradient(80% 50% at 0% 100%, rgba(0, 229, 255, 0.12), transparent 58%), repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.055) 0 1px, transparent 1px 3px)": 1,
+      "literal-color | html.tech .app-layout | background-image: radial-gradient(120% 70% at 50% -10%, rgba(34, 211, 238, 0.22), transparent 60%), radial-gradient(90% 60% at 100% 100%, rgba(99, 102, 241, 0.16), transparent 65%), linear-gradient(rgba(148, 190, 255, 0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 190, 255, 0.10) 1px, transparent 1px)": 1,
+      "literal-color | html.tech .chat-main, html.tech .session-list | border-color: rgba(34, 211, 238, 0.28)": 1,
+      "literal-color | html.tech .chat-main, html.tech .session-list | box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.10), 0 0 34px -14px rgba(34, 211, 238, 0.55), 0 18px 44px -26px rgba(0, 0, 0, 0.95)": 1,
+      "literal-color | html.tech body::after | background-image: radial-gradient(130% 60% at 50% -10%, rgba(34, 211, 238, 0.16), transparent 58%), linear-gradient(rgba(148, 190, 255, 0.13) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 190, 255, 0.13) 1px, transparent 1px), linear-gradient(rgba(148, 190, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 190, 255, 0.07) 1px, transparent 1px)": 1,
+      "literal-color | html.warm .app-layout | background-image: radial-gradient(130% 75% at 50% -12%, rgba(244, 222, 190, 0.17), transparent 66%)": 1,
+      "literal-color | html.warm .chat-main, html.warm .session-list | border-color: rgba(232, 216, 196, 0.10)": 1,
+      "literal-color | html.warm .chat-main, html.warm .session-list | box-shadow: 0 12px 30px -22px rgba(0, 0, 0, 0.85)": 1,
+      "literal-color | html.warm body::after | background-image: radial-gradient(130% 75% at 50% -12%, rgba(244, 222, 190, 0.16), transparent 64%)": 1,
+      "unowned-background | html.aurora .app-layout | background-image: radial-gradient(40% 26% at 16% 10%, rgba(34, 211, 238, 0.34), transparent 70%), radial-gradient(44% 30% at 86% 6%, rgba(139, 92, 246, 0.38), transparent 72%), radial-gradient(52% 34% at 50% 98%, rgba(59, 130, 246, 0.30), transparent 74%)": 1,
+      "unowned-background | html.aurora body::after | background-image: radial-gradient(46% 30% at 14% 8%, rgba(34, 211, 238, 0.18), transparent 68%), radial-gradient(50% 34% at 88% 4%, rgba(139, 92, 246, 0.20), transparent 70%), radial-gradient(58% 38% at 50% 100%, rgba(59, 130, 246, 0.16), transparent 72%)": 1,
+      "unowned-background | html.blueprint .app-layout | background-image: linear-gradient(rgba(11, 107, 203, 0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(11, 107, 203, 0.10) 1px, transparent 1px), linear-gradient(rgba(11, 107, 203, 0.20) 1px, transparent 1px), linear-gradient(90deg, rgba(11, 107, 203, 0.20) 1px, transparent 1px)": 1,
+      "unowned-background | html.blueprint body::after | background-image: linear-gradient(rgba(11, 107, 203, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(11, 107, 203, 0.07) 1px, transparent 1px), linear-gradient(rgba(11, 107, 203, 0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(11, 107, 203, 0.14) 1px, transparent 1px)": 1,
+      "unowned-background | html.dark.blueprint .app-layout | background-image: linear-gradient(rgba(125, 200, 255, 0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(125, 200, 255, 0.09) 1px, transparent 1px), linear-gradient(rgba(125, 200, 255, 0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(125, 200, 255, 0.18) 1px, transparent 1px)": 1,
+      "unowned-background | html.dark.blueprint body::after | background-image: linear-gradient(rgba(125, 200, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(125, 200, 255, 0.07) 1px, transparent 1px), linear-gradient(rgba(125, 200, 255, 0.13) 1px, transparent 1px), linear-gradient(90deg, rgba(125, 200, 255, 0.13) 1px, transparent 1px)": 1,
+      "unowned-background | html.neon .app-layout | background-image: radial-gradient(90% 60% at 100% 0%, rgba(255, 45, 149, 0.22), transparent 58%), radial-gradient(90% 60% at 0% 100%, rgba(0, 229, 255, 0.18), transparent 60%), repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.085) 0 1px, transparent 1px 3px)": 1,
+      "unowned-background | html.neon body::after | background-image: radial-gradient(80% 50% at 100% 0%, rgba(255, 45, 149, 0.14), transparent 56%), radial-gradient(80% 50% at 0% 100%, rgba(0, 229, 255, 0.12), transparent 58%), repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.055) 0 1px, transparent 1px 3px)": 1,
+      "unowned-background | html.tech .app-layout | background-image: radial-gradient(120% 70% at 50% -10%, rgba(34, 211, 238, 0.22), transparent 60%), radial-gradient(90% 60% at 100% 100%, rgba(99, 102, 241, 0.16), transparent 65%), linear-gradient(rgba(148, 190, 255, 0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 190, 255, 0.10) 1px, transparent 1px)": 1,
+      "unowned-background | html.tech body::after | background-image: radial-gradient(130% 60% at 50% -10%, rgba(34, 211, 238, 0.16), transparent 58%), linear-gradient(rgba(148, 190, 255, 0.13) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 190, 255, 0.13) 1px, transparent 1px), linear-gradient(rgba(148, 190, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 190, 255, 0.07) 1px, transparent 1px)": 1,
+      "unowned-background | html.warm .app-layout | background-image: radial-gradient(130% 75% at 50% -12%, rgba(244, 222, 190, 0.17), transparent 66%)": 1,
+      "unowned-background | html.warm body::after | background-image: radial-gradient(130% 75% at 50% -12%, rgba(244, 222, 190, 0.16), transparent 64%)": 1
     }
   }
 }
