@@ -1297,6 +1297,7 @@ export default {
     interactionCountdown: '{time} 남음',
     interactionCountdownElapsed: '00:00 · 서버 확인 대기 중',
     deleteSession: '이 세션을 삭제하시겠습니까?',
+    sessionLive: '세션 작업 중',
     sessionListActions: '세션 목록 작업',
     filterByProfile: '프로필로 필터링',
     selectedSessions: '{count}개 선택됨',
