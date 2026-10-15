@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 14 Oct 2026 22:43:31 +0800
+Subject: [PATCH] fix(ci): point the patch-stack verifier and docs at
+ custom-next
+
+---
+ .github/workflows/build.yml   | 2 +-
+ scripts/verify-patch-stack.sh | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
+index d824f640f..57be459ac 100644
+--- a/.github/workflows/build.yml
++++ b/.github/workflows/build.yml
+@@ -45,7 +45,7 @@ jobs:
+         run: npm run harness:check
+ 
+       - name: Verify patch stack freshness
+-        # 补丁串必须能从 main 干净重放并与 custom 源码树逐字节一致（否则有改动漏回写 patches/）
++        # 补丁串必须能从 main 干净重放并与 custom-next 源码树逐字节一致（否则有改动漏回写 patches/）
+         run: bash scripts/verify-patch-stack.sh
+ 
+       - name: Build
+diff --git a/scripts/verify-patch-stack.sh b/scripts/verify-patch-stack.sh
+index c8f827924..11876b1bc 100755
+--- a/scripts/verify-patch-stack.sh
++++ b/scripts/verify-patch-stack.sh
+@@ -27,7 +27,7 @@ export GIT_COMMITTER_NAME="${GIT_COMMITTER_NAME:-verify-patch-stack}"
+ export GIT_COMMITTER_EMAIL="${GIT_COMMITTER_EMAIL:-verify-patch-stack@localhost}"
+ 
+ BASE_REF="${BASE_REF:-main}"          # 上游同步基线（纯 upstream/main）
+-STACK_REF="${STACK_REF:-custom}"      # 补丁串部署/集成分支
++STACK_REF="${STACK_REF:-custom-next}" # 补丁串部署/集成分支（2026-10-14 起 custom-next 为唯一集成线）
+ VERIFY_TAG="refs/verify-patch-stack-base"  # 临时引用前缀
+ WORK_BRANCH="refs/verify-patch-stack-work"
+ 
