@@ -35,6 +35,7 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 | 19-blueprint | 1 | 蓝图风格（淡冷纸面 + 墨蓝主色 + 16/80px 制图网格；暗色为深海军蓝 + 天蓝），插在上游 ink/comic 旁的最小增量 |
 | 20-run-indicator | 1 | run 指示器窄屏排版（读数容器查询 440px，空间不足时放下「平均」避免孤儿行）+ 中文读数改名「当前速度」 |
 | 21-session-live-dot | 1 | 会话列表「进行中」小圆点（补 06-remove 删头像后丢失的 streaming 指示，含测试与 11 locale 文案） |
+| 04-usage（追加） | 1 | 压缩触发口径改锚 provider prompt_tokens（本地 cl100k 对 wire 高估约 1.7×，长会话在 ~54% 占用就被判超阈值） |
 
 ## ORDER 的语义
 
