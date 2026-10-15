@@ -10,7 +10,7 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 
 ⚠️ **本轮（2026-10-14）以 `custom-next` 为唯一集成分支**：`custom` 保留作历史对照，不再更新。
 
-## 分组总览（22 组 / 80 条）
+## 分组总览（22 组 / 81 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -82,6 +82,30 @@ while read n p; do git am --3way "patches/$p"; done < patches/ORDER
   **79/79 零冲突**且重放树与源码树逐字节一致（`scripts/verify-patch-stack.sh`）。
 - 教训：**动补丁串中间任意一条，必须重放全量 ORDER**——孤立重放 003/004 会因缺少前置
   补丁的中间态而假冲突（本次 004 在 main+001+003 上必败，全量序下才成立）。
+
+## 增量：0.7.36 升级（2026-10-16）
+
+- 上游 0.7.35 → 0.7.36：10 提交 / 343 文件 / +16341 −4136；**80 补丁重放 15 处停点全解**，回写 23 个。
+- 唯一根因：上游 **#3394 主题定制**把全仓硬编码 px 换成变量化写法
+  （`8px` → `calc(8px * var(--spacing-scale, 1))`、`$bg-card` → `var(--theme-card-bg, $bg-card)`、
+  `13px` → `calc(var(--font-size-base, 14px) * 13 / 14)`），恰好落在 fork 补丁要删/改的同一批行上。
+  解法三类：直接取补丁侧（04-usage/004+008、05-chat/003）、行级三方合并（10 个）、并集（19-blueprint）。
+- ⚠️ **新坑：am 静默失败**。`09-nav/005` 的 `git am --3way` 返回 128 但**既无未合并路径也无冲突标记**，
+  只有 stderr 一句「您是否曾手动编辑过您的补丁？」——这类失败不进冲突统计，靠 stderr 捕获后
+  用「等价键应用器」（按 difflib 对齐 old/new，`equal` 段保留文件里的上游写法）修掉。
+- ⚠️ **上游新增 harness 是删除型补丁的新暴露面**。上游本轮新建 `scripts/ui-theme-harness.mjs`
+  + `ui-theme-baseline.json`（1033 条存量样式债）并接进 `harness:check`，fork 树因此报 265 条：
+  209 条 stale（指向 fork 删掉的 group-chat/workflow/apirelay 文件）+ 56 条 fork 自有组件的既有债。
+  `22-0.7.36-adapt/001` 做**归属重排**（不新增任何样式债，每一条都能溯源到上游 baseline 或
+  0.7.35 fork 实测）⇒ 101 文件 / 880 条。
+- ⚠️ **上游把主题风格提为一等公民**（`api/studio/theme.ts` / `shared/theme-archive.ts` /
+  `user-theme-store.ts` 都把 style 收窄成 `'ink' | 'comic'`）⇒ 并入 `19-blueprint/001`，给 blueprint 各开一格。
+- 用户决策：主题页上游新增整块 UI **全部采纳**（预设库 + 逐区域外观编辑器 + 背景图上限 30MB/apng）；
+  用量行 / live-reasoning 多行 / 移动端磨砂抽屉**保留 fork 形态**。
+- 验证：重放 81/81 零冲突、`npm run build` 通过、`harness:check` 通过、双树单测 **0 真回归**
+  （唯一新增失败 `tos-packaging.test.ts` 在纯净上游树同样失败 = 上游对 Node 24 的环境要求）、
+  `verify-patch-stack.sh` 81 个补丁重放树与 custom-next **逐字节一致**。
+- 部署：`bin/` 与 dependencies **零改动**（仅 devDeps 加 postcss/postcss-scss，不进产物）⇒ **纯 dist 热替**。
 
 ## 修改补丁串的约定
 
