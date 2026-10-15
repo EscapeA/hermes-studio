@@ -1270,6 +1270,7 @@ export default {
     interactionCountdownElapsed: '00:00 · في انتظار تأكيد الخادم',
     newCliChat: 'CLI جديد',
     deleteSession: 'حذف هذه الجلسة؟',
+    sessionLive: 'الجلسة قيد التنفيذ',
     sessionDeleted: 'تم حذف الجلسة',
     sessionListActions: 'إجراءات قائمة الجلسات',
     filterByProfile: 'التصفية حسب الملف الشخصي',

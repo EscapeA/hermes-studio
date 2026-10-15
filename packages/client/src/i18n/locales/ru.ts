@@ -1164,6 +1164,7 @@ export default {
     clarifyExpand: 'Развернуть',
     newCliChat: 'Новый CLI',
     deleteSession: 'Удалить этот сеанс?',
+    sessionLive: 'Сессия выполняется',
     sessionDeleted: 'Сеанс удалён',
     sessionListActions: 'Действия со списком сеансов',
     filterByProfile: 'Фильтр по профилю',
