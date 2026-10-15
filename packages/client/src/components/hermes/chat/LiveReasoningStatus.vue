@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<{
   elapsed: string
   agent?: ChatAgentLabel
   deploymentSessionId?: string
-  /** Decode speed of the run's latest finished call, e.g. `当前：94 tok/s`; hidden when null. */
+  /** Decode speed of the run's latest finished call, e.g. `当前速度：94 tok/s`; hidden when null. */
   speed?: string | null
   /** Run-wide average decode speed, e.g. `平均：88 tok/s`; hidden when null. */
   averageSpeed?: string | null
@@ -68,8 +68,8 @@ watch(
       <div class="thinking-status-copy">
         <span class="thinking-status-label">{{ t('chat.thinkingInProgress') }}</span>
         <span class="thinking-status-time">{{ elapsed }}</span>
-        <span v-if="speed" class="thinking-status-speed">{{ speed }}</span>
-        <span v-if="averageSpeed" class="thinking-status-speed">{{ averageSpeed }}</span>
+        <span v-if="speed" class="thinking-status-speed thinking-status-speed--current">{{ speed }}</span>
+        <span v-if="averageSpeed" class="thinking-status-speed thinking-status-speed--average">{{ averageSpeed }}</span>
       </div>
     </div>
     <div
@@ -140,6 +140,11 @@ watch(
   row-gap: 2px;
   min-width: 0;
   min-height: 20px;
+  // The copy row is the query container for the reading layout below: whether
+  // both readings fit depends on the space left after the avatar, not on the
+  // viewport width.
+  container-type: inline-size;
+  flex: 1 1 auto;
 }
 
 .thinking-status-label {
@@ -192,6 +197,27 @@ watch(
   font-variant-numeric: tabular-nums;
   line-height: 20px;
 }
+
+// Narrow screens do not have room for the whole status row on one line. The run
+// average already lands on the message's usage card once the turn settles, so
+// below the width that fits all four readings the live row keeps only the current
+// reading instead of stranding the average on a line of its own.
+// 440px is measured against the widest realistic four-chip row across all 11
+// locales (longest timer plus 4-digit readings): Russian needs 430px, French 408,
+// English 386, Chinese 381. Keeping the threshold above that maximum makes the
+// invariant hold for every locale — the row is either complete on one line or the
+// average is dropped; it can never break with a single orphaned chip.
+@container (max-width: 440px) {
+  .thinking-status-speed--average {
+    display: none;
+  }
+}
+
+// Below ~340px even the three remaining chips cannot share one line with the
+// 40px avatar; the current reading then takes its own row. A container query
+// cannot reach the avatar or the copy row's own spacing (it cannot style its own
+// query container), so no rule here can win that space back without shrinking
+// the agent logo, which is out of scope.
 
 .live-reasoning-detail {
   width: 520px;
