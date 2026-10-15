@@ -76,3 +76,4 @@
 076 17-verify/005-point-the-patch-stack-verifier-and-docs-at-custom-next.patch
 077 19-blueprint/001-feat-theme-add-a-blueprint-style-beside-ink-and-comic.patch
 078 20-run-indicator/001-feat-usage-keep-the-live-decode-reading-on-one-l.patch
+079 21-session-live-dot/001-feat-chat-mark-working-sessions-with-a-live-dot-.patch
