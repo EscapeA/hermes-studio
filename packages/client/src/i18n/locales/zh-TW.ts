@@ -1355,7 +1355,7 @@ export default {
     executionDuration: '執行時長',
     thinkingLabel: '思考過程',
     thinkingInProgress: '正在思考',
-    tokensPerSecondCurrent: '當前：{tps} tok/s',
+    tokensPerSecondCurrent: '當前速度：{tps} tok/s',
     tokensPerSecondAverage: '平均：{tps} tok/s',
     thinkingShow: '展開思考過程',
     thinkingHide: '收起思考過程',
