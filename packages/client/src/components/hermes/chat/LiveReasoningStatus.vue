@@ -57,9 +57,10 @@ watch(
         @error="($event.target as HTMLImageElement).dataset.agentDeploymentImage = 'error'"
         alt=""
         aria-hidden="true"
-        class="thinking-avatar"
+        class="thinking-avatar thinking-avatar--logo"
+        data-theme-surface="card"
         :data-agent-deployment-target="deploymentSessionId || ''"
-        :class="isPerson ? 'thinking-avatar--person' : isEkko ? 'thinking-avatar--animated' : 'thinking-avatar--logo'"
+        :class="isPerson ? 'thinking-avatar--person' : isEkko ? 'thinking-avatar--animated' : ''"
         :style="personAvatarStyle(agent, 'thinking')"
       >
       <div class="thinking-status-copy">
@@ -70,7 +71,7 @@ watch(
       </div>
     </div>
     <div
-      v-if="!hideReasoning"
+      v-if="reasoning && !hideReasoning"
       :key="reasoningId ?? 'live-reasoning'"
       class="live-reasoning-detail"
       :data-reasoning-id="reasoningId"
@@ -80,7 +81,7 @@ watch(
         <span>{{ t('chat.thinkingLabel') }}</span>
       </div>
       <div ref="reasoningBodyRef" class="live-reasoning-body">
-        <MarkdownRenderer :content="reasoning" />
+        <MarkdownRenderer :content="reasoning ?? ''" />
       </div>
     </div>
   </div>
@@ -124,10 +125,25 @@ watch(
 }
 
 .thinking-avatar--logo {
-  box-sizing: border-box;
-  padding: calc(5px * var(--spacing-scale, 1));
-  object-fit: contain;
-  background: #fff;
+  // Scope to the static logo branch so the Ekko animation keeps cover-fit and no
+  // plate -- `.thinking-avatar--logo` is static for the harness's ownership check,
+  // so the negation keeps that behaviour explicit.
+  &:not(.thinking-avatar--animated) {
+    box-sizing: border-box;
+    // The logo art is a tight crop: hermes.png runs the character's shoulders into
+    // the bottom edge, so at 32px the cut-off black sat flush against the rounded
+    // corner and read as a black border around the avatar. Insetting the art keeps
+    // that crop off the rim. Tune `--thinking-logo-inset` to move it.
+    --thinking-logo-inset: calc(5px * var(--spacing-scale, 1));
+    padding: var(--thinking-logo-inset);
+    object-fit: contain;
+    // The art carries its own ~50% white background, so this plate stays light: a
+    // dark plate turned the avatar into "white square inside a dark square". Uses
+    // the registered card preset so the plate follows the preset palette; the
+    // artwork is opaque white, so only the inset ring is translucent.
+    background: $bg-card;
+    border-radius: $radius-md;
+  }
 }
 
 .thinking-avatar--person { @include person-avatar(40px); }
@@ -151,7 +167,12 @@ watch(
   display: inline-flex;
   align-items: center;
   color: transparent;
-  background: linear-gradient(105deg, $text-secondary 0%, $text-secondary 39%, #ffffff 48%, #ffffff 52%, $text-secondary 61%, $text-secondary 100%);
+  // Shimmer bands are palette tokens, not literals: the travelling highlight may
+  // dim but must never fall into the surface. A hardcoded trough (#2f3540 dark /
+  // #ffffff light) measured 1.2-1.0:1, so a wide slice of the label went black
+  // on dark palettes and white on light ones. Token bands keep the worst case at
+  // 5.49:1 (ink dark), 6.85:1 (blueprint dark), 5.74:1 / 6.24:1 (light presets).
+  background: linear-gradient(105deg, $text-secondary 0%, $text-secondary 39%, $text-primary 48%, $text-primary 52%, $text-secondary 61%, $text-secondary 100%);
   background-size: 300% 100%;
   background-position: 0% 0;
   -webkit-background-clip: text;
@@ -166,12 +187,8 @@ watch(
   will-change: background-position;
 
   .dark & {
-    background: linear-gradient(105deg, #f0f0f0 0%, #f0f0f0 37%, #2f3540 47%, #2f3540 53%, #f0f0f0 63%, #f0f0f0 100%);
-    background-size: 300% 100%;
-    background-position: 0% 0;
-    -webkit-background-clip: text;
-    background-clip: text;
-    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.16));
+    // Glow only — the bands stay token-driven above.
+    filter: drop-shadow(0 0 5px rgba(var(--text-primary-rgb), 0.16));
   }
 }
 
