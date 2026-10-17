@@ -298,24 +298,26 @@ onUnmounted(() => {
 
 /* Live/working indicator lives in the title row so it stays visible no matter
    which optional rows (identity, category) the session renders. */
+/* Fill is --text-primary, not a literal near-black/near-white: #171717 and
+   #f5f5f5 only track the ink palette, so on the blueprint dark card (#122436)
+   and its accent-tinted active row the dot measured 1.1-1.3:1 and read as
+   gone. --text-primary is near-black on every light palette and near-white on
+   every dark one, which is the same intent the literals encoded, and keeps the
+   dot at 17.4:1 / 15.5:1 (light) and 10.9:1 / 12.4:1 (dark) — strictly higher
+   than --accent-primary would give on the light palettes. The ring follows the
+   fill; the soft halo is the theme accent so it still reads on the blueprint
+   surface where the old fixed red glow vanished. */
 .session-item-live-dot {
   flex: 0 0 auto;
   width: 7px;
   height: 7px;
   margin-top: 5px;
   border-radius: 50%;
-  background: #171717;
+  background: var(--text-primary);
   box-shadow:
-    0 0 0 2px rgba(23, 23, 23, 0.12),
-    0 0 8px rgba(255, 107, 107, 0.35);
+    0 0 0 2px rgba(var(--text-primary-rgb), 0.16),
+    0 0 8px rgba(var(--accent-primary-rgb), 0.45);
   animation: session-live-pulse 1.5s ease-in-out infinite;
-}
-
-.dark .session-item-live-dot {
-  background: #f5f5f5;
-  box-shadow:
-    0 0 0 2px rgba(245, 245, 245, 0.16),
-    0 0 10px rgba(255, 107, 107, 0.4);
 }
 
 @keyframes session-live-pulse {
