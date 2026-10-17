@@ -131,10 +131,8 @@
     "packages/client/src/components/hermes/chat/LiveReasoningStatus.vue": {
       "literal-color | .dark .live-reasoning-detail | background: rgba(255, 255, 255, 0.045)": 1,
       "literal-color | .live-reasoning-detail | background: rgba(0, 0, 0, 0.025)": 1,
-      "literal-color | .thinking-avatar--logo | background: #fff": 1,
       "unowned-background | .dark .live-reasoning-detail | background: rgba(255, 255, 255, 0.045)": 1,
-      "unowned-background | .live-reasoning-detail | background: rgba(0, 0, 0, 0.025)": 1,
-      "unowned-background | .thinking-avatar--logo | background: #fff": 1
+      "unowned-background | .live-reasoning-detail | background: rgba(0, 0, 0, 0.025)": 1
     },
     "packages/client/src/components/hermes/chat/MarkdownRenderer.vue": {
       "literal-color | .markdown-body .markdown-audio-container | background-color: rgba(0, 0, 0, 0.04)": 1,

@@ -61,9 +61,10 @@ watch(
         @error="($event.target as HTMLImageElement).dataset.agentDeploymentImage = 'error'"
         alt=""
         aria-hidden="true"
-        class="thinking-avatar"
+        class="thinking-avatar thinking-avatar--logo"
+        data-theme-surface="card"
         :data-agent-deployment-target="deploymentSessionId || ''"
-        :class="isEkko ? 'thinking-avatar--animated' : 'thinking-avatar--logo'"
+        :class="isEkko ? 'thinking-avatar--animated' : ''"
       >
       <div class="thinking-status-copy">
         <span class="thinking-status-label">{{ t('chat.thinkingInProgress') }}</span>
@@ -126,10 +127,25 @@ watch(
 }
 
 .thinking-avatar--logo {
-  box-sizing: border-box;
-  padding: calc(5px * var(--spacing-scale, 1));
-  object-fit: contain;
-  background: #fff;
+  // Scope to the static logo branch so the Ekko animation keeps cover-fit and no
+  // plate -- `.thinking-avatar--logo` is static for the harness's ownership check,
+  // so the negation keeps that behaviour explicit.
+  &:not(.thinking-avatar--animated) {
+    box-sizing: border-box;
+    // The logo art is a tight crop: hermes.png runs the character's shoulders into
+    // the bottom edge, so at 32px the cut-off black sat flush against the rounded
+    // corner and read as a black border around the avatar. Insetting the art keeps
+    // that crop off the rim. Tune `--thinking-logo-inset` to move it.
+    --thinking-logo-inset: calc(5px * var(--spacing-scale, 1));
+    padding: var(--thinking-logo-inset);
+    object-fit: contain;
+    // The art carries its own ~50% white background, so this plate stays light: a
+    // dark plate turned the avatar into "white square inside a dark square". Uses
+    // the registered card preset so the plate follows the preset palette; the
+    // artwork is opaque white, so only the inset ring is translucent.
+    background: $bg-card;
+    border-radius: $radius-md;
+  }
 }
 
 .thinking-status-copy {
