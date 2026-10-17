@@ -151,7 +151,12 @@ watch(
   display: inline-flex;
   align-items: center;
   color: transparent;
-  background: linear-gradient(105deg, $text-secondary 0%, $text-secondary 39%, #ffffff 48%, #ffffff 52%, $text-secondary 61%, $text-secondary 100%);
+  // Shimmer bands are palette tokens, not literals: the travelling highlight may
+  // dim but must never fall into the surface. A hardcoded trough (#2f3540 dark /
+  // #ffffff light) measured 1.2-1.0:1, so a wide slice of the label went black
+  // on dark palettes and white on light ones. Token bands keep the worst case at
+  // 5.49:1 (ink dark), 6.85:1 (blueprint dark), 5.74:1 / 6.24:1 (light presets).
+  background: linear-gradient(105deg, $text-secondary 0%, $text-secondary 39%, $text-primary 48%, $text-primary 52%, $text-secondary 61%, $text-secondary 100%);
   background-size: 300% 100%;
   background-position: 0% 0;
   -webkit-background-clip: text;
@@ -166,12 +171,8 @@ watch(
   will-change: background-position;
 
   .dark & {
-    background: linear-gradient(105deg, #f0f0f0 0%, #f0f0f0 37%, #2f3540 47%, #2f3540 53%, #f0f0f0 63%, #f0f0f0 100%);
-    background-size: 300% 100%;
-    background-position: 0% 0;
-    -webkit-background-clip: text;
-    background-clip: text;
-    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.16));
+    // Glow only — the bands stay token-driven above.
+    filter: drop-shadow(0 0 5px rgba(var(--text-primary-rgb), 0.16));
   }
 }
 
