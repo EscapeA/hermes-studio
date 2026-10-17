@@ -130,14 +130,9 @@
     },
     "packages/client/src/components/hermes/chat/LiveReasoningStatus.vue": {
       "literal-color | .dark .live-reasoning-detail | background: rgba(255, 255, 255, 0.045)": 1,
-      "literal-color | .dark .thinking-status-label | background: linear-gradient(105deg, #f0f0f0 0%, #f0f0f0 37%, #2f3540 47%, #2f3540 53%, #f0f0f0 63%, #f0f0f0 100%)": 1,
       "literal-color | .live-reasoning-detail | background: rgba(0, 0, 0, 0.025)": 1,
-      "literal-color | .thinking-avatar--logo | background: #fff": 1,
-      "literal-color | .thinking-status-label | background: linear-gradient(105deg, $text-secondary 0%, $text-secondary 39%, #ffffff 48%, #ffffff 52%, $text-secondary 61%, $text-secondary 100%)": 1,
       "unowned-background | .dark .live-reasoning-detail | background: rgba(255, 255, 255, 0.045)": 1,
-      "unowned-background | .dark .thinking-status-label | background: linear-gradient(105deg, #f0f0f0 0%, #f0f0f0 37%, #2f3540 47%, #2f3540 53%, #f0f0f0 63%, #f0f0f0 100%)": 1,
-      "unowned-background | .live-reasoning-detail | background: rgba(0, 0, 0, 0.025)": 1,
-      "unowned-background | .thinking-avatar--logo | background: #fff": 1
+      "unowned-background | .live-reasoning-detail | background: rgba(0, 0, 0, 0.025)": 1
     },
     "packages/client/src/components/hermes/chat/MarkdownRenderer.vue": {
       "literal-color | .markdown-body .markdown-audio-container | background-color: rgba(0, 0, 0, 0.04)": 1,
@@ -412,12 +407,8 @@
       "unowned-background | :global(.dark) .run-usage-card | background: #1f1f1f": 1
     },
     "packages/client/src/components/hermes/chat/SessionListItem.vue": {
-      "literal-color | .dark .session-item-live-dot | background: #f5f5f5": 1,
-      "literal-color | .dark .session-item-live-dot | box-shadow: 0 0 0 2px rgba(245, 245, 245, 0.16), 0 0 10px rgba(255, 107, 107, 0.4)": 1,
       "literal-color | .session-item-category-tag | background: rgba(127, 127, 127, 0.12)": 1,
       "literal-color | .session-item-global-icon | color: #d6a019": 1,
-      "literal-color | .session-item-live-dot | background: #171717": 1,
-      "literal-color | .session-item-live-dot | box-shadow: 0 0 0 2px rgba(23, 23, 23, 0.12), 0 0 8px rgba(255, 107, 107, 0.35)": 1,
       "literal-color | .session-item-warning | background: rgba(220, 38, 38, 0.1)": 1,
       "literal-color | .session-item-warning | border: var(--border-width, 1px) solid rgba(180, 35, 24, 0.35)": 1,
       "literal-color | .session-item-warning | color: #b42318": 1,
@@ -425,9 +416,7 @@
       "literal-color | .session-item.missing-models | background: rgba(220, 38, 38, 0.08)": 1,
       "literal-color | .session-item.missing-models | color: #b42318": 1,
       "literal-color | .session-item.missing-models:hover | background: rgba(220, 38, 38, 0.12)": 1,
-      "unowned-background | .dark .session-item-live-dot | background: #f5f5f5": 1,
       "unowned-background | .session-item-category-tag | background: rgba(127, 127, 127, 0.12)": 1,
-      "unowned-background | .session-item-live-dot | background: #171717": 1,
       "unowned-background | .session-item-warning | background: rgba(220, 38, 38, 0.1)": 1,
       "unowned-background | .session-item.missing-models | background: rgba(220, 38, 38, 0.08)": 1
     },
