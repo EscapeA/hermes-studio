@@ -10,7 +10,7 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 
 ⚠️ **本轮（2026-10-14）以 `custom-next` 为唯一集成分支**：`custom` 保留作历史对照，不再更新。
 
-## 分组总览（22 组 / 81 条）
+## 分组总览（23 组 / 82 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -36,6 +36,7 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 | 20-run-indicator | 1 | run 指示器窄屏排版（读数容器查询 440px，空间不足时放下「平均」避免孤儿行）+ 中文读数改名「当前速度」 |
 | 21-session-live-dot | 1 | 会话列表「进行中」小圆点（补 06-remove 删头像后丢失的 streaming 指示，含测试与 11 locale 文案） |
 | 22-0.7.36-adapt | 1 | harness ui-theme baseline 归属重排（上游 0.7.36 新增检查器 × fork 删页/自有组件） |
+| 23-theme-contrast | 1 | 「正在思考」渐隐带与会话 live 点改走调色板 token（原硬编码在蓝图主题下 1.0–1.3:1，等于看不见） |
 | 04-usage（追加） | 1 | 压缩触发口径改锚 provider prompt_tokens（本地 cl100k 对 wire 高估约 1.7×，长会话在 ~54% 占用就被判超阈值） |
 
 ## ORDER 的语义
