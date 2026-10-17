@@ -79,5 +79,4 @@
 079 21-session-live-dot/001-feat-chat-mark-working-sessions-with-a-live-dot-.patch
 080 04-usage/012-fix-chat-anchor-the-compression-trigger-on-the-p.patch
 081 22-0.7.36-adapt/001-re-home-the-ui-theme-baseline-onto-the-fork-tree.patch
-082 23-theme-contrast/001-fix-theme-keep-the-thinking-shimmer-and-session-live.patch
-083 23-theme-contrast/002-fix-chat-inset-the-thinking-avatar-so-its-cropp.patch
+082 23-theme-contrast/001-fix-theme-keep-the-run-indicators-on-palette-tokens.patch
