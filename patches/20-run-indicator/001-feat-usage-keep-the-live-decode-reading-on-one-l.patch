@@ -1,0 +1,119 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 15 Oct 2026 09:14:32 +0800
+Subject: [PATCH] =?UTF-8?q?feat(usage):=20keep=20the=20live=20decode=20rea?=
+ =?UTF-8?q?ding=20on=20one=20line=20and=20name=20it=20=E5=BD=93=E5=89=8D?=
+ =?UTF-8?q?=E9=80=9F=E5=BA=A6?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The run indicator wrapped "正在思考 2m32s 当前：158 tok/s" onto a second line and
+stranded the run average alone on it. The four chips need 304px while a 390px
+phone leaves 292px, so the average was guaranteed to break off.
+
+Drop the run average from the live row below the width that fits all four
+readings: it already lands on the message usage card once the turn settles. The
+copy row is the query container, so the decision follows the space left after
+the avatar rather than the viewport. 440px is measured against the widest
+realistic row across all 11 locales (Russian 430px, French 408, English 386,
+Chinese 381) so the row is either complete or deliberately shortened — never
+broken with a single orphaned chip.
+
+Also rename the current reading to 当前速度 in zh/zh-TW.
+---
+ .../hermes/chat/LiveReasoningStatus.vue       | 32 +++++++++++++++++--
+ packages/client/src/i18n/locales/zh-TW.ts     |  2 +-
+ packages/client/src/i18n/locales/zh.ts        |  2 +-
+ 3 files changed, 31 insertions(+), 5 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+index 1ce001df7..d38dc3e93 100644
+--- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
++++ b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<{
+   elapsed: string
+   agent?: ChatAgentLabel
+   deploymentSessionId?: string
+-  /** Decode speed of the run's latest finished call, e.g. `当前：94 tok/s`; hidden when null. */
++  /** Decode speed of the run's latest finished call, e.g. `当前速度：94 tok/s`; hidden when null. */
+   speed?: string | null
+   /** Run-wide average decode speed, e.g. `平均：88 tok/s`; hidden when null. */
+   averageSpeed?: string | null
+@@ -68,8 +68,8 @@ watch(
+       <div class="thinking-status-copy">
+         <span class="thinking-status-label">{{ t('chat.thinkingInProgress') }}</span>
+         <span class="thinking-status-time">{{ elapsed }}</span>
+-        <span v-if="speed" class="thinking-status-speed">{{ speed }}</span>
+-        <span v-if="averageSpeed" class="thinking-status-speed">{{ averageSpeed }}</span>
++        <span v-if="speed" class="thinking-status-speed thinking-status-speed--current">{{ speed }}</span>
++        <span v-if="averageSpeed" class="thinking-status-speed thinking-status-speed--average">{{ averageSpeed }}</span>
+       </div>
+     </div>
+     <div
+@@ -140,6 +140,11 @@ watch(
+   row-gap: 2px;
+   min-width: 0;
+   min-height: 20px;
++  // The copy row is the query container for the reading layout below: whether
++  // both readings fit depends on the space left after the avatar, not on the
++  // viewport width.
++  container-type: inline-size;
++  flex: 1 1 auto;
+ }
+ 
+ .thinking-status-label {
+@@ -193,6 +198,27 @@ watch(
+   line-height: 20px;
+ }
+ 
++// Narrow screens do not have room for the whole status row on one line. The run
++// average already lands on the message's usage card once the turn settles, so
++// below the width that fits all four readings the live row keeps only the current
++// reading instead of stranding the average on a line of its own.
++// 440px is measured against the widest realistic four-chip row across all 11
++// locales (longest timer plus 4-digit readings): Russian needs 430px, French 408,
++// English 386, Chinese 381. Keeping the threshold above that maximum makes the
++// invariant hold for every locale — the row is either complete on one line or the
++// average is dropped; it can never break with a single orphaned chip.
++@container (max-width: 440px) {
++  .thinking-status-speed--average {
++    display: none;
++  }
++}
++
++// Below ~340px even the three remaining chips cannot share one line with the
++// 40px avatar; the current reading then takes its own row. A container query
++// cannot reach the avatar or the copy row's own spacing (it cannot style its own
++// query container), so no rule here can win that space back without shrinking
++// the agent logo, which is out of scope.
++
+ .live-reasoning-detail {
+   width: 520px;
+   max-width: 100%;
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 000f5a14f..161720c55 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -1357,7 +1357,7 @@ export default {
+     executionDuration: '執行時長',
+     thinkingLabel: '思考過程',
+     thinkingInProgress: '正在思考',
+-    tokensPerSecondCurrent: '當前：{tps} tok/s',
++    tokensPerSecondCurrent: '當前速度：{tps} tok/s',
+     tokensPerSecondAverage: '平均：{tps} tok/s',
+     thinkingShow: '展開思考過程',
+     thinkingHide: '收起思考過程',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index b2575e598..f0b960635 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -1375,7 +1375,7 @@ export default {
+     executionDuration: '执行时长',
+     thinkingLabel: '思考过程',
+     thinkingInProgress: '正在思考',
+-    tokensPerSecondCurrent: '当前：{tps} tok/s',
++    tokensPerSecondCurrent: '当前速度：{tps} tok/s',
+     tokensPerSecondAverage: '平均：{tps} tok/s',
+     thinkingShow: '展开思考过程',
+     thinkingHide: '收起思考过程',
