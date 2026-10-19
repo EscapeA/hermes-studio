@@ -9,12 +9,12 @@ Subject: [PATCH] test(client): adapt two upstream suites to the fork's
 - chat-input-draft: the context row now shows the percent chip instead of
   the remaining-token text, and the context progress bar is dropped
 ---
- tests/client/chat-input-draft.test.ts             | 8 +++++---
- tests/client/chat-store-search-navigation.test.ts | 4 +++-
- 2 files changed, 8 insertions(+), 4 deletions(-)
+ tests/client/chat-input-draft.test.ts             | 13 ++++++++-----
+ tests/client/chat-store-search-navigation.test.ts |  4 +++-
+ 2 files changed, 11 insertions(+), 6 deletions(-)
 
 diff --git a/tests/client/chat-input-draft.test.ts b/tests/client/chat-input-draft.test.ts
-index e38661cbe..42941d5ed 100644
+index e38661cbe..142883fdd 100644
 --- a/tests/client/chat-input-draft.test.ts
 +++ b/tests/client/chat-input-draft.test.ts
 @@ -434,15 +434,17 @@ describe('ChatInput draft persistence', () => {
@@ -38,6 +38,22 @@ index e38661cbe..42941d5ed 100644
    })
  
    it.each(['hermes', 'ekko-agent'])('never substitutes historical usage for missing or zero %s context', async agent => {
+@@ -456,12 +458,13 @@ describe('ChatInput draft persistence', () => {
+     session.contextTokens = 0
+     await nextTick()
+     expect(wrapper.get('.context-info').text()).toMatch(/^0\s+\//)
+-    expect(wrapper.get('.context-info').text()).toContain('chat.contextRemaining 256.0k')
++    // fork behavior: the remaining-token text is replaced by the usage percent chip
++    expect(wrapper.get('.context-percent').text()).toBe('0.00%')
+     for (const value of [undefined, NaN, Infinity, -1]) {
+       session.contextTokens = value
+       await nextTick()
+       expect(wrapper.get('.context-info').text()).toMatch(/^—\s+\//)
+-      expect(wrapper.get('.context-info').text()).toContain('chat.contextRemaining —')
++      expect(wrapper.get('.context-percent').text()).toBe('0.00%')
+       expect(wrapper.find('.context-bar').exists()).toBe(false)
+       expect(wrapper.text()).not.toContain('136.1k')
+     }
 diff --git a/tests/client/chat-store-search-navigation.test.ts b/tests/client/chat-store-search-navigation.test.ts
 index 5d447343f..fd25155bc 100644
 --- a/tests/client/chat-store-search-navigation.test.ts
