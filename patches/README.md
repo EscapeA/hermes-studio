@@ -10,7 +10,7 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 
 ⚠️ **本轮（2026-10-14）以 `custom-next` 为唯一集成分支**：`custom` 保留作历史对照，不再更新。
 
-## 分组总览（23 组 / 82 条）
+## 分组总览（23 组 / 83 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -25,7 +25,7 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 | 09-nav | 6 | 抽屉去自有关闭行+幽灵入口、0.7.26 导航外壳适配/材质、抽屉一级菜单合并、磨砂抽屉、图标栏尺寸 |
 | 10-reconnect | 2 | socket 重连对账 run 态（含测试） |
 | 11-perf | 4 | highlight 按需注册、i18n 构建期合并、启动光晕单请求、locale 同级 import 解析 |
-| 12-adapt | 6 | 0.7.25 / 0.7.28 / 0.7.29 / 0.7.34 套件与 locale 适配 |
+| 12-adapt | 7 | 0.7.25 / 0.7.28 / 0.7.29 / 0.7.34 套件与 locale 适配 + 0.7.38 ProviderImportModal 改用 models.profile（上游复用被删的 workflow.* 键） |
 | 13-memory | 1 | subagentStreams LRU 上限 |
 | 14-cleanup | 2 | 去 apikey.fun 推广、去侧栏设备互联入口 |
 | 15-userwait | 2 | 压缩 timer per-session、parseThinking 缓存 |
