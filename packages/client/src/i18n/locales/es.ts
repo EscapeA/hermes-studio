@@ -1777,6 +1777,7 @@ jobTriggered: 'Job ejecutado',
 
   // Models
   models: {
+    profile: 'Perfil',
     importTitle: "Importar proveedor",
     importNotice: "Comprueba la dirección, el modelo y el perfil de destino. Al confirmar, Studio guarda la clave API y establece el modelo como predeterminado del perfil. No se importa nada antes de confirmar.",
     importConfirm: "Confirmar importación",

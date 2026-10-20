@@ -1778,6 +1778,7 @@ export default {
 
   // モデル
   models: {
+    profile: 'プロファイル',
     importTitle: "プロバイダーをインポート",
     importNotice: "アドレス、モデル、対象の Profile を確認してください。確認すると API キーが Studio に保存され、このモデルが Profile の既定になります。確認前にはインポートされません。",
     importConfirm: "インポートを確認",
