@@ -652,6 +652,7 @@ export default {
     writeApprovalUnsupported: 'Bu Hermes Aracısı sürümü yazma onaylarını desteklemiyor. Bu özelliği kullanmak için Hermes Aracısını yükseltin.',
   },
   models: {
+    profile: 'Profil',
     apiModeAuto: 'Otomatik (modele göre)',
     importTitle: "Sağlayıcıyı içe aktar",
     importNotice: "Adresi, modeli ve hedef profili kontrol edin. Onaylandığında API anahtarı Studio’ya kaydedilir ve model profilin varsayılanı olur. Onaydan önce hiçbir şey içe aktarılmaz.",
