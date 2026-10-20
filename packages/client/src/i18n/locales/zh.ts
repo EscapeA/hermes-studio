@@ -1942,6 +1942,7 @@ export default {
 
   // 模型
   models: {
+    profile: '配置',
     importTitle: "导入供应商",
     importNotice: "请核对地址、模型和目标 Profile。确认后将 API Key 保存到 Studio，并将此模型设为该 Profile 的默认模型。确认前不会导入。",
     importConfirm: "确认导入",
