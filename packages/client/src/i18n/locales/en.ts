@@ -1915,6 +1915,7 @@ export default {
 
   // Models
   models: {
+    profile: 'Profile',
     importTitle: "Import provider",
     importNotice: "Review the address, model and target Profile. Confirming saves the API key to Studio and selects this model as the Profile default. Nothing is imported before confirmation.",
     importConfirm: "Confirm import",

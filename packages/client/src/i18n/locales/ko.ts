@@ -1752,6 +1752,7 @@ export default {
 
   // 모델
   models: {
+    profile: '프로필',
     importTitle: "공급자 가져오기",
     importNotice: "주소, 모델 및 대상 Profile을 확인하세요. 확인하면 API 키가 Studio에 저장되고 이 모델이 Profile의 기본 모델로 설정됩니다. 확인 전에는 가져오지 않습니다.",
     importConfirm: "가져오기 확인",
