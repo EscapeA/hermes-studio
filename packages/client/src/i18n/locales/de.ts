@@ -1720,6 +1720,7 @@ jobTriggered: 'Job ausgelost',
 
   // Models
   models: {
+    profile: 'Profil',
     importTitle: "Anbieter importieren",
     importNotice: "Prüfen Sie Adresse, Modell und Zielprofil. Nach der Bestätigung speichert Studio den API-Schlüssel und setzt das Modell als Profilstandard. Vorher wird nichts importiert.",
     importConfirm: "Import bestätigen",

@@ -1720,6 +1720,7 @@ jobTriggered: 'Job declenche',
 
   // Models
   models: {
+    profile: 'Profil',
     importTitle: "Importer un fournisseur",
     importNotice: "Vérifiez l’adresse, le modèle et le profil cible. La confirmation enregistre la clé API dans Studio et définit ce modèle par défaut pour le profil. Rien n’est importé avant confirmation.",
     importConfirm: "Confirmer l’importation",

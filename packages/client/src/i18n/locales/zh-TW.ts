@@ -1878,6 +1878,7 @@ export default {
 
   // 模型
   models: {
+    profile: '設定檔',
     importTitle: "匯入供應商",
     importNotice: "請核對位址、模型與目標 Profile。確認後將 API Key 儲存至 Studio，並將此模型設為該 Profile 的預設模型。確認前不會匯入。",
     importConfirm: "確認匯入",
