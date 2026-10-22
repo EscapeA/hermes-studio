@@ -125,6 +125,19 @@ function fallbackTitleFromText(text: string, limit: number, ellipsis: boolean): 
   return ellipsis ? `${normalized.slice(0, limit)}...` : normalized.slice(0, limit)
 }
 
+// Keep in sync with agent/title_generator.MAX_DERIVED_TITLE_CHARS: the Agent's instant
+// (no-model) title is the first 48 characters plus a single-character ellipsis (U+2026), and
+// that is exactly what a bridge session carries as its local title when no generated title
+// has landed yet.
+const DERIVED_TITLE_MAX_CHARS = 48
+const DERIVED_TITLE_ELLIPSIS = '\u2026'
+
+function derivedTitleFromText(text: string): string {
+  const normalized = normalizeTitleText(text)
+  if (normalized.length <= DERIVED_TITLE_MAX_CHARS) return normalized
+  return `${normalized.slice(0, DERIVED_TITLE_MAX_CHARS)}${DERIVED_TITLE_ELLIPSIS}`
+}
+
 function firstUserTextVariants(content: unknown): string[] {
   const raw = String(content || '')
   if (!raw.trimStart().startsWith('[')) return raw ? [raw] : []
@@ -153,6 +166,12 @@ function addTitleVariants(variants: Set<string>, text: string): void {
   variants.add(fallbackTitleFromText(normalized, 40, true))
   variants.add(fallbackTitleFromText(normalized, 63, false))
   variants.add(fallbackTitleFromText(normalized, 100, false))
+  // Hermes Agent's instant title (agent/title_generator.derive_title) caps at
+  // MAX_DERIVED_TITLE_CHARS = 48 with a single-character ellipsis, so a bridge session that
+  // started before the title-event lane was wired carries `first 48 chars + …` as its local
+  // title. Without this variant that placeholder reads as a manual rename and the generated
+  // title never replaces it.
+  variants.add(derivedTitleFromText(normalized))
   // Session creation truncates before title comparison collapses whitespace.
   variants.add(normalizeTitleText(text.replace(/[\r\n]/g, ' ').substring(0, 100)))
 }
@@ -169,6 +188,7 @@ function isReplaceableLocalTitle(sessionId: string): boolean {
     variants.add(fallbackTitleFromText(preview, 40, true))
     variants.add(fallbackTitleFromText(preview, 63, false))
     variants.add(fallbackTitleFromText(preview, 100, false))
+    variants.add(derivedTitleFromText(preview))
   }
   const firstUser = getFirstSessionMessageByRole(sessionId, 'user')
   for (const firstUserText of firstUserTextVariants(firstUser?.content)) {
@@ -1956,7 +1976,7 @@ async function applyBridgeChunkAsync(
   }
 }
 
-async function pollBridgeGeneratedTitleAfterRun(
+export async function pollBridgeGeneratedTitleAfterRun(
   bridge: AgentBridgeClient,
   sessionId: string,
   profile: string,
@@ -1975,8 +1995,12 @@ async function pollBridgeGeneratedTitleAfterRun(
       return
     }
     if (title) {
-      syncBridgeGeneratedTitle(sessionId, title, emit)
-      return
+      // `syncBridgeGeneratedTitle` returns false when the generated title equals what is
+      // already stored — which is exactly the case for a short opening message, where the
+      // Agent's instant (derived) title and the local first-message preview are identical.
+      // Ending the poll there used to strand the session on that placeholder forever; the
+      // model upgrade lands seconds later, so keep waiting instead.
+      if (syncBridgeGeneratedTitle(sessionId, title, emit)) return
     }
   }
 }

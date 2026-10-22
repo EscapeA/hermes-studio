@@ -41,7 +41,6 @@ from bridge_runtime import (
     _resolve_model,
     _resolve_runtime,
     _suppress_bridge_platform_hint,
-    _title_user_message,
     _tool_names_from_definitions,
 )
 
@@ -523,6 +522,14 @@ class AgentPool:
                     tool_complete_callback=self._tool_complete_callback(session_id),
                     clarify_callback=self._clarify_callback(session_id),
                 )
+                # Hermes Agent titles a session at TURN START (agent/turn_context.py) and reports
+                # the result through ``agent._on_session_title`` — the same lane the gateway, TUI
+                # and ACP adapters use. The bridge never wired it, so Studio received no
+                # ``session.title.updated`` and its sidebar kept the local first-message preview
+                # while the archive list (which reads the Agent's state.db) showed the LLM title.
+                # The callback takes (title, source); a one-arg callback is rejected inside
+                # title_generator._safe_callback and would fail silently.
+                agent._on_session_title = self._session_title_callback(session_id)
                 agent.compression_enabled = False
                 self._install_compression_hook(agent, session_id)
                 self._install_prepersist_dedup_hook(agent)
@@ -1043,12 +1050,20 @@ class AgentPool:
     def _append_event(self, session_id: str, event: dict[str, Any]) -> None:
         with self._lock:
             session = self._sessions.get(session_id)
-            if session and str(event.get("event") or "").startswith("subagent."):
+            event_name = str(event.get("event") or "")
+            if session and event_name.startswith("subagent."):
                 event = self._record_background_event(session, event)
             run_id = session.current_run_id if session else None
             if run_id and run_id in self._runs:
                 self._runs[run_id].events.append(_jsonable(event))
-            elif session and str(event.get("event") or "").startswith("subagent."):
+            elif session and (
+                event_name.startswith("subagent.")
+                # Session titles upgrade AFTER the run settles (the auxiliary title call is
+                # deferred for a self-hosted main route) and in a background thread, so
+                # current_run_id is already cleared when they land. Buffer them on the session
+                # instead of dropping them, or the frontend never sees the generated title.
+                or event_name == "session.title.updated"
+            ):
                 session.background_events.append(_jsonable(event))
                 if len(session.background_events) > self.MAX_BACKGROUND_EVENTS_PER_SESSION:
                     del session.background_events[:-self.MAX_BACKGROUND_EVENTS_PER_SESSION]
@@ -1234,6 +1249,31 @@ class AgentPool:
     def _status_callback(self, session_id: str):
         def callback(kind, text=None):
             self._append_event(session_id, {"event": "status", "kind": str(kind), "text": None if text is None else str(text)})
+
+        return callback
+
+    def _session_title_callback(self, session_id: str):
+        """Report the Agent's auto-generated session title to the Studio frontend.
+
+        Signature MUST be ``(title, source)``: hermes-agent's ``title_generator._notify_title``
+        invokes the callback with the title and its provenance (``derived`` / ``llm``) and
+        swallows any TypeError, so a one-arg callback fails silently and no event is ever
+        emitted. ``source`` is forwarded so the UI can tell the instant slice from the
+        model upgrade; consumers that only need the text can ignore it.
+        """
+        def callback(title, source=None):
+            cleaned = str(title or "").strip()
+            if not cleaned:
+                return
+            event = {
+                "event": "session.title.updated",
+                "session_id": session_id,
+                "title": cleaned,
+            }
+            provenance = str(source or "").strip()
+            if provenance:
+                event["title_source"] = provenance
+            self._append_event(session_id, event)
 
         return callback
 
@@ -1987,47 +2027,13 @@ class AgentPool:
                     db_count_after_prepersist,
                 )
                 tail_synced = True
-                final_response = str(
-                    result.get("final_response")
-                    or result.get("response")
-                    or result.get("output")
-                    or "".join(record.deltas)
-                    or ""
-                ).strip()
-                title_db = self._db.get_for_profile(profile)
-                if title_db is not None and final_response and not result.get("failed") and not result.get("partial"):
-                    try:
-                        from agent.title_generator import maybe_auto_title
-
-                        def title_callback(title: str) -> None:
-                            cleaned = str(title or "").strip()
-                            if not cleaned:
-                                return
-                            with self._lock:
-                                record.events.append(_jsonable({
-                                    "event": "session.title.updated",
-                                    "session_id": session.session_id,
-                                    "title": cleaned,
-                                }))
-
-                        maybe_auto_title(
-                            title_db,
-                            session.session_id,
-                            _title_user_message(message),
-                            final_response,
-                            result.get("messages", []) if isinstance(result.get("messages"), list) else [],
-                            failure_callback=getattr(session.agent, "_emit_auxiliary_failure", None),
-                            main_runtime={
-                                "model": getattr(session.agent, "model", None),
-                                "provider": getattr(session.agent, "provider", None),
-                                "base_url": getattr(session.agent, "base_url", None),
-                                "api_key": getattr(session.agent, "api_key", None),
-                                "api_mode": getattr(session.agent, "api_mode", None),
-                            },
-                            title_callback=title_callback,
-                        )
-                    except Exception:
-                        pass
+                # Auto-titling runs at TURN START through the Agent's own lane
+                # (agent/turn_context.py -> agent._on_session_title, wired above). The post-run
+                # re-title that used to live here passed final_response as conversation_history
+                # and combined it with positional + keyword arguments, so it raised
+                # "got multiple values for argument 'failure_callback'" into a bare
+                # ``except Exception: pass`` — it never produced a title. Do not reintroduce a
+                # second titling path here; it would race the turn-start upgrade.
                 with session.lock:
                     if isinstance(result.get("messages"), list):
                         session.history = result["messages"]
