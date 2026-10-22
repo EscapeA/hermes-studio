@@ -1122,6 +1122,7 @@ export default {
     contextEditFailed: 'Update failed',
     emptyState: 'Start a conversation with Hermes Agent',
     emptyStateAgent: 'Start a conversation with {agent}',
+    loadingSession: 'Loading conversation…',
     viewOlderInHistory: 'View earlier messages in History',
     scrollToBottom: 'Scroll to bottom',
     forkedFrom: 'Forked from',

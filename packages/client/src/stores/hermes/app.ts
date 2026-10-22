@@ -22,7 +22,8 @@ const WEB_UI_VERSION = __APP_VERSION__
 const SIDEBAR_COLLAPSED_KEY = 'hermes_sidebar_collapsed'
 const SIDEBAR_WIDTH_KEY = 'hermes_sidebar_width'
 const ACTIVE_PROFILE_STORAGE_KEY = 'hermes_active_profile_name'
-const MODELS_CACHE_TTL_MS = 30000
+const MODELS_CACHE_TTL_MS = 10 * 60_000
+const MODELS_RETRY_TTL_MS = 30_000
 
 export const useAppStore = defineStore('app', () => {
   const sidebarOpen = ref(false)
@@ -172,6 +173,9 @@ export const useAppStore = defineStore('app', () => {
   async function loadModels(force = false, opts: { preserveSelection?: boolean } = {}) {
     if (!hasApiKey()) return
     if (!force && modelsLoadPromise) return modelsLoadPromise
+    // The catalog is config-derived, not live provider data: a 30s TTL made
+    // every model-picker open after a short idle re-fetch it (200-570ms on a
+    // large catalog), which showed up directly in session-switch latency.
     if (!force && modelsLastRequestedAt > 0 && Date.now() - modelsLastRequestedAt < MODELS_CACHE_TTL_MS) return
     modelsLastRequestedAt = Date.now()
     modelsLoadPromise = (async () => {
@@ -179,7 +183,9 @@ export const useAppStore = defineStore('app', () => {
         const res = await fetchAvailableModels()
         applyAvailableModelsResponse(res, opts)
       } catch {
-        // ignore
+        // Keep the previous catalog on failure instead of resetting the TTL to
+        // zero, which would re-fetch on the very next caller.
+        modelsLastRequestedAt = Date.now() - MODELS_CACHE_TTL_MS + MODELS_RETRY_TTL_MS
       } finally {
         modelsLoadPromise = null
       }

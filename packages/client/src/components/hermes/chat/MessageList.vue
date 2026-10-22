@@ -584,6 +584,16 @@ const activeSessionScrollKey = computed(() => {
   });
 });
 
+// Keep one list instance alive across session switches. Keying it on the
+// session forced a full destroy + recreate on every switch: every row remounted
+// and every markdown/table/image block re-laid out, which dominated the switch
+// cost. Scroll position is restored per session by the watchers below.
+const listMountKey = computed(() => `list:${props.scrollScope}`);
+
+// While a switch is in flight the list is empty. Show an inline skeleton inside
+// the message area instead of blanking the whole chat surface behind an overlay.
+const showInlineLoading = computed(() => chatStore.isLoadingMessages && messageRows.value.length === 0);
+
 const showHistoryArchiveLink = computed(() => {
   const session = chatStore.activeSession;
   return !!session?.hasMoreBefore && (session.loadedMessageCount || 0) >= LIVE_CHAT_MAX_LOADED_MESSAGES;
@@ -925,19 +935,22 @@ defineExpose({
       @positive-click="deleteSelectedMessages" />
     <VirtualMessageList
       v-if="!isSearchFetching"
-      :key="activeSessionScrollKey || 'chat-empty'"
+      :key="listMountKey"
       ref="listRef"
       :class="{ 'message-list--search-loading': isSearchLoading }"
       :inert="isSearchLoading || undefined"
       :aria-hidden="isSearchLoading || undefined"
       :messages="messageRows"
-      :virtualized="(chatStore.activeSession?.loadedMessageCount || 0) > LIVE_CHAT_MAX_LOADED_MESSAGES"
+      :virtualized="true"
       :padding="virtualListPadding"
       @scroll="handleListScroll"
       @top-reach="handleTopReach"
     >
       <template #empty>
-        <div class="empty-state">
+        <div v-if="showInlineLoading" class="message-skeleton" role="status" :aria-label="t('chat.loadingSession')">
+          <div v-for="n in 6" :key="n" class="message-skeleton-row" :class="`message-skeleton-row--${n % 2 ? 'user' : 'assistant'}`" />
+        </div>
+        <div v-else class="empty-state">
           <p>{{ emptyState.text }}</p>
         </div>
       </template>
@@ -2042,6 +2055,46 @@ defineExpose({
   p {
     font-size: calc(var(--font-size-base, 14px) * 14 / 14);
   }
+}
+
+// Inline loading placeholder: replaces the blank surface behind the old
+// full-screen overlay while a session's transcript is being fetched.
+.message-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: calc(14px * var(--spacing-scale, 1));
+  padding: 8px 2px;
+  width: 100%;
+}
+
+.message-skeleton-row {
+  height: calc(58px * var(--spacing-scale, 1));
+  border-radius: calc(10px * var(--radius-scale, 1));
+  background: var(--theme-card-bg);
+  opacity: 0.55;
+  animation: message-skeleton-pulse 1.4s ease-in-out infinite;
+
+  &--user {
+    width: min(62%, 520px);
+    align-self: flex-end;
+  }
+
+  &--assistant {
+    width: min(86%, 720px);
+  }
+
+  &:nth-child(2n) {
+    animation-delay: 0.2s;
+  }
+
+  &:nth-child(3n) {
+    animation-delay: 0.4s;
+  }
+}
+
+@keyframes message-skeleton-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.7; }
 }
 
 .history-loader-spinner {

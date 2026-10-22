@@ -1123,6 +1123,7 @@ export default {
     contextEditFailed: '更新失败',
     emptyState: '开始与 Hermes Agent 对话',
     emptyStateAgent: '开始与 {agent} 对话',
+    loadingSession: '正在加载对话…',
     viewOlderInHistory: '前面的消息请到历史记录查看',
     scrollToBottom: '滚动到底部',
     forkedFrom: 'Fork 来源',

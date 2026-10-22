@@ -1,7 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchStudioAnnouncements } from '../../packages/server/src/modules/studio/services/notifications/announcements'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fetchStudioAnnouncements, resetStudioAnnouncementsCache } from '../../packages/server/src/modules/studio/services/notifications/announcements'
 import { getAnnouncements } from '../../packages/server/src/modules/studio/controllers/announcements'
 
+beforeEach(() => {
+  resetStudioAnnouncementsCache()
+  vi.useRealTimers()
+})
 afterEach(() => vi.unstubAllGlobals())
 
 describe('Studio announcement delivery', () => {
@@ -32,5 +36,39 @@ describe('Studio announcement delivery', () => {
     expect(ctx.status).toBe(502)
     expect(ctx.body).toEqual({ ok: false, error: 'announcement_fetch_failed' })
     expect(ctx.set).toHaveBeenCalledWith('Cache-Control', 'no-store')
+  })
+
+  // The banner sits on the boot path; a repeat visit must not pay the upstream
+  // round-trip again (it used to cost 0.4-1.7s per app load).
+  it('serves repeat reads from cache within the TTL', async () => {
+    const data = { ok: true, platform: 'desktop', list: [{ id: 1 }] }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(data)))
+    vi.stubGlobal('fetch', fetchMock)
+    expect(await fetchStudioAnnouncements('en')).toEqual(data)
+    expect(await fetchStudioAnnouncements('en')).toEqual(data)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the last good payload when the upstream fails later', async () => {
+    const data = { ok: true, platform: 'desktop', list: [{ id: 7 }] }
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(data)))
+      .mockResolvedValueOnce(new Response('', { status: 500 }))
+    vi.stubGlobal('fetch', fetchMock)
+    expect(await fetchStudioAnnouncements('en')).toEqual(data)
+    // Age the entry past the TTL so the second call retries upstream.
+    vi.useFakeTimers()
+    vi.setSystemTime(Date.now() + 11 * 60_000)
+    expect(await fetchStudioAnnouncements('en')).toEqual(data)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    vi.useRealTimers()
+  })
+
+  it('deduplicates concurrent cold reads', async () => {
+    const data = { ok: true, platform: 'desktop', list: [] }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(data)))
+    vi.stubGlobal('fetch', fetchMock)
+    await Promise.all([fetchStudioAnnouncements('en'), fetchStudioAnnouncements('en')])
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })

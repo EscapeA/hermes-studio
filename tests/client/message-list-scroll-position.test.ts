@@ -152,7 +152,7 @@ describe('MessageList session scroll position', () => {
     expect(mockScrollToBottom).not.toHaveBeenCalled()
   })
 
-  it('disables virtual scrolling for the live chat transcript', async () => {
+  it('always virtualizes the live chat transcript', async () => {
     const chatStore = useChatStore()
     chatStore.activeSessionId = 'plain-scroll-session'
     chatStore.activeSession = makeSession('plain-scroll-session')
@@ -164,7 +164,10 @@ describe('MessageList session scroll position', () => {
     })
     await flushSessionScroll()
 
-    expect(wrapper.getComponent({ name: 'VirtualMessageList' }).props('virtualized')).toBe(false)
+    // The old `loadedMessageCount > 300` gate left the typical 150-message
+    // window eager-rendered, so every session switch re-laid out the whole
+    // transcript. Virtualization is now unconditional.
+    expect(wrapper.getComponent({ name: 'VirtualMessageList' }).props('virtualized')).toBe(true)
   })
 
   it('waits for search pagination to render before scrolling and virtualizes expanded history', async () => {

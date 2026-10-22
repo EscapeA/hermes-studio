@@ -405,6 +405,28 @@ describe('session conversations controller', () => {
     expect(ctx.body).toEqual({ groups: getMessageSelectionGroups('s'), historyRevision: 0 })
   })
 
+  it('bounds oversized tool payloads on the paginated REST path', async () => {
+    const huge = 'x'.repeat(400_000)
+    localGetSessionDetailPaginatedMock.mockReturnValue({
+      session: { id: 'heavy', profile: 'default', source: 'cli', message_count: 3 },
+      messages: [
+        { id: 1, session_id: 'heavy', role: 'user', content: 'hi', timestamp: 1 },
+        { id: 2, session_id: 'heavy', role: 'tool', tool_name: 'mcp__x__session_get', content: huge, timestamp: 2 },
+        { id: 3, session_id: 'heavy', role: 'assistant', content: 'done', timestamp: 3 },
+      ],
+      total: 3, offset: 0, limit: 3, hasMore: false,
+    })
+    const mod = await import('../../packages/server/src/modules/studio/controllers/sessions')
+    const ctx: any = { params: { id: 'heavy' }, query: { limit: '3' }, state: {} }
+    await mod.getConversationMessagesPaginated(ctx)
+    const toolRow = ctx.body.messages.find((message: any) => message.role === 'tool')
+    // Must match the socket resume page: one tool row is capped at the display
+    // limit instead of shipping the raw multi-hundred-KB payload.
+    expect(toolRow.content.length).toBeLessThan(2_000)
+    expect(toolRow.content_truncated).toBe(true)
+    expect(toolRow.content_original_length).toBe(huge.length)
+  })
+
   it('returns shared session agent and workspace metadata without account secrets', async () => {
     localGetSessionDetailPaginatedMock.mockReturnValue({
       session: { id: 'shared', profile: 'default', source: 'coding_agent', agent: 'codex', agent_mode: 'scoped', coding_agent_id: 'codex', workspace: '/project', api_key: 'private', parent_title: 'private parent' },
@@ -1246,15 +1268,7 @@ describe('session conversations controller', () => {
 
   it('counts visible single-chat sessions with the same filters as the list endpoint', async () => {
     listUserProfilesMock.mockReturnValue([{ profile_name: 'default' }, { profile_name: 'travel' }])
-    localListSessionsMock.mockReturnValue([
-      { id: 'default-session', profile: 'default', source: 'cli' },
-      { id: 'travel-session', profile: 'travel', source: 'coding_agent' },
-      { id: 'archived-session', profile: 'default', source: 'cli', is_archived: 1 },
-      { id: 'secret-session', profile: 'secret', source: 'cli' },
-      { id: 'unknown-profile-session', profile: 'missing', source: 'cli' },
-      { id: 'api-session', profile: 'default', source: 'api_server' },
-      { id: 'workflow-session', profile: 'default', source: 'workflow' },
-    ])
+    localCountSessionsMock.mockReturnValue(3)
 
     const mod = await import('../../packages/server/src/modules/studio/controllers/sessions')
     const ctx: any = {
@@ -1266,14 +1280,19 @@ describe('session conversations controller', () => {
     }
     await mod.count(ctx)
 
-    expect(localListSessionsMock).toHaveBeenCalledWith(undefined, undefined, 2147483647)
+    // Counting must happen in SQL: materializing every session row and
+    // filtering in JS made this endpoint ~0.5s on a 1000-session store.
+    expect(localListSessionsMock).not.toHaveBeenCalled()
+    expect(localCountSessionsMock).toHaveBeenCalledWith(undefined, undefined, expect.objectContaining({
+      profiles: expect.arrayContaining(['default', 'travel']),
+      includeArchived: false,
+      sources: expect.arrayContaining(['cli', 'api_server']),
+    }))
     expect(ctx.body).toEqual({ count: 3 })
   })
 
   it('counts sessions for an explicit profile and source', async () => {
-    localListSessionsMock.mockReturnValue([
-      { id: 'travel-global', profile: 'travel', source: 'global_agent' },
-    ])
+    localCountSessionsMock.mockReturnValue(1)
 
     const mod = await import('../../packages/server/src/modules/studio/controllers/sessions')
     const ctx: any = {
@@ -1283,7 +1302,10 @@ describe('session conversations controller', () => {
     }
     await mod.count(ctx)
 
-    expect(localListSessionsMock).toHaveBeenCalledWith('travel', 'global_agent', 2147483647)
+    expect(localListSessionsMock).not.toHaveBeenCalled()
+    expect(localCountSessionsMock).toHaveBeenCalledWith('travel', 'global_agent', expect.objectContaining({
+      includeArchived: false,
+    }))
     expect(ctx.body).toEqual({ count: 1 })
   })
 
