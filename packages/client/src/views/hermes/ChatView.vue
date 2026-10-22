@@ -40,7 +40,9 @@ const routeLoading = ref(false)
 let routeLoadSequence = 0
 let disposed = false
 const pageLoading = computed(() => contentMode.value === 'chat' && (
-  initializing.value || routeLoading.value || chatStore.isLoadingSessions || chatStore.isLoadingMessages
+  initializing.value
+  || chatStore.isLoadingSessions
+  || (routeLoading.value && chatStore.messages.length === 0)
 ))
 const tabTitle = computed(() => {
   if (route.name !== 'hermes.session' && route.name !== 'desktop.chat') return productTitle

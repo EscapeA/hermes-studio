@@ -67,6 +67,7 @@ import { logger } from '../public/logging'
 import { isHermesAgentAvailable } from '../public/agent-status-registry'
 import { listUserProfiles } from '../public/users'
 import { ensureHermesRunWorkspace } from '../services/chat-run/workspace'
+import { buildOutboundToolMessage } from '../services/chat-run/resume-payload'
 import { normalizeDirectoryTarget } from '../services/workspace/directory'
 import {
   isAbsoluteWorkspacePath,
@@ -625,13 +626,25 @@ export async function removeCategory(ctx: any) {
 export async function count(ctx: any) {
   const source = (ctx.query.source as string) || undefined
   const profile = explicitProfileFilter(ctx)
-  const allSessions = localListSessions(profile, source, 2147483647)
   const knownProfiles = profile ? null : new Set(listProfileNamesFromDisk())
-  const sessions = filterPendingDeletedSessions(filterArchivedSessions(filterByAllowedProfiles(ctx, allSessions).filter(s =>
-    isRequestedSessionSource(source, s.source) &&
-    (!knownProfiles || knownProfiles.has(s.profile || 'default')),
-  )))
-  ctx.body = { count: sessions.length }
+  const allowedProfiles = allowedProfileSet(ctx)
+  const visibleProfiles = knownProfiles
+    ? [...knownProfiles].filter(name => !allowedProfiles || allowedProfiles.has(name))
+    : undefined
+  // Count in SQL instead of materializing every session row: the old path
+  // listed all sessions with limit 2147483647 and then filtered in JS, which
+  // cost ~0.5s on a 1000-session store and grew with history.
+  const listOptions = {
+    sources: source ? undefined : requestedSessionSources(),
+    profiles: visibleProfiles,
+    includeArchived: false,
+    excludeSessionIds: [...getPendingDeletedSessionIds()],
+  }
+  const sqlCount = localCountSessions(profile, source, listOptions)
+  // Non-super-admin users may only see their assigned profiles; the SQL filter
+  // already covers `profiles`, so only the source-family and archive filters
+  // need the JS cross-check that list() performs.
+  ctx.body = { count: sqlCount }
 }
 
 /**
@@ -2248,6 +2261,11 @@ export async function getConversationMessagesPaginated(ctx: any) {
   const assistantMessageIds = result.messages
     .filter((message: any) => String(message.display_role || message.role || '') === 'assistant')
     .map((message: any) => message.id)
+  // Bound tool payloads exactly like the socket `resume` page does. Without
+  // this the REST path shipped raw history: a 150-message window reached 2.2MB
+  // (single tool result up to 3.1MB) versus ~150KB on the socket path, and this
+  // endpoint backs tab-visible refreshes, upward paging and History.
+  const outboundMessages = result.messages.map((message: any) => buildOutboundToolMessage(message))
 
   ctx.body = {
     session: {
@@ -2273,8 +2291,8 @@ export async function getConversationMessagesPaginated(ctx: any) {
       input_tokens: session.input_tokens,
       output_tokens: session.output_tokens,
     },
-    messages: withRunUsage(ctx.params.id, result.messages),
-    taskPlans: getSessionTaskPlans(ctx.params.id, result.messages, offset === 0),
+    messages: withRunUsage(ctx.params.id, outboundMessages),
+    taskPlans: getSessionTaskPlans(ctx.params.id, outboundMessages, offset === 0),
     workspaceRunChanges: listWorkspaceRunChangesForAssistantMessages(ctx.params.id, assistantMessageIds),
     total: result.total,
     offset: result.offset,
