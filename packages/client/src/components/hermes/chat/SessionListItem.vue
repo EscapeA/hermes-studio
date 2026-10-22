@@ -50,11 +50,26 @@ const isGlobalAgentSession = computed(() => props.session.source === 'global_age
 let longPressTimer: ReturnType<typeof setTimeout> | null = null
 const longPressTriggered = ref(false)
 
+/** Clear any text selection a long-press started, so it cannot leak into a later copy. */
+function clearTextSelection() {
+  try {
+    const selection = window.getSelection?.()
+    if (selection && selection.rangeCount > 0) selection.removeAllRanges()
+  } catch {
+    // selection API unavailable; nothing to clear
+  }
+}
+
 function onTouchStart(e: TouchEvent) {
   longPressTriggered.value = false
+  // A press-hold selects text on mobile. That selection would (a) highlight the row on screen
+  // and (b) still be live when the context menu's "copy" runs, which made the copy land on the
+  // wrong target. Suppress selection/callout for the press itself.
+  clearTextSelection()
   longPressTimer = setTimeout(() => {
     longPressTriggered.value = true
     const touch = e.touches[0]
+    clearTextSelection()
     const syntheticEvent = new MouseEvent('contextmenu', {
       clientX: touch.clientX,
       clientY: touch.clientY,
@@ -202,6 +217,12 @@ onUnmounted(() => {
   text-align: start;
   text-decoration: none;
   color: var(--text-secondary);
+  /* A press-hold on mobile otherwise starts a text selection (and the OS callout) that
+     outlives the long-press and breaks the context menu's copy action. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   transition: all var(--transition-fast);
   margin-bottom: 2px;
 }
