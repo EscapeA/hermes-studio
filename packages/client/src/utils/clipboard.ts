@@ -56,6 +56,76 @@ function selectElementText(element: HTMLElement): string {
   return selection.toString()
 }
 
+/**
+ * Text a DOM Range covers, with the trailing line breaks this browser keeps.
+ *
+ * A DOM selection cannot represent a newline at the very end of its content: the caret sits
+ * after the last character, and `toString()` reports the block's text without the break. So a
+ * code block whose source ends with `\n` — `sudo systemctl restart x\n`, which is *most*
+ * shell snippets — can never match its own selection, and the verification used to reject
+ * every such copy. Pasting such a command does not need that final newline, so when the only
+ * difference is trailing newlines we accept the result instead of failing the copy.
+ */
+function matchesIgnoringTrailingBreaks(actual: string, expected: string): boolean {
+  if (sameText(actual, expected)) return true
+  const trimmed = expected.replace(/\n+$/, '')
+  return trimmed !== expected && sameText(actual, trimmed)
+}
+
+/**
+ * Select through a textarea and return what `getSelection()` reports.
+ *
+ * Unlike a DOM Range, a textarea selection is a character range over its value, so it keeps
+ * trailing line breaks exactly. That makes it the only path that can copy a shell snippet
+ * with its terminating newline. It does need focus, which is why it is tried first and the
+ * contenteditable path stays as the fallback (mobile WebViews sometimes refuse the focus).
+ */
+function selectWithTextarea(value: string): { selected: string; node: HTMLTextAreaElement } | null {
+  const node = document.createElement('textarea')
+  node.value = value
+  node.setAttribute('readonly', '')
+  node.setAttribute('aria-hidden', 'true')
+  node.setAttribute('tabindex', '-1')
+  node.style.position = 'fixed'
+  node.style.top = '0'
+  node.style.left = '0'
+  node.style.width = '1px'
+  node.style.height = '1px'
+  node.style.padding = '0'
+  node.style.border = 'none'
+  node.style.outline = 'none'
+  node.style.boxShadow = 'none'
+  node.style.background = 'transparent'
+  node.style.opacity = '0.01'
+  node.style.fontSize = '1px'
+  node.style.resize = 'none'
+  node.style.pointerEvents = 'none'
+  document.body.appendChild(node)
+
+  try {
+    node.focus({ preventScroll: true })
+  } catch {
+    // fall through: without focus the selection below will simply be empty
+  }
+  if (document.activeElement !== node) {
+    document.body.removeChild(node)
+    return null
+  }
+
+  node.select()
+  node.setSelectionRange(0, value.length)
+
+  // Trust only what the document selection actually reports. A focused textarea mirrors its
+  // own selection there; if it reads back empty (some WebViews), the caller falls back to the
+  // contenteditable path rather than claiming a copy we cannot verify.
+  const selected = selectedText()
+  if (!selected) {
+    document.body.removeChild(node)
+    return null
+  }
+  return { selected, node }
+}
+
 export async function copyToClipboard(text: string): Promise<boolean> {
   if (typeof navigator !== 'undefined' && navigator.clipboard && window.isSecureContext) {
     try {
@@ -108,21 +178,35 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   document.body.appendChild(scratch)
 
   let ok = false
+  let textarea: HTMLTextAreaElement | null = null
   try {
-    const selected = selectElementText(scratch)
-    // Also focus as a courtesy: some engines copy only the focused element's selection.
-    try {
-      scratch.focus({ preventScroll: true })
-      selectElementText(scratch)
-    } catch {
-      // focus is best-effort; the Range above is what matters
-    }
-    if (sameText(selected, text) && sameText(selectedText(), text)) {
+    // A textarea selection preserves trailing line breaks; a DOM Range cannot. Try it first
+    // and keep the contenteditable node as the fallback for engines that refuse the focus.
+    const viaTextarea = selectWithTextarea(text)
+    textarea = viaTextarea?.node ?? null
+    if (viaTextarea && matchesIgnoringTrailingBreaks(viaTextarea.selected, text)) {
       ok = document.execCommand('copy')
+    } else {
+      if (textarea) {
+        document.body.removeChild(textarea)
+        textarea = null
+      }
+      const selected = selectElementText(scratch)
+      // Also focus as a courtesy: some engines copy only the focused element's selection.
+      try {
+        scratch.focus({ preventScroll: true })
+        selectElementText(scratch)
+      } catch {
+        // focus is best-effort; the Range above is what matters
+      }
+      if (matchesIgnoringTrailingBreaks(selected, text) && matchesIgnoringTrailingBreaks(selectedText(), text)) {
+        ok = document.execCommand('copy')
+      }
     }
   } catch {
     ok = false
   } finally {
+    if (textarea && textarea.parentNode) document.body.removeChild(textarea)
     document.body.removeChild(scratch)
     // Put the document selection back so the page does not stay in a "selected" state
     // after a long-press copy.
