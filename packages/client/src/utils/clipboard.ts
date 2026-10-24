@@ -19,6 +19,19 @@
  * clipboard.
  */
 
+/**
+ * Compare what the selection covers against the intended text.
+ *
+ * Line endings are the only normalization we allow: a browser may hand back `\r\n` for a
+ * `\n` we wrote, and refusing that copy would report a failure the user cannot act on.
+ * Anything else (collapsed spaces, dropped newlines) is a real mismatch and must fail loudly,
+ * otherwise the UI shows "copied" while the clipboard holds something shorter.
+ */
+function sameText(actual: string, expected: string): boolean {
+  const normalize = (value: string) => value.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  return normalize(actual) === normalize(expected)
+}
+
 /** Text the current selection covers, or '' when nothing is selected. */
 function selectedText(): string {
   if (typeof window === 'undefined') return ''
@@ -83,6 +96,12 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   // unfocusable and unusable as a selection source in Chromium.
   scratch.style.color = 'transparent'
   scratch.style.caretColor = 'transparent'
+  // `white-space` is the difference between copying the text and copying a re-flowed
+  // approximation of it: a default-`normal` block collapses runs of spaces and turns every
+  // newline into a single space, so `getSelection()` returns "a b c" for "a\nb\nc" and the
+  // verification below (correctly) refuses to claim success. `pre-wrap` keeps the line breaks
+  // and the indentation that code blocks and multi-line messages depend on.
+  scratch.style.whiteSpace = 'pre-wrap'
   scratch.style.pointerEvents = 'none'
   scratch.style.userSelect = 'text'
   scratch.style.zIndex = '-1'
@@ -98,7 +117,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     } catch {
       // focus is best-effort; the Range above is what matters
     }
-    if (selected === text && selectedText() === text) {
+    if (sameText(selected, text) && sameText(selectedText(), text)) {
       ok = document.execCommand('copy')
     }
   } catch {

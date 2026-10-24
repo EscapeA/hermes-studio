@@ -21,7 +21,12 @@ function makeSelectionMirrorScratchNode(removeAllRanges = vi.fn(), addRange = vi
     const node =
       document.body.querySelector('[contenteditable="true"]') ||
       document.body.querySelector('textarea')
-    const value = node ? node.textContent || '' : ''
+    const raw = node ? node.textContent || '' : ''
+    // jsdom has no layout, so it cannot collapse whitespace. Reproduce what a real browser
+    // does to a selection inside a `white-space: normal` block: newlines and runs of spaces
+    // become single spaces. Without this the test cannot tell `pre-wrap` from its absence.
+    const collapses = node instanceof HTMLElement && node.style.whiteSpace !== 'pre-wrap'
+    const value = collapses ? raw.replace(/\s+/g, ' ').trim() : raw
     return {
       toString: () => value,
       rangeCount: value ? 1 : 0,
@@ -147,6 +152,57 @@ describe('copyToClipboard', () => {
     await copyToClipboard('session-id-42')
     expect(removeAllRanges).toHaveBeenCalled()
     expect(addRange).toHaveBeenCalled()
+  })
+
+  // The reported bug: only multi-line content failed. A default-`normal` scratch node turns
+  // "line1\nline2" into "line1 line2", the verification sees a mismatch, and the copy is
+  // refused — so a code block's copy button (always multi-line) never worked over plain HTTP
+  // while a single-line session id did.
+  it('copies multi-line text with its line breaks intact', async () => {
+    setClipboard({ writeText: vi.fn().mockRejectedValue(new Error('NotAllowedError')) })
+    makeSelectionMirrorScratchNode()
+    let seen = ''
+    document.execCommand = vi.fn(() => {
+      seen = window.getSelection()?.toString() || ''
+      return true
+    })
+
+    const text = 'line1\nline2\n  indented'
+    await expect(copyToClipboard(text)).resolves.toBe(true)
+    expect(seen).toBe(text)
+  })
+
+  it('keeps the scratch node in pre-wrap so runs of spaces survive', async () => {
+    setClipboard({ writeText: vi.fn().mockRejectedValue(new Error('NotAllowedError')) })
+    makeSelectionMirrorScratchNode()
+    let whiteSpace = ''
+    document.execCommand = vi.fn(() => {
+      const node = scratchNode()
+      whiteSpace = node instanceof HTMLElement ? node.style.whiteSpace : ''
+      return true
+    })
+
+    await copyToClipboard('21时 4071   22时 4217')
+    expect(whiteSpace).toBe('pre-wrap')
+  })
+
+  // A browser may normalize the line endings it hands back. That is not a copy failure.
+  it('treats CRLF and LF as the same text', async () => {
+    setClipboard({ writeText: vi.fn().mockRejectedValue(new Error('NotAllowedError')) })
+    vi.spyOn(window, 'getSelection').mockImplementation(() => {
+      const node = scratchNode()
+      const value = (node ? node.textContent || '' : '').replace(/\n/g, '\r\n')
+      return {
+        toString: () => value,
+        rangeCount: value ? 1 : 0,
+        removeAllRanges: vi.fn(),
+        addRange: vi.fn(),
+        getRangeAt: () => ({ cloneRange: () => ({}) }),
+      } as unknown as Selection
+    })
+    document.execCommand = vi.fn(() => true)
+
+    await expect(copyToClipboard('a\nb')).resolves.toBe(true)
   })
 
   it('restores focus to the previously focused element', async () => {
