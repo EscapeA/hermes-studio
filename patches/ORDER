@@ -81,3 +81,4 @@
 081 22-0.7.36-adapt/001-re-home-the-ui-theme-baseline-onto-the-fork-tree.patch
 082 23-theme-contrast/001-fix-theme-keep-the-run-indicators-on-palette-tokens.patch
 083 12-adapt/007-fix-i18n-give-the-provider-import-modal-its-own-.patch
+084 24-drawer-safe-top/001-fix-mobile-keep-drawer-headers-below-the-status-bar.patch

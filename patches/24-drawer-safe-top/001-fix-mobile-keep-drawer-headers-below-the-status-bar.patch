@@ -1,0 +1,50 @@
+From cf0ee54c6f69b68a16a1260a80e62018ea775cfa Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 24 Oct 2026 15:51:09 +0800
+Subject: [PATCH] fix(mobile): keep drawer headers below the status bar
+
+Drawer portals mount on <body>, outside .app-shell, so they inherit no top
+inset of their own and NDrawer's header only has a flat 16px padding. On a
+true edge-to-edge shell (statusBarColorMode=TRANSPARENT, where
+env(safe-area-inset-top) reports the real status bar height) that puts the
+Session tasks drawer's title and close button straight through the status bar
+band: measured y=16..67px against a status bar ending at 85px.
+
+Pad .n-drawer-header by env(safe-area-inset-top) on narrow viewports only,
+skipped once the nav rail already offsets the container via
+top: --studio-header-height so the two insets never stack.
+
+Measured on K80: drawer header padding 16px -> 63px, title/close y=127px,
+status bar bottom 78px. Desktop (rail) unchanged at 16px.
+---
+ packages/client/src/styles/global.scss | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
+index 3c5657173..e39355926 100644
+--- a/packages/client/src/styles/global.scss
++++ b/packages/client/src/styles/global.scss
+@@ -159,6 +159,20 @@ body:has(.app-shell--navigation-rail) {
+   }
+ }
+ 
++// Drawer portals mount on <body>, outside .app-shell, so they inherit no top
++// inset of their own — and NDrawer's header only has a flat 16px padding. On a
++// true edge-to-edge shell (statusBarColorMode=TRANSPARENT, where
++// env(safe-area-inset-top) reports the real status bar height) that puts the
++// title and close button straight through the status bar band.
++// Descendant combinators: NDrawer inserts one wrapper div between
++// .n-drawer-container and .n-drawer. Skipped once the nav rail already offsets
++// the container via top: --studio-header-height, so the insets never stack.
++@media (max-width: $breakpoint-mobile) {
++  body:not(:has(.app-shell--navigation-rail)) .n-drawer-container .n-drawer-header {
++    padding-top: calc(16px + env(safe-area-inset-top, 0px));
++  }
++}
++
+ .hermes-desktop-pet-window,
+ .hermes-desktop-pet-window body,
+ .hermes-desktop-pet-window #app {
+-- 
+2.53.0
+
