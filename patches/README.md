@@ -10,7 +10,7 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 
 ⚠️ **本轮（2026-10-14）以 `custom-next` 为唯一集成分支**：`custom` 保留作历史对照，不再更新。
 
-## 分组总览（23 组 / 83 条）
+## 分组总览（24 组 / 84 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -39,6 +39,7 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 | 23-theme-contrast | 1 | 「正在思考」渐隐带与会话 live 点改走调色板 token（原硬编码在蓝图主题下 1.0–1.3:1，等于看不见）+ 思考头像内缩（素材肩部贴底边，被圆角裁断后读成黑框） |
 | 24-drawer-safe-top | 1 | 抽屉顶栏让开状态栏：`NDrawer` 是 body 级 portal，`env(safe-area-inset-top)` 它自己不吃，真 edge-to-edge 壳（K80，状态栏透明）上任务抽屉的标题与关闭按钮直接压进状态栏带；窄屏给 `.n-drawer-header` 补 env 内边距，导航栏模式下容器已用 `top` 让开故跳过 |
 | 04-usage（追加） | 1 | 压缩触发口径改锚 provider prompt_tokens（本地 cl100k 对 wire 高估约 1.7×，长会话在 ~54% 占用就被判超阈值） |
+| 25-identity-rows | 1 | 去掉「署名噪音」：会话列表副标题的 profile 名（default 等，连同 `showProfile` prop）与消息气泡上方的作者行（用户＝profile/alias、assistant＝Hermes/Ekko/…）。单用户单 agent 视图下这两行只是重复信息；顺手清掉 `MessageList`/`HistoryMessageList` 的孤儿 profile computed 与 `ui-theme` 基线里含已删选择器的一条键 |
 
 ## ORDER 的语义
 
