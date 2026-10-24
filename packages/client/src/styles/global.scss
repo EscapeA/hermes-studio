@@ -159,6 +159,20 @@ body:has(.app-shell--navigation-rail) {
   }
 }
 
+// Drawer portals mount on <body>, outside .app-shell, so they inherit no top
+// inset of their own — and NDrawer's header only has a flat 16px padding. On a
+// true edge-to-edge shell (statusBarColorMode=TRANSPARENT, where
+// env(safe-area-inset-top) reports the real status bar height) that puts the
+// title and close button straight through the status bar band.
+// Descendant combinators: NDrawer inserts one wrapper div between
+// .n-drawer-container and .n-drawer. Skipped once the nav rail already offsets
+// the container via top: --studio-header-height, so the insets never stack.
+@media (max-width: $breakpoint-mobile) {
+  body:not(:has(.app-shell--navigation-rail)) .n-drawer-container .n-drawer-header {
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  }
+}
+
 .hermes-desktop-pet-window,
 .hermes-desktop-pet-window body,
 .hermes-desktop-pet-window #app {
