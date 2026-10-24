@@ -62,42 +62,6 @@ describe('MessageItem tool details', () => {
     })
   })
 
-  it('renders the profile name above a user message', () => {
-    const wrapper = mount(MessageItem, {
-      props: {
-        message: {
-          id: 'user-profile-identity',
-          role: 'user',
-          content: 'Hello',
-          timestamp: Date.now(),
-        } satisfies Message,
-        userProfileName: 'Researcher',
-      },
-      global: { stubs: { MarkdownRenderer: true } },
-    })
-
-    expect(wrapper.get('.user-message-author .message-author-name').text()).toBe('Researcher')
-    expect(wrapper.find('.user-profile-avatar').exists()).toBe(false)
-  })
-
-  it('renders the agent name above an assistant message', () => {
-    const wrapper = mount(MessageItem, {
-      props: {
-        message: {
-          id: 'assistant-agent-identity',
-          role: 'assistant',
-          content: 'Hello',
-          timestamp: Date.now(),
-        } satisfies Message,
-        assistantAgent: { label: 'Ekko' },
-      },
-      global: { stubs: { MarkdownRenderer: true } },
-    })
-
-    expect(wrapper.get('.assistant-message-author .message-author-name').text()).toBe('Ekko')
-    expect(wrapper.find('.assistant-message-author .msg-avatar').exists()).toBe(false)
-  })
-
   it('selects a completed user or assistant message as the next-turn reference', async () => {
     const chatStore = useChatStore()
     chatStore.activeSessionId = 'session-1'

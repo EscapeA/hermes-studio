@@ -18,13 +18,10 @@ const props = withDefaults(defineProps<{
   completedUnread?: boolean
   selectable?: boolean
   selected?: boolean
-  showProfile?: boolean
   categoryLabel?: string
   to?: string
   interceptModifiedNavigation?: boolean
-}>(), {
-  showProfile: true,
-})
+}>(), {})
 
 const emit = defineEmits<{
   select: []
@@ -145,12 +142,8 @@ onUnmounted(() => {
         <span class="session-item-time">{{ formatTimestampMs(session.createdAt) }}</span>
       </span>
 
-      <span class="session-item-agent-row">
-        <span v-if="props.showProfile" class="session-item-profile">
-          <span class="session-item-profile-name">{{ profileName }}</span>
-        </span>
+      <span v-if="props.categoryLabel" class="session-item-agent-row">
         <span
-          v-if="props.categoryLabel"
           class="session-item-category-tag"
           :title="props.categoryLabel"
         >
@@ -238,7 +231,6 @@ onUnmounted(() => {
 }
 
 .session-item.missing-models .session-item-title,
-.session-item.missing-models .session-item-profile-name,
 .session-item.missing-models .session-item-time {
   color: #b42318;
 }
@@ -370,24 +362,6 @@ onUnmounted(() => {
     opacity: 0.5;
     pointer-events: auto;
   }
-}
-
-.session-item-profile {
-  display: flex;
-  align-items: center;
-  gap: calc(5px * var(--spacing-scale, 1));
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
-.session-item-profile-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: calc(var(--font-size-base, 14px) * 11 / 14);
-  line-height: var(--line-height, calc(var(--font-size-base, 14px) * 16 / 14));
-  color: var(--text-muted);
 }
 
 .session-item-category-tag {

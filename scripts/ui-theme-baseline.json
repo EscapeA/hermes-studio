@@ -407,7 +407,7 @@
       "literal-color | .session-item.missing-models | color: #b42318": 1,
       "literal-color | .session-item.missing-models | background: rgba(220, 38, 38, 0.08)": 1,
       "unowned-background | .session-item.missing-models | background: rgba(220, 38, 38, 0.08)": 1,
-      "literal-color | .session-item.missing-models .session-item-title, .session-item.missing-models .session-item-profile-name, .session-item.missing-models .session-item-time | color: #b42318": 1,
+      "literal-color | .session-item.missing-models .session-item-title, .session-item.missing-models .session-item-time | color: #b42318": 1,
       "literal-color | .session-item.missing-models:hover | background: rgba(220, 38, 38, 0.12)": 1,
       "literal-color | .session-item-global-icon | color: #d6a019": 1,
       "literal-color | .session-item-category-tag | background: rgba(127, 127, 127, 0.12)": 1,

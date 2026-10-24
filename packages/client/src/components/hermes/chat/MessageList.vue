@@ -23,7 +23,6 @@ import ToolRunCard from "./ToolRunCard.vue";
 import MessageQueueFloatPanel from "./MessageQueueFloatPanel.vue";
 import PendingInteractionCountdown from "./PendingInteractionCountdown.vue";
 import { LIVE_CHAT_MAX_LOADED_MESSAGES, parseMessageReference, useChatStore, type Message } from "@/stores/hermes/chat";
-import { useProfilesStore } from "@/stores/hermes/profiles";
 import { useToolTraceVisibility } from "@/composables/useToolTraceVisibility";
 import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
 import { messageScrollPositionKey, rememberMessageScrollPosition } from "./message-scroll-position";
@@ -46,7 +45,6 @@ const props = withDefaults(defineProps<{
 })
 
 const chatStore = useChatStore();
-const profilesStore = useProfilesStore();
 const { t } = useI18n();
 const { toolTraceVisible } = useToolTraceVisibility();
 const listRef = ref<InstanceType<typeof VirtualMessageList> | null>(null);
@@ -311,15 +309,6 @@ const liveReasoningDetail = computed<{
 });
 
 const assistantAgent = computed(() => chatSessionAgentLabel(chatStore.activeSession));
-const activeSessionProfileName = computed(() => (
-  chatStore.activeSession?.profile || profilesStore.activeProfileName || "default"
-));
-const activeSessionProfile = computed(() => (
-  profilesStore.profiles.find(profile => profile.name === activeSessionProfileName.value) || null
-));
-const userProfileName = computed(() => (
-  activeSessionProfile.value?.alias?.trim() || activeSessionProfileName.value
-));
 
 const emptyState = computed(() => {
   const agent = assistantAgent.value;
@@ -995,8 +984,6 @@ defineExpose({
               <MessageItem
                 v-else
                 :message="msg"
-                :assistant-agent="assistantAgent"
-                :user-profile-name="userProfileName"
                 :highlight="chatStore.focusMessageId === msg.id"
                 :show-fork-action="!selecting && canForkActiveSession && msg.id === lastForkActionMessageId"
               />

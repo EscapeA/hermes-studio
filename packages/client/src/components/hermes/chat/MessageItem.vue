@@ -16,7 +16,6 @@ import { useChatStore } from "@/stores/hermes/chat";
 import { useFilesStore } from "@/stores/hermes/files";
 import { useToolPanelStore } from "@/stores/hermes/tool-panel";
 import { useSettingsStore } from "@/stores/hermes/settings";
-import { chatSessionAgentLabel, type ChatAgentLabel } from "@/utils/chat-agent-label";
 import TaskPlanCard from './TaskPlanCard.vue';
 import ToolChangeCard from "./ToolChangeCard.vue";
 import {
@@ -49,11 +48,7 @@ const props = withDefaults(defineProps<{
   highlight?: boolean
   headingIdPrefix?: string
   showForkAction?: boolean
-  assistantAgent?: ChatAgentLabel
-  userProfileName?: string
-}>(), {
-  userProfileName: "default",
-});
+}>(), {});
 const { t } = useI18n();
 const toast = useMessage();
 
@@ -234,7 +229,6 @@ const toolPanelStore = useToolPanelStore();
 const settingsStore = useSettingsStore();
 const speech = useGlobalSpeech();
 const voiceSettings = useVoiceSettings();
-const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentLabel(chatStore.activeSession));
 // Copy entire bubble content
 const copyableContent = computed(() => {
   if (props.message.role === 'tool') return null
@@ -1018,12 +1012,6 @@ onBeforeUnmount(() => {
     <template v-else>
       <div class="msg-body">
         <div class="msg-content" :class="message.role">
-          <div v-if="message.role === 'user'" class="message-author user-message-author">
-            <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
-          </div>
-          <div v-if="message.role === 'assistant'" class="message-author assistant-message-author">
-            <span class="message-author-name" dir="auto">{{ assistantAgent.label }}</span>
-          </div>
           <div
             class="message-bubble"
             :class="{
@@ -1417,35 +1405,6 @@ onBeforeUnmount(() => {
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
-}
-
-.message-author {
-  display: flex;
-  align-items: center;
-  gap: calc(6px * var(--spacing-scale, 1));
-  max-width: 100%;
-  margin-bottom: 6px;
-  color: $text-secondary;
-  font-size: calc(var(--font-size-base, 14px) * 12 / 14);
-  line-height: var(--line-height, calc(var(--font-size-base, 14px) * 22 / 14));
-}
-
-.user-message-author {
-  align-self: flex-end;
-  justify-content: flex-end;
-}
-
-.assistant-message-author {
-  align-self: flex-start;
-  justify-content: flex-start;
-}
-
-.message-author-name {
-  min-width: 0;
-  max-width: 240px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .message-bubble {

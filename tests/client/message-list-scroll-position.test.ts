@@ -67,8 +67,6 @@ vi.mock('@/components/hermes/chat/MessageItem.vue', () => ({
     name: 'MessageItem',
     props: {
       message: { type: Object, required: true },
-      assistantAgent: { type: Object, default: null },
-      userProfileName: { type: String, default: 'default' },
     },
     template: '<div class="stub-message" :data-id="message.id">{{ message.content }}</div>',
   }),
@@ -76,7 +74,6 @@ vi.mock('@/components/hermes/chat/MessageItem.vue', () => ({
 
 import MessageList from '@/components/hermes/chat/MessageList.vue'
 import { useChatStore, type Message, type Session } from '@/stores/hermes/chat'
-import { useProfilesStore } from '@/stores/hermes/profiles'
 
 function makeMessage(id: string): Message {
   return { id, role: 'user', content: id, timestamp: Date.now() }
@@ -301,57 +298,6 @@ describe('MessageList session scroll position', () => {
     expect(wrapper.get('.empty-state p').text()).toBe('chat.emptyStateAgent')
     expect(wrapper.find('.empty-logo').exists()).toBe(false)
     wrapper.unmount()
-  })
-
-  it.each([
-    ['Hermes', { agent: 'hermes' }, '/coding-agents/hermes.png'],
-    ['Ekko', { agent: 'ekko-agent', codingAgentId: 'ekko-agent' }],
-    ['Claude', { source: 'coding_agent', agent: 'claude', codingAgentId: 'claude-code' }],
-    ['Codex', { source: 'coding_agent', agent: 'codex', codingAgentId: 'codex' }],
-    ['Pi', { source: 'coding_agent', agent: 'pi', codingAgentId: 'pi' }],
-    ['Grok', { source: 'coding_agent', agent: 'grok', codingAgentId: 'grok' }],
-    ['OpenCode', { source: 'coding_agent', agent: 'opencode', codingAgentId: 'opencode' }],
-  ])('passes the $runtime label to Assistant message bubbles', async (label, identity) => {
-    const chatStore = useChatStore()
-    const activeSession = { ...makeSession(`agent-${label}`), ...identity } as Session
-    activeSession.messages = [{
-      id: `assistant-${label}`,
-      role: 'assistant',
-      content: label,
-      timestamp: Date.now(),
-    }]
-    chatStore.activeSessionId = activeSession.id
-    chatStore.activeSession = activeSession
-
-    const wrapper = mount(MessageList, {
-      global: { stubs: { Transition: false } },
-    })
-    await flushSessionScroll()
-
-    expect(wrapper.getComponent({ name: 'MessageItem' }).props('assistantAgent')).toEqual({ label })
-  })
-
-  it('passes the active session profile name to user message bubbles', async () => {
-    const chatStore = useChatStore()
-    const profilesStore = useProfilesStore()
-    profilesStore.activeProfileName = 'default'
-    profilesStore.profiles = [
-      { name: 'default', active: true, model: '', alias: '' },
-      { name: 'research', active: false, model: '', alias: 'Researcher' },
-    ]
-
-    const session = makeSession('profile-identity-session')
-    session.profile = 'research'
-    chatStore.activeSessionId = session.id
-    chatStore.activeSession = session
-
-    const wrapper = mount(MessageList, {
-      global: { stubs: { Transition: false } },
-    })
-    await flushSessionScroll()
-
-    const messageItem = wrapper.getComponent({ name: 'MessageItem' })
-    expect(messageItem.props('userProfileName')).toBe('Researcher')
   })
 
   it('shows a history link instead of loading more after the live chat message cap', async () => {
