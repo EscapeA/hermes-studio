@@ -128,6 +128,28 @@ while read n p; do git am --3way "patches/$p"; done < patches/ORDER
   `bin/ekko-studio-mcp.mjs` 有实质改动（group-run 的 per-context 凭据查找）⇒ 部署需 `npm i -g`，不能只热替 dist。
 - 验证：重放 82/82、`npm run build` 通过、`verify-patch-stack.sh` 82 补丁重放树与 custom-next 逐字节一致。
 
+## 增量：0.7.38 → 0.7.39 升级（2026-10-24）
+
+- 上游 25 提交 / 214 文件 / +6126 −2438（主体：会话任务 drawer+webhook #3499/#3501/#3509/#3510/#3512、
+  桌面浏览器中继与主题 #3478/#3504/#3514/#3517、TOS 打包下线 #3503、command approval 回滚 #3505）。
+- **83 补丁重放只 1 处停点**（`09-nav/005` 磨砂抽屉）：上游本版唯一碰同一行的是把
+  `background: $bg-sidebar-surface` 变量化成 `var(--theme-sidebar-bg, $bg-sidebar-surface)`，
+  fork 补丁整块替换该属性（磨砂玻璃 + 两处圆角）⇒ 整块取补丁侧（theirs）。
+  ⚠️ 该停点是 **am 静默失败**（rc=128、无未合并路径、无冲突标记），只走「等价键应用」也会失败
+  （hunk 的 `border-*-right-radius` 两行在 new 侧重复出现），需手工先 `git am --3way` 复现冲突、
+  再取 theirs、`git add` 后 `am --continue`。解析规则见升级目录 `rules_0739.py`。
+- 回写 5 个补丁（真语义变化）：
+  `06-remove/001`（GroupChatPanel/GroupChatLinkView 上游又加了几行 ⇒ 删除行数变化 + hunk 行号）、
+  `06-remove/002`、`06-remove/003`（WorkflowAgentNode.vue 上游新增 reasoningEffort 选项 ⇒ 删除块内容变化）、
+  `06-remove/004`、`09-nav/005`（上条的冲突解）。仅行号漂移 57 个，其余逐字节未变。
+- 依赖与 `bin/`：`package.json` 只有 version（0.7.38→0.7.39）与移除 `pack:tos`/`verify:tos` 脚本，
+  dependencies/devDependencies **零增删**；但 `bin/ekko-studio-mcp.mjs` 有实质改动
+  （session-tasks 端点带上 per-run 凭据、`AsyncLocalStorage` 浏览器调用上下文、browser 超时 45s→300s、
+  新增 `ekko_studio_list_session_tasks` 工具）⇒ **部署需 `npm i -g`，不能只热替 dist**。
+- 验证：重放 83/83、`npm run build` 通过、`harness:check` 通过、`scripts/verify-patch-stack.sh` 83 补丁重放树与
+  custom-next 逐字节一致；双树单测（179 个补丁相关/上游变更文件，1602 例）**0 真回归**
+  （27 例两树同红＝fork 既存，5 例上游修复）。
+
 ## 修改补丁串的约定
 
 - **新增一个补丁组**：目录名 `NN-<slug>`，序号取现有末组 +1；同时更新本文件的分组总览与 ORDER。
