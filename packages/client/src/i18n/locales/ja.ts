@@ -1275,6 +1275,7 @@ export default {
     noSessions: 'セッションがありません',
     recent: '最近',
     recentCount: '最近のセッション数',
+    manageCategories: 'カテゴリを管理',
     loadMoreSessions: 'さらにセッションを読み込む',
     newChat: '新しいチャット',
     newChatCardTitle: "どんなアイデアにも、頼れるパートナーを。",
