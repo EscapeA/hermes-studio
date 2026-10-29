@@ -1,103 +1,45 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  buildRecentSessionCategoryGroup,
-  buildVisibleSessionCategoryGroups,
-  partitionRecentSessions,
-} from '../../packages/client/src/components/hermes/chat/session-category-groups'
+import { partitionRecentSessions } from '../../packages/client/src/components/hermes/chat/session-category-groups'
 
-describe('session category groups', () => {
-  it('hides categories that have no visible sessions', () => {
-    const groups = buildVisibleSessionCategoryGroups(
-      [
-        { id: 1, name: 'Work' },
-        { id: 2, name: 'Empty' },
-      ],
-      [
-        { id: 'session-1', categoryId: 1 },
-        { id: 'session-2', categoryId: null },
-      ],
-      'Uncategorized',
-    )
-
-    expect(groups.map((group) => [group.key, group.sessions.length])).toEqual([
-      ['category-1', 1],
-      ['category-none', 1],
-    ])
-  })
-
-  it('returns no groups when the session list is empty', () => {
-    expect(buildVisibleSessionCategoryGroups(
-      [{ id: 1, name: 'Work' }],
-      [],
-      'Uncategorized',
-    )).toEqual([])
-  })
-
-  it('hides the uncategorized group when there are no user-defined categories', () => {
-    const groups = buildVisibleSessionCategoryGroups(
-      [],
-      [
-        { id: 'session-1', categoryId: null },
-        { id: 'session-2', categoryId: 999 },
-      ],
-      'Uncategorized',
-    )
-
-    expect(groups).toEqual([])
-  })
-
-  it('shows sessions with deleted or unknown categories as uncategorized', () => {
-    const groups = buildVisibleSessionCategoryGroups(
-      [{ id: 1, name: 'Work' }],
-      [{ id: 'session-1', categoryId: 999 }],
-      'Uncategorized',
-    )
-
-    expect(groups).toEqual([{
-      key: 'category-none',
-      label: 'Uncategorized',
-      sessions: [{ id: 'session-1', categoryId: 999 }],
-    }])
-  })
-
-  it('builds a dynamic recent group by strict activity time without changing real categories', () => {
+describe('recent session partition', () => {
+  it('orders by strict activity time and splits the newest page from the rest', () => {
     const sessions = [
-      { id: 'older', categoryId: 1, updatedAt: 100 },
-      { id: 'newest', categoryId: null, updatedAt: 300 },
-      { id: 'middle', categoryId: 2, updatedAt: 200 },
+      { id: 'older', updatedAt: 100 },
+      { id: 'newest', updatedAt: 300 },
+      { id: 'middle', updatedAt: 200 },
     ]
 
-    expect(buildRecentSessionCategoryGroup(sessions, 2, 'Recent')).toEqual({
+    const partition = partitionRecentSessions(sessions, 2, 'Recent')
+
+    expect(partition.group).toEqual({
       key: 'recent',
       label: 'Recent',
       sessions: [sessions[1], sessions[2]],
     })
-    expect(sessions.map(session => session.categoryId)).toEqual([1, null, 2])
+    expect(partition.remaining.map(session => session.id)).toEqual(['older'])
+    // The source list must never be reordered in place.
+    expect(sessions.map(session => session.id)).toEqual(['older', 'newest', 'middle'])
   })
 
-  it('keeps recent sessions in their sidebar categories', () => {
-    const sessions = [
-      { id: 'older-pinned', categoryId: 1, updatedAt: 100 },
-      { id: 'newest-categorized', categoryId: 1, updatedAt: 300 },
-      { id: 'middle-uncategorized', categoryId: null, updatedAt: 200 },
-    ]
+  it('grows the visible window by page size so "load more" appends older sessions', () => {
+    const sessions = Array.from({ length: 5 }, (_, index) => ({
+      id: `session-${index}`,
+      updatedAt: 1000 - index,
+    }))
 
-    const partition = partitionRecentSessions(sessions, 2, 'Recent')
-    const otherGroups = buildVisibleSessionCategoryGroups(
-      [{ id: 1, name: 'Work' }],
-      partition.remaining,
-      'Uncategorized',
-    )
+    expect(partitionRecentSessions(sessions, 2, 'Recent').group.sessions.map(s => s.id))
+      .toEqual(['session-0', 'session-1'])
+    expect(partitionRecentSessions(sessions, 4, 'Recent').group.sessions.map(s => s.id))
+      .toEqual(['session-0', 'session-1', 'session-2', 'session-3'])
+    expect(partitionRecentSessions(sessions, 6, 'Recent').remaining).toEqual([])
+  })
 
-    expect(partition.group.sessions.map(session => session.id)).toEqual([
-      'newest-categorized',
-      'middle-uncategorized',
-    ])
-    expect(otherGroups.flatMap(group => group.sessions.map(session => session.id))).toEqual([
-      'older-pinned',
-      'newest-categorized',
-      'middle-uncategorized',
-    ])
+  it('clamps the limit to a sane page size', () => {
+    const sessions = [{ id: 'only', updatedAt: 1 }]
+
+    expect(partitionRecentSessions(sessions, 0, 'Recent').group.sessions).toHaveLength(1)
+    expect(partitionRecentSessions(sessions, Number.NaN, 'Recent').group.sessions).toHaveLength(1)
+    expect(partitionRecentSessions(sessions, 5000, 'Recent').group.sessions).toHaveLength(1)
   })
 })

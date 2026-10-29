@@ -384,7 +384,8 @@ onUnmounted(() => {
 .session-item-category-tag {
   flex: 0 1 auto;
   min-width: 0;
-  max-width: 45%;
+  /* 副标题行只剩分类标签，宽度可以放到整行；此前 45% 会把长分类名截断。 */
+  max-width: 100%;
   overflow: hidden;
   padding: calc(1px * var(--spacing-scale, 1)) calc(6px * var(--spacing-scale, 1));
   border-radius: var(--radius-component, 4px);

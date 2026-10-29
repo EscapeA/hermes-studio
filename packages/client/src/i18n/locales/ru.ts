@@ -1215,6 +1215,7 @@ export default {
     noSessions: 'Нет сеансов',
     recent: 'Недавние',
     recentCount: 'Количество недавних сессий',
+    manageCategories: 'Управление категориями',
     loadMoreSessions: 'Загрузить ещё сеансы',
     searchTitle: 'Поиск сеансов',
     searchSubtitle: 'Поиск по заголовку или содержимому сообщений',
