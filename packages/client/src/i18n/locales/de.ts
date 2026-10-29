@@ -1310,6 +1310,7 @@ export default {
     noSessions: 'Keine Sitzungen',
     recent: 'Zuletzt',
     recentCount: 'Anzahl letzter Sitzungen',
+    manageCategories: 'Kategorien verwalten',
     loadMoreSessions: 'Weitere Sitzungen laden',
     newChat: 'Neuer Chat',
     newChatCardTitle: "Jede Idee verdient einen guten Partner.",
