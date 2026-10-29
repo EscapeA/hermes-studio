@@ -10,10 +10,12 @@ const props = defineProps<{
   loading?: boolean
   batchMode: boolean
   batchDisabled?: boolean
+  categories?: Array<{ id: number; name: string }>
 }>()
 const emit = defineEmits<{
   filter: [profile: string | null]
   batch: []
+  'category-action': [payload: { action: 'rename' | 'delete'; categoryId: number }]
 }>()
 const { t } = useI18n()
 const show = ref(false)
@@ -40,6 +42,22 @@ const options = computed<DropdownOption[]>(() => {
     )
   }
   items.push({ key: 'batch', label: t('chat.toggleBatchMode'), disabled: props.batchMode || props.batchDisabled })
+  // 分类不再作为侧栏分组，重命名/删除改为从这里进入。
+  if (props.categories?.length) {
+    items.push({
+      key: 'categories',
+      label: t('chat.manageCategories'),
+      disabled: props.batchMode,
+      children: props.categories.map(category => ({
+        key: `category-manage:${category.id}`,
+        label: category.name,
+        children: [
+          { key: `category-rename:${category.id}`, label: t('chat.renameCategory') },
+          { key: `category-delete:${category.id}`, label: t('chat.deleteCategory') },
+        ],
+      })),
+    })
+  }
   return items
 })
 
@@ -48,6 +66,11 @@ function select(key: string) {
   if (key === 'batch') emit('batch')
   else if (key === 'all') emit('filter', null)
   else if (key.startsWith('profile:')) emit('filter', key.slice('profile:'.length))
+  else if (key.startsWith('category-rename:')) {
+    emit('category-action', { action: 'rename', categoryId: Number(key.slice('category-rename:'.length)) })
+  } else if (key.startsWith('category-delete:')) {
+    emit('category-action', { action: 'delete', categoryId: Number(key.slice('category-delete:'.length)) })
+  }
 }
 </script>
 
