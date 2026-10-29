@@ -68,7 +68,7 @@ import ChatToolsPanel from "./ChatToolsPanel.vue";
 import SubagentStreamPanel from "./SubagentStreamPanel.vue";
 import { chatSessionAgentAvatar } from "@/utils/chat-agent-avatar";
 import { isHermesSession } from "@/utils/hermes/session-agent";
-import { buildVisibleSessionCategoryGroups, partitionRecentSessions } from "./session-category-groups";
+import { partitionRecentSessions } from "./session-category-groups";
 import { buildSessionCategoryMenuChildren, resolveRecentSessionCategoryLabel } from "./session-category-menu";
 import { buildActiveSessionMenuOptions, buildSessionContextMenuOptions } from "./session-menu-options";
 import PageSidebarNav from "@/components/layout/PageSidebarNav.vue";
@@ -371,14 +371,8 @@ async function submitBrowserAnnotations(payload: BrowserAnnotationSubmission): P
   return true;
 }
 
-async function handleSessionClick(
-  sessionId: string,
-  options: { preserveCategoryCollapse?: boolean } = {},
-) {
+async function handleSessionClick(sessionId: string) {
   closeNewChatPage();
-  if (!options.preserveCategoryCollapse) {
-    setCategoryRevealSuppressedSessionId(null);
-  }
   chatStore.clearSessionCompletedUnread(sessionId);
   if (isMobile.value) showSessions.value = false;
   await router.push({
@@ -388,12 +382,6 @@ async function handleSessionClick(
   if (chatStore.activeSessionId !== sessionId) {
     await chatStore.switchSession(sessionId);
   }
-}
-
-async function handleRecentSessionClick(sessionId: string) {
-  // Recent is a shortcut; selecting it must not overwrite the real category's saved collapse state.
-  setCategoryRevealSuppressedSessionId(sessionId);
-  await handleSessionClick(sessionId, { preserveCategoryCollapse: true });
 }
 
 
@@ -612,61 +600,9 @@ const createCategoryPendingCategory = ref<SessionCategory | null>(null);
 const createCategorySubmitting = ref(false);
 const createCategoryInputRef = ref<InstanceType<typeof NInput> | null>(null);
 let sessionCategoriesLoadPromise: Promise<void> | null = null;
-const COLLAPSED_CATEGORIES_STORAGE_KEY = "hermes_chat_collapsed_categories";
-const RECENT_CATEGORY_REVEAL_SUPPRESSION_STORAGE_KEY = "hermes_chat_recent_category_reveal_suppression";
 const showRecentCountModal = ref(false);
 const recentCountDraft = ref(sessionBrowserPrefsStore.recentCount);
 
-function loadCollapsedCategories(): Set<string> {
-  try {
-    const value = JSON.parse(localStorage.getItem(COLLAPSED_CATEGORIES_STORAGE_KEY) || "[]");
-    return new Set(Array.isArray(value) ? value.map(String) : []);
-  } catch {
-    return new Set();
-  }
-}
-
-const collapsedCategories = ref<Set<string>>(loadCollapsedCategories());
-
-function loadCategoryRevealSuppressedSessionId(): string | null {
-  try {
-    return sessionStorage.getItem(RECENT_CATEGORY_REVEAL_SUPPRESSION_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-const categoryRevealSuppressedSessionId = ref<string | null>(
-  loadCategoryRevealSuppressedSessionId(),
-);
-
-function setCategoryRevealSuppressedSessionId(sessionId: string | null) {
-  categoryRevealSuppressedSessionId.value = sessionId;
-  try {
-    if (sessionId) {
-      sessionStorage.setItem(RECENT_CATEGORY_REVEAL_SUPPRESSION_STORAGE_KEY, sessionId);
-    } else {
-      sessionStorage.removeItem(RECENT_CATEGORY_REVEAL_SUPPRESSION_STORAGE_KEY);
-    }
-  } catch {
-    // Keep the in-memory behavior when session storage is unavailable.
-  }
-}
-
-function persistCollapsedCategories() {
-  localStorage.setItem(
-    COLLAPSED_CATEGORIES_STORAGE_KEY,
-    JSON.stringify([...collapsedCategories.value]),
-  );
-}
-
-function toggleCategoryGroup(key: string) {
-  const next = new Set(collapsedCategories.value);
-  if (next.has(key)) next.delete(key);
-  else next.add(key);
-  collapsedCategories.value = next;
-  persistCollapsedCategories();
-}
 async function handleProfileFilterChange(value: string | null) {
   chatStore.setSessionProfileFilter(value);
   await chatStore.loadSessions(chatStore.sessionProfileFilter);
@@ -681,13 +617,32 @@ function sortSessionsForSidebar(items: Session[]): Session[] {
   });
 }
 
+const pinnedSessions = computed(() =>
+  sortSessionsForSidebar(
+    chatStore.sessions.filter((session) =>
+      session.isPinned,
+    ),
+  ),
+);
+
+// 分类不再参与侧栏分组：侧栏只有「置顶」+「最近」。
+// 「最近」以 recentCount 作为单页条数，底部「加载更多」按页追加更早的会话。
+const recentPageCount = ref(1);
+const recentPageSize = computed(() => sessionBrowserPrefsStore.recentCount);
+const unpinnedSessions = computed(() =>
+  sortSessionsForSidebar(
+    chatStore.sessions.filter((session) => !/^person-(main|task)-/.test(session.id) && !session.isPinned),
+  ),
+);
 const recentSessionPartition = computed(() => partitionRecentSessions(
-  chatStore.sessions.filter((session) => !/^person-(main|task)-/.test(session.id) && !session.isPinned),
-  sessionBrowserPrefsStore.recentCount,
+  unpinnedSessions.value,
+  recentPageSize.value * recentPageCount.value,
   t("chat.recent"),
 ));
 const recentSessions = computed(() => recentSessionPartition.value.group);
-const nonRecentSessions = computed(() => recentSessionPartition.value.remaining);
+const hasMoreRecentSessions = computed(
+  () => recentSessionPartition.value.remaining.length > 0,
+);
 const sessionCategoryNames = computed(() => new Map(
   sessionCategories.value.map(category => [category.id, category.name]),
 ));
@@ -702,31 +657,18 @@ function recentCategoryLabel(session: Session): string | undefined {
   );
 }
 
+function loadMoreRecentSessions() {
+  recentPageCount.value += 1;
+}
+
+watch(
+  [recentPageSize, () => chatStore.sessionProfileFilter],
+  () => { recentPageCount.value = 1; },
+);
+
 function toggleRecentGroup() {
   sessionBrowserPrefsStore.setRecentCollapsed(!sessionBrowserPrefsStore.recentCollapsed);
 }
-
-const pinnedSessions = computed(() =>
-  sortSessionsForSidebar(
-    chatStore.sessions.filter((session) => !/^person-(main|task)-/.test(session.id) &&
-      session.isPinned,
-    ),
-  ),
-);
-
-const unpinnedSessions = computed(() =>
-  sortSessionsForSidebar(
-    nonRecentSessions.value.filter(
-      (session) => !session.isPinned,
-    ),
-  ),
-);
-
-const categorizedSessions = computed(() => buildVisibleSessionCategoryGroups(
-  sessionCategories.value,
-  unpinnedSessions.value,
-  t("chat.uncategorized"),
-));
 
 function openRecentCountModal(event: MouseEvent) {
   event.stopPropagation();
@@ -738,46 +680,6 @@ function saveRecentCount() {
   sessionBrowserPrefsStore.setRecentCount(recentCountDraft.value);
   showRecentCountModal.value = false;
 }
-
-const activeSessionCategoryKey = computed(() => {
-  const session = chatStore.sessions.find((item) => item.id === chatStore.activeSessionId);
-  return session?.categoryId == null ? "category-none" : `category-${session.categoryId}`;
-});
-
-watch(
-  [
-    () => sessionCategoriesLoaded.value,
-    () => categorizedSessions.value.map((group) => group.key).join("\u0000"),
-    () => chatStore.activeSessionId,
-    activeSessionCategoryKey,
-  ],
-  ([loaded, , sessionId, activeKey], [previousLoaded, , previousSessionId, previousActiveKey]) => {
-    if (!sessionCategoriesLoaded.value || categorizedSessions.value.length === 0) return;
-    const activeSession = chatStore.sessions.find((session) => session.id === chatStore.activeSessionId);
-    if (categoryRevealSuppressedSessionId.value === activeSession?.id) return;
-    setCategoryRevealSuppressedSessionId(null);
-    // Only navigation or a changed category should reveal the active session.
-    // Background list refreshes must preserve manually collapsed groups.
-    const shouldReveal = loaded !== previousLoaded
-      || sessionId !== previousSessionId
-      || activeKey !== previousActiveKey;
-    if (shouldReveal && collapsedCategories.value.has(activeKey)) {
-      collapsedCategories.value = new Set(
-        [...collapsedCategories.value].filter((key) => key !== activeKey),
-      );
-      persistCollapsedCategories();
-    }
-    if (localStorage.getItem(COLLAPSED_CATEGORIES_STORAGE_KEY) !== null) return;
-    const expandedKey = categorizedSessions.value.some((group) => group.key === activeKey)
-      ? activeKey
-      : categorizedSessions.value[0]?.key;
-    collapsedCategories.value = new Set(
-      categorizedSessions.value.map((group) => group.key).filter((key) => key !== expandedKey),
-    );
-    persistCollapsedCategories();
-  },
-  { immediate: true },
-);
 
 async function loadSessionCategories() {
   if (sessionCategoriesLoadPromise) return sessionCategoriesLoadPromise;
@@ -1834,57 +1736,22 @@ const contextSession = computed(() =>
     : null,
 );
 
-const showCategoryContextMenu = ref(false);
-const categoryContextMenuX = ref(0);
-const categoryContextMenuY = ref(0);
 const categoryContextId = ref<number | null>(null);
 const categoryContextName = computed(() =>
   sessionCategories.value.find((item) => item.id === categoryContextId.value)?.name || "",
 );
-const categoryContextMenuOptions = computed<DropdownOption[]>(() => [
-  { label: t("chat.renameCategory"), key: "rename" },
-  { label: t("chat.deleteCategory"), key: "delete" },
-]);
 const showRenameCategoryModal = ref(false);
 const renameCategoryValue = ref("");
 const showDeleteCategoryModal = ref(false);
 
-function handleCategoryContextMenu(event: MouseEvent, groupKey: string) {
-  if (groupKey === "category-none") return;
-  const categoryId = Number(groupKey.slice("category-".length));
-  if (!Number.isSafeInteger(categoryId)) return;
-  event.preventDefault();
-  event.stopPropagation();
-  showContextMenu.value = false;
-  categoryContextId.value = categoryId;
-  categoryContextMenuX.value = event.clientX;
-  categoryContextMenuY.value = event.clientY;
-  showCategoryContextMenu.value = true;
-}
-
-function handleCategoryMenuButton(event: MouseEvent, groupKey: string) {
-  if (groupKey === "category-none") return;
-  const categoryId = Number(groupKey.slice("category-".length));
-  if (!Number.isSafeInteger(categoryId)) return;
-  event.preventDefault();
-  event.stopPropagation();
-  const anchor = event.currentTarget as HTMLElement;
-  const rect = anchor.getBoundingClientRect();
-  showContextMenu.value = false;
-  categoryContextId.value = categoryId;
-  categoryContextMenuX.value = rect.left;
-  categoryContextMenuY.value = rect.bottom;
-  showCategoryContextMenu.value = true;
-}
-
-function handleCategoryContextMenuSelect(key: string) {
-  showCategoryContextMenu.value = false;
-  const category = sessionCategories.value.find((item) => item.id === categoryContextId.value);
+function handleListCategoryAction(payload: { action: "rename" | "delete"; categoryId: number }) {
+  const category = sessionCategories.value.find((item) => item.id === payload.categoryId);
   if (!category) return;
-  if (key === "rename") {
+  categoryContextId.value = category.id;
+  if (payload.action === "rename") {
     renameCategoryValue.value = category.name;
     showRenameCategoryModal.value = true;
-  } else if (key === "delete") {
+  } else {
     showDeleteCategoryModal.value = true;
   }
 }
@@ -1914,13 +1781,6 @@ async function handleDeleteCategoryConfirm() {
     sessionCategories.value = sessionCategories.value.filter((item) => item.id !== categoryId);
     for (const session of chatStore.sessions) {
       if (session.categoryId === categoryId) session.categoryId = null;
-    }
-    const collapsedKey = `category-${categoryId}`;
-    if (collapsedCategories.value.has(collapsedKey)) {
-      collapsedCategories.value = new Set(
-        [...collapsedCategories.value].filter((key) => key !== collapsedKey),
-      );
-      persistCollapsedCategories();
     }
     message.success(t("chat.categoryDeleted"));
     showDeleteCategoryModal.value = false;
@@ -1982,7 +1842,6 @@ const contextMenuCategoriesKey = computed(() => [
 
 function handleContextMenu(e: MouseEvent, sessionId: string) {
   e.preventDefault();
-  showCategoryContextMenu.value = false;
   contextSessionId.value = sessionId;
   showContextMenu.value = true;
   contextMenuX.value = e.clientX;
@@ -2513,9 +2372,11 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
               :profiles="profilesStore.profiles"
               :profile="sessionProfileFilter"
               :loading="profilesStore.loading"
+              :categories="sessionCategories"
               :batch-mode="isBatchMode"
               @filter="handleProfileFilterChange"
               @batch="toggleBatchMode"
+              @category-action="handleListCategoryAction"
             />
             <button
               v-if="isMobile"
@@ -2626,12 +2487,20 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
               :category-label="recentCategoryLabel(s)"
               :to="sessionHref(s.id)"
               :intercept-modified-navigation="desktopChatWindowAvailable"
-              @select="handleRecentSessionClick(s.id)"
+              @select="handleSessionClick(s.id)"
               @open-new="openSessionInNewTab(s.id, s.profile || null)"
               @contextmenu="handleContextMenu($event, s.id)"
               @delete="handleDeleteSession(s.id)"
               @toggle-select="toggleSessionSelection(s)"
             />
+            <button
+              v-if="hasMoreRecentSessions"
+              class="session-load-more"
+              type="button"
+              @click="loadMoreRecentSessions"
+            >
+              {{ t("chat.loadMoreSessions") }}
+            </button>
           </template>
         </template>
 
@@ -2649,71 +2518,6 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
             {{ t("common.retry") }}
           </button>
         </div>
-
-        <template v-for="group in categorizedSessions" :key="group.key">
-          <div
-            class="session-group-header"
-            @click="toggleCategoryGroup(group.key)"
-            @contextmenu="handleCategoryContextMenu($event, group.key)"
-          >
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              class="group-chevron"
-              :class="{ collapsed: collapsedCategories.has(group.key) }"
-            >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-            <span class="session-group-label">{{ group.label }}</span>
-            <span class="session-group-count">{{ group.sessions.length }}</span>
-            <button
-              v-if="group.key !== 'category-none'"
-              class="session-category-menu-button"
-              type="button"
-              :aria-label="t('chat.more')"
-              :title="t('chat.more')"
-              @click="handleCategoryMenuButton($event, group.key)"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <circle cx="5" cy="12" r="1.6" />
-                <circle cx="12" cy="12" r="1.6" />
-                <circle cx="19" cy="12" r="1.6" />
-              </svg>
-            </button>
-          </div>
-          <template v-if="!collapsedCategories.has(group.key)">
-            <SessionListItem
-              v-for="s in group.sessions"
-              :key="s.id"
-              :session="s"
-              :active="s.id === chatStore.activeSessionId"
-              :pinned="false"
-              can-delete
-              :streaming="sessionStates.isWorking(s.id, chatStore.isSessionWorking(s.id))"
-              :completed-unread="sessionStates.isUnread(s.id, chatStore.isSessionCompletedUnread(s.id))"
-              :selectable="isBatchMode"
-              :selected="isSessionSelected(s)"
-              :show-profile="true"
-              :to="sessionHref(s.id)"
-              :intercept-modified-navigation="desktopChatWindowAvailable"
-              @select="handleSessionClick(s.id)"
-              @open-new="openSessionInNewTab(s.id, s.profile || null)"
-              @contextmenu="handleContextMenu($event, s.id)"
-              @delete="handleDeleteSession(s.id)"
-              @toggle-select="toggleSessionSelection(s)"
-            />
-          </template>
-        </template>
       </template>
     </SessionListSidebar>
 
@@ -2794,17 +2598,6 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
     >
       <NInputNumber v-model:value="recentCountDraft" :min="1" :max="100" />
     </NModal>
-
-    <NDropdown
-      placement="bottom-start"
-      trigger="manual"
-      :x="categoryContextMenuX"
-      :y="categoryContextMenuY"
-      :options="categoryContextMenuOptions"
-      :show="showCategoryContextMenu"
-      @select="handleCategoryContextMenuSelect"
-      @clickoutside="showCategoryContextMenu = false"
-    />
 
     <NModal
       v-model:show="showCreateCategoryModal"
@@ -3526,20 +3319,19 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
   font-weight: 400;
 }
 
-.session-category-menu-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
-  margin-inline-start: auto;
-  padding: 0;
+.session-load-more {
+  display: block;
+  width: 100%;
+  margin: calc(2px * var(--spacing-scale, 1)) 0 calc(6px * var(--spacing-scale, 1));
+  padding: calc(6px * var(--spacing-scale, 1)) calc(10px * var(--spacing-scale, 1));
   border: 0;
-  border-radius: var(--radius-component, 4px);
+  border-radius: var(--radius-component, 6px);
   background: transparent;
   color: $text-muted;
   cursor: pointer;
+  font: inherit;
+  font-size: calc(var(--font-size-base, 14px) * 11 / 14);
+  text-align: center;
 
   &:hover,
   &:focus-visible {

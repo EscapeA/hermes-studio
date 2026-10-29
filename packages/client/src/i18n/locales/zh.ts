@@ -1325,6 +1325,7 @@ export default {
     noSessions: '暂无会话',
     recent: '最近',
     recentCount: '最近会话数量',
+    manageCategories: '管理分类',
     loadMoreSessions: '加载更多会话',
     searchTitle: '搜索会话',
     searchSubtitle: '按标题或消息内容搜索',

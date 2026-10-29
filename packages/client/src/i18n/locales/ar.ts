@@ -1315,6 +1315,7 @@ export default {
     noSessions: 'لا توجد جلسات',
     recent: 'الأخيرة',
     recentCount: 'عدد الجلسات الأخيرة',
+    manageCategories: 'إدارة الفئات',
     loadMoreSessions: 'تحميل جلسات أكثر',
     searchTitle: 'البحث في الجلسات',
     searchSubtitle: 'ابحث بالعنوان أو بمحتوى الرسالة',

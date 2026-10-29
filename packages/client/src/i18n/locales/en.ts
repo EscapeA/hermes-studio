@@ -1324,6 +1324,7 @@ export default {
     noSessions: 'No sessions',
     recent: 'Recent',
     recentCount: 'Recent session count',
+    manageCategories: 'Manage categories',
     loadMoreSessions: 'Load more sessions',
     searchTitle: 'Search Sessions',
     searchSubtitle: 'Search by title or message content',

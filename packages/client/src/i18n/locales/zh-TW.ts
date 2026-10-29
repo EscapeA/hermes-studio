@@ -1316,6 +1316,7 @@ export default {
     noSessions: '目前無工作階段',
     recent: '最近',
     recentCount: '最近會話數量',
+    manageCategories: '管理分類',
     loadMoreSessions: '載入更多工作階段',
     searchTitle: '搜尋工作階段',
     searchSubtitle: '依標題或訊息內容搜尋',

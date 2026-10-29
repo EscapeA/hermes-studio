@@ -1274,6 +1274,7 @@ export default {
     noSessions: 'Aucune session',
     recent: 'Récentes',
     recentCount: 'Nombre de sessions récentes',
+    manageCategories: 'Gérer les catégories',
     loadMoreSessions: 'Charger plus de sessions',
     newChat: 'Nouvelle discussion',
     newChatCardTitle: "Chaque idée mérite un bon partenaire.",
