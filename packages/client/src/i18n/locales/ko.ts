@@ -1275,6 +1275,7 @@ export default {
     noSessions: '세션 없음',
     recent: '최근',
     recentCount: '최근 세션 수',
+    manageCategories: '카테고리 관리',
     loadMoreSessions: '세션 더 불러오기',
     newChat: '새 채팅',
     newChatCardTitle: "모든 아이디어에는 좋은 파트너가 필요합니다.",
