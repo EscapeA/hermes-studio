@@ -40,8 +40,6 @@
 040 06-remove/004-test-web-adapt-client-and-e2e-suites-after-workf.patch
 041 07-sidebar/001-feat-web-rework-the-page-sidebar-into-a-flat-nav.patch
 042 07-sidebar/002-test-web-cover-the-flat-page-sidebar-and-history.patch
-043 06-remove/005-feat-web-remove-avatars-from-the-frontend.patch
-044 06-remove/006-test-web-adapt-suites-after-avatar-removal.patch
 045 04-usage/010-feat-usage-show-the-current-decode-speed-beside-.patch
 046 04-usage/011-test-usage-cover-the-per-call-decode-reading.patch
 047 12-adapt/001-fix-test-add-a-locales-fallback-alias-to-the-vit.patch
@@ -70,16 +68,12 @@
 071 17-verify/004-verify-patch-stack-materialises-patches-untracked.patch
 072 12-adapt/005-fix-i18n-drop-turkish-keys-for-fork-removed-f.patch
 073 12-adapt/006-test-client-adapt-i18n-lazy-loading-suite-to-the-.patch
-074 05-chat/015-rebase-onto-upstream-0.7.35-structures.patch
-075 05-chat/016-adapt-suites-to-the-rebase-decisions.patch
 076 17-verify/005-point-the-patch-stack-verifier-and-docs-at-custom-next.patch
 077 19-blueprint/001-feat-theme-add-a-blueprint-style-beside-ink-and-comic.patch
 078 20-run-indicator/001-feat-usage-keep-the-live-decode-reading-on-one-l.patch
-079 21-session-live-dot/001-feat-chat-mark-working-sessions-with-a-live-dot-.patch
 080 04-usage/012-fix-chat-anchor-the-compression-trigger-on-the-p.patch
 081 22-0.7.36-adapt/001-re-home-the-ui-theme-baseline-onto-the-fork-tree.patch
 082 23-theme-contrast/001-fix-theme-keep-the-run-indicators-on-palette-tokens.patch
 083 12-adapt/007-fix-i18n-give-the-provider-import-modal-its-own-.patch
 084 24-drawer-safe-top/001-fix-mobile-keep-drawer-headers-below-the-status-bar.patch
-085 25-identity-rows/0001-feat-chat-drop-profile-and-agent-name-rows-from-sess.patch
 086 26-sidebar-recent-only/001-feat-chat-flatten-the-session-sidebar-to-pinned-and-r.patch
