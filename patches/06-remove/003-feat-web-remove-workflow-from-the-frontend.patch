@@ -1,4 +1,4 @@
-From 3d8aee8cc62f157ce74a01eb9376053ec6c23fcf Mon Sep 17 00:00:00 2001
+From b47c16940de6e0bf129fe45830846df5fe58d7b2 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] feat(web): remove workflow from the frontend
@@ -2060,7 +2060,7 @@ index 498f57318..e784365e8 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 7dceedcce..64a183f20 100644
+index 9e503913c..17efdbce6 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -654,7 +654,6 @@ export default {
@@ -2374,7 +2374,7 @@ index 7dceedcce..64a183f20 100644
    kanban: {
      title: 'لوحة كانبان',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index fb273068c..ca4bbc4c7 100644
+index 401dc6f9f..8042168b9 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -715,7 +715,6 @@ export default {
@@ -2561,7 +2561,7 @@ index fb273068c..ca4bbc4c7 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 8955bbfcd..345eb9c7b 100644
+index f8b50b844..1b0d95b15 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -654,7 +654,6 @@ export default {
@@ -2829,7 +2829,7 @@ index 8955bbfcd..345eb9c7b 100644
    kanban: {
      title: 'Kanban Board',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 5ba9eec7f..25715f8f3 100644
+index 97708dfa0..bddcfbb38 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -715,7 +715,6 @@ export default {
@@ -3016,7 +3016,7 @@ index 5ba9eec7f..25715f8f3 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 0c2c8b3b8..a0164632b 100644
+index fa6f2d6f2..4a5939e46 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -715,7 +715,6 @@ export default {
@@ -3203,7 +3203,7 @@ index 0c2c8b3b8..a0164632b 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 301e4bb91..5fe12ead3 100644
+index a33493496..eb8779d49 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -716,7 +716,6 @@ export default {
@@ -3390,7 +3390,7 @@ index 301e4bb91..5fe12ead3 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 76f963d37..25717efd1 100644
+index 5ecac30e3..7c3e99a76 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -716,7 +716,6 @@ export default {
@@ -3577,7 +3577,7 @@ index 76f963d37..25717efd1 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 0709fef9c..addfc5727 100644
+index 2de8ae846..7696ec25b 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -715,7 +715,6 @@ export default {
@@ -3764,7 +3764,7 @@ index 0709fef9c..addfc5727 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index ce2f15ae9..cbdb780c2 100644
+index cea6fb931..14ad753ed 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -580,7 +580,6 @@ export default {
@@ -4046,7 +4046,7 @@ index ce2f15ae9..cbdb780c2 100644
    kanban: {
      title: 'Канбан',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 11e10d98e..bd1bf9d5f 100644
+index 345290efc..f30a5e110 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -655,7 +655,6 @@ export default {
@@ -4355,7 +4355,7 @@ index 11e10d98e..bd1bf9d5f 100644
    kanban: {
      title: '看板',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 1f2c14316..1fddf405d 100644
+index 2b64df803..25093e77a 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -655,7 +655,6 @@ export default {

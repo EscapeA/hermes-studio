@@ -1,4 +1,4 @@
-From a8aebab6836d53162660b8212614321a7c5f75c8 Mon Sep 17 00:00:00 2001
+From 0e96dae1564732d8dc4eb9cc10391cd1246ffd97 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Tue, 20 Oct 2026 21:23:32 +0800
 Subject: [PATCH] fix(i18n): give the provider import modal its own profile
@@ -38,7 +38,7 @@ index 76dab857b..0b45c0917 100644
            :options="profiles.map(p => ({ label: p.name, value: p.name }))" />
        </NFormItem>
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 9998a9479..10a75aa08 100644
+index 49c8fb21a..625a0a8ce 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -1928,6 +1928,7 @@ export default {
@@ -50,7 +50,7 @@ index 9998a9479..10a75aa08 100644
      importNotice: "تحقق من العنوان والنموذج والملف المستهدف. عند التأكيد يحفظ Studio مفتاح API ويعيّن النموذج افتراضيًا لهذا الملف. لا يتم الاستيراد قبل التأكيد.",
      importConfirm: "تأكيد الاستيراد",
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 44d6532ef..431b21687 100644
+index f0f64234d..c43997cc1 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -1777,6 +1777,7 @@ jobTriggered: 'Job ausgelost',
@@ -62,7 +62,7 @@ index 44d6532ef..431b21687 100644
      importNotice: "Prüfen Sie Adresse, Modell und Zielprofil. Nach der Bestätigung speichert Studio den API-Schlüssel und setzt das Modell als Profilstandard. Vorher wird nichts importiert.",
      importConfirm: "Import bestätigen",
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index a5d52e81f..13a6f1373 100644
+index 293615189..3071dc742 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -1941,6 +1941,7 @@ export default {
@@ -74,7 +74,7 @@ index a5d52e81f..13a6f1373 100644
      importNotice: "Review the address, model and target Profile. Confirming saves the API key to Studio and selects this model as the Profile default. Nothing is imported before confirmation.",
      importConfirm: "Confirm import",
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index f12f8e2e9..22545e8f7 100644
+index 507ab6a9b..494f930a7 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -1777,6 +1777,7 @@ jobTriggered: 'Job ejecutado',
@@ -86,7 +86,7 @@ index f12f8e2e9..22545e8f7 100644
      importNotice: "Comprueba la dirección, el modelo y el perfil de destino. Al confirmar, Studio guarda la clave API y establece el modelo como predeterminado del perfil. No se importa nada antes de confirmar.",
      importConfirm: "Confirmar importación",
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index f9f738b16..d8d8ec36f 100644
+index 9dacaa4a7..bfc1dfb48 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -1777,6 +1777,7 @@ jobTriggered: 'Job declenche',
@@ -98,7 +98,7 @@ index f9f738b16..d8d8ec36f 100644
      importNotice: "Vérifiez l’adresse, le modèle et le profil cible. La confirmation enregistre la clé API dans Studio et définit ce modèle par défaut pour le profil. Rien n’est importé avant confirmation.",
      importConfirm: "Confirmer l’importation",
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index bb27f3ca6..ea210db23 100644
+index e8aa5abf0..27a34fc56 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -1778,6 +1778,7 @@ export default {
@@ -110,7 +110,7 @@ index bb27f3ca6..ea210db23 100644
      importNotice: "アドレス、モデル、対象の Profile を確認してください。確認すると API キーが Studio に保存され、このモデルが Profile の既定になります。確認前にはインポートされません。",
      importConfirm: "インポートを確認",
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index bd57c12f1..ae66f8e0a 100644
+index f855c6faa..8de833e2b 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -1778,6 +1778,7 @@ export default {
@@ -122,7 +122,7 @@ index bd57c12f1..ae66f8e0a 100644
      importNotice: "주소, 모델 및 대상 Profile을 확인하세요. 확인하면 API 키가 Studio에 저장되고 이 모델이 Profile의 기본 모델로 설정됩니다. 확인 전에는 가져오지 않습니다.",
      importConfirm: "가져오기 확인",
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index fabdaec18..b47cef9f0 100644
+index 8658db937..448a33b64 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -1777,6 +1777,7 @@ jobTriggered: 'Job acionado',
@@ -134,7 +134,7 @@ index fabdaec18..b47cef9f0 100644
      importNotice: "Verifique o endereço, o modelo e o perfil de destino. A confirmação salva a chave API no Studio e define o modelo como padrão do perfil. Nada é importado antes da confirmação.",
      importConfirm: "Confirmar importação",
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index cc298f8ed..ec22fb42d 100644
+index 6ba895bd4..14fde645b 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -1772,6 +1772,7 @@ export default {
@@ -146,10 +146,10 @@ index cc298f8ed..ec22fb42d 100644
      importNotice: "Проверьте адрес, модель и целевой профиль. После подтверждения Studio сохранит ключ API и назначит модель по умолчанию для профиля. До подтверждения ничего не импортируется.",
      importConfirm: "Подтвердить импорт",
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index 627fef153..bd930f844 100644
+index 57ba2150b..c17045b9d 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -643,6 +643,7 @@ export default {
+@@ -652,6 +652,7 @@ export default {
      writeApprovalUnsupported: 'Bu Hermes Aracısı sürümü yazma onaylarını desteklemiyor. Bu özelliği kullanmak için Hermes Aracısını yükseltin.',
    },
    models: {
@@ -158,7 +158,7 @@ index 627fef153..bd930f844 100644
      importTitle: "Sağlayıcıyı içe aktar",
      importNotice: "Adresi, modeli ve hedef profili kontrol edin. Onaylandığında API anahtarı Studio’ya kaydedilir ve model profilin varsayılanı olur. Onaydan önce hiçbir şey içe aktarılmaz.",
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 82f0fdf41..d3719c53a 100644
+index 120f7a836..d24bc221a 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -1935,6 +1935,7 @@ export default {
@@ -170,7 +170,7 @@ index 82f0fdf41..d3719c53a 100644
      importNotice: "請核對位址、模型與目標 Profile。確認後將 API Key 儲存至 Studio，並將此模型設為該 Profile 的預設模型。確認前不會匯入。",
      importConfirm: "確認匯入",
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index d6798abcb..e60137f58 100644
+index 0e0c3c866..e34b1611e 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -1942,6 +1942,7 @@ export default {

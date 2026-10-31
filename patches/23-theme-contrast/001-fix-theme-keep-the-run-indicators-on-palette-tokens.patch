@@ -1,4 +1,4 @@
-From 774b2ba0a3ac1769977b4180abbef3eadce4082b Mon Sep 17 00:00:00 2001
+From 12ff30692e6050439e0a211554808f5e918d7280 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 07:49:19 +0800
 Subject: [PATCH] fix(theme): keep the run indicators on palette tokens and

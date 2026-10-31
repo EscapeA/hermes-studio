@@ -1,4 +1,4 @@
-From cf662d784f4c62a1c3209f2aa84a32c8313d9037 Mon Sep 17 00:00:00 2001
+From 86ed674fe201382fcc61737cc41a7c57e917c1aa Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:05:12 +0800
 Subject: [PATCH] feat(chat): use latest API prompt_tokens for context usage UI

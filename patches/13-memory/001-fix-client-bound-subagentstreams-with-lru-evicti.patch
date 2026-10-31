@@ -1,4 +1,4 @@
-From c7b62775a3cbbbcd738521530ffe296e6a2d6a8e Mon Sep 17 00:00:00 2001
+From 4d05592a6bd06c328acd853eaae02272b0119220 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:03:03 +0800
 Subject: [PATCH] fix(client): bound subagentStreams with LRU eviction
@@ -14,7 +14,7 @@ map reads/writes in a plain (non-reactive) side map.
  1 file changed, 42 insertions(+), 2 deletions(-)
 
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index c3e9f0b7a..c8a3643c8 100644
+index e88f6ffd9..ae856b208 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
 @@ -1426,6 +1426,42 @@ function createChatState(scopedSessionId?: string) {
@@ -60,7 +60,7 @@ index c3e9f0b7a..c8a3643c8 100644
    const storedSessionProfileFilter = getItemBestEffort(SESSION_PROFILE_FILTER_STORAGE_KEY)?.trim()
    const sessionProfileFilter = ref<string | null>(
      storedSessionProfileFilter && storedSessionProfileFilter !== '__all__'
-@@ -2880,9 +2916,10 @@ function createChatState(scopedSessionId?: string) {
+@@ -2883,9 +2919,10 @@ function createChatState(scopedSessionId?: string) {
      const subagentId = String((evt as any).subagent_id || `${(evt as any).task_index ?? 0}`)
      const streamKey = `${sessionId}:${subagentId}`
      const currentStream = subagentStreams.value.get(streamKey)
@@ -72,7 +72,7 @@ index c3e9f0b7a..c8a3643c8 100644
      const toolCallId = `subagent:${subagentId}`
      const taskIndex = Number((evt as any).task_index ?? 0)
      const taskCount = Number((evt as any).task_count ?? 1)
-@@ -2989,7 +3026,10 @@ function createChatState(scopedSessionId?: string) {
+@@ -2992,7 +3029,10 @@ function createChatState(scopedSessionId?: string) {
    }
  
    function getSubagentStream(sessionId: string, subagentId: string): SubagentStream | null {

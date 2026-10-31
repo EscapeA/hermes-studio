@@ -1,4 +1,4 @@
-From d1b383f2578e62bc7783265a10954af535e56a81 Mon Sep 17 00:00:00 2001
+From 0be0f4feb44ffcf197f8f67b52216d2086c2a981 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 18:23:53 +0800
 Subject: [PATCH] feat(web): rework the page sidebar into a flat nav with a
@@ -208,7 +208,7 @@ index e784365e8..b6efd713c 100644
 -}
  </style>
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 64a183f20..5308ecdf3 100644
+index 17efdbce6..9b4ae98a5 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -671,7 +671,6 @@ export default {
@@ -220,7 +220,7 @@ index 64a183f20..5308ecdf3 100644
      files: 'الملفات',
      devices: 'الأجهزة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index ca4bbc4c7..8b389092b 100644
+index 8042168b9..6872396ff 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -681,7 +681,6 @@ export default {
@@ -232,7 +232,7 @@ index ca4bbc4c7..8b389092b 100644
      files: 'Dateien',
      devices: 'Gerate',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 345eb9c7b..f752b4c5b 100644
+index 1b0d95b15..568c21e59 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -671,7 +671,6 @@ export default {
@@ -244,7 +244,7 @@ index 345eb9c7b..f752b4c5b 100644
      files: 'Files',
      devices: 'Devices',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 25715f8f3..7f22d2aa0 100644
+index bddcfbb38..7bac3190f 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -681,7 +681,6 @@ export default {
@@ -256,7 +256,7 @@ index 25715f8f3..7f22d2aa0 100644
      files: 'Archivos',
      devices: 'Dispositivos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index a0164632b..5046b3c81 100644
+index 4a5939e46..073ad7dc9 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -681,7 +681,6 @@ export default {
@@ -268,7 +268,7 @@ index a0164632b..5046b3c81 100644
      files: 'Fichiers',
      devices: 'Appareils',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 5fe12ead3..91cf0ef95 100644
+index eb8779d49..a79d42820 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -682,7 +682,6 @@ export default {
@@ -280,7 +280,7 @@ index 5fe12ead3..91cf0ef95 100644
      files: 'ファイル',
      devices: 'デバイス',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 25717efd1..ab64a0fca 100644
+index 7c3e99a76..c2da0cd24 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -682,7 +682,6 @@ export default {
@@ -292,7 +292,7 @@ index 25717efd1..ab64a0fca 100644
      files: '파일',
      devices: '기기',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index addfc5727..ebfa3a3a0 100644
+index 7696ec25b..1024bbbc8 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -681,7 +681,6 @@ export default {
@@ -304,7 +304,7 @@ index addfc5727..ebfa3a3a0 100644
      files: 'Arquivos',
      devices: 'Dispositivos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index cbdb780c2..0625f07f5 100644
+index 14ad753ed..e2ce24a59 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -596,7 +596,6 @@ export default {
@@ -316,7 +316,7 @@ index cbdb780c2..0625f07f5 100644
      files: 'Файлы',
      devices: 'Устройства',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index bd1bf9d5f..22dca4600 100644
+index f30a5e110..d769d2136 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -672,7 +672,6 @@ export default {
@@ -328,7 +328,7 @@ index bd1bf9d5f..22dca4600 100644
      files: '檔案',
      devices: '裝置',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 1fddf405d..e2f9b1ab8 100644
+index 25093e77a..ce7d48e8e 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -672,7 +672,6 @@ export default {

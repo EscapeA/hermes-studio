@@ -1,4 +1,4 @@
-From d7b8ed0adf7a5283db808960ff2b87262b5833f1 Mon Sep 17 00:00:00 2001
+From 191e91f5903060bc9b59056f8aa12ce5171ef44f Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Wed, 19 Aug 2026 23:13:59 +0800
 Subject: [PATCH] feat(chat): anti-flicker collapsible tool strip
@@ -238,7 +238,7 @@ index b5724e47d..225ced87c 100644
    display: flex;
    flex: 1 1 0;
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 8f948d3ea..23309d8b7 100644
+index 76c0b07bd..b5a346e0a 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -1488,6 +1488,10 @@ export default {
@@ -253,7 +253,7 @@ index 8f948d3ea..23309d8b7 100644
      copiedBubble: 'Message copied',
      copyFailed: 'Copy failed',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 1f3a1bf5f..bc3ee0dc3 100644
+index b0ae1487d..eb9bb65ac 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -1471,6 +1471,10 @@ export default {
@@ -268,7 +268,7 @@ index 1f3a1bf5f..bc3ee0dc3 100644
      copiedBubble: '已複製',
      copyFailed: '複製失敗',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 83abe7687..b69a44b26 100644
+index 6b5c3e77d..65d95cf50 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -1489,6 +1489,10 @@ export default {

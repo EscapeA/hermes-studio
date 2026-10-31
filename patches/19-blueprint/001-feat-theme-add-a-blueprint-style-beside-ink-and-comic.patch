@@ -1,4 +1,4 @@
-From 0d2e511a5ab944ff84a4eddd2e747fe025d7d0b2 Mon Sep 17 00:00:00 2001
+From a29b838a35b740d2d1ada1b7aeabdb3bdf197ff4 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 14 Oct 2026 23:10:09 +0800
 Subject: [PATCH] feat(theme): add a blueprint style beside ink and comic
@@ -131,7 +131,7 @@ index 833235aa9..c28834ab1 100644
      customization,
      appearance: computed(() => normalizeThemeAppearance(serverTheme.value.appearance)),
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index d1df42f6b..9998a9479 100644
+index 9553c4135..49c8fb21a 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -2349,6 +2349,7 @@ export default {
@@ -143,7 +143,7 @@ index d1df42f6b..9998a9479 100644
      fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',
      textColor: 'لون النص',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 71dd7b6fe..44d6532ef 100644
+index 99d782450..f0f64234d 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -2151,6 +2151,7 @@ jobTriggered: 'Job ausgelost',
@@ -155,7 +155,7 @@ index 71dd7b6fe..44d6532ef 100644
      fontSizeHint: 'Grundgröße für Oberfläche und Unterhaltungen',
      textColor: 'Textfarbe',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 2c04562af..a5d52e81f 100644
+index 59488ede6..293615189 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -2362,6 +2362,7 @@ export default {
@@ -167,7 +167,7 @@ index 2c04562af..a5d52e81f 100644
      fontSizeHint: 'Base interface and conversation text size',
      textColor: 'Text color',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 20c1a3ce0..f12f8e2e9 100644
+index 5d97a8790..507ab6a9b 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -2151,6 +2151,7 @@ jobTriggered: 'Job ejecutado',
@@ -179,7 +179,7 @@ index 20c1a3ce0..f12f8e2e9 100644
      fontSizeHint: 'Tamaño base de la interfaz y las conversaciones',
      textColor: 'Color del texto',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 87075953a..f9f738b16 100644
+index 2965e5f83..9dacaa4a7 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -2151,6 +2151,7 @@ jobTriggered: 'Job declenche',
@@ -191,7 +191,7 @@ index 87075953a..f9f738b16 100644
      fontSizeHint: 'Taille de base de l’interface et des conversations',
      textColor: 'Couleur du texte',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 72f3fc566..bb27f3ca6 100644
+index 9b568e7c1..e8aa5abf0 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -2152,6 +2152,7 @@ export default {
@@ -203,7 +203,7 @@ index 72f3fc566..bb27f3ca6 100644
      fontSizeHint: '画面と会話テキストの基本サイズ',
      textColor: '文字色',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 96adfc22d..bd57c12f1 100644
+index 4dd69c30a..f855c6faa 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -2152,6 +2152,7 @@ export default {
@@ -215,7 +215,7 @@ index 96adfc22d..bd57c12f1 100644
      fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',
      textColor: '텍스트 색상',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 8889c6b24..fabdaec18 100644
+index fd9ba7719..8658db937 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -2151,6 +2151,7 @@ jobTriggered: 'Job acionado',
@@ -227,7 +227,7 @@ index 8889c6b24..fabdaec18 100644
      fontSizeHint: 'Tamanho base da interface e das conversas',
      textColor: 'Cor do texto',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 09f7dc3dc..cc298f8ed 100644
+index 8a02a9b66..6ba895bd4 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -2142,6 +2142,7 @@ export default {
@@ -239,10 +239,10 @@ index 09f7dc3dc..cc298f8ed 100644
      fontSizeHint: 'Базовый размер текста интерфейса и диалогов',
      textColor: 'Цвет текста',
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index e5bae41f4..627fef153 100644
+index cfb6f8f93..57ba2150b 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -561,7 +561,7 @@ export default {
+@@ -570,7 +570,7 @@ export default {
      customization: themeAppearanceMessages['tr'],
      title: 'Tema', saved: 'Tema kaydedildi', saveFailed: 'Tema kaydedilemedi', reset: 'Varsayılanları geri yükle', resetSuccess: 'Varsayılan tema geri yüklendi',
      appearance: 'Görünüm', appearanceHint: 'Değişiklikler arayüz genelinde önizlenir', mode: 'Parlaklık', modeHint: 'Açık veya koyu palet seçin',
@@ -252,7 +252,7 @@ index e5bae41f4..627fef153 100644
      accentColor: 'Seçim rengi', accentColorHint: 'Etkin öğelerde, seçimlerde ve birincil düğmelerde kullanılır', background: 'Arka plan görseli',
      backgroundHint: 'Bir görsel veya hareketli duvar kâğıdı yükleyin', backgroundTypeError: 'PNG, JPEG, WebP, GIF veya APNG görseli kullanın', backgroundSizeError: 'Arka plan görselleri en fazla 30 MB olabilir',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index cb9bea126..f4086de0c 100644
+index a861e4ab3..9bbe58b33 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -2309,6 +2309,7 @@ export default {
@@ -264,7 +264,7 @@ index cb9bea126..f4086de0c 100644
      fontSizeHint: '介面與對話內容的基礎字級',
      textColor: '文字顏色',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 9f4e606b2..9860b5ef7 100644
+index acfda39ab..f1e70b7a6 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -2355,6 +2355,7 @@ export default {

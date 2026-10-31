@@ -1,4 +1,4 @@
-From e2be2e31aa4327f37e9f6e533bf3ad5315b82826 Mon Sep 17 00:00:00 2001
+From a1ca75b47d250ea6ce85fe176c8b845f32b9cd30 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
 Subject: [PATCH] perf(i18n): merge en fallback at build time, one locale chunk

@@ -1,4 +1,4 @@
-From c505823f2d923154dd1a82d4de7165778f80d10c Mon Sep 17 00:00:00 2001
+From 2d218591fa9c93f59f6984312ed3caab8acb1725 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 12:52:40 +0800
 Subject: [PATCH] feat(chat): drop the composer voice button

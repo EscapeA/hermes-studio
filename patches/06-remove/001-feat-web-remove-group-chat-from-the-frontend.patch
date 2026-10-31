@@ -1,4 +1,4 @@
-From d888259ace3656c25ed20a188834b22c8cd18517 Mon Sep 17 00:00:00 2001
+From 21fd35c429ef63ffa7a3de803d8a72476d95fbb3 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:23 +0800
 Subject: [PATCH] feat(web): remove group chat from the frontend
@@ -12472,7 +12472,7 @@ index f937be668..498f57318 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 63e24b0d2..7dceedcce 100644
+index 2b83f1027..9e503913c 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -674,7 +674,6 @@ export default {
@@ -12724,7 +12724,7 @@ index 63e24b0d2..7dceedcce 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 0a735133d..fb273068c 100644
+index db5f9916b..401dc6f9f 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -687,7 +687,6 @@ export default {
@@ -12976,7 +12976,7 @@ index 0a735133d..fb273068c 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 855115ad8..8955bbfcd 100644
+index bf601f127..f8b50b844 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -674,7 +674,6 @@ export default {
@@ -13228,7 +13228,7 @@ index 855115ad8..8955bbfcd 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 73792b0ce..5ba9eec7f 100644
+index ffbfb1906..97708dfa0 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -687,7 +687,6 @@ export default {
@@ -13480,7 +13480,7 @@ index 73792b0ce..5ba9eec7f 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index ffa30482f..0c2c8b3b8 100644
+index 8fe2a836e..fa6f2d6f2 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -687,7 +687,6 @@ export default {
@@ -13732,7 +13732,7 @@ index ffa30482f..0c2c8b3b8 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 37a34ce7f..301e4bb91 100644
+index d3d301d2b..a33493496 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -688,7 +688,6 @@ export default {
@@ -13984,7 +13984,7 @@ index 37a34ce7f..301e4bb91 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index ce4aeae63..76f963d37 100644
+index 0398e9f35..5ecac30e3 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -688,7 +688,6 @@ export default {
@@ -14236,7 +14236,7 @@ index ce4aeae63..76f963d37 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 4ab7e6338..0709fef9c 100644
+index 6395751b0..2de8ae846 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -687,7 +687,6 @@ export default {
@@ -14488,7 +14488,7 @@ index 4ab7e6338..0709fef9c 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 0029d73e5..ce2f15ae9 100644
+index 768976d97..cea6fb931 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -599,7 +599,6 @@ export default {
@@ -14737,7 +14737,7 @@ index 0029d73e5..ce2f15ae9 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 8c2c449c7..11e10d98e 100644
+index 2460aecfe..345290efc 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -675,7 +675,6 @@ export default {
@@ -14989,7 +14989,7 @@ index 8c2c449c7..11e10d98e 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 42b88a7b8..1f2c14316 100644
+index e94a4a276..2b64df803 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -675,7 +675,6 @@ export default {

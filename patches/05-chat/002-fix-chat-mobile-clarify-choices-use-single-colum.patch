@@ -1,4 +1,4 @@
-From d4c6990866eba68871913e611ee2aed0acd35a9a Mon Sep 17 00:00:00 2001
+From 028b708bbb37db9d4f9405a98c4223c8dd33fc68 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 19:06:09 +0800
 Subject: [PATCH] fix(chat): mobile clarify choices use single-column

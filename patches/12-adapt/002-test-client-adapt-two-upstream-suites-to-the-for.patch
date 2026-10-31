@@ -1,4 +1,4 @@
-From 83e06084741b662e22cfeb71e6983b44979efb90 Mon Sep 17 00:00:00 2001
+From b573466636ba390d745361a3588f55ef34674270 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Mon, 28 Sep 2026 23:07:20 +0800
 Subject: [PATCH] test(client): adapt two upstream suites to the fork's

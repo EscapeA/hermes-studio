@@ -1,4 +1,4 @@
-From 12215a89ae3b4e2015ba9d647bbc3bf70a00069e Mon Sep 17 00:00:00 2001
+From 8b7d47e4e38773f20a147d1accb7e50aa085150d Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:22:13 +0800
 Subject: [PATCH] fix(chat): use full prompt_tokens (in=) not uncached input

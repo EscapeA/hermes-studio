@@ -1,4 +1,4 @@
-From 4a8e119f5b7bf0ec225ac08b3efc57ae843edc63 Mon Sep 17 00:00:00 2001
+From 27e6b091f0704a6faf4b8a843f9068ab0dda2d48 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 23 Aug 2026 08:51:56 +0800
 Subject: [PATCH] fix(server): support archived=1 on GET /sessions (restore

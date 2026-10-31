@@ -1,4 +1,4 @@
-From 671df4e1f1c9175eb70c552a2c281c2bddb87a71 Mon Sep 17 00:00:00 2001
+From 851824c07f8a24927b563aa400041e470b521601 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:29 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after group chat

@@ -1,4 +1,4 @@
-From 1d0b9f8f248543d8e517ea49d43ad4f120daec67 Mon Sep 17 00:00:00 2001
+From 4b5cf1e253bdd06727b7327bfeda781d9dba6a77 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 00:21:44 +0800
 Subject: [PATCH] feat(chat): collapsible clarify float panel
@@ -213,7 +213,7 @@ index c93febd65..402328883 100644
      width: 18px;
      height: 18px;
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 20046720c..5579c3f23 100644
+index f0596ed98..cba151967 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -1401,6 +1401,9 @@ export default {
@@ -227,7 +227,7 @@ index 20046720c..5579c3f23 100644
      interactionCountdown: 'متبقٍ {time}',
      interactionCountdownElapsed: '00:00 · في انتظار تأكيد الخادم',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 8803a2e1f..1fd6f78b0 100644
+index f96e09591..7123018db 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -1349,6 +1349,9 @@ export default {
@@ -241,7 +241,7 @@ index 8803a2e1f..1fd6f78b0 100644
      interactionCountdown: '{time} verbleibend',
      interactionCountdownElapsed: '00:00 · Serverbestätigung ausstehend',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 7b8aa8c27..8c37dce6f 100644
+index 78020e6c8..9337f7820 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -1410,6 +1410,9 @@ export default {
@@ -255,7 +255,7 @@ index 7b8aa8c27..8c37dce6f 100644
      interactionCountdown: '{time} remaining',
      interactionCountdownElapsed: '00:00 · Awaiting server confirmation',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 22cfcdc5c..edba3e5fd 100644
+index de34c97a3..09b7e6355 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -1349,6 +1349,9 @@ export default {
@@ -269,7 +269,7 @@ index 22cfcdc5c..edba3e5fd 100644
      interactionCountdown: 'Quedan {time}',
      interactionCountdownElapsed: '00:00 · Esperando confirmación del servidor',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index c96fa3be4..a93aff5f1 100644
+index b1387134d..f3d70aba9 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -1349,6 +1349,9 @@ export default {
@@ -283,7 +283,7 @@ index c96fa3be4..a93aff5f1 100644
      interactionCountdown: '{time} restante',
      interactionCountdownElapsed: '00:00 · Confirmation du serveur en attente',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 76a8f754c..05119339a 100644
+index d16ce01e9..44d172051 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -1349,6 +1349,9 @@ export default {
@@ -297,7 +297,7 @@ index 76a8f754c..05119339a 100644
      interactionCountdown: '残り {time}',
      interactionCountdownElapsed: '00:00 · サーバー確認待ち',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 3ee74f285..0cc184976 100644
+index a96d10c39..f18278294 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -1349,6 +1349,9 @@ export default {
@@ -311,7 +311,7 @@ index 3ee74f285..0cc184976 100644
      interactionCountdown: '{time} 남음',
      interactionCountdownElapsed: '00:00 · 서버 확인 대기 중',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 41f24f524..7b30edd54 100644
+index 85bfbc2ce..b304d2095 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -1349,6 +1349,9 @@ export default {
@@ -325,7 +325,7 @@ index 41f24f524..7b30edd54 100644
      interactionCountdown: '{time} restante',
      interactionCountdownElapsed: '00:00 · Aguardando confirmação do servidor',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 0888729d6..4bc8bb01e 100644
+index d170bbdb5..17d6f76f8 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -1301,6 +1301,8 @@ export default {
@@ -338,7 +338,7 @@ index 0888729d6..4bc8bb01e 100644
      deleteSession: 'Удалить этот сеанс?',
      sessionDeleted: 'Сеанс удалён',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index c8f053d57..34d847f18 100644
+index 1c8a04557..3c97d5c17 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -1401,6 +1401,9 @@ export default {
@@ -352,7 +352,7 @@ index c8f053d57..34d847f18 100644
      interactionCountdown: '剩餘 {time}',
      interactionCountdownElapsed: '00:00 · 等待伺服器確認',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index c772ac316..46ad76bf8 100644
+index a8bd66871..e35fc8848 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -1410,6 +1410,9 @@ export default {

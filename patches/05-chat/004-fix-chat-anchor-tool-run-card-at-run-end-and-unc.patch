@@ -1,4 +1,4 @@
-From accbad867052bd021acfb7971986a94de2042175 Mon Sep 17 00:00:00 2001
+From ccf3e5ebb97549777c60e718916c9bd30bb15243 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 28 Aug 2026 07:50:09 +0800
 Subject: [PATCH] fix(chat): anchor tool-run card at run end and unclip
