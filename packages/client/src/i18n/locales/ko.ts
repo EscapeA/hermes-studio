@@ -1338,6 +1338,7 @@ export default {
     importSessionSuccess: '세션을 Web UI로 가져왔습니다',
     importSessionAlreadyExists: '세션이 이미 Web UI에 있습니다',
     importSessionFailed: '세션 가져오기 실패',
+    sessionLive: '세션 실행 중',
     sessionDeleted: '세션이 삭제되었습니다',
     rename: '이름 변경',
     archiveSession: '보관',

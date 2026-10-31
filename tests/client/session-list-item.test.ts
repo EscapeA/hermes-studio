@@ -206,10 +206,32 @@ describe('SessionListItem', () => {
     expect(wrapper.emitted('open-new')).toBeUndefined()
   })
 
+  it('hides the agent avatar by default and marks working sessions with a live dot', async () => {
+    const wrapper = mount(SessionListItem, {
+      props: {
+        session,
+        active: false,
+        pinned: false,
+        canDelete: false,
+        streaming: false,
+      },
+      global: { stubs: { ProfileAvatar: true } },
+    })
+
+    expect(wrapper.find('.session-item-agent-logo').exists()).toBe(false)
+    expect(wrapper.find('.session-item-live-dot').exists()).toBe(false)
+
+    await wrapper.setProps({ streaming: true })
+    const dot = wrapper.get('.session-item-live-dot')
+    expect(dot.attributes('aria-label')).toBe('chat.sessionLive')
+    expect(wrapper.get('.session-item-title-row').element.contains(dot.element)).toBe(true)
+  })
+
   it('renders the Hermes logo for Hermes sessions', () => {
     const wrapper = mount(SessionListItem, {
       props: {
         session: { ...session, source: 'cli', agent: 'hermes' },
+        showAgentAvatar: true,
         active: false,
         pinned: false,
         canDelete: true,
@@ -231,6 +253,7 @@ describe('SessionListItem', () => {
     const wrapper = mount(SessionListItem, {
       props: {
         session: { ...session, source: 'global_agent', agent: 'hermes' },
+        showAgentAvatar: true,
         active: false,
         pinned: false,
         canDelete: true,
@@ -256,6 +279,7 @@ describe('SessionListItem', () => {
           agent: 'ekko-agent',
           codingAgentId: 'ekko-agent',
         },
+        showAgentAvatar: true,
         active: false,
         pinned: false,
         canDelete: true,
@@ -276,6 +300,7 @@ describe('SessionListItem', () => {
     const wrapper = mount(SessionListItem, {
       props: {
         session: { ...session, source: undefined, agent: undefined, codingAgentId: undefined },
+        showAgentAvatar: true,
         active: false,
         pinned: false,
         canDelete: true,
@@ -297,6 +322,7 @@ describe('SessionListItem', () => {
     const wrapper = mount(SessionListItem, {
       props: {
         session: { ...session, source: 'coding_agent', agent: 'claude', codingAgentId: 'claude-code' },
+        showAgentAvatar: true,
         active: false,
         pinned: false,
         canDelete: true,
@@ -318,6 +344,7 @@ describe('SessionListItem', () => {
     const wrapper = mount(SessionListItem, {
       props: {
         session: { ...session, source: 'coding_agent', agent: 'codex', codingAgentId: 'codex' },
+        showAgentAvatar: true,
         active: false,
         pinned: false,
         canDelete: true,

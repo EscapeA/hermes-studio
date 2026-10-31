@@ -1337,6 +1337,7 @@ export default {
     importSessionSuccess: 'Sitzung in Web UI importiert',
     importSessionAlreadyExists: 'Sitzung existiert bereits in Web UI',
     importSessionFailed: 'Sitzung konnte nicht importiert werden',
+    sessionLive: 'Sitzung läuft',
     sessionDeleted: 'Sitzung geloscht',
     rename: 'Umbenennen',
     archiveSession: 'Archivieren',

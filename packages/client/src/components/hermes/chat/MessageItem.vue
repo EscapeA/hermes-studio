@@ -54,6 +54,8 @@ const props = withDefaults(defineProps<{
   highlight?: boolean
   headingIdPrefix?: string
   showForkAction?: boolean
+  /** 会话界面默认不显示气泡上方的作者行（头像＋名字），Person 角色视图仍需要它做身份标识。 */
+  hideAuthor?: boolean
   assistantAgent?: ChatAgentAvatar
   userProfileName?: string
   userProfileAvatar?: ProfileAvatarData | null
@@ -1026,7 +1028,7 @@ onBeforeUnmount(() => {
     <template v-else>
       <div class="msg-body">
         <div class="msg-content" :class="message.role">
-          <div v-if="message.role === 'user'" class="message-author user-message-author">
+          <div v-if="!hideAuthor && message.role === 'user'" class="message-author user-message-author">
             <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
             <ProfileAvatar
               class="user-profile-avatar"
@@ -1035,7 +1037,7 @@ onBeforeUnmount(() => {
               :size="22"
             />
           </div>
-          <div v-if="message.role === 'assistant'" class="message-author assistant-message-author">
+          <div v-if="!hideAuthor && message.role === 'assistant'" class="message-author assistant-message-author">
             <img
               class="msg-avatar"
               :class="{ 'msg-avatar--person': !!personAvatarAnimation(assistantAgent, 'idle') }"

@@ -85,6 +85,28 @@ describe('MessageItem tool details', () => {
     expect(wrapper.get('.user-profile-avatar .profile-avatar-image').attributes('src')).toBe(avatar.dataUrl)
   })
 
+  it('hides both author rows when hideAuthor is set', () => {
+    const wrapper = mount(MessageItem, {
+      props: {
+        message: {
+          id: 'author-hidden',
+          role: 'assistant',
+          content: 'Hello',
+          timestamp: Date.now(),
+        } satisfies Message,
+        hideAuthor: true,
+        assistantAgent: {
+          label: 'Ekko',
+          src: '/coding-agents/ekko-agent.png',
+        },
+      },
+      global: { stubs: { MarkdownRenderer: true } },
+    })
+
+    expect(wrapper.find('.message-author').exists()).toBe(false)
+    expect(wrapper.get('.message-bubble').text()).toContain('Hello')
+  })
+
   it('renders the agent name and avatar above an assistant message', () => {
     const wrapper = mount(MessageItem, {
       props: {
