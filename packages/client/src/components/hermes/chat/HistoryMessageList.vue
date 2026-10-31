@@ -20,6 +20,7 @@ import { groupCompletedToolsByRun } from "./tool-run-grouping";
 
 const props = withDefaults(defineProps<{
   session?: Session | null; // Optional: use this session instead of chatStore.activeSession
+  hideAuthor?: boolean;
   loadOlder?: (sessionId: string) => Promise<boolean>;
   scrollScope?: string;
 }>(), {
@@ -221,6 +222,7 @@ defineExpose({
         <MessageItem
           v-else
           :message="msg"
+          :hide-author="hideAuthor"
           :assistant-agent="assistantAgent"
           :highlight="chatStore.focusMessageId === msg.id"
         />
