@@ -65,7 +65,6 @@
 065 15-userwait/001-fix-chat-track-compression-auto-clear-timer-per-.patch
 066 15-userwait/002-perf-chat-memoize-per-message-thinking-parse-in-.patch
 067 16-audit/001-fix-chat-default-agent-label-is-hermes-before-a-.patch
-068 16-audit/002-fix-chat-keep-a-stable-live-reasoning-key-instea.patch
 069 16-audit/003-refactor-chat-rename-cachehitratepercent-to.patch
 070 17-verify/003-verify-patch-stack-honours-order.patch
 071 17-verify/004-verify-patch-stack-materialises-patches-untracked.patch
