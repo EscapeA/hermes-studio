@@ -1,4 +1,4 @@
-From 191e91f5903060bc9b59056f8aa12ce5171ef44f Mon Sep 17 00:00:00 2001
+From 5bed29f4af145248c8fb48aab228906fb8f8b8f3 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Wed, 19 Aug 2026 23:13:59 +0800
 Subject: [PATCH] feat(chat): anti-flicker collapsible tool strip
@@ -20,7 +20,7 @@ unmount so session switches never leak stale tools into the new panel.
  4 files changed, 175 insertions(+), 5 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index b5724e47d..225ced87c 100644
+index fea2bb9e3..4aaaf71fe 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
 @@ -150,10 +150,66 @@ const currentToolCalls = computed(() => {
@@ -146,7 +146,7 @@ index b5724e47d..225ced87c 100644
            </div>
          </div>
          </Transition>
-@@ -2056,10 +2144,76 @@ defineExpose({
+@@ -2057,10 +2145,76 @@ defineExpose({
    width: 520px;
    min-width: 0;
    max-width: 100%;
@@ -226,7 +226,7 @@ index b5724e47d..225ced87c 100644
    scrollbar-width: none;
    -ms-overflow-style: none;
    &::-webkit-scrollbar {
-@@ -2067,6 +2221,10 @@ defineExpose({
+@@ -2068,6 +2222,10 @@ defineExpose({
    }
  }
  
@@ -238,7 +238,7 @@ index b5724e47d..225ced87c 100644
    display: flex;
    flex: 1 1 0;
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 76c0b07bd..b5a346e0a 100644
+index 55a2fc4ab..87e32a341 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -1488,6 +1488,10 @@ export default {
@@ -253,7 +253,7 @@ index 76c0b07bd..b5a346e0a 100644
      copiedBubble: 'Message copied',
      copyFailed: 'Copy failed',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index b0ae1487d..eb9bb65ac 100644
+index 233b07647..f400aa4d5 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -1471,6 +1471,10 @@ export default {
@@ -268,7 +268,7 @@ index b0ae1487d..eb9bb65ac 100644
      copiedBubble: '已複製',
      copyFailed: '複製失敗',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 6b5c3e77d..65d95cf50 100644
+index dc73cce63..6b0f823ab 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -1489,6 +1489,10 @@ export default {

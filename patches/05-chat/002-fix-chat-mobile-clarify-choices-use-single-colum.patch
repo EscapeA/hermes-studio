@@ -1,4 +1,4 @@
-From 028b708bbb37db9d4f9405a98c4223c8dd33fc68 Mon Sep 17 00:00:00 2001
+From 33ccfdaccde9d50db8975c9ea1beb23bef4324f9 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 19:06:09 +0800
 Subject: [PATCH] fix(chat): mobile clarify choices use single-column
@@ -13,7 +13,7 @@ and wrap text while approval stays two columns.
  1 file changed, 32 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index bde6d28e6..23f2e85a8 100644
+index cbedcae72..81e993b0a 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
 @@ -1217,7 +1217,10 @@ defineExpose({
@@ -28,7 +28,7 @@ index bde6d28e6..23f2e85a8 100644
              <NButton
                v-for="choice in visibleClarify.choices"
                :key="choice"
-@@ -1494,6 +1497,24 @@ defineExpose({
+@@ -1495,6 +1498,24 @@ defineExpose({
    border-top: var(--border-width, 1px) solid $border-color;
  }
  
@@ -53,7 +53,7 @@ index bde6d28e6..23f2e85a8 100644
  .clarify-float-input-row {
    display: flex;
    gap: calc(8px * var(--spacing-scale, 1));
-@@ -1726,6 +1747,16 @@ defineExpose({
+@@ -1727,6 +1748,16 @@ defineExpose({
      }
    }
  

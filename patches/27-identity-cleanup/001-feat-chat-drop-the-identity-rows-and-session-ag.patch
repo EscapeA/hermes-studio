@@ -1,4 +1,4 @@
-From 2671247ec005f1cdaaa56f545f52199a9ee05ecd Mon Sep 17 00:00:00 2001
+From bde05e2ed4040bce5f7c185530cdb0a1b2039016 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 1 Nov 2026 06:59:06 +0800
 Subject: [PATCH] feat(chat): drop the identity rows and session agent avatars
@@ -121,7 +121,7 @@ index c12b79789..6acc5e5d4 100644
                class="msg-avatar"
                :class="{ 'msg-avatar--person': !!personAvatarAnimation(assistantAgent, 'idle') }"
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index b8217a080..fac6cddc0 100644
+index 2c7ef2557..b78171f9c 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
 @@ -37,6 +37,7 @@ import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-spee
@@ -289,7 +289,7 @@ index f2e00137b..2d7a02137 100644
    flex: 0 1 auto;
    min-width: 0;
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index ed2eba8fa..c8ae57b15 100644
+index a36602371..2a945837f 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -1377,6 +1377,7 @@ export default {
@@ -301,7 +301,7 @@ index ed2eba8fa..c8ae57b15 100644
      sessionListActions: 'إجراءات قائمة الجلسات',
      filterByProfile: 'التصفية حسب الملف الشخصي',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index decc96bc1..d6e44a820 100644
+index 5b570e4d2..a971b2c6f 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -1337,6 +1337,7 @@ export default {
@@ -313,7 +313,7 @@ index decc96bc1..d6e44a820 100644
      rename: 'Umbenennen',
      archiveSession: 'Archivieren',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index f16ae93de..bd1161d93 100644
+index ec207fce5..d43eb5545 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -1386,6 +1386,7 @@ export default {
@@ -325,7 +325,7 @@ index f16ae93de..bd1161d93 100644
      sessionListActions: 'Session list actions',
      filterByProfile: 'Filter by Profile',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index ba3c7ca17..d462be0eb 100644
+index 671d94465..a33549b10 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -1337,6 +1337,7 @@ export default {
@@ -337,7 +337,7 @@ index ba3c7ca17..d462be0eb 100644
      rename: 'Renombrar',
      archiveSession: 'Archivar',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index ddd3670aa..7b8901d70 100644
+index 1e23c359e..86d661045 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -1337,6 +1337,7 @@ export default {
@@ -349,7 +349,7 @@ index ddd3670aa..7b8901d70 100644
      rename: 'Renommer',
      archiveSession: 'Archiver',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 07526de63..24076a2c7 100644
+index 439d2b824..f1a2f9cea 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -1338,6 +1338,7 @@ export default {
@@ -361,7 +361,7 @@ index 07526de63..24076a2c7 100644
      rename: '名前変更',
      archiveSession: 'アーカイブ',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index e9e08110d..bf1b9db69 100644
+index 8367c247f..ff2c5dc93 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -1338,6 +1338,7 @@ export default {
@@ -373,7 +373,7 @@ index e9e08110d..bf1b9db69 100644
      rename: '이름 변경',
      archiveSession: '보관',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 3b1212d5c..a51cae1f8 100644
+index 2c8c203d4..e4c1c2d98 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -1337,6 +1337,7 @@ export default {
@@ -385,7 +385,7 @@ index 3b1212d5c..a51cae1f8 100644
      rename: 'Renomear',
      archiveSession: 'Arquivar',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 8887f248d..26b680820 100644
+index 10595cdd2..dd2b03b11 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -1271,6 +1271,7 @@ export default {
@@ -397,7 +397,7 @@ index 8887f248d..26b680820 100644
      sessionListActions: 'Действия со списком сеансов',
      filterByProfile: 'Фильтр по профилю',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 6f7a7b915..3a687bc52 100644
+index 9848a8c17..d7ebadee0 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -1377,6 +1377,7 @@ export default {
@@ -409,7 +409,7 @@ index 6f7a7b915..3a687bc52 100644
      sessionListActions: '會話列表操作',
      filterByProfile: '依 Profile 篩選',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index ac9236738..73b47951a 100644
+index f2dcc0075..2926261df 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -1387,6 +1387,7 @@ export default {
@@ -449,10 +449,10 @@ index a02a28d26..367d9a3b0 100644
              :load-older="loadOlderHistoryMessages"
              scroll-scope="history"
 diff --git a/packages/client/src/views/hermes/PersonView.vue b/packages/client/src/views/hermes/PersonView.vue
-index c60978dc5..b83e93465 100644
+index 075c187ac..8fe950bc7 100644
 --- a/packages/client/src/views/hermes/PersonView.vue
 +++ b/packages/client/src/views/hermes/PersonView.vue
-@@ -568,7 +568,7 @@ onBeforeUnmount(() => { stopPersonUpdates(); disposed = true; personDeployment?.
+@@ -590,7 +590,7 @@ onBeforeUnmount(() => { stopPersonUpdates(); disposed = true; personDeployment?.
        <template #default>
              <SessionListItem v-for="session in sidebarSessions" :key="session.id" :session="session" :active="session.id === selectedSessionId" :pinned="false" :can-delete="!isMobile" :delete-disabled="pending"
                :selectable="batchMode" :selected="selectedConversationIds.has(session.id)" @toggle-select="toggleConversationSelection(session.id)"

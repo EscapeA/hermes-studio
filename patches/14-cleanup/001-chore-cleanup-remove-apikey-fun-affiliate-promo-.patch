@@ -1,4 +1,4 @@
-From 81d16d528033c9bd7f4226139426a649ae5ce256 Mon Sep 17 00:00:00 2001
+From 1a124629689e3d7a9f18e011bd4f1aee7a216c5f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 6 Sep 2026 09:25:42 +0800
 Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
@@ -45,7 +45,7 @@ Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
  delete mode 100644 tests/server/api-relay-usage.test.ts
 
 diff --git a/docs/openapi.json b/docs/openapi.json
-index 913918185..f5f7b67af 100644
+index a78c3de29..a580a0923 100644
 --- a/docs/openapi.json
 +++ b/docs/openapi.json
 @@ -5224,32 +5224,6 @@
@@ -81,7 +81,7 @@ index 913918185..f5f7b67af 100644
      "/api/hermes/auth/anthropic/start": {
        "post": {
          "tags": [
-@@ -21653,6 +21627,17 @@
+@@ -21810,6 +21784,17 @@
            }
          },
          "parameters": [
@@ -99,7 +99,7 @@ index 913918185..f5f7b67af 100644
            {
              "name": "category",
              "in": "query",
-@@ -23780,6 +23765,17 @@
+@@ -23937,6 +23922,17 @@
              "schema": {
                "type": "string"
              }
@@ -499,7 +499,7 @@ index afc5cff53..1c7aba919 100644
  .studio-navigation-rail__item {
    display: grid;
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index cba151967..8633ca356 100644
+index 632f4b85c..1258986f7 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -635,35 +635,6 @@ export default {
@@ -547,7 +547,7 @@ index cba151967..8633ca356 100644
      jobs: 'المهام المجدولة',
      kanban: 'كانبان',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 7123018db..4936fa61d 100644
+index 521fe41ce..888475d26 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -647,35 +647,6 @@ export default {
@@ -595,7 +595,7 @@ index 7123018db..4936fa61d 100644
      jobs: 'Geplante Aufgaben',
      models: 'Modelle',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 9337f7820..76c0b07bd 100644
+index 4e64ca689..55a2fc4ab 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -635,35 +635,6 @@ export default {
@@ -643,7 +643,7 @@ index 9337f7820..76c0b07bd 100644
      jobs: 'Jobs',
      kanban: 'Kanban',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 09b7e6355..bd0db39ed 100644
+index f12543f77..dd250c2dd 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -647,35 +647,6 @@ export default {
@@ -691,7 +691,7 @@ index 09b7e6355..bd0db39ed 100644
      jobs: 'Tareas programadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index f3d70aba9..5d4d8cdca 100644
+index 468c35cd7..399f1c5c9 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -647,35 +647,6 @@ export default {
@@ -739,7 +739,7 @@ index f3d70aba9..5d4d8cdca 100644
      jobs: 'Taches planifiees',
      models: 'Modeles',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 44d172051..350591be3 100644
+index 17dc09f7c..b79718f13 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -648,34 +648,6 @@ export default {
@@ -786,7 +786,7 @@ index 44d172051..350591be3 100644
      jobs: 'ジョブ',
      models: 'モデル',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index f18278294..c26e9497e 100644
+index 067874c6f..5cf9fc4e0 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -648,34 +648,6 @@ export default {
@@ -833,7 +833,7 @@ index f18278294..c26e9497e 100644
      jobs: '예약 작업',
      models: '모델',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index b304d2095..87c831039 100644
+index a1626ce47..60209af4d 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -647,35 +647,6 @@ export default {
@@ -881,7 +881,7 @@ index b304d2095..87c831039 100644
      jobs: 'Tarefas agendadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 17d6f76f8..95c263413 100644
+index c031057a2..c308f7892 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -528,7 +528,6 @@ export default {
@@ -1117,7 +1117,7 @@ index 17d6f76f8..95c263413 100644
      origin: {
        label: "Категория использования",
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 3c97d5c17..b0ae1487d 100644
+index b7cab1a52..233b07647 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -636,34 +636,6 @@ export default {
@@ -1164,7 +1164,7 @@ index 3c97d5c17..b0ae1487d 100644
      jobs: '任務',
      kanban: '看板',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index e35fc8848..6b5c3e77d 100644
+index 91e0fd1cb..dc73cce63 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -636,34 +636,6 @@ export default {

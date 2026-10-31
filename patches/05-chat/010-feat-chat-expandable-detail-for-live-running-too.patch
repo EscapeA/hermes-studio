@@ -1,4 +1,4 @@
-From 02bcb77d2f8e8021f07fcfe9e1a7d6501397e5ed Mon Sep 17 00:00:00 2001
+From 4281283f939cf4859d304c7e225f5b4ae68925d3 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 20:14:05 +0800
 Subject: [PATCH] feat(chat): expandable detail for live running tool items
@@ -23,7 +23,7 @@ transcript).
  1 file changed, 137 insertions(+), 6 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 225ced87c..97b8dc0fa 100644
+index 4aaaf71fe..107899c05 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
 @@ -92,9 +92,50 @@ function isSubagentToolCall(message: Message): boolean {
@@ -141,7 +141,7 @@ index 225ced87c..97b8dc0fa 100644
              </div>
              <div
                v-if="visibleToolCalls.length === 0"
-@@ -2244,6 +2312,16 @@ defineExpose({
+@@ -2245,6 +2313,16 @@ defineExpose({
    background: rgba(0, 0, 0, 0.03);
    border-radius: $radius-sm;
  
@@ -158,7 +158,7 @@ index 225ced87c..97b8dc0fa 100644
    &.subagent-entry {
      cursor: pointer;
  
-@@ -2258,6 +2336,20 @@ defineExpose({
+@@ -2259,6 +2337,20 @@ defineExpose({
      background: rgba(255, 255, 255, 0.06);
    }
  
@@ -179,7 +179,7 @@ index 225ced87c..97b8dc0fa 100644
    &.compression-item {
      color: $text-muted;
      font-size: calc(var(--font-size-base, 14px) * 10 / 14);
-@@ -2271,6 +2363,16 @@ defineExpose({
+@@ -2272,6 +2364,16 @@ defineExpose({
      }
    }
  
@@ -196,7 +196,7 @@ index 225ced87c..97b8dc0fa 100644
    .tool-call-icon {
      flex-shrink: 0;
      color: $text-muted;
-@@ -2296,6 +2398,35 @@ defineExpose({
+@@ -2297,6 +2399,35 @@ defineExpose({
      max-width: none;
      color: $text-muted;
    }
