@@ -1,0 +1,604 @@
+From 2671247ec005f1cdaaa56f545f52199a9ee05ecd Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 1 Nov 2026 06:59:06 +0800
+Subject: [PATCH] feat(chat): drop the identity rows and session agent avatars
+
+Single-user single-agent chat repeated the same identity everywhere: every
+session row carried a profile avatar plus its name, and every message bubble
+printed an author row (profile/alias for user turns, runtime name for assistant
+turns). Strip them from the chat surfaces and replace the lost streaming cue.
+
+- SessionListItem: remove the profile row and the showProfile prop; the agent
+  logo becomes opt-in via showAgentAvatar (Person still needs it for identity).
+- SessionListItem: mark working sessions with a live dot in the title row, so
+  the indicator no longer depends on the avatar row being rendered.
+- MessageItem/MessageList/HistoryMessageList: add hideAuthor, set by ChatPanel
+  and HistoryView; Person keeps its author rows as character identity.
+- i18n: add chat.sessionLive for all supported locales.
+- tests/harness: assert the live dot and the hidden author rows, and re-home
+  the ui-theme baseline keys whose selectors were deleted.
+---
+ .../src/components/hermes/chat/ChatPanel.vue  |  3 +-
+ .../hermes/chat/HistoryMessageList.vue        |  2 +
+ .../components/hermes/chat/MessageItem.vue    |  6 +-
+ .../components/hermes/chat/MessageList.vue    |  2 +
+ .../hermes/chat/SessionListItem.vue           | 76 ++++++++++---------
+ packages/client/src/i18n/locales/ar.ts        |  1 +
+ packages/client/src/i18n/locales/de.ts        |  1 +
+ packages/client/src/i18n/locales/en.ts        |  1 +
+ packages/client/src/i18n/locales/es.ts        |  1 +
+ packages/client/src/i18n/locales/fr.ts        |  1 +
+ packages/client/src/i18n/locales/ja.ts        |  1 +
+ packages/client/src/i18n/locales/ko.ts        |  1 +
+ packages/client/src/i18n/locales/pt.ts        |  1 +
+ packages/client/src/i18n/locales/ru.ts        |  1 +
+ packages/client/src/i18n/locales/zh-TW.ts     |  1 +
+ packages/client/src/i18n/locales/zh.ts        |  1 +
+ .../client/src/views/hermes/HistoryView.vue   |  3 +-
+ .../client/src/views/hermes/PersonView.vue    |  2 +-
+ scripts/ui-theme-baseline.json                |  5 +-
+ tests/client/message-item-highlight.test.ts   | 22 ++++++
+ tests/client/session-list-item.test.ts        | 27 +++++++
+ 21 files changed, 112 insertions(+), 47 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
+index 95432c64a..aab2e1c1a 100644
+--- a/packages/client/src/components/hermes/chat/ChatPanel.vue
++++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
+@@ -2429,7 +2429,6 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
+             :completed-unread="sessionStates.isUnread(s.id, chatStore.isSessionCompletedUnread(s.id))"
+             :selectable="isBatchMode"
+             :selected="isSessionSelected(s)"
+-            :show-profile="true"
+             :to="sessionHref(s.id)"
+             :intercept-modified-navigation="desktopChatWindowAvailable"
+             @select="handleSessionClick(s.id)"
+@@ -2483,7 +2482,6 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
+               :completed-unread="sessionStates.isUnread(s.id, chatStore.isSessionCompletedUnread(s.id))"
+               :selectable="isBatchMode"
+               :selected="isSessionSelected(s)"
+-              :show-profile="true"
+               :category-label="recentCategoryLabel(s)"
+               :to="sessionHref(s.id)"
+               :intercept-modified-navigation="desktopChatWindowAvailable"
+@@ -2954,6 +2952,7 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
+             <template v-else>
+             <MessageList
+               ref="messageListRef"
++              hide-author
+               :selection-actions-target="messageSelectionActionsTarget"
+               :approval-portal-to-body="showRealtimeVoice"
+               scroll-scope="chat"
+diff --git a/packages/client/src/components/hermes/chat/HistoryMessageList.vue b/packages/client/src/components/hermes/chat/HistoryMessageList.vue
+index 8bf6142fc..8b416320a 100644
+--- a/packages/client/src/components/hermes/chat/HistoryMessageList.vue
++++ b/packages/client/src/components/hermes/chat/HistoryMessageList.vue
+@@ -20,6 +20,7 @@ import { groupCompletedToolsByRun } from "./tool-run-grouping";
+ 
+ const props = withDefaults(defineProps<{
+   session?: Session | null; // Optional: use this session instead of chatStore.activeSession
++  hideAuthor?: boolean;
+   loadOlder?: (sessionId: string) => Promise<boolean>;
+   scrollScope?: string;
+ }>(), {
+@@ -221,6 +222,7 @@ defineExpose({
+         <MessageItem
+           v-else
+           :message="msg"
++          :hide-author="hideAuthor"
+           :assistant-agent="assistantAgent"
+           :highlight="chatStore.focusMessageId === msg.id"
+         />
+diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
+index c12b79789..6acc5e5d4 100644
+--- a/packages/client/src/components/hermes/chat/MessageItem.vue
++++ b/packages/client/src/components/hermes/chat/MessageItem.vue
+@@ -54,6 +54,8 @@ const props = withDefaults(defineProps<{
+   highlight?: boolean
+   headingIdPrefix?: string
+   showForkAction?: boolean
++  /** 会话界面默认不显示气泡上方的作者行（头像＋名字），Person 角色视图仍需要它做身份标识。 */
++  hideAuthor?: boolean
+   assistantAgent?: ChatAgentAvatar
+   userProfileName?: string
+   userProfileAvatar?: ProfileAvatarData | null
+@@ -1026,7 +1028,7 @@ onBeforeUnmount(() => {
+     <template v-else>
+       <div class="msg-body">
+         <div class="msg-content" :class="message.role">
+-          <div v-if="message.role === 'user'" class="message-author user-message-author">
++          <div v-if="!hideAuthor && message.role === 'user'" class="message-author user-message-author">
+             <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
+             <ProfileAvatar
+               class="user-profile-avatar"
+@@ -1035,7 +1037,7 @@ onBeforeUnmount(() => {
+               :size="22"
+             />
+           </div>
+-          <div v-if="message.role === 'assistant'" class="message-author assistant-message-author">
++          <div v-if="!hideAuthor && message.role === 'assistant'" class="message-author assistant-message-author">
+             <img
+               class="msg-avatar"
+               :class="{ 'msg-avatar--person': !!personAvatarAnimation(assistantAgent, 'idle') }"
+diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
+index b8217a080..fac6cddc0 100644
+--- a/packages/client/src/components/hermes/chat/MessageList.vue
++++ b/packages/client/src/components/hermes/chat/MessageList.vue
+@@ -37,6 +37,7 @@ import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-spee
+ 
+ const props = withDefaults(defineProps<{
+   userLabel?: string
++  hideAuthor?: boolean
+   hideToolCalls?: boolean
+   hideRunUsage?: boolean
+   hideReasoning?: boolean
+@@ -1018,6 +1019,7 @@ defineExpose({
+                 :message="msg"
+                 :hide-run-usage="hideRunUsage"
+                 :hide-reasoning="hideReasoning"
++                :hide-author="hideAuthor"
+                 :assistant-agent="assistantAgent"
+                 :user-profile-name="userProfileName"
+                 :user-profile-avatar="userProfileAvatar"
+diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
+index f2e00137b..2d7a02137 100644
+--- a/packages/client/src/components/hermes/chat/SessionListItem.vue
++++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
+@@ -4,8 +4,6 @@ import { NPopconfirm, NCheckbox, NTooltip } from 'naive-ui'
+ import { useI18n } from 'vue-i18n'
+ import type { Session } from '@/stores/hermes/chat'
+ import { useAppStore } from '@/stores/hermes/app'
+-import { useProfilesStore } from '@/stores/hermes/profiles'
+-import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
+ import PinIcon from '@/components/common/PinIcon.vue'
+ import { formatTimestampMs } from '@/shared/session-display'
+ import { chatSessionAgentAvatar, personAvatarAnimation, personAvatarStyle } from '@/utils/chat-agent-avatar'
+@@ -22,14 +20,13 @@ const props = withDefaults(defineProps<{
+   completedUnread?: boolean
+   selectable?: boolean
+   selected?: boolean
+-  showProfile?: boolean
++  /** 会话列表默认不显示 agent 头像；Person 角色视图靠它做身份标识。 */
++  showAgentAvatar?: boolean
+   singleLine?: boolean
+   categoryLabel?: string
+   to?: string
+   interceptModifiedNavigation?: boolean
+-}>(), {
+-  showProfile: true,
+-})
++}>(), {})
+ 
+ const emit = defineEmits<{
+   select: []
+@@ -41,9 +38,7 @@ const emit = defineEmits<{
+ 
+ const { t } = useI18n()
+ const appStore = useAppStore()
+-const profilesStore = useProfilesStore()
+ const profileName = computed(() => props.session.profile || 'default')
+-const profileAvatar = computed(() => profilesStore.profiles.find(profile => profile.name === profileName.value)?.avatar)
+ const profileHasModels = computed(() => {
+   const profileModels = appStore.profileModelGroups.find(profile => profile.profile === profileName.value)
+   return !!profileModels?.groups?.some(group => group.models.length > 0)
+@@ -134,6 +129,12 @@ onUnmounted(() => {
+             <PinIcon width="13" height="13" filled />
+           </span>
+           <span v-if="completedUnread && !streaming" class="session-item-unread-dot" aria-hidden="true" />
++          <span
++            v-if="streaming && !showAgentAvatar"
++            class="session-item-live-dot"
++            :title="t('chat.sessionLive')"
++            :aria-label="t('chat.sessionLive')"
++          />
+           <span class="session-item-title" dir="auto">
+             {{ session.title }}
+           </span>
+@@ -148,8 +149,8 @@ onUnmounted(() => {
+         </span>
+         <span class="session-item-time">{{ formatTimestampMs(session.createdAt) }}</span>
+       </span>
+-      <span class="session-item-agent-row">
+-        <span class="session-item-agent-logo-wrap" :class="{ streaming }">
++      <span v-if="showAgentAvatar || props.categoryLabel" class="session-item-agent-row">
++        <span v-if="showAgentAvatar" class="session-item-agent-logo-wrap" :class="{ streaming }">
+           <img
+             class="session-item-agent-logo"
+             :class="{ 'session-item-agent-logo--person': isPersonSession }"
+@@ -158,10 +159,6 @@ onUnmounted(() => {
+             :alt="sessionAgentLogo.label"
+           >
+         </span>
+-        <span v-if="props.showProfile" class="session-item-profile">
+-          <ProfileAvatar class="session-item-profile-avatar" :name="profileName" :avatar="profileAvatar" :size="16" />
+-          <span class="session-item-profile-name">{{ profileName }}</span>
+-        </span>
+         <span
+           v-if="props.categoryLabel"
+           class="session-item-category-tag"
+@@ -254,7 +251,6 @@ onUnmounted(() => {
+ }
+ 
+ .session-item.missing-models .session-item-title,
+-.session-item.missing-models .session-item-profile-name,
+ .session-item.missing-models .session-item-time {
+   color: #b42318;
+ }
+@@ -312,6 +308,34 @@ onUnmounted(() => {
+   box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.12);
+ }
+ 
++/* 进行中指示放在标题行，不依赖头像行是否渲染。 */
++.session-item-live-dot {
++  flex: 0 0 auto;
++  width: 7px;
++  height: 7px;
++  border-radius: 50%;
++  background: var(--accent-primary);
++  box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.12);
++  animation: session-live-pulse 1.5s ease-in-out infinite;
++}
++
++@keyframes session-live-pulse {
++  0%,
++  100% {
++    transform: scale(1);
++    opacity: 1;
++  }
++
++  50% {
++    transform: scale(0.82);
++    opacity: 0.72;
++  }
++}
++
++@media (prefers-reduced-motion: reduce) {
++  .session-item-live-dot { animation: none; }
++}
++
+ .session-item-time {
+   flex: 0 0 auto;
+   font-size: calc(var(--font-size-base, 14px) * 11 / 14);
+@@ -359,28 +383,6 @@ onUnmounted(() => {
+   }
+ }
+ 
+-.session-item-profile {
+-  display: flex;
+-  align-items: center;
+-  gap: calc(5px * var(--spacing-scale, 1));
+-  flex: 0 1 auto;
+-  min-width: 0;
+-}
+-
+-.session-item-profile-avatar {
+-  background: var(--bg-secondary);
+-}
+-
+-.session-item-profile-name {
+-  min-width: 0;
+-  overflow: hidden;
+-  text-overflow: ellipsis;
+-  white-space: nowrap;
+-  font-size: calc(var(--font-size-base, 14px) * 11 / 14);
+-  line-height: var(--line-height, calc(var(--font-size-base, 14px) * 16 / 14));
+-  color: var(--text-muted);
+-}
+-
+ .session-item-category-tag {
+   flex: 0 1 auto;
+   min-width: 0;
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index ed2eba8fa..c8ae57b15 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -1377,6 +1377,7 @@ export default {
+     interactionCountdownElapsed: '00:00 · في انتظار تأكيد الخادم',
+     newCliChat: 'CLI جديد',
+     deleteSession: 'حذف هذه الجلسة؟',
++    sessionLive: 'الجلسة قيد التنفيذ',
+     sessionDeleted: 'تم حذف الجلسة',
+     sessionListActions: 'إجراءات قائمة الجلسات',
+     filterByProfile: 'التصفية حسب الملف الشخصي',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index decc96bc1..d6e44a820 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1337,6 +1337,7 @@ export default {
+     importSessionSuccess: 'Sitzung in Web UI importiert',
+     importSessionAlreadyExists: 'Sitzung existiert bereits in Web UI',
+     importSessionFailed: 'Sitzung konnte nicht importiert werden',
++    sessionLive: 'Sitzung läuft',
+     sessionDeleted: 'Sitzung geloscht',
+     rename: 'Umbenennen',
+     archiveSession: 'Archivieren',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index f16ae93de..bd1161d93 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -1386,6 +1386,7 @@ export default {
+     interactionCountdownElapsed: '00:00 · Awaiting server confirmation',
+     newCliChat: 'New CLI',
+     deleteSession: 'Delete this session?',
++    sessionLive: 'Session is working',
+     sessionDeleted: 'Session deleted',
+     sessionListActions: 'Session list actions',
+     filterByProfile: 'Filter by Profile',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index ba3c7ca17..d462be0eb 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1337,6 +1337,7 @@ export default {
+     importSessionSuccess: 'Sesion importada a Web UI',
+     importSessionAlreadyExists: 'La sesion ya existe en Web UI',
+     importSessionFailed: 'Error al importar la sesion',
++    sessionLive: 'Sesión en curso',
+     sessionDeleted: 'Sesion eliminada',
+     rename: 'Renombrar',
+     archiveSession: 'Archivar',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index ddd3670aa..7b8901d70 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1337,6 +1337,7 @@ export default {
+     importSessionSuccess: 'Session importée dans Web UI',
+     importSessionAlreadyExists: 'La session existe déjà dans Web UI',
+     importSessionFailed: 'Échec de l’import de la session',
++    sessionLive: 'Session en cours',
+     sessionDeleted: 'Session supprimee',
+     rename: 'Renommer',
+     archiveSession: 'Archiver',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 07526de63..24076a2c7 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1338,6 +1338,7 @@ export default {
+     importSessionSuccess: 'セッションを Web UI にインポートしました',
+     importSessionAlreadyExists: 'セッションは既に Web UI に存在します',
+     importSessionFailed: 'セッションのインポートに失敗しました',
++    sessionLive: 'セッション実行中',
+     sessionDeleted: 'セッションを削除しました',
+     rename: '名前変更',
+     archiveSession: 'アーカイブ',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index e9e08110d..bf1b9db69 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1338,6 +1338,7 @@ export default {
+     importSessionSuccess: '세션을 Web UI로 가져왔습니다',
+     importSessionAlreadyExists: '세션이 이미 Web UI에 있습니다',
+     importSessionFailed: '세션 가져오기 실패',
++    sessionLive: '세션 실행 중',
+     sessionDeleted: '세션이 삭제되었습니다',
+     rename: '이름 변경',
+     archiveSession: '보관',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 3b1212d5c..a51cae1f8 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1337,6 +1337,7 @@ export default {
+     importSessionSuccess: 'Sessão importada para Web UI',
+     importSessionAlreadyExists: 'A sessão já existe no Web UI',
+     importSessionFailed: 'Falha ao importar sessão',
++    sessionLive: 'Sessão em execução',
+     sessionDeleted: 'Sessão excluida',
+     rename: 'Renomear',
+     archiveSession: 'Arquivar',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 8887f248d..26b680820 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -1271,6 +1271,7 @@ export default {
+     clarifyExpand: 'Развернуть',
+     newCliChat: 'Новый CLI',
+     deleteSession: 'Удалить этот сеанс?',
++    sessionLive: 'Сессия выполняется',
+     sessionDeleted: 'Сеанс удалён',
+     sessionListActions: 'Действия со списком сеансов',
+     filterByProfile: 'Фильтр по профилю',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 6f7a7b915..3a687bc52 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -1377,6 +1377,7 @@ export default {
+     interactionCountdown: '剩餘 {time}',
+     interactionCountdownElapsed: '00:00 · 等待伺服器確認',
+     deleteSession: '確定刪除此工作階段？',
++    sessionLive: '會話進行中',
+     sessionDeleted: '工作階段已刪除',
+     sessionListActions: '會話列表操作',
+     filterByProfile: '依 Profile 篩選',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index ac9236738..73b47951a 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -1387,6 +1387,7 @@ export default {
+     interactionCountdownElapsed: '00:00 · 等待服务端确认',
+     newCliChat: '新建 CLI',
+     deleteSession: '确定删除此会话？',
++    sessionLive: '会话进行中',
+     sessionDeleted: '会话已删除',
+     sessionListActions: '会话列表操作',
+     filterByProfile: '按 Profile 筛选',
+diff --git a/packages/client/src/views/hermes/HistoryView.vue b/packages/client/src/views/hermes/HistoryView.vue
+index a02a28d26..367d9a3b0 100644
+--- a/packages/client/src/views/hermes/HistoryView.vue
++++ b/packages/client/src/views/hermes/HistoryView.vue
+@@ -954,7 +954,6 @@ function handleBatchDeleteConfirm() {
+             :streaming="false"
+             :selectable="isBatchMode"
+             :selected="isSessionSelected(s)"
+-            :show-profile="true"
+             @select="isBatchMode ? toggleSessionSelection(s) : handleSessionClick(s.id, s.profile)"
+             @contextmenu="handleContextMenu($event, s.id)"
+             @delete="handleDeleteSession(s.id, s.profile)"
+@@ -1001,7 +1000,6 @@ function handleBatchDeleteConfirm() {
+               :streaming="false"
+               :selectable="isBatchMode"
+               :selected="isSessionSelected(s)"
+-              :show-profile="true"
+               @select="isBatchMode ? toggleSessionSelection(s) : handleSessionClick(s.id, s.profile)"
+               @contextmenu="handleContextMenu($event, s.id)"
+               @delete="handleDeleteSession(s.id, s.profile)"
+@@ -1070,6 +1068,7 @@ function handleBatchDeleteConfirm() {
+           <HistoryMessageList
+             :key="historySession?.id || 'history-empty'"
+             ref="historyMessageListRef"
++            hide-author
+             :session="historySession"
+             :load-older="loadOlderHistoryMessages"
+             scroll-scope="history"
+diff --git a/packages/client/src/views/hermes/PersonView.vue b/packages/client/src/views/hermes/PersonView.vue
+index c60978dc5..b83e93465 100644
+--- a/packages/client/src/views/hermes/PersonView.vue
++++ b/packages/client/src/views/hermes/PersonView.vue
+@@ -568,7 +568,7 @@ onBeforeUnmount(() => { stopPersonUpdates(); disposed = true; personDeployment?.
+       <template #default>
+             <SessionListItem v-for="session in sidebarSessions" :key="session.id" :session="session" :active="session.id === selectedSessionId" :pinned="false" :can-delete="!isMobile" :delete-disabled="pending"
+               :selectable="batchMode" :selected="selectedConversationIds.has(session.id)" @toggle-select="toggleConversationSelection(session.id)"
+-              single-line :show-profile="false" :streaming="sessionStates.isWorking(session.id, chatStore.isSessionWorking(session.id))"
++              single-line show-agent-avatar :streaming="sessionStates.isWorking(session.id, chatStore.isSessionWorking(session.id))"
+               :completed-unread="sessionStates.isUnread(session.id)" :to="router.resolve({ name: 'hermes.person', query: { session: session.id } }).href"
+               :delete-confirm-text="t('person.deleteConversationConfirm')" @select="selectConversation(session.id)" @delete="deleteConversation(session.id)" @contextmenu="openConversationMenu($event, session.id)" />
+             <NButton v-if="nextOffset !== null" quaternary block @click="loadConversations(nextOffset!)">{{ t('person.older') }}</NButton>
+diff --git a/scripts/ui-theme-baseline.json b/scripts/ui-theme-baseline.json
+index b7ef62bc7..e3cebc612 100644
+--- a/scripts/ui-theme-baseline.json
++++ b/scripts/ui-theme-baseline.json
+@@ -408,7 +408,7 @@
+       "literal-color | .session-item.missing-models | color: #b42318": 1,
+       "literal-color | .session-item.missing-models | background: rgba(220, 38, 38, 0.08)": 1,
+       "unowned-background | .session-item.missing-models | background: rgba(220, 38, 38, 0.08)": 1,
+-      "literal-color | .session-item.missing-models .session-item-title, .session-item.missing-models .session-item-profile-name, .session-item.missing-models .session-item-time | color: #b42318": 1,
++      "literal-color | .session-item.missing-models .session-item-title, .session-item.missing-models .session-item-time | color: #b42318": 1,
+       "literal-color | .session-item.missing-models:hover | background: rgba(220, 38, 38, 0.12)": 1,
+       "literal-color | .session-item-global-icon | color: #d6a019": 1,
+       "literal-color | .session-item-category-tag | background: rgba(127, 127, 127, 0.12)": 1,
+@@ -417,7 +417,6 @@
+       "literal-color | .session-item-warning | background: rgba(220, 38, 38, 0.1)": 1,
+       "unowned-background | .session-item-warning | background: rgba(220, 38, 38, 0.1)": 1,
+       "literal-color | .session-item-warning | color: #b42318": 1,
+-      "unowned-background | .session-item-profile-avatar | background: var(--bg-secondary)": 1,
+       "literal-color | .session-item-agent-logo-wrap.streaming::before | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
+       "literal-color | .session-item-agent-logo | border: var(--border-width, 1px) solid #fff": 1,
+       "literal-color | 0% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
+@@ -1083,4 +1082,4 @@
+       "unowned-background | .profile-avatar-view | background: var(--bg-secondary)": 1
+     }
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/tests/client/message-item-highlight.test.ts b/tests/client/message-item-highlight.test.ts
+index 230455864..c750026b9 100644
+--- a/tests/client/message-item-highlight.test.ts
++++ b/tests/client/message-item-highlight.test.ts
+@@ -85,6 +85,28 @@ describe('MessageItem tool details', () => {
+     expect(wrapper.get('.user-profile-avatar .profile-avatar-image').attributes('src')).toBe(avatar.dataUrl)
+   })
+ 
++  it('hides both author rows when hideAuthor is set', () => {
++    const wrapper = mount(MessageItem, {
++      props: {
++        message: {
++          id: 'author-hidden',
++          role: 'assistant',
++          content: 'Hello',
++          timestamp: Date.now(),
++        } satisfies Message,
++        hideAuthor: true,
++        assistantAgent: {
++          label: 'Ekko',
++          src: '/coding-agents/ekko-agent.png',
++        },
++      },
++      global: { stubs: { MarkdownRenderer: true } },
++    })
++
++    expect(wrapper.find('.message-author').exists()).toBe(false)
++    expect(wrapper.get('.message-bubble').text()).toContain('Hello')
++  })
++
+   it('renders the agent name and avatar above an assistant message', () => {
+     const wrapper = mount(MessageItem, {
+       props: {
+diff --git a/tests/client/session-list-item.test.ts b/tests/client/session-list-item.test.ts
+index 4cdd0f3a1..11f9ef6e1 100644
+--- a/tests/client/session-list-item.test.ts
++++ b/tests/client/session-list-item.test.ts
+@@ -206,10 +206,32 @@ describe('SessionListItem', () => {
+     expect(wrapper.emitted('open-new')).toBeUndefined()
+   })
+ 
++  it('hides the agent avatar by default and marks working sessions with a live dot', async () => {
++    const wrapper = mount(SessionListItem, {
++      props: {
++        session,
++        active: false,
++        pinned: false,
++        canDelete: false,
++        streaming: false,
++      },
++      global: { stubs: { ProfileAvatar: true } },
++    })
++
++    expect(wrapper.find('.session-item-agent-logo').exists()).toBe(false)
++    expect(wrapper.find('.session-item-live-dot').exists()).toBe(false)
++
++    await wrapper.setProps({ streaming: true })
++    const dot = wrapper.get('.session-item-live-dot')
++    expect(dot.attributes('aria-label')).toBe('chat.sessionLive')
++    expect(wrapper.get('.session-item-title-row').element.contains(dot.element)).toBe(true)
++  })
++
+   it('renders the Hermes logo for Hermes sessions', () => {
+     const wrapper = mount(SessionListItem, {
+       props: {
+         session: { ...session, source: 'cli', agent: 'hermes' },
++        showAgentAvatar: true,
+         active: false,
+         pinned: false,
+         canDelete: true,
+@@ -231,6 +253,7 @@ describe('SessionListItem', () => {
+     const wrapper = mount(SessionListItem, {
+       props: {
+         session: { ...session, source: 'global_agent', agent: 'hermes' },
++        showAgentAvatar: true,
+         active: false,
+         pinned: false,
+         canDelete: true,
+@@ -256,6 +279,7 @@ describe('SessionListItem', () => {
+           agent: 'ekko-agent',
+           codingAgentId: 'ekko-agent',
+         },
++        showAgentAvatar: true,
+         active: false,
+         pinned: false,
+         canDelete: true,
+@@ -276,6 +300,7 @@ describe('SessionListItem', () => {
+     const wrapper = mount(SessionListItem, {
+       props: {
+         session: { ...session, source: undefined, agent: undefined, codingAgentId: undefined },
++        showAgentAvatar: true,
+         active: false,
+         pinned: false,
+         canDelete: true,
+@@ -297,6 +322,7 @@ describe('SessionListItem', () => {
+     const wrapper = mount(SessionListItem, {
+       props: {
+         session: { ...session, source: 'coding_agent', agent: 'claude', codingAgentId: 'claude-code' },
++        showAgentAvatar: true,
+         active: false,
+         pinned: false,
+         canDelete: true,
+@@ -318,6 +344,7 @@ describe('SessionListItem', () => {
+     const wrapper = mount(SessionListItem, {
+       props: {
+         session: { ...session, source: 'coding_agent', agent: 'codex', codingAgentId: 'codex' },
++        showAgentAvatar: true,
+         active: false,
+         pinned: false,
+         canDelete: true,
+-- 
+2.53.0
+
