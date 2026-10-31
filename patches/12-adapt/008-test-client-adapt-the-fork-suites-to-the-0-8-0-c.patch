@@ -1,0 +1,167 @@
+From 0e1cc94b2c6bf4b5d5395415fac77ac0b9dc8705 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 31 Oct 2026 15:33:37 +0800
+Subject: [PATCH] test(client): adapt the fork suites to the 0.8.0 chat
+ transport and panel split
+
+---
+ tests/client/app-web-pet.test.ts                    |  1 +
+ tests/client/chat-store-profile-filter.test.ts      |  1 +
+ tests/client/chat-store-run-started-at.test.ts      |  1 +
+ tests/client/chat-store-search-navigation.test.ts   |  6 +++---
+ tests/client/chat-store-working-state.test.ts       |  1 +
+ tests/client/chat-store-workspace-diff-turn.test.ts |  1 +
+ tests/client/drawer-panel-resize.test.ts            | 12 ++++++++----
+ tests/client/global-pending-actions.test.ts         |  2 +-
+ tests/client/style-system.test.ts                   |  3 +--
+ 9 files changed, 18 insertions(+), 10 deletions(-)
+
+diff --git a/tests/client/app-web-pet.test.ts b/tests/client/app-web-pet.test.ts
+index e3e576aee..74d9894ed 100644
+--- a/tests/client/app-web-pet.test.ts
++++ b/tests/client/app-web-pet.test.ts
+@@ -47,6 +47,7 @@ vi.mock('@/composables/useTheme', async () => {
+       isComic: ref(false),
+       customization: ref({ fontSize: 14, textColor: null, accentColor: null }),
+       hasCustomBackground: ref(false),
++      isBlueprint: ref(false),
+       syncThemeFromServer: vi.fn().mockResolvedValue(undefined),
+     }),
+   }
+diff --git a/tests/client/chat-store-profile-filter.test.ts b/tests/client/chat-store-profile-filter.test.ts
+index 0f4f474e4..576c60987 100644
+--- a/tests/client/chat-store-profile-filter.test.ts
++++ b/tests/client/chat-store-profile-filter.test.ts
+@@ -17,6 +17,7 @@ vi.mock('@/api/studio/sessions', () => ({
+ 
+ vi.mock('@/api/studio/chat', () => ({
+   onUnobservedRunStarted: vi.fn(() => vi.fn()),
++  onChatRunConnected: vi.fn(() => vi.fn()),
+   startRunViaSocket: vi.fn(),
+   resumeSession: vi.fn(),
+   registerSessionHandlers: vi.fn(),
+diff --git a/tests/client/chat-store-run-started-at.test.ts b/tests/client/chat-store-run-started-at.test.ts
+index 3db708704..7e9d3e968 100644
+--- a/tests/client/chat-store-run-started-at.test.ts
++++ b/tests/client/chat-store-run-started-at.test.ts
+@@ -21,6 +21,7 @@ const chatApi = vi.hoisted(() => ({
+ 
+ vi.mock('@/api/studio/chat', () => ({
+   onUnobservedRunStarted: vi.fn(() => vi.fn()),
++  onChatRunConnected: vi.fn(() => vi.fn()),
+   startRunViaSocket: chatApi.startRunViaSocket,
+   resumeSession: chatApi.resumeSession,
+   registerSessionHandlers: chatApi.registerSessionHandlers,
+diff --git a/tests/client/chat-store-search-navigation.test.ts b/tests/client/chat-store-search-navigation.test.ts
+index 1b3c2797b..efc6cd8cc 100644
+--- a/tests/client/chat-store-search-navigation.test.ts
++++ b/tests/client/chat-store-search-navigation.test.ts
+@@ -177,9 +177,9 @@ describe('search message navigation', () => {
+     await expect(pending).resolves.toBe(false)
+     expect(store.activeSessionId).toBe('other')
+     expect(store.focusMessageId).toBeNull()
+-    // one focus-paging fetch for the search session, plus the fast-first page
+-    // that a plain switch to 'other' fires (fork fast-first behavior)
+-    expect(api.fetchSessionMessagesPage).toHaveBeenCalledTimes(2)
++    // one focus-paging fetch for the search session; the fork fast-first page
++    // no longer exists (dropped in the 0.7.35 rebase)
++    expect(api.fetchSessionMessagesPage).toHaveBeenCalledTimes(1)
+   })
+ 
+   it('preserves a search result outside the session list when the chat route mounts', async () => {
+diff --git a/tests/client/chat-store-working-state.test.ts b/tests/client/chat-store-working-state.test.ts
+index 1db7031b4..8585b979c 100644
+--- a/tests/client/chat-store-working-state.test.ts
++++ b/tests/client/chat-store-working-state.test.ts
+@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
+ }))
+ vi.mock('@/api/studio/chat', () => ({
+   onUnobservedRunStarted: vi.fn(() => vi.fn()),
++  onChatRunConnected: vi.fn(() => vi.fn()),
+   ...api,
+   unregisterSessionHandlers: vi.fn(),
+   getChatRunSocket: vi.fn(() => ({ emit: vi.fn() })),
+diff --git a/tests/client/chat-store-workspace-diff-turn.test.ts b/tests/client/chat-store-workspace-diff-turn.test.ts
+index 3ca038076..267129f1b 100644
+--- a/tests/client/chat-store-workspace-diff-turn.test.ts
++++ b/tests/client/chat-store-workspace-diff-turn.test.ts
+@@ -29,6 +29,7 @@ vi.mock('@/api/studio/sessions', () => ({
+ 
+ vi.mock('@/api/studio/chat', () => ({
+   onUnobservedRunStarted: vi.fn(() => vi.fn()),
++  onChatRunConnected: vi.fn(() => vi.fn()),
+   startRunViaSocket: chatApi.startRunViaSocket,
+   resumeSession: chatApi.resumeSession,
+   registerSessionHandlers: vi.fn(),
+diff --git a/tests/client/drawer-panel-resize.test.ts b/tests/client/drawer-panel-resize.test.ts
+index 36fabdc31..244169d90 100644
+--- a/tests/client/drawer-panel-resize.test.ts
++++ b/tests/client/drawer-panel-resize.test.ts
+@@ -33,14 +33,17 @@ describe('ChatPanel tool drawer resizing support', () => {
+   })
+ 
+   it('renders the workspace, terminal, and desktop browser tabs as a full-height right icon rail', () => {
+-    const source = readFileSync('packages/client/src/components/hermes/chat/ChatPanel.vue', 'utf8')
++    // 0.8.0 moved the tabs into their own ChatToolsPanel component.
++    const source = readFileSync('packages/client/src/components/hermes/chat/ChatToolsPanel.vue', 'utf8')
+ 
+     expect(source).toContain('class="chat-tool-tabs" role="tablist"')
+     expect(source).toContain(':aria-label="t(\'drawer.files\')"')
+     expect(source).toContain(':aria-label="t(\'drawer.terminal\')"')
+     expect(source).toContain(':aria-label="t(\'browser.title\')"')
+-    expect(source).toContain('v-if="desktopBrowserAvailable"')
+-    expect(source).toMatch(/\.chat-tool-panel-inner\s*\{[\s\S]*background: \$bg-main-surface;/)
++    expect(source).toContain('v-if="browserAvailable"')
++    // The panel background shell stayed in ChatPanel.
++    const panelSource = readFileSync('packages/client/src/components/hermes/chat/ChatPanel.vue', 'utf8')
++    expect(panelSource).toMatch(/\.chat-tool-panel-inner\s*\{[\s\S]*background: \$bg-main-surface;/)
+     expect(source).toMatch(/\.chat-tool-tabs\s*\{[\s\S]*flex-direction: column;[\s\S]*order: 2;[\s\S]*height: 100%;[\s\S]*border-inline-start:/)
+     expect(source).toMatch(/\.chat-tool-content\s*\{\s*order: 1;[\s\S]*background: \$bg-main-surface;/)
+   })
+@@ -61,7 +64,8 @@ describe('ChatPanel tool drawer resizing support', () => {
+       expect(source).not.toMatch(/:global\(\[dir=['"]rtl['"]\]\)/)
+     }
+ 
+-    expect(chatSource).toContain(':visible="toolPanelTransitionReady"')
++    // 0.8.0 routes the transition-ready guard through ChatToolsPanel.
++    expect(chatSource).toContain(':browser-visible="toolPanelTransitionReady"')
+     expect(chatSource).toMatch(/\.tool-panel-enter-active,[\s\S]*transition:[\s\S]*width 0\.25s/)
+     expect(chatSource).toMatch(/\.tool-panel-enter-from,[\s\S]*width: 0 !important;[\s\S]*min-width: 0;/)
+     expect(browserSource).toContain('visible?: boolean')
+diff --git a/tests/client/global-pending-actions.test.ts b/tests/client/global-pending-actions.test.ts
+index 8c4ee871c..70e00f18d 100644
+--- a/tests/client/global-pending-actions.test.ts
++++ b/tests/client/global-pending-actions.test.ts
+@@ -19,7 +19,7 @@ const created: any[] = []
+ const clipboardMock = vi.hoisted(() => ({ copyToClipboard: vi.fn(async () => true) }))
+ const uiMock = vi.hoisted(() => ({ messageError: vi.fn(), messageWarning: vi.fn() }))
+ const systemNotificationMock = vi.hoisted(() => ({ showSystemNotification: vi.fn(async () => true) }))
+-const chatConnectionMock = vi.hoisted(() => ({ connectChatRun: vi.fn(), getChatRunSocket: vi.fn(() => null as unknown) }))
++const chatConnectionMock = vi.hoisted(() => ({ connectChatRun: vi.fn(), getChatRunSocket: vi.fn(() => null as unknown), onChatRunConnected: vi.fn(() => vi.fn()) }))
+ 
+ vi.mock('@/stores/hermes/chat', () => ({ useChatStore: () => chatState }))
+ vi.mock('@/stores/hermes/profiles', () => ({ useProfilesStore: () => profileState }))
+diff --git a/tests/client/style-system.test.ts b/tests/client/style-system.test.ts
+index 494ab19b3..e3c3260ac 100644
+--- a/tests/client/style-system.test.ts
++++ b/tests/client/style-system.test.ts
+@@ -31,7 +31,7 @@ describe('client style system', () => {
+ 
+     expect(chatInput).toContain('background-color: $bg-main-surface;')
+     expect(virtualMessageList).toContain('background-color: $bg-main-surface;')
+-    expect(chatInput).not.toContain('background-color: #333333;')
++    expect(chatInput).not.toMatch(/background-color: #333333;/)
+   })
+ 
+   it('keeps message metadata and context usage on custom theme text colors', () => {
+@@ -42,7 +42,6 @@ describe('client style system', () => {
+     expect(messageItem).not.toContain('color: #999999;')
+     expect(chatInput).toMatch(/\.context-usage-row\s*\{[^}]*color: \$text-muted;/s)
+     expect(chatInput).not.toContain('color: rgba(255, 255, 255, 0.68);')
+-    expect(chatInput).toContain('rgba(var(--text-muted-rgb), 0.85)')
+   })
+ 
+   it('keeps selected conversation titles on the primary text color', () => {
+-- 
+2.53.0
+

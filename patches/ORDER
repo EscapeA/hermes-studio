@@ -77,3 +77,4 @@
 083 12-adapt/007-fix-i18n-give-the-provider-import-modal-its-own-.patch
 084 24-drawer-safe-top/001-fix-mobile-keep-drawer-headers-below-the-status-bar.patch
 086 26-sidebar-recent-only/001-feat-chat-flatten-the-session-sidebar-to-pinned-and-r.patch
+087 12-adapt/008-test-client-adapt-the-fork-suites-to-the-0-8-0-c.patch
