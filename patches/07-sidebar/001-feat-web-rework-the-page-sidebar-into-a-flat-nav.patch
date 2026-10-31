@@ -1,4 +1,4 @@
-From b08ccdf2f2f85dd6da55369acbde7866b6c0e21d Mon Sep 17 00:00:00 2001
+From d1b383f2578e62bc7783265a10954af535e56a81 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 18:23:53 +0800
 Subject: [PATCH] feat(web): rework the page sidebar into a flat nav with a

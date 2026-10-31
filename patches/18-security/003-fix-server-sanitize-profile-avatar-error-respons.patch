@@ -1,4 +1,4 @@
-From 40e41da28f155f38a8b5b08e0e6c3753784e3904 Mon Sep 17 00:00:00 2001
+From a85981d597972ef26b5cf4d32995543cdd9e0d5f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:04:18 +0800
 Subject: [PATCH] fix(server): sanitize profile avatar error responses

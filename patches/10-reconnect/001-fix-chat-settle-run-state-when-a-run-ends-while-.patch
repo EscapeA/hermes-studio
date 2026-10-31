@@ -1,4 +1,4 @@
-From 317e12b97e62acf1bc353517a54dbab47f25ffbd Mon Sep 17 00:00:00 2001
+From 14dde62be2d837c68a8b279222317167d80b1a6f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 11:22:27 +0800
 Subject: [PATCH] fix(chat): settle run state when a run ends while the socket

@@ -1,4 +1,4 @@
-From 915ea704a76321b4ffc3b4a81f74c326e17cc254 Mon Sep 17 00:00:00 2001
+From 3d8aee8cc62f157ce74a01eb9376053ec6c23fcf Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] feat(web): remove workflow from the frontend

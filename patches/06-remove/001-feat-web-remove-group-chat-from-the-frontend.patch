@@ -1,4 +1,4 @@
-From 45678388f47335ce213d0fa9c1f58e3a9e4b68c4 Mon Sep 17 00:00:00 2001
+From d888259ace3656c25ed20a188834b22c8cd18517 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:23 +0800
 Subject: [PATCH] feat(web): remove group chat from the frontend

@@ -1,4 +1,4 @@
-From b09973e1e49b3c36c84497d46274f0a353ddd0f2 Mon Sep 17 00:00:00 2001
+From 20e8a90ea41aa807df0ec6e15d5355cc1e922a07 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 11:58:02 +0800
 Subject: [PATCH] feat(usage): show the current decode speed beside the run

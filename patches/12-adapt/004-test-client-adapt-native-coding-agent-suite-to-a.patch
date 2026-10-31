@@ -1,4 +1,4 @@
-From dd6493d984eabe45c50d3a0da9cb556253783c27 Mon Sep 17 00:00:00 2001
+From 32bc89b959693f0a615eb22eac1920421cedb39b Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 4 Oct 2026 12:30:06 +0800
 Subject: [PATCH] test(client): adapt native coding agent suite to avatar

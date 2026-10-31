@@ -1,4 +1,4 @@
-From 3a58078349f71dd2cd56535bd2fe926a9c61f995 Mon Sep 17 00:00:00 2001
+From b7037f068741f6953831e7b9c70f77f4c31925ea Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 21:42:28 +0800
 Subject: [PATCH] feat(chat): flatten the session sidebar to pinned and recent

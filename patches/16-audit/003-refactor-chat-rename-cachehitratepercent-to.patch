@@ -1,4 +1,4 @@
-From e7f8e15e6cecc03f0677fca4b5aee208ce31b139 Mon Sep 17 00:00:00 2001
+From 82c5a26f94950a81750bc7048cdd1d219b52d55e Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:26:54 +0800
 Subject: [PATCH] refactor(chat): rename cacheHitRatePercent to

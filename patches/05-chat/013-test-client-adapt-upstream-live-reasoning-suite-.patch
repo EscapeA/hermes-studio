@@ -1,4 +1,4 @@
-From 1a456b4fd314c26163dcde9612ce51353ea4a3f2 Mon Sep 17 00:00:00 2001
+From 5da89e0e618133af5a5be016207202d76ce992af Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 17 Sep 2026 13:43:17 +0800
 Subject: [PATCH] test(client): adapt upstream live-reasoning suite to fork

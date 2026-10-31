@@ -1,4 +1,4 @@
-From 3e7ae51d0a0416d3476d30cfb9a7f71333ab93ca Mon Sep 17 00:00:00 2001
+From 73a3f5011a2f8bc8b95a5aa7336338010401adc9 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:24:13 +0800
 Subject: [PATCH] perf(chat): memoize per-message thinking parse in MessageList

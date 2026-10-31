@@ -1,4 +1,4 @@
-From c750768d7383c9e5956d409abeb179c415362411 Mon Sep 17 00:00:00 2001
+From 384c9eea36818ffd461c09999225f24f211688dd Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 1 Oct 2026 12:39:49 +0800
 Subject: [PATCH] fix(mobile-nav): stop rendering the app-level list twice
