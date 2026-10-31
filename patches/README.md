@@ -14,9 +14,9 @@ custom-next = main + patches/*.patch 线性重放（集成分支，0.8.0 升级�
 > 退役 `06-remove/005`(去头像) `06-remove/006`(其套件)、`05-chat/015`+`016`(0.7.35 rebase 结构修正，
 > 上游已吸收)、`21-session-live-dot`(上游 agent-logo 自带 streaming 光晕)、`25-identity-rows`
 > (上游 0.8.0 恢复了作者行)。新增 `12-adapt/008`（0.8.0 传输/面板拆分的套件适配）。
-> 当前 **24 组 / 80 条**。
+> 当前 **25 组 / 81 条**。
 
-## 分组总览（24 组 / 80 条）
+## 分组总览（25 组 / 81 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -47,6 +47,7 @@ custom-next = main + patches/*.patch 线性重放（集成分支，0.8.0 升级�
 | 04-usage（追加） | 1 | 压缩触发口径改锚 provider prompt_tokens（本地 cl100k 对 wire 高估约 1.7×，长会话在 ~54% 占用就被判超阈值） |
 | 25-identity-rows | 1 | 去掉「署名噪音」：会话列表副标题的 profile 名（default 等，连同 `showProfile` prop）与消息气泡上方的作者行（用户＝profile/alias、assistant＝Hermes/Ekko/…）。单用户单 agent 视图下这两行只是重复信息；顺手清掉 `MessageList`/`HistoryMessageList` 的孤儿 profile computed 与 `ui-theme` 基线里含已删选择器的一条键 |
 | 26-sidebar-recent-only | 1 | 会话侧栏拍平成「置顶 + 最近」两组：分类/未分类不再作为分组（同一会话不再同时出现在「最近」与分类组），分类管理（重命名/删除）移入侧栏顶部「会话列表操作」菜单；「最近」改为分页（`recentCount` = 单页条数，底部「加载更多」逐页追加更早会话，此前超出上限的会话在侧栏不可达）；分类标签 `max-width` 由 45% 放开到 100%（副标题行只剩标签，45% 只会白截长分类名） |
+| 27-identity-cleanup | 1 | 去掉会话界面的身份噪音：会话列表副标题的 profile 名（`default` 等）与其头像行整块删除（连同 `showProfile` prop），气泡上方的作者行（用户=profile/alias，assistant=Hermes/Ekko/…）改由 `hideAuthor` 关闭、由 ChatPanel/HistoryView 传参，Person 角色视图仍保留作者行做角色身份；会话列表的 agent 头像改 `showAgentAvatar` 可选（仅 Person 侧栏开），进行中状态改用标题行小圆点（不再依赖头像行的彩虹光晕） |
 
 ## ORDER 的语义
 
