@@ -1,4 +1,4 @@
-From cb4f19e3effdda7aaa578ecb32f41282cbd8e27b Mon Sep 17 00:00:00 2001
+From 7bca7bd680fcce8c0633876abe99aeec94207c11 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 00:08:44 +0800
 Subject: [PATCH] fix(chat): align session and context usage on one composer

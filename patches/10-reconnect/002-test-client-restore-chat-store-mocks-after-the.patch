@@ -1,4 +1,4 @@
-From 958c9e09b746894ec195aba1c71fb627737d6f11 Mon Sep 17 00:00:00 2001
+From 106d6303190b95694b999d6ae427fcc234c3bb72 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 4 Oct 2026 13:21:44 +0800
 Subject: [PATCH] test(client): restore chat-store mocks after the

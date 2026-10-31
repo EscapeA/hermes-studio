@@ -1,4 +1,4 @@
-From d6640a38a2c42a31f5dfdbd3a051b156c6290ebe Mon Sep 17 00:00:00 2001
+From 914303fea6c1f48d1bac181f20a831b4e270979c Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Fri, 14 Aug 2026 19:03:18 +0800
 Subject: [PATCH] feat(chat): drop cache-write from composer token display
@@ -59,7 +59,7 @@ index 3df7195e6..654cdadb9 100644
    })
  })
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 486a9da41..d9a78cdea 100644
+index 65b72ae7e..6c3b3537c 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -1179,7 +1179,7 @@ export default {
@@ -72,7 +72,7 @@ index 486a9da41..d9a78cdea 100644
      contextEditTitle: 'Kontextlänge bearbeiten',
      contextEditDesc: 'Kontextlängenlimit für aktuelles Modell festlegen (in Tokens)',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 9cac729b4..95d03b731 100644
+index 51b43e3df..6b48a33a7 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -1200,7 +1200,7 @@ export default {
@@ -85,7 +85,7 @@ index 9cac729b4..95d03b731 100644
      contextEditTitle: 'Edit Context Length',
      contextEditDesc: 'Set context length limit for current model (in tokens)',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index f57ccd487..d247b8c9f 100644
+index 2a49b225c..286372aaa 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -1179,7 +1179,7 @@ export default {
@@ -98,7 +98,7 @@ index f57ccd487..d247b8c9f 100644
      contextEditTitle: 'Editar longitud del contexto',
      contextEditDesc: 'Establecer el límite de longitud del contexto para el modelo actual (en tokens)',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 515308833..79147e885 100644
+index 43ed57d93..99de22010 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -1179,7 +1179,7 @@ export default {
@@ -111,7 +111,7 @@ index 515308833..79147e885 100644
      contextEditTitle: 'Modifier la longueur du contexte',
      contextEditDesc: 'Définir la limite de longueur du contexte pour le modèle actuel (en tokens)',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 3e41d38ae..b654ff4e4 100644
+index 1dcbe1519..9fe67f7b3 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -1179,7 +1179,7 @@ export default {
@@ -124,7 +124,7 @@ index 3e41d38ae..b654ff4e4 100644
      contextEditTitle: 'コンテキスト長を編集',
      contextEditDesc: '現在のモデルのコンテキスト長制限を設定（トークン数）',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 95c6e4089..e6f54a6bf 100644
+index 1c83f9fdd..18e769bb5 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -1179,7 +1179,7 @@ export default {
@@ -137,7 +137,7 @@ index 95c6e4089..e6f54a6bf 100644
      contextEditTitle: '컨텍스트 길이 편집',
      contextEditDesc: '현재 모델의 컨텍스트 길이 제한 설정 (토큰 수)',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 5ef322cd3..948e78e32 100644
+index 81897ce9c..6a1320d35 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -1179,7 +1179,7 @@ export default {
@@ -150,7 +150,7 @@ index 5ef322cd3..948e78e32 100644
      contextEditTitle: 'Editar tamanho do contexto',
      contextEditDesc: 'Definir o limite de tamanho do contexto para o modelo atual (em tokens)',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 7282fb3a9..ee39caa8d 100644
+index 724e40f51..b5f4d4261 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -1106,7 +1106,7 @@ export default {
@@ -163,7 +163,7 @@ index 7282fb3a9..ee39caa8d 100644
      contextEditTitle: 'Изменить размер контекста',
      contextEditDesc: 'Установите лимит размера контекста для текущей модели (в токенах)',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index e2213f957..b5a75803f 100644
+index cdbbc811d..7bf636203 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -1193,7 +1193,7 @@ export default {
@@ -176,7 +176,7 @@ index e2213f957..b5a75803f 100644
      contextEditTitle: '編輯上下文長度',
      contextEditDesc: '設定目前模型的上下文長度限制（token 數量）',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index e69196102..a48cb9749 100644
+index 59dcc71b4..130580b09 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -1200,7 +1200,7 @@ export default {

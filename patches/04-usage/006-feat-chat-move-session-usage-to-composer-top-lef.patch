@@ -1,4 +1,4 @@
-From 8a11e394e744793a2219c219631d10d829f2d274 Mon Sep 17 00:00:00 2001
+From 739a48f5711fa5892e20d9de2c6ad7747162495f Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 14:35:38 +0800
 Subject: [PATCH] feat(chat): move session usage to composer top-left, show

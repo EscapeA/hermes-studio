@@ -1,4 +1,4 @@
-From 0e1cc94b2c6bf4b5d5395415fac77ac0b9dc8705 Mon Sep 17 00:00:00 2001
+From 67bfcb473e29a1a3c1429e761072ea2d31a62e51 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 31 Oct 2026 15:33:37 +0800
 Subject: [PATCH] test(client): adapt the fork suites to the 0.8.0 chat
@@ -70,7 +70,7 @@ index 1b3c2797b..efc6cd8cc 100644
  
    it('preserves a search result outside the session list when the chat route mounts', async () => {
 diff --git a/tests/client/chat-store-working-state.test.ts b/tests/client/chat-store-working-state.test.ts
-index 1db7031b4..8585b979c 100644
+index faed894b2..3772d936d 100644
 --- a/tests/client/chat-store-working-state.test.ts
 +++ b/tests/client/chat-store-working-state.test.ts
 @@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({

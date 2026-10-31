@@ -1,4 +1,4 @@
-From 8f83738262b2ee85a68323a1ca0ad731cd654c32 Mon Sep 17 00:00:00 2001
+From 98806731e3c1bc8f61657ae57564071d3691b5a4 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:08:42 +0800
 Subject: [PATCH] fix(chat): track compression auto-clear timer per session to
@@ -9,10 +9,10 @@ Subject: [PATCH] fix(chat): track compression auto-clear timer per session to
  1 file changed, 33 insertions(+), 15 deletions(-)
 
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index c8a3643c8..c1f8f5b63 100644
+index ae856b208..4c63b7ca0 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -1698,16 +1698,43 @@ function createChatState(scopedSessionId?: string) {
+@@ -1701,16 +1701,43 @@ function createChatState(scopedSessionId?: string) {
      return sid ? compressionStates.value.get(sid) || null : null
    })
  
@@ -58,7 +58,7 @@ index c8a3643c8..c1f8f5b63 100644
    const abortStates = ref<Map<string, AbortState>>(new Map())
  
    function setAbortState(sessionId: string | null | undefined, state: AbortState | null) {
-@@ -4298,13 +4325,9 @@ function createChatState(scopedSessionId?: string) {
+@@ -4350,13 +4377,9 @@ function createChatState(scopedSessionId?: string) {
                  const target = sessions.value.find(s => s.id === sid)
                  if (target) target.contextTokens = (evt as any).contextTokens
                }
@@ -75,7 +75,7 @@ index c8a3643c8..c1f8f5b63 100644
                break
              }
  
-@@ -4969,12 +4992,7 @@ function createChatState(scopedSessionId?: string) {
+@@ -5024,12 +5047,7 @@ function createChatState(scopedSessionId?: string) {
              const target = sessions.value.find(s => s.id === sid)
              if (target) target.contextTokens = (evt as any).contextTokens
            }

@@ -1,4 +1,4 @@
-From 9ca5a66464bcf2d2ce82e997bbc61e90c4dae19f Mon Sep 17 00:00:00 2001
+From 7ef20ed9b268721e9744cf7ca42fefc4c220f391 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 18:23:53 +0800
 Subject: [PATCH] test(web): cover the flat page sidebar and history toggle

@@ -1,4 +1,4 @@
-From e1805275c141cee8f5793b709aa73695f22bd83f Mon Sep 17 00:00:00 2001
+From 1c3a1a5d841d26e23649731f18921041a12f7c7f Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 07:54:53 +0800
 Subject: [PATCH] ci: switch CI build+deploy trigger from dev/main to custom

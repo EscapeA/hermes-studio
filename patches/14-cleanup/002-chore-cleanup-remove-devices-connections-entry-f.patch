@@ -1,4 +1,4 @@
-From 8ad70cde79b8efd961d64f5a699d9941a8678321 Mon Sep 17 00:00:00 2001
+From 0deb8ebc28af8f042373e35705d16114bb5e0d91 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 23 Sep 2026 00:15:36 +0800
 Subject: [PATCH] chore(cleanup): remove Devices/connections entry from page

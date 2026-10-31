@@ -1,4 +1,4 @@
-From b7037f068741f6953831e7b9c70f77f4c31925ea Mon Sep 17 00:00:00 2001
+From fec9712e1e90ae9af0d88e37866e0dbeb4439796 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 21:42:28 +0800
 Subject: [PATCH] feat(chat): flatten the session sidebar to pinned and recent
@@ -656,7 +656,7 @@ index 151f35f7c..a49cb7a74 100644
  </script>
  
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 10a75aa08..98ef11d51 100644
+index 625a0a8ce..ed2eba8fa 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -1315,6 +1315,7 @@ export default {
@@ -668,7 +668,7 @@ index 10a75aa08..98ef11d51 100644
      searchTitle: 'البحث في الجلسات',
      searchSubtitle: 'ابحث بالعنوان أو بمحتوى الرسالة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 431b21687..b12e0b556 100644
+index c43997cc1..decc96bc1 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -1274,6 +1274,7 @@ export default {
@@ -680,7 +680,7 @@ index 431b21687..b12e0b556 100644
      newChat: 'Neuer Chat',
      newChatCardTitle: "Jede Idee verdient einen guten Partner.",
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 13a6f1373..11e6b42b8 100644
+index 3071dc742..f16ae93de 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -1324,6 +1324,7 @@ export default {
@@ -692,7 +692,7 @@ index 13a6f1373..11e6b42b8 100644
      searchTitle: 'Search Sessions',
      searchSubtitle: 'Search by title or message content',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 22545e8f7..257c6ee50 100644
+index 494f930a7..ba3c7ca17 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -1274,6 +1274,7 @@ export default {
@@ -704,7 +704,7 @@ index 22545e8f7..257c6ee50 100644
      newChat: 'Nuevo chat',
      newChatCardTitle: "Cada idea merece un buen compañero.",
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index d8d8ec36f..55e4e0a86 100644
+index bfc1dfb48..ddd3670aa 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -1274,6 +1274,7 @@ export default {
@@ -716,7 +716,7 @@ index d8d8ec36f..55e4e0a86 100644
      newChat: 'Nouvelle discussion',
      newChatCardTitle: "Chaque idée mérite un bon partenaire.",
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index ea210db23..fe8d57dbb 100644
+index 27a34fc56..07526de63 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -1275,6 +1275,7 @@ export default {
@@ -728,7 +728,7 @@ index ea210db23..fe8d57dbb 100644
      newChat: '新しいチャット',
      newChatCardTitle: "どんなアイデアにも、頼れるパートナーを。",
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index ae66f8e0a..e99ef01ca 100644
+index 8de833e2b..e9e08110d 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -1275,6 +1275,7 @@ export default {
@@ -740,7 +740,7 @@ index ae66f8e0a..e99ef01ca 100644
      newChat: '새 채팅',
      newChatCardTitle: "모든 아이디어에는 좋은 파트너가 필요합니다.",
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index b47cef9f0..49045628c 100644
+index 448a33b64..3b1212d5c 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -1274,6 +1274,7 @@ export default {
@@ -752,7 +752,7 @@ index b47cef9f0..49045628c 100644
      newChat: 'Novo chat',
      newChatCardTitle: "Toda ideia merece um bom parceiro.",
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index ec22fb42d..c59a808e9 100644
+index 14fde645b..8887f248d 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -1215,6 +1215,7 @@ export default {
@@ -764,7 +764,7 @@ index ec22fb42d..c59a808e9 100644
      searchTitle: 'Поиск сеансов',
      searchSubtitle: 'Поиск по заголовку или содержимому сообщений',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index d3719c53a..50e1c702b 100644
+index d24bc221a..6f7a7b915 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -1316,6 +1316,7 @@ export default {
@@ -776,7 +776,7 @@ index d3719c53a..50e1c702b 100644
      searchTitle: '搜尋工作階段',
      searchSubtitle: '依標題或訊息內容搜尋',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index e60137f58..9c5f1cdf6 100644
+index e34b1611e..ac9236738 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -1325,6 +1325,7 @@ export default {

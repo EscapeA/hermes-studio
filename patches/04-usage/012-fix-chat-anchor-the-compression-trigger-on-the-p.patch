@@ -1,4 +1,4 @@
-From dad7ec7ea39254904b6e8535ec90eb42964db2ac Mon Sep 17 00:00:00 2001
+From f07521ab58798720f935fda699c5d3894ca6d7a6 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 15 Oct 2026 17:51:44 +0800
 Subject: [PATCH] fix(chat): anchor the compression trigger on the provider

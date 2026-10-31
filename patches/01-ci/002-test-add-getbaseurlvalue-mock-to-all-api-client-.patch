@@ -1,4 +1,4 @@
-From f78284a7df69ff441cea9fd7a2e22b1b9bd59b17 Mon Sep 17 00:00:00 2001
+From 74d75c0086f86ed224d8c2566fe3e35c3f66bffe Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 7 Jul 2026 10:47:15 +0800
 Subject: [PATCH] test: add getBaseUrlValue mock to all @/api/client test mocks

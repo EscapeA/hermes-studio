@@ -1,4 +1,4 @@
-From 494454cd310119ff7fa9c2953a6e7b83e4d4282e Mon Sep 17 00:00:00 2001
+From ddd285381e92e985584bdfa030bb29e7ecc5db86 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
 Subject: [PATCH] perf(chat): use highlight.js core + register ~19 languages on

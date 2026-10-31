@@ -1,4 +1,4 @@
-From 800699b9e78066c4e6f9944e110e1ca7029bcf54 Mon Sep 17 00:00:00 2001
+From 9f6eaffb9f8d7066c2cd31dd7ca43db636b4265c Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Wed, 5 Aug 2026 03:31:22 +0800
 Subject: [PATCH] ci: drop unit-test step from build workflow

@@ -1,4 +1,4 @@
-From 20e8a90ea41aa807df0ec6e15d5355cc1e922a07 Mon Sep 17 00:00:00 2001
+From 0b119288b045235cbf59e5ef24b8ec16ba956b33 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 11:58:02 +0800
 Subject: [PATCH] feat(usage): show the current decode speed beside the run
@@ -112,7 +112,7 @@ index eaed25ef2..d67bc74af 100644
            <div v-if="visibleToolCalls.length > 0 || chatStore.compressionState || chatStore.abortState" class="tool-calls-panel">
              <!-- Abort indicator -->
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 5308ecdf3..d1df42f6b 100644
+index 9b4ae98a5..9553c4135 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -1471,7 +1471,8 @@ export default {
@@ -126,7 +126,7 @@ index 5308ecdf3..d1df42f6b 100644
      thinkingHide: 'إخفاء التفكير',
      thinkingDuration: 'المدة المرصودة {duration}',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 8b389092b..71dd7b6fe 100644
+index 6872396ff..99d782450 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -1388,7 +1388,8 @@ export default {
@@ -140,7 +140,7 @@ index 8b389092b..71dd7b6fe 100644
      thinkingHide: 'Denkprozess ausblenden',
      thinkingDuration: 'Beobachtet {duration}',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index f752b4c5b..2c04562af 100644
+index 568c21e59..59488ede6 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -1480,7 +1480,8 @@ export default {
@@ -154,7 +154,7 @@ index f752b4c5b..2c04562af 100644
      thinkingHide: 'Hide thinking',
      thinkingDuration: 'Observed {duration}',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 7f22d2aa0..20c1a3ce0 100644
+index 7bac3190f..5d97a8790 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -1388,7 +1388,8 @@ export default {
@@ -168,7 +168,7 @@ index 7f22d2aa0..20c1a3ce0 100644
      thinkingHide: 'Ocultar pensamiento',
      thinkingDuration: 'Observado {duration}',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 5046b3c81..87075953a 100644
+index 073ad7dc9..2965e5f83 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -1388,7 +1388,8 @@ export default {
@@ -182,7 +182,7 @@ index 5046b3c81..87075953a 100644
      thinkingHide: 'Masquer le raisonnement',
      thinkingDuration: 'Observé {duration}',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 91cf0ef95..72f3fc566 100644
+index a79d42820..9b568e7c1 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -1389,7 +1389,8 @@ export default {
@@ -196,7 +196,7 @@ index 91cf0ef95..72f3fc566 100644
      thinkingHide: '思考過程を隠す',
      thinkingDuration: '観測 {duration}',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index ab64a0fca..96adfc22d 100644
+index c2da0cd24..4dd69c30a 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -1389,7 +1389,8 @@ export default {
@@ -210,7 +210,7 @@ index ab64a0fca..96adfc22d 100644
      thinkingHide: '사고 과정 접기',
      thinkingDuration: '관측 {duration}',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index ebfa3a3a0..8889c6b24 100644
+index 1024bbbc8..fd9ba7719 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -1388,7 +1388,8 @@ export default {
@@ -224,7 +224,7 @@ index ebfa3a3a0..8889c6b24 100644
      thinkingHide: 'Ocultar raciocínio',
      thinkingDuration: 'Observado {duration}',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 0625f07f5..09f7dc3dc 100644
+index e2ce24a59..8a02a9b66 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -1360,7 +1360,8 @@ export default {
@@ -238,7 +238,7 @@ index 0625f07f5..09f7dc3dc 100644
      thinkingHide: 'Свернуть процесс размышления',
      thinkingDuration: 'Наблюдается {duration}',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 22dca4600..cb9bea126 100644
+index d769d2136..a861e4ab3 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -1463,7 +1463,8 @@ export default {
@@ -252,7 +252,7 @@ index 22dca4600..cb9bea126 100644
      thinkingHide: '收起思考過程',
      thinkingDuration: '已觀察 {duration}',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index e2f9b1ab8..9f4e606b2 100644
+index ce7d48e8e..acfda39ab 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -1481,7 +1481,8 @@ export default {
@@ -266,7 +266,7 @@ index e2f9b1ab8..9f4e606b2 100644
      thinkingHide: '收起思考过程',
      thinkingDuration: '已观察 {duration}',
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 680a017a0..51e9f828f 100644
+index c488b7200..c98306ddd 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
 @@ -1447,11 +1447,27 @@ function createChatState(scopedSessionId?: string) {
@@ -315,7 +315,7 @@ index 680a017a0..51e9f828f 100644
    }
  
    function setRunStartedAt(sessionId: string, startedAt: number) {
-@@ -5767,6 +5787,7 @@ function createChatState(scopedSessionId?: string) {
+@@ -5823,6 +5843,7 @@ function createChatState(scopedSessionId?: string) {
      isSessionWorking,
      runStartedAt,
      runSpeed,

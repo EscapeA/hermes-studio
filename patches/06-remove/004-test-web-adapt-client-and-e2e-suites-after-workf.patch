@@ -1,4 +1,4 @@
-From 50dda8515bd425cfbb7545aa5fb345f12fa86f69 Mon Sep 17 00:00:00 2001
+From c6b644744d4af0a99ada3164d268eb5870ee03a9 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal

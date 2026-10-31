@@ -1,4 +1,4 @@
-From 55abb50329e63700dd9c2663f0de74b8f98a6c21 Mon Sep 17 00:00:00 2001
+From 6d9c32dbe55ecf1c7504865f8b82caecc2a82dbb Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 12:33:27 +0800
 Subject: [PATCH] fix(chat): tighten run indicator and composer spacing

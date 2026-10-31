@@ -1,4 +1,4 @@
-From 14dde62be2d837c68a8b279222317167d80b1a6f Mon Sep 17 00:00:00 2001
+From 4ca7ac64ac7687d76b602be52db24723c0664d5d Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 11:22:27 +0800
 Subject: [PATCH] fix(chat): settle run state when a run ends while the socket
@@ -78,7 +78,7 @@ index 62c8901b7..04ebbde94 100644
    }
  
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 51e9f828f..c3e9f0b7a 100644
+index c98306ddd..e88f6ffd9 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
 @@ -6,7 +6,7 @@ import { historySessionSource, isBuiltinEkkoSession } from '@/utils/hermes/sessi
@@ -90,7 +90,7 @@ index 51e9f828f..c3e9f0b7a 100644
  import { archiveSession as archiveSessionApi, deleteSession as deleteSessionApi, fetchSessionMessagesPage, fetchSessions, fetchWorkspaceRunChangeFile, setSessionModel, setSessionPushEnabled as persistSessionPushEnabled, setSessionReasoningEffort as persistSessionReasoningEffort, type HermesMessage, type SessionSummary, type WorkspaceRunChangeFileDetail, type WorkspaceRunChangeSummary } from '@/api/studio/sessions'
  import { getActiveProfileName } from '@/api/client'
  import { onAuthInvalidated } from '@/api/auth-invalidation'
-@@ -5411,6 +5411,70 @@ function createChatState(scopedSessionId?: string) {
+@@ -5466,6 +5466,70 @@ function createChatState(scopedSessionId?: string) {
      if (!passive) ensureAbortHandle()
    }
  
@@ -161,7 +161,7 @@ index 51e9f828f..c3e9f0b7a 100644
    function handlePeerUserMessage(evt: RunEvent) {
      const sid = evt.session_id
      if (scopedSessionId ? sid !== scopedSessionId : sid?.startsWith('person-task-')) return
-@@ -5558,50 +5622,59 @@ function createChatState(scopedSessionId?: string) {
+@@ -5614,50 +5678,59 @@ function createChatState(scopedSessionId?: string) {
    // Tab visibility: re-sync when returning to foreground
    if (typeof document !== 'undefined') {
      const onVisibilityChange = () => {

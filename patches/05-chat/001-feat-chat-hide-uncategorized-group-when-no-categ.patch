@@ -1,4 +1,4 @@
-From 2ba9c23472446137f0d5a8d616eafee7db71abd2 Mon Sep 17 00:00:00 2001
+From 4c340749ffd1ad2c86255ec4a8039b85cda3cb30 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 08:54:55 +0800
 Subject: [PATCH] feat(chat): hide uncategorized group when no categories are

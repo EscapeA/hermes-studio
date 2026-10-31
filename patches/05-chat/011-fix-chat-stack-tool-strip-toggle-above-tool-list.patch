@@ -1,4 +1,4 @@
-From 32f529d3f88317e2599a1e99b8859f10b00d6e01 Mon Sep 17 00:00:00 2001
+From e4a138b030a62ffe1d23f18d5d924be0f51a2371 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 20:21:35 +0800
 Subject: [PATCH] fix(chat): stack tool strip toggle above tool list, drop

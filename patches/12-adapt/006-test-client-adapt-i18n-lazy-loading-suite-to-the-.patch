@@ -1,4 +1,4 @@
-From 56ea1258934935a4f193d16d5d9a5c8f7f433381 Mon Sep 17 00:00:00 2001
+From bc8bde01bb7369a3b96b5ea66bfd08a96f1c52d1 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Tue, 13 Oct 2026 16:39:12 +0800
 Subject: [PATCH] test(client): adapt i18n lazy-loading suite to the build-time

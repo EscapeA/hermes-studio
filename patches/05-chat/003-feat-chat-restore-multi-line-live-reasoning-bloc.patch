@@ -1,4 +1,4 @@
-From d0f5e4726da6b2015d1d77fe7007e352e08c748f Mon Sep 17 00:00:00 2001
+From d10dd697aa32cd3a284a734baa7d5e4171439c8c Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 28 Aug 2026 07:24:56 +0800
 Subject: [PATCH] feat(chat): restore multi-line live reasoning block with

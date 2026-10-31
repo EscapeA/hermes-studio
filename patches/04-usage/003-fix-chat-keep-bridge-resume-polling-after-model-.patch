@@ -1,4 +1,4 @@
-From d8ae9b64744c9d8aed8824dec0ee0f8172e862a4 Mon Sep 17 00:00:00 2001
+From 5c950c47099c2a9363303c8b21a61d6329be8ec2 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:32:59 +0800
 Subject: [PATCH] fix(chat): keep bridge resume polling after model.usage apply

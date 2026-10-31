@@ -1,4 +1,4 @@
-From 0ceab2591eb0fa95fb524a34eb84fbe1f1ec64c6 Mon Sep 17 00:00:00 2001
+From 77f6ec8d7957f3f196ef0ecd80fd3c41ee034c8b Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Mon, 21 Sep 2026 23:26:11 +0800
 Subject: [PATCH] feat(settings): configurable Agent Management entry target
@@ -113,7 +113,7 @@ index 4ea25238c..f937be668 100644
  
  function openModels() {
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 80b8edf2f..63e24b0d2 100644
+index 8633ca356..2b83f1027 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -2802,6 +2802,9 @@ export default {
@@ -127,7 +127,7 @@ index 80b8edf2f..63e24b0d2 100644
      agent: {
        maxTurns: 'الحد الأقصى للدورات',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index b455ac3ed..0a735133d 100644
+index 4936fa61d..db5f9916b 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -2301,6 +2301,9 @@ jobTriggered: 'Job ausgelost',
@@ -141,7 +141,7 @@ index b455ac3ed..0a735133d 100644
      agent: {
        maxTurns: 'Maximale Runden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 23309d8b7..855115ad8 100644
+index b5a346e0a..bf601f127 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -2813,6 +2813,9 @@ export default {
@@ -155,7 +155,7 @@ index 23309d8b7..855115ad8 100644
      agent: {
        maxTurns: 'Max Turns',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 54dc50657..73792b0ce 100644
+index bd0db39ed..ffbfb1906 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -2301,6 +2301,9 @@ jobTriggered: 'Job ejecutado',
@@ -169,7 +169,7 @@ index 54dc50657..73792b0ce 100644
      agent: {
        maxTurns: 'Turnos maximos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 3739715e8..ffa30482f 100644
+index 5d4d8cdca..8fe2a836e 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -2301,6 +2301,9 @@ jobTriggered: 'Job declenche',
@@ -183,7 +183,7 @@ index 3739715e8..ffa30482f 100644
      agent: {
        maxTurns: 'Tours maximum',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 12dc60e45..37a34ce7f 100644
+index 350591be3..d3d301d2b 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -2302,6 +2302,9 @@ export default {
@@ -197,7 +197,7 @@ index 12dc60e45..37a34ce7f 100644
      agent: {
        maxTurns: '最大ターン数',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 93cce8e54..ce4aeae63 100644
+index c26e9497e..0398e9f35 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -2302,6 +2302,9 @@ export default {
@@ -211,7 +211,7 @@ index 93cce8e54..ce4aeae63 100644
      agent: {
        maxTurns: '최대 턴 수',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index acddadcbc..4ab7e6338 100644
+index 87c831039..6395751b0 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -2301,6 +2301,9 @@ jobTriggered: 'Job acionado',
@@ -225,7 +225,7 @@ index acddadcbc..4ab7e6338 100644
      agent: {
        maxTurns: 'Máximo de turnos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 93284e5db..0029d73e5 100644
+index 95c263413..768976d97 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -2563,6 +2563,9 @@ export default {
@@ -239,7 +239,7 @@ index 93284e5db..0029d73e5 100644
      agent: {
        maxTurns: 'Максимум ходов',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index bc3ee0dc3..8c2c449c7 100644
+index eb9bb65ac..2460aecfe 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -2759,6 +2759,9 @@ export default {
@@ -253,7 +253,7 @@ index bc3ee0dc3..8c2c449c7 100644
      agent: {
        maxTurns: '最大輪次',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index b69a44b26..42b88a7b8 100644
+index 65d95cf50..e94a4a276 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -2852,6 +2852,9 @@ export default {

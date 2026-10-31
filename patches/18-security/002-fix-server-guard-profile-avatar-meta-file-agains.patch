@@ -1,4 +1,4 @@
-From 941ed153491e40ac98cfef5921bc032cd44a38d6 Mon Sep 17 00:00:00 2001
+From 8fd0ec394de7e4ef676a9f1992ddd75414d5f3b5 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:03:45 +0800
 Subject: [PATCH] fix(server): guard profile avatar meta.file against path

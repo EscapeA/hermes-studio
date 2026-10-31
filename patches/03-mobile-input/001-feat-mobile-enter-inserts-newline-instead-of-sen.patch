@@ -1,4 +1,4 @@
-From ebcfb06397ce37ddf339e7df2d29faba8c66c687 Mon Sep 17 00:00:00 2001
+From c81b241604f9ae7bad1b665114fa94a8214c09bd Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 17 Jun 2026 12:33:44 +0800
 Subject: [PATCH] feat: mobile Enter inserts newline instead of sending

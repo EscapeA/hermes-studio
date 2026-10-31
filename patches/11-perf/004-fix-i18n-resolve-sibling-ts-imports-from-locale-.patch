@@ -1,4 +1,4 @@
-From c4c8d373d9700972296bee7587c1bab6954beb71 Mon Sep 17 00:00:00 2001
+From bc43fc90231b907d88c42d61c55a0d7f4599e22c Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 25 Aug 2026 14:13:45 +0800
 Subject: [PATCH] fix(i18n): resolve sibling TS imports from locale dir in

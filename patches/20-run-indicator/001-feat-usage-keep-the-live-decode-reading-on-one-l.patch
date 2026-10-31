@@ -1,4 +1,4 @@
-From 5f77036af41665584dfe881cbb3c97c144b78343 Mon Sep 17 00:00:00 2001
+From b5177180dc4fb4ca7a5913f104f083dc6a38c308 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 15 Oct 2026 09:14:32 +0800
 Subject: [PATCH] =?UTF-8?q?feat(usage):=20keep=20the=20live=20decode=20rea?=
@@ -92,7 +92,7 @@ index 8a7157cd2..0fc2abd31 100644
    width: 520px;
    max-width: 100%;
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index f4086de0c..82f0fdf41 100644
+index 9bbe58b33..120f7a836 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -1463,7 +1463,7 @@ export default {
@@ -105,7 +105,7 @@ index f4086de0c..82f0fdf41 100644
      thinkingShow: '展開思考過程',
      thinkingHide: '收起思考過程',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 9860b5ef7..d6798abcb 100644
+index f1e70b7a6..0e0c3c866 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -1481,7 +1481,7 @@ export default {
