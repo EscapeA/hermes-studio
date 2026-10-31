@@ -4,8 +4,6 @@ import { NPopconfirm, NCheckbox, NTooltip } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import type { Session } from '@/stores/hermes/chat'
 import { useAppStore } from '@/stores/hermes/app'
-import { useProfilesStore } from '@/stores/hermes/profiles'
-import ProfileAvatar from '@/components/hermes/profiles/ProfileAvatar.vue'
 import PinIcon from '@/components/common/PinIcon.vue'
 import { formatTimestampMs } from '@/shared/session-display'
 import { chatSessionAgentAvatar, personAvatarAnimation, personAvatarStyle } from '@/utils/chat-agent-avatar'
@@ -22,14 +20,14 @@ const props = withDefaults(defineProps<{
   completedUnread?: boolean
   selectable?: boolean
   selected?: boolean
-  showProfile?: boolean
+  /** 会话列表默认不显示 agent 头像；Person 角色视图靠它做身份标识。 */
+  showAgentAvatar?: boolean
   showTime?: boolean
   singleLine?: boolean
   categoryLabel?: string
   to?: string
   interceptModifiedNavigation?: boolean
 }>(), {
-  showProfile: true,
   showTime: true,
 })
 
@@ -43,9 +41,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
-const profilesStore = useProfilesStore()
 const profileName = computed(() => props.session.profile || 'default')
-const profileAvatar = computed(() => profilesStore.profiles.find(profile => profile.name === profileName.value)?.avatar)
 const profileHasModels = computed(() => {
   const profileModels = appStore.profileModelGroups.find(profile => profile.profile === profileName.value)
   return !!profileModels?.groups?.some(group => group.models.length > 0)
@@ -136,6 +132,12 @@ onUnmounted(() => {
             <PinIcon width="13" height="13" filled />
           </span>
           <span v-if="completedUnread && !streaming" class="session-item-unread-dot" aria-hidden="true" />
+          <span
+            v-if="streaming && !showAgentAvatar"
+            class="session-item-live-dot"
+            :title="t('chat.sessionLive')"
+            :aria-label="t('chat.sessionLive')"
+          />
           <span class="session-item-title" dir="auto">
             {{ session.title }}
           </span>
@@ -150,8 +152,8 @@ onUnmounted(() => {
         </span>
         <span v-if="showTime" class="session-item-time">{{ formatTimestampMs(session.createdAt) }}</span>
       </span>
-      <span class="session-item-agent-row">
-        <span class="session-item-agent-logo-wrap" :class="{ streaming }">
+      <span v-if="showAgentAvatar || props.categoryLabel" class="session-item-agent-row">
+        <span v-if="showAgentAvatar" class="session-item-agent-logo-wrap" :class="{ streaming }">
           <img
             class="session-item-agent-logo"
             :class="{ 'session-item-agent-logo--person': isPersonSession }"
@@ -159,10 +161,6 @@ onUnmounted(() => {
             :src="sessionAgentLogo.src"
             :alt="sessionAgentLogo.label"
           >
-        </span>
-        <span v-if="props.showProfile" class="session-item-profile">
-          <ProfileAvatar class="session-item-profile-avatar" :name="profileName" :avatar="profileAvatar" :size="16" />
-          <span class="session-item-profile-name">{{ profileName }}</span>
         </span>
         <span
           v-if="props.categoryLabel"
@@ -256,7 +254,6 @@ onUnmounted(() => {
 }
 
 .session-item.missing-models .session-item-title,
-.session-item.missing-models .session-item-profile-name,
 .session-item.missing-models .session-item-time {
   color: #b42318;
 }
@@ -314,6 +311,34 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.12);
 }
 
+/* 进行中指示放在标题行，不依赖头像行是否渲染。 */
+.session-item-live-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.12);
+  animation: session-live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes session-live-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(0.82);
+    opacity: 0.72;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .session-item-live-dot { animation: none; }
+}
+
 .session-item-time {
   flex: 0 0 auto;
   font-size: calc(var(--font-size-base, 14px) * 11 / 14);
@@ -359,28 +384,6 @@ onUnmounted(() => {
     opacity: 0.5;
     pointer-events: auto;
   }
-}
-
-.session-item-profile {
-  display: flex;
-  align-items: center;
-  gap: calc(5px * var(--spacing-scale, 1));
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
-.session-item-profile-avatar {
-  background: var(--bg-secondary);
-}
-
-.session-item-profile-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: calc(var(--font-size-base, 14px) * 11 / 14);
-  line-height: var(--line-height, calc(var(--font-size-base, 14px) * 16 / 14));
-  color: var(--text-muted);
 }
 
 .session-item-category-tag {

@@ -954,7 +954,6 @@ function handleBatchDeleteConfirm() {
             :streaming="false"
             :selectable="isBatchMode"
             :selected="isSessionSelected(s)"
-            :show-profile="true"
             @select="isBatchMode ? toggleSessionSelection(s) : handleSessionClick(s.id, s.profile)"
             @contextmenu="handleContextMenu($event, s.id)"
             @delete="handleDeleteSession(s.id, s.profile)"
@@ -1001,7 +1000,6 @@ function handleBatchDeleteConfirm() {
               :streaming="false"
               :selectable="isBatchMode"
               :selected="isSessionSelected(s)"
-              :show-profile="true"
               @select="isBatchMode ? toggleSessionSelection(s) : handleSessionClick(s.id, s.profile)"
               @contextmenu="handleContextMenu($event, s.id)"
               @delete="handleDeleteSession(s.id, s.profile)"
@@ -1070,6 +1068,7 @@ function handleBatchDeleteConfirm() {
           <HistoryMessageList
             :key="historySession?.id || 'history-empty'"
             ref="historyMessageListRef"
+            hide-author
             :session="historySession"
             :load-older="loadOlderHistoryMessages"
             scroll-scope="history"
