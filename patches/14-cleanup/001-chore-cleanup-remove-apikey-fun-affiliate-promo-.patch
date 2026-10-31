@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From bd282639462e3c7678256363ecadd062ee021d3f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 6 Sep 2026 09:25:42 +0800
 Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
@@ -11,7 +11,7 @@ Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
  .../components/hermes/ApiRelayUsageCard.vue   | 141 -----------
  .../hermes/models/ProviderFormModal.vue       |  36 ---
  .../src/components/layout/PageSidebarNav.vue  |  14 +-
- .../layout/StudioNavigationRail.vue           |  14 +-
+ .../layout/StudioNavigationRail.vue           |  13 +-
  packages/client/src/i18n/locales/ar.ts        |  30 ---
  packages/client/src/i18n/locales/de.ts        |  30 ---
  packages/client/src/i18n/locales/en.ts        |  30 ---
@@ -32,7 +32,7 @@ Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
  tests/e2e/api-relay.spec.ts                   | 200 ----------------
  tests/server/api-relay-usage.test.ts          | 170 -------------
  vitest.config.ts                              |   1 -
- 27 files changed, 3 insertions(+), 1404 deletions(-)
+ 27 files changed, 3 insertions(+), 1403 deletions(-)
  delete mode 100644 packages/client/public/relay-logo.png
  delete mode 100644 packages/client/src/api/hermes/api-relay.ts
  delete mode 100644 packages/client/src/components/hermes/ApiRelayUsageCard.vue
@@ -84,10 +84,10 @@ z&F}Znbu}qxS4v9DF8be_FfS(QkmGfDCKEpUwr~4Z#{LBX<E1-_go$tf0000<MNUMn
 GLSTX!^7c;v
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index 6fdd5f493..03ed2ec9d 100644
+index 11e57dbfd..915eca5db 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -144,7 +144,7 @@ provide(mobileNavigationKey, {
+@@ -152,7 +152,7 @@ provide(mobileNavigationKey, {
    target: computed(() => !isWideViewport.value && hasNavigationRail.value ? mobileSidebarHost.value : null),
  });
  const hasMobileContextSidebar = computed(() =>
@@ -96,7 +96,7 @@ index 6fdd5f493..03ed2ec9d 100644
  );
  watch([hasNavigationRail, isWideViewport], () => { mobileNavigationOpen.value = false; });
  watch(sessionSearchOpen, (open) => { if (open) mobileNavigationOpen.value = false; });
-@@ -164,7 +164,6 @@ const usesPageSidebar = computed(() =>
+@@ -173,7 +173,6 @@ const usesPageSidebar = computed(() =>
      "hermes.agentManager",
      "hermes.models",
      "hermes.usage",
@@ -327,7 +327,7 @@ index 0e1723c00..8a9ae2823 100644
    display: flex;
    justify-content: flex-end;
 diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
-index 049910c24..0297ec29b 100644
+index d031568c6..c0ff8e334 100644
 --- a/packages/client/src/components/layout/PageSidebarNav.vue
 +++ b/packages/client/src/components/layout/PageSidebarNav.vue
 @@ -1,5 +1,4 @@
@@ -340,8 +340,8 @@ index 049910c24..0297ec29b 100644
  import DesktopUpdateDownloadTab from './DesktopUpdateDownloadTab.vue'
  import { useNavigationRail } from '@/composables/useNavigationRail'
  
--type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'usage' | 'apiRelay' | 'group' | 'global' | 'workflow'
-+type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'usage' | 'group' | 'global' | 'workflow'
+-type ActiveSection = 'person' | 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'usage' | 'apiRelay' | 'group' | 'global' | 'workflow'
++type ActiveSection = 'person' | 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'usage' | 'group' | 'global' | 'workflow'
  
  const props = defineProps<{
    active: ActiveSection
@@ -378,7 +378,7 @@ index 049910c24..0297ec29b 100644
    width: 100%;
    min-width: 0;
 diff --git a/packages/client/src/components/layout/StudioNavigationRail.vue b/packages/client/src/components/layout/StudioNavigationRail.vue
-index 403b45cf3..d635ebbed 100644
+index afc5cff53..1c7aba919 100644
 --- a/packages/client/src/components/layout/StudioNavigationRail.vue
 +++ b/packages/client/src/components/layout/StudioNavigationRail.vue
 @@ -1,5 +1,4 @@
@@ -387,7 +387,7 @@ index 403b45cf3..d635ebbed 100644
  import { computed } from 'vue'
  import { useRoute } from 'vue-router'
  import { useI18n } from 'vue-i18n'
-@@ -28,7 +27,6 @@ const activeKey = computed(() => {
+@@ -29,12 +28,11 @@ const activeKey = computed(() => {
    if (['hermes.chat', 'hermes.session', 'hermes.globalAgent', 'hermes.globalAgentSession'].includes(name)) return 'chat'
    if (name.startsWith('hermes.groupChat')) return 'group'
    if (name.startsWith('hermes.history')) return 'history'
@@ -395,7 +395,13 @@ index 403b45cf3..d635ebbed 100644
    return entries.value.find(entry => entry.route === name)?.key || 'settings'
  })
  const mobileNavigation = useMobileNavigation()
-@@ -51,14 +49,6 @@ function handleNavigate(key: string) {
+ function handleNavigate(key: string) {
+-  if (mobileNavigation && ['connections', 'agents', 'models', 'usage', 'apiRelay'].includes(key)) {
++  if (mobileNavigation && ['connections', 'agents', 'models', 'usage'].includes(key)) {
+     mobileNavigation.open.value = false
+   }
+ }
+@@ -53,14 +51,6 @@ function handleNavigate(key: string) {
          </template>
          {{ t(entry.label) }}
        </NTooltip>
@@ -410,22 +416,19 @@ index 403b45cf3..d635ebbed 100644
      </nav>
      <div class="studio-navigation-rail__bottom">
        <NTooltip placement="right" trigger="hover">
-@@ -102,9 +92,7 @@ function handleNavigate(key: string) {
-   overflow-y: auto;
+@@ -105,7 +95,6 @@ function handleNavigate(key: string) {
    scrollbar-width: none;
  }
--.studio-navigation-rail__bottom { display: flex; flex-direction: column; gap: calc(8px * var(--spacing-scale, 1)); padding-top: 12px; }
+ .studio-navigation-rail__bottom { display: flex; flex-direction: column; gap: calc(8px * var(--spacing-scale, 1)); padding-top: 12px; }
 -.api-relay-logo { border-radius: var(--radius-component, 4px); }
--.studio-navigation-rail__item {
-+.studio-navigation-rail__bottom { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; }.studio-navigation-rail__item {
+ .studio-navigation-rail__avatar { aspect-ratio: 1; flex-shrink: 0; border-radius: 4px; object-fit: contain; }
+ .studio-navigation-rail__item {
    display: grid;
-   place-items: center;
-   flex: 0 0 44px;
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index a5bbb5111..4b810df4e 100644
+index 5579c3f23..80b8edf2f 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -577,35 +577,6 @@ export default {
+@@ -635,35 +635,6 @@ export default {
      toolsClearExcluded: 'مسح المستثنى',
    },
  
@@ -461,7 +464,7 @@ index a5bbb5111..4b810df4e 100644
    sidebar: {
      resize: 'تغيير عرض الشريط الجانبي',
      desktopUpdatePreparing: "جارٍ تجهيز التحديث",
-@@ -622,7 +593,6 @@ export default {
+@@ -680,7 +651,6 @@ export default {
      chat: 'محادثة',
      backToChat: 'رجوع',
      search: 'بحث',
@@ -470,10 +473,10 @@ index a5bbb5111..4b810df4e 100644
      jobs: 'المهام المجدولة',
      kanban: 'كانبان',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 1d36212c0..a504ed75d 100644
+index 1fd6f78b0..b455ac3ed 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -589,35 +589,6 @@ export default {
+@@ -647,35 +647,6 @@ export default {
      toolsClearExcluded: 'Ausschlüsse löschen',
    },
  
@@ -509,7 +512,7 @@ index 1d36212c0..a504ed75d 100644
    sidebar: {
      resize: 'Seitenleistenbreite ändern',
      desktopUpdatePreparing: "Update wird vorbereitet",
-@@ -634,7 +605,6 @@ export default {
+@@ -692,7 +663,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Zuruck',
      search: 'Suche',
@@ -518,10 +521,10 @@ index 1d36212c0..a504ed75d 100644
      jobs: 'Geplante Aufgaben',
      models: 'Modelle',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 7c637c5fc..b53ee6702 100644
+index 8c37dce6f..8f948d3ea 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -577,35 +577,6 @@ export default {
+@@ -635,35 +635,6 @@ export default {
      toolsClearExcluded: 'Clear excluded',
    },
  
@@ -557,7 +560,7 @@ index 7c637c5fc..b53ee6702 100644
    sidebar: {
      resize: 'Resize sidebar',
      desktopUpdatePreparing: "Preparing update",
-@@ -622,7 +593,6 @@ export default {
+@@ -680,7 +651,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Back',
      search: 'Search',
@@ -566,10 +569,10 @@ index 7c637c5fc..b53ee6702 100644
      jobs: 'Jobs',
      kanban: 'Kanban',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 15e13c5b0..ee2babfd1 100644
+index edba3e5fd..54dc50657 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -589,35 +589,6 @@ export default {
+@@ -647,35 +647,6 @@ export default {
      toolsClearExcluded: 'Borrar exclusiones',
    },
  
@@ -605,7 +608,7 @@ index 15e13c5b0..ee2babfd1 100644
    sidebar: {
      resize: 'Cambiar el ancho de la barra lateral',
      desktopUpdatePreparing: "Preparando actualización",
-@@ -634,7 +605,6 @@ export default {
+@@ -692,7 +663,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Volver',
      search: 'Buscar',
@@ -614,10 +617,10 @@ index 15e13c5b0..ee2babfd1 100644
      jobs: 'Tareas programadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 694fed000..fefad9b1b 100644
+index a93aff5f1..3739715e8 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -589,35 +589,6 @@ export default {
+@@ -647,35 +647,6 @@ export default {
      toolsClearExcluded: 'Effacer les exclusions',
    },
  
@@ -653,7 +656,7 @@ index 694fed000..fefad9b1b 100644
    sidebar: {
      resize: 'Redimensionner la barre latérale',
      desktopUpdatePreparing: "Préparation de la mise à jour",
-@@ -634,7 +605,6 @@ export default {
+@@ -692,7 +663,6 @@ export default {
      chat: 'Discussion',
      backToChat: 'Retour',
      search: 'Rechercher',
@@ -662,10 +665,10 @@ index 694fed000..fefad9b1b 100644
      jobs: 'Taches planifiees',
      models: 'Modeles',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 7e4666664..bda94b3d9 100644
+index 05119339a..12dc60e45 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -590,34 +590,6 @@ export default {
+@@ -648,34 +648,6 @@ export default {
      toolsClearExcluded: '除外をクリア',
    },
  
@@ -700,7 +703,7 @@ index 7e4666664..bda94b3d9 100644
    sidebar: {
      resize: 'サイドバーの幅を変更',
      desktopUpdatePreparing: "更新を準備中",
-@@ -634,7 +606,6 @@ export default {
+@@ -692,7 +664,6 @@ export default {
      chat: 'チャット',
      backToChat: '戻る',
      search: '検索',
@@ -709,10 +712,10 @@ index 7e4666664..bda94b3d9 100644
      jobs: 'ジョブ',
      models: 'モデル',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index f879d34d9..825caaebb 100644
+index 0cc184976..93cce8e54 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -590,34 +590,6 @@ export default {
+@@ -648,34 +648,6 @@ export default {
      toolsClearExcluded: '제외 항목 지우기',
    },
  
@@ -747,7 +750,7 @@ index f879d34d9..825caaebb 100644
    sidebar: {
      resize: '사이드바 너비 조절',
      desktopUpdatePreparing: "업데이트 준비 중",
-@@ -634,7 +606,6 @@ export default {
+@@ -692,7 +664,6 @@ export default {
      chat: '채팅',
      backToChat: '뒤로',
      search: '검색',
@@ -756,10 +759,10 @@ index f879d34d9..825caaebb 100644
      jobs: '예약 작업',
      models: '모델',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 9d53fb987..62154584f 100644
+index 7b30edd54..acddadcbc 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -589,35 +589,6 @@ export default {
+@@ -647,35 +647,6 @@ export default {
      toolsClearExcluded: 'Limpar exclusões',
    },
  
@@ -795,7 +798,7 @@ index 9d53fb987..62154584f 100644
    sidebar: {
      resize: 'Redimensionar barra lateral',
      desktopUpdatePreparing: "Preparando atualização",
-@@ -634,7 +605,6 @@ export default {
+@@ -692,7 +663,6 @@ export default {
      chat: 'Chat',
      backToChat: 'Voltar',
      search: 'Pesquisar',
@@ -804,10 +807,10 @@ index 9d53fb987..62154584f 100644
      jobs: 'Tarefas agendadas',
      models: 'Modelos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index ac6ee3c17..b7ed0b9c7 100644
+index 4bc8bb01e..93284e5db 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -470,7 +470,6 @@ export default {
+@@ -528,7 +528,6 @@ export default {
      },
    },
  
@@ -815,7 +818,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    common: {
      close: 'Закрыть',
      loading: 'Загрузка...',
-@@ -504,34 +503,6 @@ export default {
+@@ -562,34 +561,6 @@ export default {
    },
  
  
@@ -850,7 +853,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    sidebar: {
      resize: 'Изменить ширину боковой панели',
      desktopUpdatePreparing: "Подготовка обновления",
-@@ -548,7 +519,6 @@ export default {
+@@ -606,7 +577,6 @@ export default {
      chat: 'Чат',
      backToChat: 'Назад',
      search: 'Поиск',
@@ -858,7 +861,7 @@ index ac6ee3c17..b7ed0b9c7 100644
      history: 'История',
      jobs: 'Задачи',
      kanban: 'Канбан',
-@@ -952,7 +922,6 @@ export default {
+@@ -1010,7 +980,6 @@ export default {
      pinned: 'Закреплено',
    },
  
@@ -866,7 +869,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    drawer: {
      terminal: 'Терминал',
      files: 'Рабочая область',
-@@ -973,7 +942,6 @@ export default {
+@@ -1031,7 +1000,6 @@ export default {
      hint: { idle: 'Нажмите в центре, чтобы начать голосовую реплику', paused: 'Включите микрофон, когда будете готовы', listening: 'Сделайте паузу для отправки или нажмите для завершения', listeningManual: 'Идет запись. Нажмите в центре еще раз, чтобы остановить и распознать речь', processing: 'Преобразую речь в текст', thinking: 'Сообщение отправлено в текущий разговор', speaking: 'Ответ можно прервать в любое время', error: 'Нажмите в центре, чтобы повторить' },
    },
  
@@ -874,7 +877,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    chat: {
      selectMessages: "Выбрать сообщения",
      messagesSelected: "Выбрано: {count}",
-@@ -1354,7 +1322,6 @@ export default {
+@@ -1412,7 +1380,6 @@ export default {
      speechNotSupported: 'Этот браузер не поддерживает воспроизведение речи',
    },
  
@@ -882,7 +885,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    workflow: {
      listActions: 'Действия со списком рабочих процессов',
      quality: { results: "JEV quality observations", rerun: "Edit and rerun from this node", decision: { pass: "Passed", needs_improvement: "Needs improvement", unknown: "Unknown" } },
-@@ -1619,7 +1586,6 @@ export default {
+@@ -1677,7 +1644,6 @@ export default {
      newNodeTitle: 'Узел {count}',
    },
  
@@ -890,7 +893,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    kanban: {
      title: 'Канбан',
      createTask: 'Создать задачу',
-@@ -1755,7 +1721,6 @@ export default {
+@@ -1813,7 +1779,6 @@ export default {
      },
    },
  
@@ -898,7 +901,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    scheduleBuilder: { time: 'Время', hour: 'Час', minute: 'Минута', weekday: 'День недели', monthDay: 'День месяца' },
    jobs: {
      title: 'Периодические задачи',
-@@ -1843,7 +1808,6 @@ export default {
+@@ -1901,7 +1866,6 @@ export default {
      },
    },
  
@@ -906,7 +909,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    skills: {
      filterBySource: "Фильтр по источнику",
      title: 'Навыки',
-@@ -1906,7 +1870,6 @@ export default {
+@@ -1964,7 +1928,6 @@ export default {
      writeApprovalRemoveFile: 'Это подтверждение удалит {file} из skill {skill}.',
    },
  
@@ -914,7 +917,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    plugins: {
      title: 'Плагины',
      refresh: 'Обновить',
-@@ -1977,7 +1940,6 @@ export default {
+@@ -2035,7 +1998,6 @@ export default {
      },
    },
  
@@ -922,7 +925,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    petdex: {
      title: 'Petdex Pets',
      subtitle: 'Browse the public petdex catalog used by Hermes desktop pets.',
-@@ -2016,7 +1978,6 @@ export default {
+@@ -2074,7 +2036,6 @@ export default {
      soulPlaceholder: 'Введите конфигурацию души...',
    },
  
@@ -930,7 +933,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    models: {
      importTitle: "Импорт провайдера",
      importNotice: "Проверьте адрес, модель и целевой профиль. После подтверждения Studio сохранит ключ API и назначит модель по умолчанию для профиля. До подтверждения ничего не импортируется.",
-@@ -2274,7 +2235,6 @@ export default {
+@@ -2332,7 +2293,6 @@ export default {
      fetchFailed: 'Не удалось получить модели',
    },
  
@@ -938,7 +941,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    profiles: {
      title: 'Профили',
      create: 'Создать профиль',
-@@ -2358,7 +2318,6 @@ export default {
+@@ -2416,7 +2376,6 @@ export default {
      },
    },
  
@@ -946,7 +949,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    logs: {
      file: "Файл журнала",
      level: "Уровень журнала",
-@@ -2371,7 +2330,6 @@ export default {
+@@ -2429,7 +2388,6 @@ export default {
      noEntries: 'Нет записей',
    },
  
@@ -954,7 +957,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    theme: {
      presets: themePresetMessages['ru'],
      customization: themeAppearanceMessages['ru'],
-@@ -2939,12 +2897,10 @@ export default {
+@@ -3000,12 +2958,10 @@ export default {
        providerEdge: 'Edge TTS (бесплатно, не требует API-ключа)',
        providerMimo: 'MiMo TTS',
  
@@ -967,7 +970,7 @@ index ac6ee3c17..b7ed0b9c7 100644
        openaiKey: 'API-ключ',
        openaiKeyHint: 'API-ключ OpenAI с правами TTS',
        openaiUrl: 'Базовый URL API',
-@@ -2954,7 +2910,6 @@ export default {
+@@ -3015,7 +2971,6 @@ export default {
        openaiVoice: 'Тембр',
        openaiVoiceHint: 'Тембр для синтеза речи',
  
@@ -975,7 +978,7 @@ index ac6ee3c17..b7ed0b9c7 100644
        customHint: 'Поддерживается любая служба TTS, совместимая с OpenAI, включая GPT-SoVITS, CosyVoice и т.п.',
        customUrl: 'URL API',
        customUrlHint: 'Полный базовый URL службы TTS',
-@@ -2974,7 +2929,6 @@ export default {
+@@ -3035,7 +2990,6 @@ export default {
        edgePitch: 'Высота тона',
        edgePitchHint: 'Регулировка высоты тона (–20 … +20 Гц)',
  
@@ -983,7 +986,7 @@ index ac6ee3c17..b7ed0b9c7 100644
        testTitle: 'Тестовое прослушивание',
        testText: 'Тестовый текст',
        testTextPlaceholder: 'Введите тестовый текст...',
-@@ -2983,7 +2937,6 @@ export default {
+@@ -3044,7 +2998,6 @@ export default {
        testButtonPlaying: 'Воспроизведение...',
        testFailed: 'Ошибка теста: {error}',
  
@@ -991,7 +994,7 @@ index ac6ee3c17..b7ed0b9c7 100644
        mimoHint: 'MiMo TTS от Xiaomi. Поддерживает три режима: предустановленные тембры, дизайн тембра и клонирование тембра.',
        mimoApiKey: 'API-ключ',
        mimoApiKeyHint: 'Получите его на platform.xiaomimimo.com',
-@@ -3010,7 +2963,6 @@ export default {
+@@ -3071,7 +3024,6 @@ export default {
      },
    },
  
@@ -999,7 +1002,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    platform: {
      requireMention: "Требуется упоминание {'@'}",
      requireMentionGroup: "В группе требуется упоминание {'@'}бота для ответа",
-@@ -3103,7 +3055,6 @@ export default {
+@@ -3164,7 +3116,6 @@ export default {
      qqQrScanHint: 'Отсканируйте QR-код с помощью QQ или откройте ссылку на телефоне, чтобы завершить привязку',
    },
  
@@ -1007,7 +1010,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    gateways: {
      title: 'Шлюзы',
      running: 'Работает',
-@@ -3113,7 +3064,6 @@ export default {
+@@ -3174,7 +3125,6 @@ export default {
      stopFailed: 'Ошибка остановки',
    },
  
@@ -1015,7 +1018,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    language: {
      label: 'Язык',
      zh: 'Китайский',
-@@ -3121,7 +3071,6 @@ export default {
+@@ -3182,7 +3132,6 @@ export default {
      ru: 'Русский',
    },
  
@@ -1023,7 +1026,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    terminal: {
      sessions: 'Сеансы',
      newTab: 'Новая вкладка терминала',
-@@ -3134,7 +3083,6 @@ export default {
+@@ -3195,7 +3144,6 @@ export default {
      connectionError: 'Ошибка соединения с терминалом',
    },
  
@@ -1031,7 +1034,7 @@ index ac6ee3c17..b7ed0b9c7 100644
    groupChat: {
      messageAlreadySummarized: "Уже включено в сводку; удаление невозможно",
      messageSummaryBoundaryUnknown: "Граница сводки неизвестна; удаление отключено",
-@@ -3366,7 +3314,6 @@ export default {
+@@ -3427,7 +3375,6 @@ export default {
      summaryLoadFailed: 'Не удалось загрузить резюме комнаты',
    },
  
@@ -1040,10 +1043,10 @@ index ac6ee3c17..b7ed0b9c7 100644
      origin: {
        label: "Категория использования",
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index f71bcc471..f36a962f4 100644
+index 34d847f18..1f3a1bf5f 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -578,34 +578,6 @@ export default {
+@@ -636,34 +636,6 @@ export default {
      toolsClearExcluded: '清空排除',
    },
  
@@ -1078,7 +1081,7 @@ index f71bcc471..f36a962f4 100644
    sidebar: {
      resize: '調整側邊欄寬度',
      desktopUpdatePreparing: "正在準備更新",
-@@ -622,7 +594,6 @@ export default {
+@@ -680,7 +652,6 @@ export default {
      chat: '對話',
      backToChat: '返回',
      search: '搜尋',
@@ -1087,10 +1090,10 @@ index f71bcc471..f36a962f4 100644
      jobs: '任務',
      kanban: '看板',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 4fcf3f1de..0495ff271 100644
+index 46ad76bf8..83abe7687 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -578,34 +578,6 @@ export default {
+@@ -636,34 +636,6 @@ export default {
      toolsClearExcluded: '清空排除',
    },
  
@@ -1125,7 +1128,7 @@ index 4fcf3f1de..0495ff271 100644
    sidebar: {
      resize: '调整侧边栏宽度',
      desktopUpdatePreparing: "正在准备更新",
-@@ -622,7 +594,6 @@ export default {
+@@ -680,7 +652,6 @@ export default {
      chat: '对话',
      backToChat: '返回',
      search: '搜索',
@@ -1134,10 +1137,10 @@ index 4fcf3f1de..0495ff271 100644
      jobs: '任务',
      kanban: '看板',
 diff --git a/packages/client/src/router/index.ts b/packages/client/src/router/index.ts
-index 5b7da32a4..fd3c404d9 100644
+index fc4e04374..6ec72537c 100644
 --- a/packages/client/src/router/index.ts
 +++ b/packages/client/src/router/index.ts
-@@ -89,11 +89,6 @@ const router = createRouter({
+@@ -98,11 +98,6 @@ const router = createRouter({
        name: 'hermes.models',
        component: () => import('@/views/hermes/ChatView.vue'),
      },
@@ -2047,3 +2050,6 @@ index dd913938b..16c1a1d89 100644
      },
    },
    test: {
+-- 
+2.53.0
+

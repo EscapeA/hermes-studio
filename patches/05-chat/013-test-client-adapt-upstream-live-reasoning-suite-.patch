@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 1a456b4fd314c26163dcde9612ce51353ea4a3f2 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 17 Sep 2026 13:43:17 +0800
 Subject: [PATCH] test(client): adapt upstream live-reasoning suite to fork
@@ -15,7 +15,7 @@ delay, so mount with the messages already present and assert fork behavior.
  1 file changed, 68 insertions(+), 45 deletions(-)
 
 diff --git a/tests/client/message-list-live-reasoning.test.ts b/tests/client/message-list-live-reasoning.test.ts
-index ac0f052bb..03574bde6 100644
+index d6cfccab3..169375bc1 100644
 --- a/tests/client/message-list-live-reasoning.test.ts
 +++ b/tests/client/message-list-live-reasoning.test.ts
 @@ -138,22 +138,17 @@ describe('MessageList live reasoning', () => {
@@ -23,7 +23,7 @@ index ac0f052bb..03574bde6 100644
    })
  
 -  it('updates the thinking logo with the active agent and preserves the Ekko animation', async () => {
-+  it('keeps the thinking status without an avatar icon per the compact run indicator', async () => {
++  it('keeps the thinking status with the agent avatar beside it', async () => {
      const wrapper = mountMessageList([])
      const chatStore = useChatStore()
 -    for (const [agent, src] of [
@@ -40,15 +40,15 @@ index ac0f052bb..03574bde6 100644
 -      expect(wrapper.get('.thinking-avatar').classes()).toContain(
 -        agent === 'ekko-agent' ? 'thinking-avatar--animated' : 'thinking-avatar--logo',
 -      )
-+      // Custom fork: the run indicator intentionally drops the avatar icon
-+      // (thinking.gif removal), so only the text status line remains.
-+      expect(wrapper.find('.thinking-avatar').exists()).toBe(false)
++      // 0.8.0: avatar surfaces are upstream-owned again (Person BOTs are
++      // identified by their animation), so the run indicator keeps the logo.
++      expect(wrapper.find('.thinking-avatar').exists()).toBe(true)
 +      expect(wrapper.find('.thinking-status').exists()).toBe(true)
 +      expect(wrapper.find('.thinking-status-copy').text()).toContain('chat.thinkingInProgress')
      }
      wrapper.unmount()
    })
-@@ -260,34 +255,46 @@ describe('MessageList live reasoning', () => {
+@@ -272,34 +267,46 @@ describe('MessageList live reasoning', () => {
    })
  
    it('moves a finalized tool and its reasoning into the transcript, then reuses the fixed live line', async () => {
@@ -117,7 +117,7 @@ index ac0f052bb..03574bde6 100644
      expect(chatStore.messages.find(message => message.id === 'assistant-1')).toEqual(
        expect.objectContaining({ reasoning: 'Need inspect the file.' }),
      )
-@@ -297,10 +304,14 @@ describe('MessageList live reasoning', () => {
+@@ -309,10 +316,14 @@ describe('MessageList live reasoning', () => {
      runningTool.toolStatus = 'done'
      await nextTick()
  
@@ -136,7 +136,7 @@ index ac0f052bb..03574bde6 100644
  
      chatStore.messages.push({
        id: 'assistant-2',
-@@ -312,9 +323,11 @@ describe('MessageList live reasoning', () => {
+@@ -324,9 +335,11 @@ describe('MessageList live reasoning', () => {
      })
      await nextTick()
  
@@ -150,7 +150,7 @@ index ac0f052bb..03574bde6 100644
      expect(chatStore.messages.find(message => message.id === 'tool-1')).toEqual(
        expect.objectContaining({ reasoning: 'Need inspect the file.' }),
      )
-@@ -442,14 +455,18 @@ describe('MessageList live reasoning', () => {
+@@ -454,14 +467,18 @@ describe('MessageList live reasoning', () => {
      ])
      await flushPromises()
  
@@ -172,7 +172,7 @@ index ac0f052bb..03574bde6 100644
      const wrapper = mountMessageList([
        { id: 'user-1', role: 'user', content: 'Use several tools', timestamp: 1 },
        {
-@@ -479,17 +496,23 @@ describe('MessageList live reasoning', () => {
+@@ -491,17 +508,23 @@ describe('MessageList live reasoning', () => {
          timestamp: 4,
        },
      ], false)
@@ -198,3 +198,6 @@ index ac0f052bb..03574bde6 100644
 +    expect(wrapper.find('[data-id="tool-without-run"]').exists()).toBe(true)
    })
  })
+-- 
+2.53.0
+

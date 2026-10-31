@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From d0f5e4726da6b2015d1d77fe7007e352e08c748f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 28 Aug 2026 07:24:56 +0800
 Subject: [PATCH] feat(chat): restore multi-line live reasoning block with
@@ -10,14 +10,14 @@ observability of long thinking streams. Restore the pre-0.6.45 behavior:
 markdown multi-line rendering inside a max-height 220px scroll container,
 with stick-to-bottom auto scroll while streaming.
 ---
- .../hermes/chat/LiveReasoningStatus.vue       | 130 +++++-------------
- 1 file changed, 36 insertions(+), 94 deletions(-)
+ .../hermes/chat/LiveReasoningStatus.vue       | 129 +++++-------------
+ 1 file changed, 35 insertions(+), 94 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
-index f5e386e7a..3527df7f2 100644
+index 09c37f5b5..62018da41 100644
 --- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
 +++ b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
-@@ -1,10 +1,12 @@
+@@ -1,11 +1,13 @@
  <script setup lang="ts">
  import { deploymentUrl } from '@/utils/deployment-url'
 -import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
@@ -25,14 +25,15 @@ index f5e386e7a..3527df7f2 100644
  import { useI18n } from 'vue-i18n'
  import thinkingImage from '@/assets/thinking.gif'
  import type { ChatAgentAvatar } from '@/utils/chat-agent-avatar'
+ import { personAvatarAnimation, personAvatarStyle } from '@/utils/chat-agent-avatar'
  
 +const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
 +
  const props = withDefaults(defineProps<{
    reasoning?: string | null
    reasoningId?: string | number | null
-@@ -19,57 +21,21 @@ const props = withDefaults(defineProps<{
- const isEkko = computed(() => props.agent.label === 'Ekko')
+@@ -25,57 +27,21 @@ const isPerson = computed(() => !!personThinking.value)
+ const avatarSrc = computed(() => personThinking.value || (isEkko.value ? thinkingImage : props.agent.src))
  
  const { t } = useI18n()
 -const reasoningBody = ref<HTMLElement | null>(null)
@@ -99,12 +100,11 @@ index f5e386e7a..3527df7f2 100644
  </script>
  
  <template>
-@@ -94,15 +60,18 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
-       </div>
+@@ -102,15 +68,17 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
      </div>
      <div
-+      v-if="reasoning"
-+      :key="reasoningId ?? reasoning"
+       v-if="!hideReasoning"
++      :key="reasoningId ?? 'live-reasoning'"
        class="live-reasoning-detail"
 -      :class="{ 'is-empty': !reasoningLine }"
        :data-reasoning-id="reasoningId"
@@ -120,7 +120,7 @@ index f5e386e7a..3527df7f2 100644
      </div>
    </div>
  </template>
-@@ -114,15 +83,10 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -123,15 +91,10 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
    display: flex;
    flex-direction: column;
    align-items: flex-start;
@@ -137,7 +137,7 @@ index f5e386e7a..3527df7f2 100644
  }
  
  .thinking-status {
-@@ -131,10 +95,7 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -140,10 +103,7 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
    gap: calc(10px * var(--spacing-scale, 1));
    width: 100%;
    min-width: 0;
@@ -148,7 +148,7 @@ index f5e386e7a..3527df7f2 100644
  }
  
  .thinking-avatar {
-@@ -161,14 +122,11 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -172,14 +132,11 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
  .thinking-status-copy {
    display: flex;
    align-items: center;
@@ -166,7 +166,7 @@ index f5e386e7a..3527df7f2 100644
  }
  
  .thinking-status-label {
-@@ -223,28 +181,14 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -234,28 +191,14 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
  }
  
  .live-reasoning-detail {
@@ -196,7 +196,7 @@ index f5e386e7a..3527df7f2 100644
  
    .dark & {
      background: rgba(255, 255, 255, 0.045);
-@@ -254,27 +198,26 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -265,27 +208,26 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
  .live-reasoning-label {
    display: flex;
    align-items: center;
@@ -236,7 +236,7 @@ index f5e386e7a..3527df7f2 100644
    }
  }
  
-@@ -287,5 +230,4 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
+@@ -298,5 +240,4 @@ onBeforeUnmount(() => cancelAnimationFrame(scrollFrame))
      background-position: 0% 0;
    }
  }
@@ -244,3 +244,6 @@ index f5e386e7a..3527df7f2 100644
 -</style>
 +</style>
 \ No newline at end of file
+-- 
+2.53.0
+

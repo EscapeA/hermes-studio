@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From d8ae9b64744c9d8aed8824dec0ee0f8172e862a4 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:32:59 +0800
 Subject: [PATCH] fix(chat): keep bridge resume polling after model.usage apply
@@ -12,7 +12,7 @@ abort cursor advancement. Update resume test mocks for the new usage helpers.
  2 files changed, 53 insertions(+), 4 deletions(-)
 
 diff --git a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
-index df9c58666..cb5b781cb 100644
+index 535473277..babc280d5 100644
 --- a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
 +++ b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
 @@ -1085,10 +1085,19 @@ export async function resumeBridgeRun(
@@ -93,3 +93,6 @@ index 2d66b06c2..130b999e7 100644
  }))
  
  function createNamespace() {
+-- 
+2.53.0
+

@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From e088cc781cfcc17e0e22302f490da1942ac4a4b6 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Mon, 28 Sep 2026 23:07:20 +0800
 Subject: [PATCH] test(client): adapt two upstream suites to the fork's
@@ -14,10 +14,10 @@ Subject: [PATCH] test(client): adapt two upstream suites to the fork's
  2 files changed, 11 insertions(+), 6 deletions(-)
 
 diff --git a/tests/client/chat-input-draft.test.ts b/tests/client/chat-input-draft.test.ts
-index e38661cbe..142883fdd 100644
+index e9a64e0a8..dbb55fdbc 100644
 --- a/tests/client/chat-input-draft.test.ts
 +++ b/tests/client/chat-input-draft.test.ts
-@@ -434,15 +434,17 @@ describe('ChatInput draft persistence', () => {
+@@ -502,15 +502,17 @@ describe('ChatInput draft persistence', () => {
  
      expect(wrapper.get('.context-info').text()).toMatch(/2\.0k\s+\//)
      expect(wrapper.get('.context-limit-editable').text()).toBe('256.0k')
@@ -38,7 +38,7 @@ index e38661cbe..142883fdd 100644
    })
  
    it.each(['hermes', 'ekko-agent'])('never substitutes historical usage for missing or zero %s context', async agent => {
-@@ -456,12 +458,13 @@ describe('ChatInput draft persistence', () => {
+@@ -524,12 +526,13 @@ describe('ChatInput draft persistence', () => {
      session.contextTokens = 0
      await nextTick()
      expect(wrapper.get('.context-info').text()).toMatch(/^0\s+\//)
@@ -55,10 +55,10 @@ index e38661cbe..142883fdd 100644
        expect(wrapper.text()).not.toContain('136.1k')
      }
 diff --git a/tests/client/chat-store-search-navigation.test.ts b/tests/client/chat-store-search-navigation.test.ts
-index 5d447343f..fd25155bc 100644
+index b54f96d12..2032a5642 100644
 --- a/tests/client/chat-store-search-navigation.test.ts
 +++ b/tests/client/chat-store-search-navigation.test.ts
-@@ -144,7 +144,9 @@ describe('search message navigation', () => {
+@@ -176,7 +176,9 @@ describe('search message navigation', () => {
      await expect(pending).resolves.toBe(false)
      expect(store.activeSessionId).toBe('other')
      expect(store.focusMessageId).toBeNull()
@@ -69,3 +69,6 @@ index 5d447343f..fd25155bc 100644
    })
  
    it('preserves a search result outside the session list when the chat route mounts', async () => {
+-- 
+2.53.0
+

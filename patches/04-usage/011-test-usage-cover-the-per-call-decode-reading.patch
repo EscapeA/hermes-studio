@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 051b016e0e1b324cbf009d7d0a15929ca248b7c1 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 27 Sep 2026 11:58:09 +0800
 Subject: [PATCH] test(usage): cover the per-call decode reading
@@ -111,3 +111,6 @@ index 3a000bf84..380d21da8 100644
 +    expect(latestRunSpeed(state)).toBeUndefined()
 +  })
  })
+-- 
+2.53.0
+

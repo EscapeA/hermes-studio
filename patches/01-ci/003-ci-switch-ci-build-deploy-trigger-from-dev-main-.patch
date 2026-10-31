@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From e1805275c141cee8f5793b709aa73695f22bd83f Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 07:54:53 +0800
 Subject: [PATCH] ci: switch CI build+deploy trigger from dev/main to custom
@@ -10,7 +10,7 @@ branch carrying the 52-patch stack; dev/main is retired (kept as archive).
  1 file changed, 1 insertion(+)
 
 diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
-index c64ca5371..4a330ab50 100644
+index cfcfb310e..db893f1be 100644
 --- a/.github/workflows/build.yml
 +++ b/.github/workflows/build.yml
 @@ -4,6 +4,7 @@ on:
@@ -21,3 +21,6 @@ index c64ca5371..4a330ab50 100644
    pull_request:
      branches:
        - main
+-- 
+2.53.0
+

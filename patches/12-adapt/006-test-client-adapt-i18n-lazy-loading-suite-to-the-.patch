@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From b12596700fe401437073769fcc7cd53286055552 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Tue, 13 Oct 2026 16:39:12 +0800
 Subject: [PATCH] test(client): adapt i18n lazy-loading suite to the build-time
@@ -9,10 +9,10 @@ Subject: [PATCH] test(client): adapt i18n lazy-loading suite to the build-time
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/tests/client/i18n-lazy-loading.test.ts b/tests/client/i18n-lazy-loading.test.ts
-index 54f2025c6..28f43b6fe 100644
+index 318d38afe..0dbc65572 100644
 --- a/tests/client/i18n-lazy-loading.test.ts
 +++ b/tests/client/i18n-lazy-loading.test.ts
-@@ -57,7 +57,9 @@ describe('i18n lazy loading', () => {
+@@ -73,7 +73,9 @@ describe('i18n lazy loading', () => {
      const { i18nReady } = await import('@/i18n')
      const i18n = await i18nReady
  
@@ -23,3 +23,6 @@ index 54f2025c6..28f43b6fe 100644
      expect(i18n.global.locale.value).toBe('tr')
      expect(document.documentElement.lang).toBe('tr')
      expect(document.documentElement.dir).toBe('ltr')
+-- 
+2.53.0
+

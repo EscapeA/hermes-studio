@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From cf662d784f4c62a1c3209f2aa84a32c8313d9037 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:05:12 +0800
 Subject: [PATCH] feat(chat): use latest API prompt_tokens for context usage UI
@@ -20,20 +20,20 @@ the next real API usage event.
  create mode 100644 tests/server/run-chat-api-prompt-context.test.ts
 
 diff --git a/packages/server/src/modules/studio/contracts/runs/session.ts b/packages/server/src/modules/studio/contracts/runs/session.ts
-index 51765d64b..26aa03fa7 100644
+index 955dd5106..fe1aefc0e 100644
 --- a/packages/server/src/modules/studio/contracts/runs/session.ts
 +++ b/packages/server/src/modules/studio/contracts/runs/session.ts
-@@ -169,6 +169,8 @@ export interface SessionState {
-   contextTokens?: number
-   /** Ekko's system/tool context, kept separately from conversation history. */
+@@ -174,6 +174,8 @@ export interface SessionState {
    ekkoContext?: { fixedContextTokens: number }
+   /** Bound to the actual agent for this turn, including account agents such as Person. */
+   ekkoBoundaryInterrupt?: (expectedRunId: string) => { status: string; phase?: string; reason?: string }
 +  /** Last real API prompt_tokens (in=) for context-window UI; blocks local estimate overwrite. */
 +  apiPromptTokens?: number
    bridgeContext?: BridgeContextState
    isAborting?: boolean
    queue: QueuedRun[]
 diff --git a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
-index 29d40c388..1b1bf8df2 100644
+index 11371c2ab..6bb5baeac 100644
 --- a/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
 +++ b/packages/server/src/modules/studio/services/chat-run/handle-bridge-run.ts
 @@ -21,10 +21,13 @@ import type {
@@ -283,7 +283,7 @@ index 000000000..090a92578
 +  })
 +})
 diff --git a/tests/server/run-chat-bridge-final-context.test.ts b/tests/server/run-chat-bridge-final-context.test.ts
-index 9cbd9e600..735e17928 100644
+index df2f456f3..8948ae1f4 100644
 --- a/tests/server/run-chat-bridge-final-context.test.ts
 +++ b/tests/server/run-chat-bridge-final-context.test.ts
 @@ -46,7 +46,24 @@ const updateContextTokenUsageMock = vi.fn((sid: string, state: any, emit: any, c
@@ -347,7 +347,7 @@ index 9cbd9e600..735e17928 100644
    })
  
    it('refreshes Studio Claude OAuth before creating the Anthropic bridge agent', async () => {
-@@ -1487,6 +1522,87 @@ describe('bridge run final context usage', () => {
+@@ -1489,6 +1524,87 @@ describe('bridge run final context usage', () => {
      }))
    })
  
@@ -435,3 +435,6 @@ index 9cbd9e600..735e17928 100644
    it('uses cached fixed context instead of bridge estimate when available', async () => {
      const emit = vi.fn()
      const nsp = makeNamespace(emit)
+-- 
+2.53.0
+

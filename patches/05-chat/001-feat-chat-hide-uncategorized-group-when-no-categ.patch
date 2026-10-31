@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 2ba9c23472446137f0d5a8d616eafee7db71abd2 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 08:54:55 +0800
 Subject: [PATCH] feat(chat): hide uncategorized group when no categories are
@@ -66,3 +66,6 @@ index 3f0aac924..ccdd73239 100644
    it('shows sessions with deleted or unknown categories as uncategorized', () => {
      const groups = buildVisibleSessionCategoryGroups(
        [{ id: 1, name: 'Work' }],
+-- 
+2.53.0
+

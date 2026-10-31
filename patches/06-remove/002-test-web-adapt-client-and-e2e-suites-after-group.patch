@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From c9eb7b02a329718bb21a03a013379d88c50e8b85 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:29 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after group chat
@@ -18,9 +18,7 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  .../client/agent-status-availability.test.ts  |    2 +-
  tests/client/api.test.ts                      |   10 +-
  ...approval-system-notification-click.test.ts |    2 -
- .../client/chat-message-mobile-layout.test.ts |   16 -
  tests/client/desktop-browser-route.test.ts    |    7 -
- tests/client/drawer-panel-resize.test.ts      |   13 +-
  tests/client/ekko-display-name.test.ts        |    4 -
  tests/client/files-panel-attach.test.ts       |   18 -
  tests/client/files-store.test.ts              |   81 -
@@ -32,12 +30,11 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  .../client/group-chat-handoff-locales.test.ts |   16 -
  ...up-chat-handoff-presentation-model.test.ts |   61 -
  ...oup-chat-handoff-stop-presentation.test.ts |   51 -
- .../group-chat-history-entry-removal.test.ts  |   27 -
  .../client/group-chat-input-mentions.test.ts  |  502 ----
  .../group-chat-invite-attachments.test.ts     |   72 -
  tests/client/group-chat-invite-code.test.ts   |   18 -
  .../client/group-chat-mention-options.test.ts |   48 -
- .../group-chat-panel-workspace-source.test.ts |  572 -----
+ .../group-chat-panel-workspace-source.test.ts |  559 -----
  tests/client/group-chat-remote-rooms.test.ts  |   74 -
  tests/client/group-chat-room-drafts.test.ts   |  104 -
  .../client/group-chat-store-baseline.test.ts  | 1558 ------------
@@ -51,18 +48,16 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  tests/client/i18n-coverage.test.ts            |   87 -
  tests/client/login-view.test.ts               |    4 +-
  tests/client/markdown-rendering.test.ts       |   12 +-
- .../page-sidebar-nav-history-position.test.ts |    7 +-
  tests/client/router-login-redirect.test.ts    |   15 -
- tests/client/style-system.test.ts             |   31 +-
  tests/client/use-speech-tts.test.ts           |   21 +-
  tests/desktop/group-chat-agent-popup.test.ts  |   63 -
  tests/e2e/desktop-window-chrome.spec.ts       |    6 -
  tests/e2e/fixtures.ts                         |   10 -
- tests/e2e/group-chat-room-deeplink.spec.ts    | 2191 -----------------
+ tests/e2e/group-chat-room-deeplink.spec.ts    | 2218 -----------------
  tests/e2e/group-chat-share.spec.ts            |  448 ----
  tests/e2e/history-session-deeplink.spec.ts    |   42 +-
  tests/e2e/theme.spec.ts                       |   18 -
- 48 files changed, 33 insertions(+), 9200 deletions(-)
+ 43 files changed, 19 insertions(+), 9134 deletions(-)
  delete mode 100644 tests/client/group-agent-avatar.test.ts
  delete mode 100644 tests/client/group-agent-presets-source.test.ts
  delete mode 100644 tests/client/group-agent-presets.test.ts
@@ -70,7 +65,6 @@ Subject: [PATCH] test(web): adapt client and e2e suites after group chat
  delete mode 100644 tests/client/group-chat-handoff-locales.test.ts
  delete mode 100644 tests/client/group-chat-handoff-presentation-model.test.ts
  delete mode 100644 tests/client/group-chat-handoff-stop-presentation.test.ts
- delete mode 100644 tests/client/group-chat-history-entry-removal.test.ts
  delete mode 100644 tests/client/group-chat-input-mentions.test.ts
  delete mode 100644 tests/client/group-chat-invite-attachments.test.ts
  delete mode 100644 tests/client/group-chat-invite-code.test.ts
@@ -104,10 +98,10 @@ index a8a654117..4b31f8258 100644
      expect(route).toContain("name: 'hermes.agentManager'")
      expect(route).toContain("component: () => import('@/views/hermes/ChatView.vue')")
 diff --git a/tests/client/agent-status-availability.test.ts b/tests/client/agent-status-availability.test.ts
-index e8e6f49d6..fe32f5f47 100644
+index 3c3e0aba7..9c51df495 100644
 --- a/tests/client/agent-status-availability.test.ts
 +++ b/tests/client/agent-status-availability.test.ts
-@@ -38,7 +38,7 @@ describe('Agent status availability', () => {
+@@ -39,7 +39,7 @@ describe('Agent status availability', () => {
        expect(isAgentStatusAvailable(null, id)).toBe(false)
      },
    )
@@ -142,10 +136,10 @@ index e16ade21f..bc2cca44e 100644
      })
  
 diff --git a/tests/client/approval-system-notification-click.test.ts b/tests/client/approval-system-notification-click.test.ts
-index 03329a46e..17cd46cd2 100644
+index fbb8b44d7..ef966dbf0 100644
 --- a/tests/client/approval-system-notification-click.test.ts
 +++ b/tests/client/approval-system-notification-click.test.ts
-@@ -24,11 +24,9 @@ describe('approval system notification click targets', () => {
+@@ -37,11 +37,9 @@ describe('approval system notification click targets', () => {
      const workflowView = read('packages/client/src/views/hermes/WorkflowView.vue')
      const chatView = read('packages/client/src/views/hermes/ChatView.vue')
      const globalAgentView = read('packages/client/src/views/hermes/GlobalAgentView.vue')
@@ -157,41 +151,8 @@ index 03329a46e..17cd46cd2 100644
      expect(workflowView).toContain("import { useRoute } from 'vue-router'")
      expect(workflowView).toContain('await profilesStore.switchProfile(profile)')
      expect(workflowView).toContain('route.query.workflowId')
-diff --git a/tests/client/chat-message-mobile-layout.test.ts b/tests/client/chat-message-mobile-layout.test.ts
-index f92de9192..c26ebc63d 100644
---- a/tests/client/chat-message-mobile-layout.test.ts
-+++ b/tests/client/chat-message-mobile-layout.test.ts
-@@ -9,9 +9,6 @@ describe('chat message mobile layout guards', () => {
-     const virtualList = readFileSync('packages/client/src/components/hermes/chat/VirtualMessageList.vue', 'utf8')
-     const messageItem = readFileSync('packages/client/src/components/hermes/chat/MessageItem.vue', 'utf8')
-     const markdownRenderer = readFileSync('packages/client/src/components/hermes/chat/MarkdownRenderer.vue', 'utf8')
--    const groupChatPanel = readFileSync('packages/client/src/components/hermes/group-chat/GroupChatPanel.vue', 'utf8')
--    const groupMessageList = readFileSync('packages/client/src/components/hermes/group-chat/GroupMessageList.vue', 'utf8')
--    const groupMessageItem = readFileSync('packages/client/src/components/hermes/group-chat/GroupMessageItem.vue', 'utf8')
- 
-     expect(chatPanel).toContain('.chat-panel')
-     expect(chatPanel).toContain('min-width: 0;')
-@@ -42,18 +39,5 @@ describe('chat message mobile layout guards', () => {
-     expect(markdownRenderer).toContain('width: 100%;')
-     expect(markdownRenderer).toContain('code:not(.hljs)')
-     expect(markdownRenderer).toContain('white-space: pre-wrap;')
--
--    expect(groupChatPanel).toContain('.group-chat-panel')
--    expect(groupChatPanel).toContain('min-width: 0;')
--    expect(groupChatPanel).toContain('max-width: 100%;')
--
--    expect(groupMessageList).toContain('.group-message-list')
--    expect(groupMessageList).toContain('min-width: 0;')
--    expect(groupMessageList).toContain('max-width: 100%;')
--
--    expect(groupMessageItem).toContain('.group-message')
--    expect(groupMessageItem).toContain('.msg-body')
--    expect(groupMessageItem).toContain('.msg-content')
--    expect(groupMessageItem).toContain('overflow-wrap: anywhere;')
-   })
- })
 diff --git a/tests/client/desktop-browser-route.test.ts b/tests/client/desktop-browser-route.test.ts
-index b95921ee0..1a22188f5 100644
+index 39f8b9b8f..ed52f0258 100644
 --- a/tests/client/desktop-browser-route.test.ts
 +++ b/tests/client/desktop-browser-route.test.ts
 @@ -45,7 +45,6 @@ describe('desktop browser chat panel gate', () => {
@@ -202,7 +163,7 @@ index b95921ee0..1a22188f5 100644
      const browserPanel = readFileSync('packages/client/src/components/hermes/chat/DesktopBrowserPanel.vue', 'utf8')
      const settingsPage = readFileSync('packages/client/src/views/hermes/DesktopBrowserView.vue', 'utf8')
      const sidebar = readFileSync('packages/client/src/components/layout/AppSidebar.vue', 'utf8')
-@@ -55,12 +54,6 @@ describe('desktop browser chat panel gate', () => {
+@@ -53,12 +52,6 @@ describe('desktop browser chat panel gate', () => {
      expect(chatPanel).toContain(':submit="submitBrowserAnnotations"')
      expect(chatPanel).toContain('await chatStore.sendMessage("", [attachment])')
      expect(chatPanel).toContain('OPEN_DESKTOP_BROWSER_PANEL_EVENT')
@@ -215,51 +176,6 @@ index b95921ee0..1a22188f5 100644
      expect(browserPanel).toContain('onAnnotationRequest')
      expect(browserPanel).toContain('EXTERNAL_OVERLAY_SELECTOR')
      expect(browserPanel).toContain("'.n-modal-body-wrapper'")
-diff --git a/tests/client/drawer-panel-resize.test.ts b/tests/client/drawer-panel-resize.test.ts
-index 2471fb1e9..d805cb639 100644
---- a/tests/client/drawer-panel-resize.test.ts
-+++ b/tests/client/drawer-panel-resize.test.ts
-@@ -17,12 +17,9 @@ describe('ChatPanel tool drawer resizing support', () => {
-     expect(source).toMatch(/\.chat-tool-resize-handle\s*\{[\s\S]*inset-inline-start: -7px;/)
-   })
- 
--  it('mirrors group-chat and workflow resize seams without changing LTR sizing', () => {
--    const groupSource = readFileSync('packages/client/src/components/hermes/group-chat/GroupChatPanel.vue', 'utf8')
-+  it('mirrors workflow resize seams without changing LTR sizing', () => {
-     const workflowSource = readFileSync('packages/client/src/views/hermes/WorkflowView.vue', 'utf8')
- 
--    expect(groupSource).toContain("deltaSign: document.documentElement.dir === 'rtl' ? 1 : -1")
--    expect(groupSource).toMatch(/\.group-workspace-resize-handle\s*\{[\s\S]*inset-inline-start: -7px;/)
-     expect(workflowSource).toContain("deltaSign: document.documentElement.dir === 'rtl' ? -1 : 1")
-     expect(workflowSource).toMatch(/\.workflow-chat-resize-handle\s*\{[\s\S]*inset-inline-end: -7px;/)
-   })
-@@ -57,12 +54,11 @@ describe('ChatPanel tool drawer resizing support', () => {
-     expect(source).toMatch(/\.chat-tool-content\s*\{\s*order: 1;[\s\S]*background: \$bg-main-surface;/)
-   })
- 
--  it('animates the single and group chat tool panels without exposing the native browser mid-transition', () => {
-+  it('animates the chat tool panel without exposing the native browser mid-transition', () => {
-     const chatSource = readFileSync('packages/client/src/components/hermes/chat/ChatPanel.vue', 'utf8')
--    const groupSource = readFileSync('packages/client/src/components/hermes/group-chat/GroupChatPanel.vue', 'utf8')
-     const browserSource = readFileSync('packages/client/src/components/hermes/chat/DesktopBrowserPanel.vue', 'utf8')
- 
--    for (const source of [chatSource, groupSource]) {
-+    for (const source of [chatSource]) {
-       expect(source).toContain('<Transition')
-       expect(source).toContain('name="tool-panel"')
-       expect(source).toContain('@before-enter="handleToolPanelBeforeEnter"')
-@@ -75,11 +71,8 @@ describe('ChatPanel tool drawer resizing support', () => {
-     }
- 
-     expect(chatSource).toContain(':visible="toolPanelTransitionReady"')
--    expect(groupSource).toContain(':visible="toolPanelTransitionReady"')
-     expect(chatSource).toMatch(/\.tool-panel-enter-active,[\s\S]*transition:[\s\S]*width 0\.25s/)
--    expect(groupSource).toMatch(/\.tool-panel-enter-active,[\s\S]*transition:[\s\S]*width 0\.25s/)
-     expect(chatSource).toMatch(/\.tool-panel-enter-from,[\s\S]*width: 0 !important;[\s\S]*min-width: 0;/)
--    expect(groupSource).toMatch(/\.tool-panel-enter-from,[\s\S]*width: 0 !important;[\s\S]*min-width: 0;/)
-     expect(browserSource).toContain('visible?: boolean')
-     expect(browserSource).toContain('props.visible && !externalOverlayOpen.value')
-   })
 diff --git a/tests/client/ekko-display-name.test.ts b/tests/client/ekko-display-name.test.ts
 index 2cf8186c4..5edc9d64f 100644
 --- a/tests/client/ekko-display-name.test.ts
@@ -416,7 +332,7 @@ index 8b48025fb..72951fdb4 100644
      mockSessionsApi.fetchSessionWorkspaceFileText.mockResolvedValue({
        content: Array.from({ length: 600 }, (_, index) => `line ${index + 1}`).join('\n'),
 diff --git a/tests/client/global-pending-actions.test.ts b/tests/client/global-pending-actions.test.ts
-index 1e8f4e8c7..e971c5494 100644
+index 7d925df03..5671b50fa 100644
 --- a/tests/client/global-pending-actions.test.ts
 +++ b/tests/client/global-pending-actions.test.ts
 @@ -11,16 +11,6 @@ const chatState = reactive({
@@ -436,15 +352,15 @@ index 1e8f4e8c7..e971c5494 100644
  const profileState = reactive({ activeProfileName: 'default' as string | null })
  const settingsState = reactive({ display: { approval_bell: false, notify_on_approval: false }, fetchSettings: vi.fn(async () => true) })
  const routeState = reactive({ name: 'hermes.chat' as string })
-@@ -37,7 +27,6 @@ const workflowMock = vi.hoisted(() => ({
+@@ -38,7 +28,6 @@ const workflowMock = vi.hoisted(() => ({
  }))
  
  vi.mock('@/stores/hermes/chat', () => ({ useChatStore: () => chatState }))
 -vi.mock('@/stores/hermes/group-chat', () => ({ useGroupChatStore: () => groupState }))
  vi.mock('@/stores/hermes/profiles', () => ({ useProfilesStore: () => profileState }))
  vi.mock('@/stores/hermes/settings', () => ({ useSettingsStore: () => settingsState }))
- vi.mock('@/utils/clipboard', () => clipboardMock)
-@@ -90,10 +79,6 @@ describe('GlobalPendingActions', () => {
+ vi.mock('@/api/studio/chat', () => chatConnectionMock)
+@@ -92,10 +81,6 @@ describe('GlobalPendingActions', () => {
      chatState.pendingClarifies = new Map()
      chatState.sessions = []
      chatState.activeSessionId = 'session-a'
@@ -455,8 +371,8 @@ index 1e8f4e8c7..e971c5494 100644
      profileState.activeProfileName = 'default'
      settingsState.display.approval_bell = false
      settingsState.display.notify_on_approval = false
-@@ -103,7 +88,7 @@ describe('GlobalPendingActions', () => {
-     workflowMock.statusHandlers.splice(0)
+@@ -118,7 +103,7 @@ describe('GlobalPendingActions', () => {
+     wrapper.unmount()
    })
  
 -  it('sends privacy-safe system notifications for new direct, group, and workflow pending keys with exact navigation', async () => {
@@ -464,7 +380,7 @@ index 1e8f4e8c7..e971c5494 100644
      settingsState.display.notify_on_approval = true
      const wrapper = mount(GlobalPendingActions)
      await nextTick()
-@@ -115,12 +100,6 @@ describe('GlobalPendingActions', () => {
+@@ -130,12 +115,6 @@ describe('GlobalPendingActions', () => {
      chatState.pendingClarifies = new Map([['session-c', {
        sessionId: 'session-c', clarifyId: 'clarify-c', question: 'Which secret path?', choices: null,
      }]])
@@ -477,7 +393,7 @@ index 1e8f4e8c7..e971c5494 100644
      await nextTick()
  
      workflowMock.statusHandlers[0]?.({
-@@ -129,23 +108,19 @@ describe('GlobalPendingActions', () => {
+@@ -144,23 +123,19 @@ describe('GlobalPendingActions', () => {
      })
      await nextTick()
  
@@ -502,7 +418,7 @@ index 1e8f4e8c7..e971c5494 100644
      const workflowPayload = systemCalls.find(([payload]) => payload.tag.includes('workflow-approval'))?.[0]
      expect(workflowPayload?.clickUrl).toBe('/hermes/workflow?profile=default&workflowId=workflow-b&runId=run-b&nodeId=build&executionId=exec-b')
      wrapper.unmount()
-@@ -293,12 +268,6 @@ describe('GlobalPendingActions', () => {
+@@ -308,12 +283,6 @@ describe('GlobalPendingActions', () => {
      chatState.pendingApprovals = new Map(chatState.pendingApprovals)
      await nextTick()
      expect(playCompletionSound).toHaveBeenCalledTimes(1)
@@ -515,7 +431,7 @@ index 1e8f4e8c7..e971c5494 100644
      wrapper.unmount()
    })
  
-@@ -368,22 +337,6 @@ describe('GlobalPendingActions', () => {
+@@ -383,22 +352,6 @@ describe('GlobalPendingActions', () => {
      wrapper.unmount()
    })
  
@@ -538,7 +454,7 @@ index 1e8f4e8c7..e971c5494 100644
    it('does not duplicate the existing in-context approval for the active session', async () => {
      chatState.pendingApprovals = new Map([['session-a', {
        sessionId: 'session-a', approvalId: 'approval-a', description: 'Run', command: 'pwd', choices: ['once'],
-@@ -510,46 +463,6 @@ describe('GlobalPendingActions', () => {
+@@ -525,46 +478,6 @@ describe('GlobalPendingActions', () => {
      expect(uiMock.messageWarning).toHaveBeenCalledWith('chat.interactionExpired')
    })
  
@@ -1075,39 +991,6 @@ index a5e158c84..000000000
 -
 -    expect(handler).toContain('handoffErrorTranslationKey(err?.message)')
 -    expect(handler).not.toContain("message.error(err?.message")
--  })
--})
-diff --git a/tests/client/group-chat-history-entry-removal.test.ts b/tests/client/group-chat-history-entry-removal.test.ts
-deleted file mode 100644
-index 9d1f992a3..000000000
---- a/tests/client/group-chat-history-entry-removal.test.ts
-+++ /dev/null
-@@ -1,27 +0,0 @@
--import { existsSync, readFileSync } from 'node:fs'
--import { describe, expect, it } from 'vitest'
--
--const router = readFileSync('packages/client/src/router/index.ts', 'utf8')
--const historyView = readFileSync('packages/client/src/views/hermes/HistoryView.vue', 'utf8')
--const messageList = readFileSync('packages/client/src/components/hermes/group-chat/GroupMessageList.vue', 'utf8')
--
--describe('Group Chat has one history surface', () => {
--  it('redirects both legacy history URLs to the live room', () => {
--    expect(router).toMatch(/path: '\/hermes\/history\/group-chat\/:roomId'[\s\S]*?name: 'hermes\.groupChatRoom'/)
--    expect(router).toMatch(/path: '\/hermes\/group-chat\/history\/:roomId'[\s\S]*?name: 'hermes\.groupChatRoom'/)
--    expect(router).not.toContain("name: 'hermes.groupChatHistory'")
--  })
--
--  it('removes the GROUP section and dedicated history pane', () => {
--    expect(historyView).not.toContain('GroupChatHistoryPane')
--    expect(historyView).not.toContain('groupRooms')
--    expect(historyView).not.toContain('>GROUP<')
--    expect(existsSync('packages/client/src/components/hermes/group-chat/GroupChatHistoryPane.vue')).toBe(false)
--  })
--
--  it('removes the complete-history escape hatch from the live transcript', () => {
--    expect(messageList).not.toContain('HistoryArchiveLink')
--    expect(messageList).not.toContain('viewCompleteHistory')
--    expect(messageList).not.toContain('hasReachedMessageDisplayLimit')
 -  })
 -})
 diff --git a/tests/client/group-chat-input-mentions.test.ts b/tests/client/group-chat-input-mentions.test.ts
@@ -1776,10 +1659,10 @@ index 59e07acf6..000000000
 -})
 diff --git a/tests/client/group-chat-panel-workspace-source.test.ts b/tests/client/group-chat-panel-workspace-source.test.ts
 deleted file mode 100644
-index 06ad095ff..000000000
+index 9be6192cc..000000000
 --- a/tests/client/group-chat-panel-workspace-source.test.ts
 +++ /dev/null
-@@ -1,572 +0,0 @@
+@@ -1,559 +0,0 @@
 -import { readPresetStyleSource as readFileSync } from './preset-style-source'
 -import { describe, expect, it } from 'vitest'
 -import { GROUP_AGENT_OPTIONS } from '../../packages/client/src/utils/agent-options'
@@ -2254,20 +2137,7 @@ index 06ad095ff..000000000
 -    expect(source).not.toContain('@click="handleLocateSummaryAnchor"')
 -  })
 -
--  it('fades the group chat surface when switching between rooms like single chat', () => {
--    const groupSource = readFileSync('packages/client/src/components/hermes/group-chat/GroupChatPanel.vue', 'utf8')
--    const singleSource = readFileSync('packages/client/src/components/hermes/chat/ChatPanel.vue', 'utf8')
--
--    expect(groupSource).toContain('ref="groupChatSurfaceRef"')
--    expect(groupSource).toContain('if (!roomId || !previousRoomId || roomId === previousRoomId) return')
--    expect(groupSource).toContain('roomFadeAnimation?.cancel()')
--    expect(groupSource).toContain('roomFadeAnimation = surface.animate(')
--    expect(groupSource).toContain('duration: 1500')
--    expect(groupSource).toContain("easing: 'ease'")
--    expect(groupSource).toContain("{ flush: 'post' }")
--    expect(singleSource).toContain('duration: 1500')
--    expect(singleSource).toContain('easing: "ease"')
--  })
+-  // Actual group/single surface fades are covered by page-loading.spec.ts.
 -
 -  it('renders room creation and manageable room settings as right-side drawers', () => {
 -    const source = readFileSync('packages/client/src/components/hermes/group-chat/GroupChatPanel.vue', 'utf8')
@@ -2321,7 +2191,7 @@ index 06ad095ff..000000000
 -    expect(selection).toContain("provider: input.usesGlobal ? '' : input.provider")
 -    expect(selection).toContain("model: input.usesGlobal ? input.nativeModel || '' : input.model")
 -    expect(source).toContain("apiMode: selectedAgentType.value === 'hermes' || usesGlobalAgentMode.value ? undefined : selectedAgentApiMode.value")
--    expect(source).toContain("reasoningEffort: usesGlobalAgentMode.value ? nativeAgentSelection.value.reasoningEffort : selectedAgentReasoningEffort.value")
+-    // Reasoning defaults and submitted values are covered by group-chat-reasoning-effort.spec.ts.
 -    for (const modelSource of [source, linkView]) {
 -      expect(modelSource).toContain(modelSource === source ? 'function handleAgentModelSelect(' : 'function handleAgentModelChange(model: string)')
 -      expect(modelSource).toContain("selectedAgentReasoningEffort.value = ''")
@@ -6918,27 +6788,6 @@ index 6be9d4717..8b1216d87 100644
      expect(images[1].attributes('src')).toBe('https://example.com/photo.png')
      expect(resolveImageUrl).toHaveBeenCalledWith('/workspace/马年 image.png')
      expect(downloadApiMock.getDownloadUrl).not.toHaveBeenCalled()
-diff --git a/tests/client/page-sidebar-nav-history-position.test.ts b/tests/client/page-sidebar-nav-history-position.test.ts
-index 0f2b02434..6a58ec4a6 100644
---- a/tests/client/page-sidebar-nav-history-position.test.ts
-+++ b/tests/client/page-sidebar-nav-history-position.test.ts
-@@ -11,13 +11,12 @@ const historyViewSource = readFileSync(
- )
- 
- describe('page sidebar conversation switch', () => {
--  it('places history after single chat, group chat, and workflow', () => {
--    const switchStart = navSource.indexOf('conversation-switch conversation-switch--four')
-+  it('places history after single chat and workflow', () => {
-+    const switchStart = navSource.indexOf('conversation-switch conversation-switch--three')
-     const switchSource = navSource.slice(switchStart)
- 
-     expect(switchStart).toBeGreaterThan(-1)
--    expect(switchSource.indexOf('@click="openChat"')).toBeLessThan(switchSource.indexOf('@click="openGroupChat"'))
--    expect(switchSource.indexOf('@click="openGroupChat"')).toBeLessThan(switchSource.indexOf('@click="openWorkflow"'))
-+    expect(switchSource.indexOf('@click="openChat"')).toBeLessThan(switchSource.indexOf('@click="openWorkflow"'))
-     expect(switchSource.indexOf('@click="openWorkflow"')).toBeLessThan(switchSource.indexOf('@click="openHistory"'))
-     expect(navSource.match(/@click="openHistory"/g)).toHaveLength(1)
-   })
 diff --git a/tests/client/router-login-redirect.test.ts b/tests/client/router-login-redirect.test.ts
 index 2095d5f4b..5a9b72fce 100644
 --- a/tests/client/router-login-redirect.test.ts
@@ -6965,122 +6814,6 @@ index 2095d5f4b..5a9b72fce 100644
    it('does not redirect desktop login when a stale token exists', async () => {
      mockHasApiKey.mockReturnValue(true)
      ;(window as any).hermesDesktop = { isDesktop: true }
-diff --git a/tests/client/style-system.test.ts b/tests/client/style-system.test.ts
-index 1049ff594..d62371df7 100644
---- a/tests/client/style-system.test.ts
-+++ b/tests/client/style-system.test.ts
-@@ -27,25 +27,19 @@ describe('client style system', () => {
- 
-   it('keeps chat and composer surfaces aligned in dark mode', () => {
-     const chatInput = readClientFile('components/hermes/chat/ChatInput.vue')
--    const groupChatInput = readClientFile('components/hermes/group-chat/GroupChatInput.vue')
-     const virtualMessageList = readClientFile('components/hermes/chat/VirtualMessageList.vue')
- 
-     expect(chatInput).toContain('background-color: $bg-main-surface;')
--    expect(groupChatInput).toContain('background-color: $bg-main-surface;')
-     expect(virtualMessageList).toContain('background-color: $bg-main-surface;')
-     expect(chatInput).not.toContain('background-color: #333333;')
--    expect(groupChatInput).not.toContain('background-color: #333333;')
-   })
- 
-   it('keeps message metadata and context usage on custom theme text colors', () => {
-     const chatInput = readClientFile('components/hermes/chat/ChatInput.vue')
-     const messageItem = readClientFile('components/hermes/chat/MessageItem.vue')
--    const groupMessageItem = readClientFile('components/hermes/group-chat/GroupMessageItem.vue')
- 
-     expect(messageItem).toMatch(/\.message-meta\s*\{[^}]*color: \$text-muted;/s)
--    expect(groupMessageItem).toMatch(/\.message-meta\s*\{[^}]*color: \$text-muted;/s)
-     expect(messageItem).not.toContain('color: #999999;')
--    expect(groupMessageItem).not.toContain('color: #999999;')
-     expect(chatInput).toMatch(/\.context-usage-row\s*\{[^}]*color: \$text-muted;/s)
-     expect(chatInput).not.toContain('color: rgba(255, 255, 255, 0.68);')
-     expect(chatInput).toContain('rgba(var(--text-muted-rgb), 0.85)')
-@@ -53,15 +47,11 @@ describe('client style system', () => {
- 
-   it('keeps selected conversation titles on the primary text color', () => {
-     const sessionListItem = readClientFile('components/hermes/chat/SessionListItem.vue')
--    const groupChatPanel = readClientFile('components/hermes/group-chat/GroupChatPanel.vue')
-     const workflowView = readClientFile('views/hermes/WorkflowView.vue')
- 
-     expect(sessionListItem).toMatch(
-       /\.session-item\.active \.session-item-title\s*\{\s*color: var\(--text-primary\);/,
-     )
--    expect(groupChatPanel).toMatch(
--      /&\.active \.room-name\s*\{\s*color: \$text-primary;/,
--    )
-     expect(workflowView).toMatch(
-       /&\.selected \.workflow-list-name\s*\{\s*color: var\(--text-primary\);/,
-     )
-@@ -87,11 +77,11 @@ describe('client style system', () => {
-     expect(historyMessageList).toContain('animation: history-message-surface-fade-in 1.5s ease both;')
-   })
- 
--  it('keeps the four-way conversation switch active state visible in dark mode', () => {
-+  it('keeps the three-way conversation switch active state visible in dark mode', () => {
-     const pageSidebarNav = readClientFile('components/layout/PageSidebarNav.vue')
- 
-     expect(pageSidebarNav).toContain(
--      ':global(.dark .conversation-switch--four .conversation-switch-tab.active)',
-+      ':global(.dark .conversation-switch--three .conversation-switch-tab.active)',
-     )
-     expect(pageSidebarNav).toContain('background: $bg-card-hover;')
-     expect(pageSidebarNav).toContain('inset 0 0 0 1px $border-color')
-@@ -125,7 +115,6 @@ describe('client style system', () => {
-     const app = readClientFile('App.vue')
-     const globalStyles = readClientFile('styles/global.scss')
-     const useTheme = readClientFile('composables/useTheme.ts')
--    const groupMessageItem = readClientFile('components/hermes/group-chat/GroupMessageItem.vue')
-     const messageItem = readClientFile('components/hermes/chat/MessageItem.vue')
-     const customBackgroundStyles = app
-       .split('.app-shell--custom-background {')[1]
-@@ -138,26 +127,25 @@ describe('client style system', () => {
-     expect(customBackgroundStyles).toContain('background-color: var(--glass-content-bg)')
-     expect(customBackgroundStyles).toContain('backdrop-filter: blur(8px) saturate(110%)')
-     expect(customBackgroundStyles).toContain(':deep(.chat-panel > .chat-main)')
--    expect(customBackgroundStyles).toContain(':deep(.group-chat-panel > .chat-main)')
-     expect(customBackgroundStyles).toContain(':deep(.virtual-message-list)')
-     expect(customBackgroundStyles).toContain(':deep(.agent-manager-panel)')
-     expect(customBackgroundStyles).toMatch(
-       /:deep\(\.workflow-view\),[\s\S]*:deep\(\.petdex-view\)\s*\{\s*background-color: transparent;/,
-     )
-     expect(customBackgroundStyles).toMatch(
--      /:deep\(\.chat-main-content\),[\s\S]*:deep\(\.group-chat-surface\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);[\s\S]*backdrop-filter: none;/,
-+      /:deep\(\.chat-main-content\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);[\s\S]*backdrop-filter: none;/,
-     )
-     expect(customBackgroundStyles).toMatch(
--      /:deep\(\.virtual-message-list\),[\s\S]*:deep\(\.group-message-shell\)\s*\{[\s\S]*background-color: transparent;[\s\S]*backdrop-filter: none;/,
-+      /:deep\(\.virtual-message-list\)\s*\{[\s\S]*background-color: transparent;[\s\S]*backdrop-filter: none;/,
-     )
-     expect(customBackgroundStyles).toMatch(
--      /:deep\(\.chat-panel > \.chat-main\),[\s\S]*background-color: transparent;[\s\S]*backdrop-filter: none;/,
-+      /:deep\(\.chat-panel > \.chat-main\)\s*\{[\s\S]*background-color: transparent;[\s\S]*backdrop-filter: none;/,
-     )
-     expect(customBackgroundStyles).toMatch(
--      /:deep\(\.chat-panel > \.chat-main > \.chat-header\),[\s\S]*background-color: var\(--glass-chrome-bg\);[\s\S]*backdrop-filter: blur\(16px\) saturate\(110%\);/,
-+      /:deep\(\.chat-panel > \.chat-main > \.chat-header\),?[\s\S]*background-color: var\(--glass-chrome-bg\);[\s\S]*backdrop-filter: blur\(16px\) saturate\(110%\);/,
-     )
-     expect(customBackgroundStyles).toMatch(
--      /:deep\(\.desktop-titlebar:not\(\.desktop-titlebar--flush\)\),[\s\S]*:deep\(\.chat-panel > \.chat-main > \.chat-header\),[\s\S]*background-color: var\(--glass-chrome-bg\);[\s\S]*backdrop-filter: blur\(16px\) saturate\(110%\);/,
-+      /:deep\(\.desktop-titlebar:not\(\.desktop-titlebar--flush\)\),[\s\S]*:deep\(\.chat-panel > \.chat-main > \.chat-header\),?[\s\S]*background-color: var\(--glass-chrome-bg\);[\s\S]*backdrop-filter: blur\(16px\) saturate\(110%\);/,
-     )
-     expect(customBackgroundStyles).toMatch(
-       /:deep\(\.chat-input-area \.input-wrapper\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
-@@ -165,14 +153,11 @@ describe('client style system', () => {
-     expect(customBackgroundStyles).toMatch(
-       /:deep\(\.browser-settings-page > \.settings-card\)\s*\{\s*background-color: transparent;/,
-     )
--    expect(groupMessageItem).toMatch(
--      /:global\(html\.theme-has-custom-background \.group-message:not\(\.embedded\) \.msg-content:not\(\.agent-error\)\),[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.78\);[\s\S]*border: 1px solid rgba\(var\(--text-primary-rgb\), 0\.18\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
--    )
-     expect(messageItem).toMatch(
-       /:global\(html\.theme-has-custom-background \.message\.user \.message-bubble:not\(\.system\):not\(\.command\):not\(\.agent-error\)\),[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.78\);[\s\S]*border: 1px solid rgba\(var\(--text-primary-rgb\), 0\.18\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
-     )
-     expect(customBackgroundStyles).toMatch(
--      /:deep\(\.chat-main-content\),[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);/,
-+      /:deep\(\.chat-main-content\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);/,
-     )
-     expect(useTheme).toContain(
-       "document.documentElement.classList.toggle('theme-has-custom-background', active)",
 diff --git a/tests/client/use-speech-tts.test.ts b/tests/client/use-speech-tts.test.ts
 index 0c7ece358..52f956ebb 100644
 --- a/tests/client/use-speech-tts.test.ts
@@ -7193,10 +6926,10 @@ index dad3635df..000000000
 -  })
 -})
 diff --git a/tests/e2e/desktop-window-chrome.spec.ts b/tests/e2e/desktop-window-chrome.spec.ts
-index 522e811af..f8aa893b1 100644
+index 18b41f7f2..9d537f4ed 100644
 --- a/tests/e2e/desktop-window-chrome.spec.ts
 +++ b/tests/e2e/desktop-window-chrome.spec.ts
-@@ -379,12 +379,6 @@ test('keeps chat and group actions below the shared macOS header', async ({ page
+@@ -232,12 +232,6 @@ test('keeps chat and group actions below the shared macOS header', async ({ page
    expect((await newChat.boundingBox())?.x).toBeGreaterThanOrEqual(64)
    expect((await page.locator('.studio-navigation-rail .page-sidebar-account-btn').boundingBox())?.y).toBeGreaterThanOrEqual(44)
  
@@ -7210,10 +6943,10 @@ index 522e811af..f8aa893b1 100644
  
  test('renders a native-chrome desktop chat route with only messages and input', async ({ page }) => {
 diff --git a/tests/e2e/fixtures.ts b/tests/e2e/fixtures.ts
-index f67c51b2d..86577170a 100644
+index 5ca264f29..dbacf792d 100644
 --- a/tests/e2e/fixtures.ts
 +++ b/tests/e2e/fixtures.ts
-@@ -1092,16 +1092,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
+@@ -1122,16 +1122,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
        return
      }
  
@@ -7232,10 +6965,10 @@ index f67c51b2d..86577170a 100644
        return
 diff --git a/tests/e2e/group-chat-room-deeplink.spec.ts b/tests/e2e/group-chat-room-deeplink.spec.ts
 deleted file mode 100644
-index 6d9516f04..000000000
+index b7226dd86..000000000
 --- a/tests/e2e/group-chat-room-deeplink.spec.ts
 +++ /dev/null
-@@ -1,2191 +0,0 @@
+@@ -1,2218 +0,0 @@
 -import { expect, test, type Page, type Route } from '@playwright/test'
 -import { authenticate, TEST_MODEL_GROUP } from './fixtures'
 -import type { AvailableModelGroup } from '../../packages/client/src/api/hermes/system'
@@ -7408,18 +7141,18 @@ index 6d9516f04..000000000
 -    if (pathname === '/health') return json({ status: 'ok' })
 -    if (pathname === '/api/auth/status') return json({ hasPasswordLogin: false, username: null })
 -    if (pathname === '/api/hermes/runtime-versions/jobs' && request.method() === 'GET') return json({ jobs: [] })
--    if (pathname === '/api/agents/status' && request.method() === 'GET') {
+-    if (pathname === '/api/agents/availability' && request.method() === 'GET') {
 -      return json({
 -        revision: 1,
 -        updatedAt: '2026-01-01T00:00:00.000Z',
 -        agents: [
--          { id: 'hermes', name: 'Hermes', provider: 'Nous Research', kind: 'hermes', installed: true, version: '0.19.1', source: 'user-cli', path: '/usr/local/bin/hermes', error: '', installations: [] },
--          { id: 'ekko-agent', name: 'Ekko', provider: 'Ekko Studio', kind: 'built-in', installed: true, version: '0.7.0', source: 'built-in', path: '', error: '', installations: [] },
--          { id: 'claude-code', name: 'Claude', provider: 'Anthropic', kind: 'coding-agent', installed: true, version: '1.0.0', source: 'user-cli', path: '/usr/local/bin/claude', error: '', installations: [] },
--          { id: 'codex', name: 'Codex', provider: 'OpenAI', kind: 'coding-agent', installed: true, version: '1.0.0', source: 'user-cli', path: '/usr/local/bin/codex', error: '', installations: [] },
--          { id: 'pi', name: 'Pi', provider: 'Pi', kind: 'coding-agent', installed: true, version: '1.0.0', source: 'user-cli', path: '/usr/local/bin/pi', error: '', installations: [] },
--          { id: 'grok', name: 'Grok', provider: 'xAI', kind: 'coding-agent', installed: true, version: '1.0.0', source: 'user-cli', path: '/usr/local/bin/grok', error: '', installations: [] },
--          { id: 'dsh', name: 'DeepSeek Harness', provider: 'DeepSeek', kind: 'coding-agent', installed: true, version: '0.1.5-rc.1', source: 'user-cli', path: '/usr/local/bin/dsh', error: '', installations: [] },
+-          { id: 'hermes', name: 'Hermes', provider: 'Nous Research', kind: 'hermes', installed: true, available: true, version: '0.19.1', source: 'user-cli', path: '/usr/local/bin/hermes', error: '', installations: [] },
+-          { id: 'ekko-agent', name: 'Ekko', provider: 'Ekko Studio', kind: 'built-in', installed: true, available: true, version: '0.7.0', source: 'built-in', path: '', error: '', installations: [] },
+-          { id: 'claude-code', name: 'Claude', provider: 'Anthropic', kind: 'coding-agent', installed: true, available: true, version: '1.0.0', source: 'user-cli', path: '/usr/local/bin/claude', error: '', installations: [] },
+-          { id: 'codex', name: 'Codex', provider: 'OpenAI', kind: 'coding-agent', installed: true, available: true, version: '1.0.0', source: 'user-cli', path: '/usr/local/bin/codex', error: '', installations: [] },
+-          { id: 'pi', name: 'Pi', provider: 'Pi', kind: 'coding-agent', installed: true, available: true, version: '1.0.0', source: 'user-cli', path: '/usr/local/bin/pi', error: '', installations: [] },
+-          { id: 'grok', name: 'Grok', provider: 'xAI', kind: 'coding-agent', installed: true, available: true, version: '1.0.0', source: 'user-cli', path: '/usr/local/bin/grok', error: '', installations: [] },
+-          { id: 'dsh', name: 'DeepSeek Harness', provider: 'DeepSeek', kind: 'coding-agent', installed: true, available: true, version: '0.1.5-rc.1', source: 'user-cli', path: '/usr/local/bin/dsh', error: '', installations: [] },
 -        ],
 -      })
 -    }
@@ -7684,6 +7417,7 @@ index 6d9516f04..000000000
 -  const listeners = new Map()
 -  const socket = {
 -    connected: true,
+-    get volatile() { return this },
 -    url,
 -    options,
 -    on(event, handler) {
@@ -7824,17 +7558,22 @@ index 6d9516f04..000000000
 -  return api
 -}
 -
+-async function waitForGroupSocket(page: Page) {
+-  // The navigation rail can connect Person presence before the group page initializes.
+-  await page.waitForFunction(() => (window as any).__PW_GROUP_SOCKET__?.sockets?.some((socket: any) => String(socket.url).endsWith('/group-chat')))
+-}
+-
 -async function triggerGroupSocket(page: Page, event: string, payload: unknown) {
--  await page.waitForFunction(() => Boolean((window as any).__PW_GROUP_SOCKET__?.sockets?.length))
+-  await waitForGroupSocket(page)
 -  await page.evaluate(({ event, payload }) => {
--    const sockets = (window as any).__PW_GROUP_SOCKET__?.sockets || []
+-    const sockets = ((window as any).__PW_GROUP_SOCKET__?.sockets || []).filter((socket: any) => String(socket.url).endsWith('/group-chat'))
 -    if (sockets.length === 0) throw new Error('Group chat socket is not connected')
 -    for (const socket of sockets) socket.__trigger(event, payload)
 -  }, { event, payload })
 -}
 -
 -async function connectGroupSocket(page: Page) {
--  await page.waitForFunction(() => Boolean((window as any).__PW_GROUP_SOCKET__?.sockets?.length))
+-  await waitForGroupSocket(page)
 -  await page.evaluate(() => {
 -    const state = (window as any).__PW_GROUP_SOCKET__
 -    for (const socket of state.sockets) {
@@ -7954,7 +7693,7 @@ index 6d9516f04..000000000
 -  }
 -}
 -
--for (const endpoint of ['/api/hermes/profiles', '/api/hermes/available-models', '/api/agents/status']) {
+-for (const endpoint of ['/api/hermes/profiles', '/api/hermes/available-models', '/api/agents/availability']) {
 -  test(`opens the Agent drawer before ${endpoint} finishes and preserves a reopened edit`, async ({ page }) => {
 -    await setup(page, '/#/hermes/group-chat/room/room-alpha')
 -    await page.locator('.agent-avatar-rail-add').click()
@@ -8051,7 +7790,7 @@ index 6d9516f04..000000000
 -  await expect(drawer.locator('.agent-form-loading')).toBeHidden()
 -  await drawer.getByRole('button', { name: 'Cancel', exact: true }).click()
 -  await expect(drawer).toBeHidden()
--  await page.route('**/api/agents/status', route => route.fulfill({ status: 500, json: { error: 'Status unavailable' } }))
+-  await page.route('**/api/agents/availability', route => route.fulfill({ status: 500, json: { error: 'Status unavailable' } }))
 -  await page.locator('.agent-avatar-rail-add').click()
 -  await expect(drawer).toBeVisible()
 -  await expect(drawer.locator('.agent-form-loading')).toBeHidden()
@@ -9331,12 +9070,12 @@ index 6d9516f04..000000000
 -
 -test('group-chat Agent picker only lists installed Agents in catalog order', async ({ page }) => {
 -  await setup(page, '/#/hermes/group-chat/room/room-alpha')
--  await page.route('**/api/agents/status', route => route.fulfill({ json: {
+-  await page.route('**/api/agents/availability', route => route.fulfill({ json: {
 -    revision: 1, updatedAt: new Date().toISOString(), agents: [
--      { id: 'ekko-agent', installed: true, source: 'built-in', path: '', version: '' },
--      { id: 'claude-code', installed: false, source: 'not-installed', path: '', version: '' },
--      { id: 'codex', installed: true, source: 'user-cli', path: '/test/codex', version: '' },
--      { id: 'qwen', installed: true, source: 'user-cli', path: '/test/qwen', version: '' },
+-      { id: 'ekko-agent', installed: true, available: true, source: 'built-in', path: '', version: '' },
+-      { id: 'claude-code', installed: false, available: false, source: 'not-installed', path: '', version: '' },
+-      { id: 'codex', installed: true, available: true, source: 'user-cli', path: '/test/codex', version: '' },
+-      { id: 'qwen', installed: true, available: true, source: 'user-cli', path: '/test/qwen', version: '' },
 -    ],
 -  } }))
 -  await page.locator('.agent-avatar-rail-add').click()
@@ -9426,6 +9165,27 @@ index 6d9516f04..000000000
 -  await expect.poll(() => api.addedAgents.length).toBe(1)
 -  expect(api.addedAgents[0].body).toMatchObject({ agentMode: 'global', model: 'native-review', reasoningEffort: 'low' })
 -  expect(api.addedAgents[0].body.presetId).toBeUndefined()
+-})
+-
+-
+-test('can select public available Agents while private status is denied', async ({ page }) => {
+-  await setup(page, '/#/hermes/group-chat/room/room-alpha')
+-  let privateRequests = 0
+-  await page.route('**/api/agents/status', route => { privateRequests++; return route.fulfill({ status: 403, json: { error: 'Forbidden' } }) })
+-  await page.route('**/api/agents/availability', route => route.fulfill({ json: {
+-    revision: 2, updatedAt: '', agents: [
+-      { id: 'hermes', installed: true, source: 'managed-runtime', available: false },
+-      { id: 'ekko-agent', installed: true, source: 'built-in', available: true },
+-      { id: 'codex', installed: true, source: 'user-cli', available: true },
+-    ],
+-  } }))
+-  await page.locator('.agent-avatar-rail-add').click()
+-  const drawer = page.locator('.n-drawer').filter({ hasText: 'Add Agent' })
+-  await expect(drawer.locator('.agent-form-loading')).toBeHidden()
+-  await drawer.locator('.n-select').first().click()
+-  await expect.poll(async () => (await page.locator('.n-base-select-option__content:visible').allTextContents())
+-    .map(label => label.split(' · ')[0])).toEqual(['Ekko', 'Codex'])
+-  expect(privateRequests).toBe(0)
 -})
 diff --git a/tests/e2e/group-chat-share.spec.ts b/tests/e2e/group-chat-share.spec.ts
 deleted file mode 100644
@@ -9977,3 +9737,6 @@ index b2a773cd8..4ca83c852 100644
    await page.goto('/#/hermes/petdex')
    await expect(page.locator('.petdex-view')).toHaveCSS(
      'background-color',
+-- 
+2.53.0
+

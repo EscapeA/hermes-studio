@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 0616fb718ac3bfe413787fffd939863978b198ce Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 11:54:16 +0800
 Subject: [PATCH] fix(ci): verify-patch-stack honours patches/ORDER when
@@ -30,3 +30,6 @@ index 58922f7b2..bd0ee0143 100755
  
  [ "${#PATCHES[@]}" -gt 0 ] || fail "在 $STACK_REF 的 patches/ 下没有找到任何 *.patch"
  
+-- 
+2.53.0
+

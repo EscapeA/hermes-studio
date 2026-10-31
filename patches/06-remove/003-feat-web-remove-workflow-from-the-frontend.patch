@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 915ea704a76321b4ffc3b4a81f74c326e17cc254 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] feat(web): remove workflow from the frontend
@@ -25,12 +25,11 @@ Drop the whole workflow surface from the SPA (server modules untouched):
  packages/client/src/App.vue                   |   23 +-
  .../client/src/api/studio/workflow-socket.ts  |  134 -
  packages/client/src/api/studio/workflows.ts   |  348 --
- .../hermes/models/ScopedModelSelector.vue     |  122 -
- .../hermes/workflow/WorkflowAgentNode.vue     |  811 ---
+ .../hermes/workflow/WorkflowAgentNode.vue     |  813 ---
  .../hermes/workflow/WorkflowConditionEdge.vue |  140 -
  .../hermes/workflow/WorkflowFieldHelp.vue     |   68 -
  .../src/components/hermes/workflow/types.ts   |   39 -
- .../layout/GlobalPendingActions.vue           |  143 +-
+ .../layout/GlobalPendingActions.vue           |  121 +-
  .../src/components/layout/PageSidebarNav.vue  |   37 +-
  packages/client/src/i18n/locales/ar.ts        |  296 -
  packages/client/src/i18n/locales/de.ts        |  169 -
@@ -57,10 +56,9 @@ Drop the whole workflow surface from the SPA (server modules untouched):
  .../client/src/utils/workflow-run-snapshot.ts |   68 -
  .../client/src/views/hermes/ModelsView.vue    |    2 +-
  .../client/src/views/hermes/WorkflowView.vue  | 5420 -----------------
- 35 files changed, 38 insertions(+), 10647 deletions(-)
+ 34 files changed, 30 insertions(+), 10513 deletions(-)
  delete mode 100644 packages/client/src/api/studio/workflow-socket.ts
  delete mode 100644 packages/client/src/api/studio/workflows.ts
- delete mode 100644 packages/client/src/components/hermes/models/ScopedModelSelector.vue
  delete mode 100644 packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue
  delete mode 100644 packages/client/src/components/hermes/workflow/WorkflowConditionEdge.vue
  delete mode 100644 packages/client/src/components/hermes/workflow/WorkflowFieldHelp.vue
@@ -78,10 +76,10 @@ Drop the whole workflow surface from the SPA (server modules untouched):
  delete mode 100644 packages/client/src/views/hermes/WorkflowView.vue
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index aea8736dd..6b4f6fc94 100644
+index ed0da267c..dac76f0ca 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -170,7 +170,6 @@ const usesPageSidebar = computed(() =>
+@@ -177,7 +177,6 @@ const usesPageSidebar = computed(() =>
      "hermes.historySession",
      "hermes.globalAgent",
      "hermes.globalAgentSession",
@@ -89,15 +87,15 @@ index aea8736dd..6b4f6fc94 100644
    ].includes(route.name as string),
  );
  const usesHermesConfigSidebar = computed(
-@@ -624,7 +623,6 @@ useKeyboard();
-     :deep(.header-title),
+@@ -633,7 +632,6 @@ useKeyboard();
      :deep(h1),
      :deep(.header-session-title),
+     :deep(.person-title),
 -    :deep(.header-workflow-title),
      :deep(.room-title-text) {
        font-size: calc(var(--font-size-base, 14px) * 13 / 14);
        white-space: nowrap;
-@@ -632,10 +630,6 @@ useKeyboard();
+@@ -641,10 +639,6 @@ useKeyboard();
        text-overflow: ellipsis;
      }
  
@@ -108,7 +106,7 @@ index aea8736dd..6b4f6fc94 100644
      :deep(.header-left) {
        gap: 0;
      }
-@@ -695,8 +689,7 @@ useKeyboard();
+@@ -704,8 +698,7 @@ useKeyboard();
  
    .app-main--card,
    :deep(.chat-panel > .chat-main),
@@ -118,7 +116,7 @@ index aea8736dd..6b4f6fc94 100644
      margin: 0;
      border: none;
      border-radius: 0;
-@@ -738,7 +731,6 @@ useKeyboard();
+@@ -747,7 +740,6 @@ useKeyboard();
  
    :deep(.chat-panel),
    :deep(.history-panel),
@@ -126,10 +124,10 @@ index aea8736dd..6b4f6fc94 100644
    :deep(.petdex-view) {
      background-color: transparent;
    }
-@@ -756,15 +748,13 @@ useKeyboard();
-   :deep(.ekko-config-sidebar),
+@@ -766,15 +758,13 @@ useKeyboard();
    :deep(.coding-agent-config-sidebar),
    :deep(.chat-panel > .session-list),
+   :deep(.person-layout > .person-sidebar),
 -  :deep(.history-panel > .page-loading-content > .session-list),
 -  :deep(.workflow-view > .page-loading-content > .workflow-sidebar) {
 +  :deep(.history-panel > .page-loading-content > .session-list) {
@@ -143,7 +141,7 @@ index aea8736dd..6b4f6fc94 100644
    :deep(.connections-panel),
    :deep(.agent-manager-panel),
    :deep(.models-view) {
-@@ -847,15 +837,13 @@ useKeyboard();
+@@ -857,16 +847,14 @@ useKeyboard();
    &:not(.app-shell--navigation-rail) {
      .app-main--card,
      :deep(.chat-panel > .chat-main),
@@ -155,16 +153,17 @@ index aea8736dd..6b4f6fc94 100644
    }
  
    :deep(.chat-panel > .session-list > .page-sidebar-top),
+   :deep(.person-layout > .person-sidebar > .page-sidebar-top),
 -  :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top),
 -  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top) {
 +  :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top) {
      -webkit-app-region: drag;
  
      button,
-@@ -901,8 +889,7 @@ useKeyboard();
-   }
+@@ -913,8 +901,7 @@ useKeyboard();
  
    :deep(.chat-panel > .session-list > .page-sidebar-top),
+   :deep(.person-layout > .person-sidebar > .page-sidebar-top),
 -  :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top),
 -  :deep(.workflow-view > .page-loading-content > .workflow-sidebar > .page-sidebar-top) {
 +  :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top) {
@@ -665,140 +664,12 @@ index afc22e59b..000000000
 -export async function deleteWorkflowSchedule(id: string, scheduleId: string): Promise<void> {
 -  await request<{ ok: true }>(`/api/studio/workflows/${encodeURIComponent(id)}/schedules/${encodeURIComponent(scheduleId)}`, { method: 'DELETE' })
 -}
-diff --git a/packages/client/src/components/hermes/models/ScopedModelSelector.vue b/packages/client/src/components/hermes/models/ScopedModelSelector.vue
-deleted file mode 100644
-index f0f56cb5b..000000000
---- a/packages/client/src/components/hermes/models/ScopedModelSelector.vue
-+++ /dev/null
-@@ -1,122 +0,0 @@
--<script setup lang="ts">
--import { computed } from 'vue'
--import { useI18n } from 'vue-i18n'
--import { useAppStore } from '@/stores/hermes/app'
--import type { AvailableModelGroup } from '@/api/hermes/system'
--import type { ProviderApiMode } from '@/api/studio/provider-api-mode'
--import ModelCascader from '@/components/hermes/models/ModelCascader.vue'
--
--const props = defineProps<{
--  provider: string
--  model: string
--  groups: AvailableModelGroup[]
--  allowMoa?: boolean
--  disabled?: boolean
--}>()
--
--const emit = defineEmits<{
--  select: [value: { provider: string; model: string; apiMode?: ProviderApiMode }]
--}>()
--
--const { t } = useI18n()
--const appStore = useAppStore()
--
--const groupsWithCustom = computed(() =>
--  props.groups.map(group => ({
--    ...group,
--    models: [...new Set([
--      ...group.models,
--      ...(appStore.customModels[group.provider] || []),
--      ...(group.provider === props.provider && props.model ? [props.model] : []),
--    ])],
--  })),
--)
--
--const selectedGroup = computed(() =>
--  groupsWithCustom.value.find(group => group.provider === props.provider && group.models.includes(props.model)),
--)
--
--const selectedDisplayName = computed(() => {
--  if (!props.model) return ''
--  return selectedGroup.value
--    ? appStore.displayModelName(props.model, props.provider)
--    : props.model
--})
--
--function handleSelect(selection: { provider: string; model: string; apiMode?: ProviderApiMode }) {
--  emit('select', selection)
--}
--</script>
--
--<template>
--  <div class="scoped-model-selector">
--    <ModelCascader
--      :groups="groupsWithCustom"
--      :allow-moa="props.allowMoa"
--      :provider="props.provider"
--      :model="props.model"
--      :disabled="props.disabled"
--      @select="handleSelect"
--    >
--      <template #trigger="{ show, open, openWithKeyboard }">
--        <button class="model-trigger" type="button" :disabled="props.disabled" aria-haspopup="dialog" :aria-expanded="show" @click="open" @keydown.down="openWithKeyboard">
--          <span class="model-name" :title="props.model">{{ selectedDisplayName || t('models.selectModel') }}</span>
--          <svg class="model-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
--            <polyline points="6 9 12 15 18 9" />
--          </svg>
--        </button>
--      </template>
--    </ModelCascader>
--  </div>
--</template>
--
--<style scoped lang="scss">
--@use '@/styles/variables' as *;
--
--.scoped-model-selector {
--  min-width: 0;
--}
--
--.model-trigger {
--  display: flex;
--  align-items: center;
--  gap: calc(6px * var(--spacing-scale, 1));
--  width: 100%;
--  padding: calc(6px * var(--spacing-scale, 1)) calc(8px * var(--spacing-scale, 1));
--  background: var(--theme-input-bg, $bg-input);
--  border: var(--border-width, 1px) solid $border-color;
--  border-radius: $radius-sm;
--  color: $text-primary;
--  font-size: calc(var(--font-size-base, 14px) * 13 / 14);
--  cursor: pointer;
--  transition: border-color $transition-fast;
--
--  &:hover {
--    border-color: $accent-muted;
--  }
--
--  &:focus-visible {
--    outline: 2px solid $accent-primary;
--    outline-offset: 2px;
--  }
--
--  &:disabled {
--    cursor: not-allowed;
--    opacity: 0.6;
--  }
--}
--
--.model-name {
--  flex: 1;
--  min-width: 0;
--  overflow: hidden;
--  text-overflow: ellipsis;
--  white-space: nowrap;
--  text-align: start;
--}
--
--.model-arrow {
--  flex-shrink: 0;
--  color: $text-muted;
--}
--</style>
 diff --git a/packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue b/packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue
 deleted file mode 100644
-index 23f4d17c2..000000000
+index a305b2746..000000000
 --- a/packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue
 +++ /dev/null
-@@ -1,811 +0,0 @@
+@@ -1,813 +0,0 @@
 -<script setup lang="ts">
 -import { agentReasoningEffortOptions, agentReasoningEffortValue, modelReasoningEfforts } from '@/utils/model-reasoning-effort'
 -import NativeCodingAgentModelFields from '@/components/hermes/models/NativeCodingAgentModelFields.vue'
@@ -861,17 +732,19 @@ index 23f4d17c2..000000000
 -  { label: t('codingAgents.protocolAnthropicMessages'), value: 'anthropic_messages' },
 -])
 -const reasoningEffortOptions = computed(() => agentReasoningEffortOptions([
--  { label: t(props.data.agent === 'hermes' ? 'chat.reasoningEffort.options.default' : 'chat.reasoningEffort.options.none'), value: 'default' },
+-  { label: t('chat.reasoningEffort.options.none'), value: 'default' },
 -  ...modelReasoningEfforts(
 -    props.data.modelGroups,
 -    props.data.provider,
 -    props.data.model,
 -  ).map(value => ({ label: t(`chat.reasoningEffort.options.${value}`), value })),
--], props.data.agent === 'hermes', 'default'))
+-], 'default'))
 -const reasoningEffortValue = computed(() => agentReasoningEffortValue(props.data.reasoningEffort, reasoningEffortOptions.value, 'default'))
 -watch([reasoningEffortOptions, () => props.data.reasoningEffort], ([options, effort]) => {
--  if (!props.data.readonly && usesScopedModel.value && effort && effort !== 'default' && !options.some(option => option.value === effort)) {
--    updateField('reasoningEffort', 'default')
+-  if (props.data.readonly || !usesScopedModel.value || !props.data.model) return
+-  const fallback = agentReasoningEffortValue('default', options, 'default')
+-  if (((!effort || effort === 'default') && fallback !== 'default') || (effort && effort !== 'default' && !options.some(option => option.value === effort))) {
+-    updateField('reasoningEffort', fallback)
 -  }
 -}, { immediate: true })
 -const imageAttachments = computed(() => props.data.images.filter(isImagePath))
@@ -1876,21 +1749,22 @@ index 63fc2b22f..000000000
 -
 -export type WorkflowAgentNodeEditableData = Pick<WorkflowAgentNodeData, 'title' | 'agent' | 'agentMode' | 'priorAgentMode' | 'agentPreset' | 'agentPresetReady' | 'provider' | 'model' | 'apiMode' | 'reasoningEffort' | 'input' | 'skills' | 'images' | 'approvalRequired' | 'orchestration'>
 diff --git a/packages/client/src/components/layout/GlobalPendingActions.vue b/packages/client/src/components/layout/GlobalPendingActions.vue
-index 14f74128f..79e92bb68 100644
+index b4d3446b6..413d80922 100644
 --- a/packages/client/src/components/layout/GlobalPendingActions.vue
 +++ b/packages/client/src/components/layout/GlobalPendingActions.vue
-@@ -10,10 +10,7 @@ import { useSettingsStore } from '@/stores/hermes/settings'
+@@ -11,11 +11,8 @@ import { connectChatRun, getChatRunSocket } from '@/api/studio/chat'
  import { copyToClipboard } from '@/utils/clipboard'
  import { playCompletionSound } from '@/utils/completion-sound'
  import { showSystemNotification } from '@/utils/completion-notification'
 -import { workflowApprovalKey } from '@/utils/workflow-approval-key'
+ import { PERSON_AVATAR } from '@/utils/chat-agent-avatar'
  import { PENDING_INTERACTION_EXPIRED_EVENT } from '@/utils/pending-interaction'
 -import { approveWorkflowNode, type WorkflowRecord } from '@/api/studio/workflows'
 -import { listWorkflowsSocket, onWorkflowStatusUpdated, subscribeWorkflowStatuses, disconnectWorkflowSocket, type WorkflowRuntimeStatus } from '@/api/studio/workflow-socket'
  
  const chatStore = useChatStore()
  const profilesStore = useProfilesStore()
-@@ -31,11 +28,6 @@ const pendingNotificationKeys = new Set<string>()
+@@ -33,11 +30,6 @@ const pendingNotificationKeys = new Set<string>()
  const clarifyDrafts = reactive<Record<string, string>>({})
  const submitting = reactive<Record<string, boolean>>({})
  const copiedCommandKey = ref<string | null>(null)
@@ -1902,7 +1776,7 @@ index 14f74128f..79e92bb68 100644
  let pendingBaselineEstablished = false
  let approvalSoundArmed = false
  let settingsLoadGeneration = 0
-@@ -72,35 +64,10 @@ function loadApprovalSoundSetting() {
+@@ -74,35 +66,10 @@ function loadApprovalSoundSetting() {
    })
  }
  
@@ -1938,7 +1812,7 @@ index 14f74128f..79e92bb68 100644
  
  function normalizePendingSourceTitle(title: string): string {
    return title.replace(/^(?:\s*branch:\s*)+/i, 'branch: ').trim()
-@@ -110,14 +77,6 @@ function sessionTitle(sessionId: string): string {
+@@ -113,14 +80,6 @@ function sessionTitle(sessionId: string): string {
    return normalizePendingSourceTitle(chatStore.sessions.find(session => session.id === sessionId)?.title || sessionId)
  }
  
@@ -1953,7 +1827,7 @@ index 14f74128f..79e92bb68 100644
  function pendingSoundActionKeys(): string[] {
    const keys: string[] = []
    for (const pending of chatStore.pendingApprovals.values()) {
-@@ -126,12 +85,6 @@ function pendingSoundActionKeys(): string[] {
+@@ -129,12 +88,6 @@ function pendingSoundActionKeys(): string[] {
    for (const pending of chatStore.pendingClarifies.values()) {
      keys.push(`chat-clarify:${pending.sessionId}:${pending.clarifyId}`)
    }
@@ -1966,7 +1840,7 @@ index 14f74128f..79e92bb68 100644
    return keys
  }
  
-@@ -149,23 +102,6 @@ function pendingActions(suppressVisibleSources = true): GlobalPendingAction[] {
+@@ -152,23 +105,6 @@ function pendingActions(suppressVisibleSources = true): GlobalPendingAction[] {
      if (pending.sessionId === visibleChatSessionId) continue
      actions.push({ key: `chat-clarify:${pending.sessionId}:${pending.clarifyId}`, profile, kind: 'chat-clarify', title: sessionTitle(pending.sessionId), pending })
    }
@@ -1990,7 +1864,7 @@ index 14f74128f..79e92bb68 100644
    return actions
  }
  
-@@ -265,31 +201,12 @@ async function submitClarify(action: Extract<GlobalPendingAction, { kind: 'chat-
+@@ -268,18 +204,6 @@ async function submitClarify(action: Extract<GlobalPendingAction, { kind: 'chat-
    }
  }
  
@@ -2007,36 +1881,23 @@ index 14f74128f..79e92bb68 100644
 -}
 -
  function openPendingSource(action: GlobalPendingAction) {
--  if (action.kind === 'chat-approval' || action.kind === 'chat-clarify') {
--    const sessionId = action.pending.sessionId
--    const session = chatStore.sessions.find(item => item.id === sessionId)
--    void router.push({
--      name: session?.source === 'global_agent' ? 'hermes.globalAgentSession' : 'hermes.session',
--      params: { sessionId },
--    })
--    return
--  }
-+  const sessionId = action.pending.sessionId
-+  const session = chatStore.sessions.find(item => item.id === sessionId)
-   void router.push({
+   if (action.kind === 'chat-approval' || action.kind === 'chat-clarify') {
+     const sessionId = action.pending.sessionId
+@@ -291,10 +215,6 @@ function openPendingSource(action: GlobalPendingAction) {
+     })
+     return
+   }
+-  void router.push({
 -    name: 'hermes.workflow',
 -    query: { workflowId: action.workflowId, runId: action.runId, nodeId: action.nodeId, executionId: action.executionId },
-+    name: session?.source === 'global_agent' ? 'hermes.globalAgentSession' : 'hermes.session',
-+    params: { sessionId },
-   })
+-  })
  }
  
-@@ -303,21 +220,11 @@ function systemNotificationCopy(action: GlobalPendingAction): { title: string; b
- 
- function pendingSourceClickUrl(action: GlobalPendingAction): string {
-   const profileQuery = `?profile=${encodeURIComponent(action.profile)}`
--  if (action.kind === 'chat-approval' || action.kind === 'chat-clarify') {
--    const sessionId = encodeURIComponent(action.pending.sessionId)
--    const session = chatStore.sessions.find(item => item.id === action.pending.sessionId)
--    return session?.source === 'global_agent'
--      ? `/hermes/global-agent/session/${sessionId}${profileQuery}`
--      : `/hermes/session/${sessionId}${profileQuery}`
--  }
+ function systemNotificationCopy(action: GlobalPendingAction): { title: string; body: string } {
+@@ -315,14 +235,7 @@ function pendingSourceClickUrl(action: GlobalPendingAction): string {
+       ? `/hermes/global-agent/session/${sessionId}${profileQuery}`
+       : `/hermes/session/${sessionId}${profileQuery}`
+   }
 -  const query = new URLSearchParams({
 -    profile: action.profile,
 -    workflowId: action.workflowId,
@@ -2045,15 +1906,11 @@ index 14f74128f..79e92bb68 100644
 -    ...(action.executionId ? { executionId: action.executionId } : {}),
 -  })
 -  return `/hermes/workflow?${query.toString()}`
-+  const sessionId = encodeURIComponent(action.pending.sessionId)
-+  const session = chatStore.sessions.find(item => item.id === action.pending.sessionId)
-+  return session?.source === 'global_agent'
-+    ? `/hermes/global-agent/session/${sessionId}${profileQuery}`
-+    : `/hermes/session/${sessionId}${profileQuery}`
++  return `/hermes/${profileQuery}`
  }
  
  function notifyPendingAction(action: GlobalPendingAction) {
-@@ -348,26 +255,19 @@ function createGlobalNotification(action: GlobalPendingAction): NotificationReac
+@@ -353,26 +266,19 @@ function createGlobalNotification(action: GlobalPendingAction): NotificationReac
      title: () => notificationTitle(action, clarify),
      content: clarify
        ? () => clarifyContent(action)
@@ -2088,9 +1945,9 @@ index 14f74128f..79e92bb68 100644
      duration: 0,
      closable: false,
    })
-@@ -419,25 +319,18 @@ watch(pendingActions, actions => {
- 
+@@ -425,25 +331,18 @@ watch(pendingActions, actions => {
  onMounted(() => {
+   if (!getChatRunSocket()) connectChatRun(profilesStore.activeProfileName)
    window.addEventListener(PENDING_INTERACTION_EXPIRED_EVENT, showPendingInteractionExpired)
 -  window.addEventListener('hermes:workflow-approval-visible', handleVisibleWorkflowApproval)
 -  resetWorkflowSubscriptions(profilesStore.activeProfileName)
@@ -2116,15 +1973,15 @@ index 14f74128f..79e92bb68 100644
    handles.clear()
  })
 diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
-index 90d43216b..9053b7894 100644
+index 498f57318..e784365e8 100644
 --- a/packages/client/src/components/layout/PageSidebarNav.vue
 +++ b/packages/client/src/components/layout/PageSidebarNav.vue
 @@ -9,7 +9,7 @@ import { getAgentManagerEntry, resolveAgentManagerEntryRoute } from '@/utils/age
  import DesktopUpdateDownloadTab from './DesktopUpdateDownloadTab.vue'
  import { useNavigationRail } from '@/composables/useNavigationRail'
  
--type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'usage' | 'global' | 'workflow'
-+type ActiveSection = 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'usage' | 'global'
+-type ActiveSection = 'person' | 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'usage' | 'global' | 'workflow'
++type ActiveSection = 'person' | 'chat' | 'history' | 'connections' | 'agents' | 'models' | 'usage' | 'global'
  
  const props = defineProps<{
    active: ActiveSection
@@ -2203,10 +2060,10 @@ index 90d43216b..9053b7894 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 8001666dd..91209ca5c 100644
+index 7dceedcce..64a183f20 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -627,7 +627,6 @@ export default {
+@@ -654,7 +654,6 @@ export default {
      history: 'السجل',
      jobs: 'المهام المجدولة',
      kanban: 'كانبان',
@@ -2214,7 +2071,7 @@ index 8001666dd..91209ca5c 100644
      models: 'النماذج',
      profiles: 'البروفايلات',
      skills: 'المهارات',
-@@ -1462,301 +1461,6 @@ export default {
+@@ -1489,301 +1488,6 @@ export default {
      stopSpeech: 'إيقاف',
      speechNotSupported: 'تشغيل الصوت غير مدعوم في هذا المتصفح',
    },
@@ -2517,10 +2374,10 @@ index 8001666dd..91209ca5c 100644
    kanban: {
      title: 'لوحة كانبان',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index c615ddbc1..11dffe9e0 100644
+index fb273068c..ca4bbc4c7 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -688,7 +688,6 @@ export default {
+@@ -715,7 +715,6 @@ export default {
      dockerUpdateGuide: 'In der Docker-Umgebung bitte das neueste Image pullen und den Container neu erstellen:',
      dockerUpdateNote: 'Ihre Daten bleiben nach dem Neuerstellen des Containers erhalten.',
      kanban: 'Kanban',
@@ -2528,7 +2385,7 @@ index c615ddbc1..11dffe9e0 100644
      groupTools: 'Werkzeuge',
      groupToolsShort: "Tools",
      codingAgents: "Coding Agents",
-@@ -3103,174 +3102,6 @@ jobTriggered: 'Job ausgelost',
+@@ -3130,174 +3129,6 @@ jobTriggered: 'Job ausgelost',
      loadFailed: 'Skill-Nutzung konnte nicht geladen werden',
      otherSkills: 'Andere Skills',
    },
@@ -2704,10 +2561,10 @@ index c615ddbc1..11dffe9e0 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 03ca40751..81e850a88 100644
+index 8955bbfcd..345eb9c7b 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -627,7 +627,6 @@ export default {
+@@ -654,7 +654,6 @@ export default {
      history: 'History',
      jobs: 'Jobs',
      kanban: 'Kanban',
@@ -2715,7 +2572,7 @@ index 03ca40751..81e850a88 100644
      models: 'Models',
      profiles: 'Profiles',
      skills: 'Skills',
-@@ -1475,255 +1474,6 @@ export default {
+@@ -1502,255 +1501,6 @@ export default {
      stopSpeech: 'Stop',
      speechNotSupported: 'Voice playback not supported in this browser',
    },
@@ -2972,10 +2829,10 @@ index 03ca40751..81e850a88 100644
    kanban: {
      title: 'Kanban Board',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index a480b22b7..a62d2e115 100644
+index 5ba9eec7f..25715f8f3 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -688,7 +688,6 @@ export default {
+@@ -715,7 +715,6 @@ export default {
      dockerUpdateGuide: 'En el entorno Docker, extraiga la imagen más reciente y vuelva a crear el contenedor:',
      dockerUpdateNote: 'Sus datos se conservarán después de recrear el contenedor.',
      kanban: 'Kanban',
@@ -2983,7 +2840,7 @@ index a480b22b7..a62d2e115 100644
      groupTools: 'Herramientas',
      groupToolsShort: "Herr.",
      codingAgents: "Agentes de código",
-@@ -3103,174 +3102,6 @@ jobTriggered: 'Job ejecutado',
+@@ -3130,174 +3129,6 @@ jobTriggered: 'Job ejecutado',
      loadFailed: 'No se pudo cargar el uso de habilidades',
      otherSkills: 'Otras habs.',
    },
@@ -3159,10 +3016,10 @@ index a480b22b7..a62d2e115 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 5354d4cce..62f1a2034 100644
+index 0c2c8b3b8..a0164632b 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -688,7 +688,6 @@ export default {
+@@ -715,7 +715,6 @@ export default {
      dockerUpdateGuide: 'Dans l\'environnement Docker, veuillez tirer la dernière image et recréer le conteneur :',
      dockerUpdateNote: 'Vos données seront conservées après la recréation du conteneur.',
      kanban: 'Kanban',
@@ -3170,7 +3027,7 @@ index 5354d4cce..62f1a2034 100644
      groupTools: 'Outils',
      groupToolsShort: "Outils",
      codingAgents: "Agents de code",
-@@ -3103,174 +3102,6 @@ jobTriggered: 'Job declenche',
+@@ -3130,174 +3129,6 @@ jobTriggered: 'Job declenche',
      loadFailed: 'Impossible de charger l\'utilisation des compétences',
      otherSkills: 'Autres comp.',
    },
@@ -3346,10 +3203,10 @@ index 5354d4cce..62f1a2034 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index c6aa7332e..d79b4f93d 100644
+index 301e4bb91..5fe12ead3 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -689,7 +689,6 @@ export default {
+@@ -716,7 +716,6 @@ export default {
      dockerUpdateGuide: 'Docker 環境で実行中です。最新イメージをプルしてコンテナを再作成してください：',
      dockerUpdateNote: 'データは保持され、コンテナ再作成後も失われません。',
      kanban: 'カンバン',
@@ -3357,7 +3214,7 @@ index c6aa7332e..d79b4f93d 100644
      groupTools: 'ツール',
      groupToolsShort: "ツール",
      codingAgents: "コーディングエージェント",
-@@ -3103,174 +3102,6 @@ export default {
+@@ -3130,174 +3129,6 @@ export default {
      loadFailed: 'スキル使用状況の読み込みに失敗しました',
      otherSkills: 'その他',
    },
@@ -3533,10 +3390,10 @@ index c6aa7332e..d79b4f93d 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 57e838021..3706f2b05 100644
+index 76f963d37..25717efd1 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -689,7 +689,6 @@ export default {
+@@ -716,7 +716,6 @@ export default {
      dockerUpdateGuide: 'Docker 환경에서 실행 중입니다. 최신 이미지를 가져와 컨테이너를 다시 생성하세요:',
      dockerUpdateNote: '데이터는 유지되며 컨테이너 재생성 후에도 손실되지 않습니다.',
      kanban: '칸반',
@@ -3544,7 +3401,7 @@ index 57e838021..3706f2b05 100644
      groupTools: '도구',
      groupToolsShort: "도구",
      codingAgents: "코딩 에이전트",
-@@ -3103,174 +3102,6 @@ export default {
+@@ -3130,174 +3129,6 @@ export default {
      loadFailed: '스킬 사용량을 불러오지 못했습니다',
      otherSkills: '기타',
    },
@@ -3720,10 +3577,10 @@ index 57e838021..3706f2b05 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 85fa3cf11..4c1be9e45 100644
+index 0709fef9c..addfc5727 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -688,7 +688,6 @@ export default {
+@@ -715,7 +715,6 @@ export default {
      dockerUpdateGuide: 'No ambiente Docker, obtenha a imagem mais recente e recrie o contêiner:',
      dockerUpdateNote: 'Seus dados serão preservados após a recriação do contêiner.',
      kanban: 'Kanban',
@@ -3731,7 +3588,7 @@ index 85fa3cf11..4c1be9e45 100644
      groupTools: 'Ferramentas',
      groupToolsShort: "Ferr.",
      codingAgents: "Agentes de código",
-@@ -3103,174 +3102,6 @@ jobTriggered: 'Job acionado',
+@@ -3130,174 +3129,6 @@ jobTriggered: 'Job acionado',
      loadFailed: 'Falha ao carregar o uso de habilidades',
      otherSkills: 'Outras habs.',
    },
@@ -3907,10 +3764,10 @@ index 85fa3cf11..4c1be9e45 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index bf0a4cc29..c16b80626 100644
+index ce2f15ae9..cbdb780c2 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -553,7 +553,6 @@ export default {
+@@ -580,7 +580,6 @@ export default {
      history: 'История',
      jobs: 'Задачи',
      kanban: 'Канбан',
@@ -3918,7 +3775,7 @@ index bf0a4cc29..c16b80626 100644
      models: 'Модели',
      profiles: 'Профили',
      plugins: 'Плагины',
-@@ -1352,269 +1351,6 @@ export default {
+@@ -1379,269 +1378,6 @@ export default {
      speechNotSupported: 'Этот браузер не поддерживает воспроизведение речи',
    },
  
@@ -4189,10 +4046,10 @@ index bf0a4cc29..c16b80626 100644
    kanban: {
      title: 'Канбан',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 0f01fa827..54ff980c3 100644
+index 11e10d98e..bd1bf9d5f 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -628,7 +628,6 @@ export default {
+@@ -655,7 +655,6 @@ export default {
      history: '歷史',
      jobs: '任務',
      kanban: '看板',
@@ -4200,7 +4057,7 @@ index 0f01fa827..54ff980c3 100644
      models: '模型',
      profiles: '設定檔',
      plugins: '插件',
-@@ -1469,296 +1468,6 @@ export default {
+@@ -1496,296 +1495,6 @@ export default {
      newCliChat: '新增 CLI',
      cliEmptyState: '開始 CLI 對話',
    },
@@ -4498,10 +4355,10 @@ index 0f01fa827..54ff980c3 100644
    kanban: {
      title: '看板',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index b2d0657e6..f403a6384 100644
+index 1f2c14316..1fddf405d 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -628,7 +628,6 @@ export default {
+@@ -655,7 +655,6 @@ export default {
      history: '历史',
      jobs: '任务',
      kanban: '看板',
@@ -4509,7 +4366,7 @@ index b2d0657e6..f403a6384 100644
      models: '模型',
      profiles: '配置',
      plugins: '插件',
-@@ -1476,301 +1475,6 @@ export default {
+@@ -1503,301 +1502,6 @@ export default {
      stopSpeech: '停止',
      speechNotSupported: '此浏览器不支持语音播放',
    },
@@ -4812,10 +4669,10 @@ index b2d0657e6..f403a6384 100644
    kanban: {
      title: '看板',
 diff --git a/packages/client/src/router/index.ts b/packages/client/src/router/index.ts
-index 3a3c48f4f..ef47946a3 100644
+index ad006d22c..c9a70101d 100644
 --- a/packages/client/src/router/index.ts
 +++ b/packages/client/src/router/index.ts
-@@ -75,11 +75,6 @@ const router = createRouter({
+@@ -76,11 +76,6 @@ const router = createRouter({
        component: () => import('@/views/hermes/KanbanView.vue'),
        meta: { hermesConfig: true },
      },
@@ -5881,7 +5738,7 @@ index 857a715a0..000000000
 -  }
 -}
 diff --git a/packages/client/src/views/hermes/ModelsView.vue b/packages/client/src/views/hermes/ModelsView.vue
-index 30c584007..b82ff46fa 100644
+index a849af76f..1f13d62eb 100644
 --- a/packages/client/src/views/hermes/ModelsView.vue
 +++ b/packages/client/src/views/hermes/ModelsView.vue
 @@ -217,7 +217,7 @@ async function handleRefreshModelCache() {
@@ -5895,7 +5752,7 @@ index 30c584007..b82ff46fa 100644
            @update:value="handleProfileUpdate"
 diff --git a/packages/client/src/views/hermes/WorkflowView.vue b/packages/client/src/views/hermes/WorkflowView.vue
 deleted file mode 100644
-index 1a9f1119d..000000000
+index e577dabc5..000000000
 --- a/packages/client/src/views/hermes/WorkflowView.vue
 +++ /dev/null
 @@ -1,5420 +0,0 @@
@@ -6034,9 +5891,9 @@ index 1a9f1119d..000000000
 -} from '@/components/hermes/workflow/types'
 -import type { AvailableModelGroup } from '@/api/hermes/system'
 -import {
--  fetchAgentStatusSnapshot,
--  isAgentStatusAvailable,
--  type AgentStatusSnapshot,
+-  fetchAgentAvailabilitySnapshot,
+-  isAgentAvailable,
+-  type AgentAvailabilitySnapshot,
 -} from '@/api/agent-status'
 -
 -import '@vue-flow/core/dist/style.css'
@@ -6067,7 +5924,7 @@ index 1a9f1119d..000000000
 -const workflowImportPreview = ref<Awaited<ReturnType<typeof previewWorkflowImport>> | null>(null)
 -const workflowImportProfile = ref('default')
 -const workflowImportConfirming = ref(false)
--const agentStatusSnapshot = ref<AgentStatusSnapshot | null>(null)
+-const agentAvailabilitySnapshot = ref<AgentAvailabilitySnapshot | null>(null)
 -const WORKFLOW_CHAT_PANEL_MIN_WIDTH = 360
 -const WORKFLOW_CHAT_PANEL_DEFAULT_WIDTH = 560
 -const WORKFLOW_CANVAS_MIN_WIDTH = 360
@@ -6332,7 +6189,7 @@ index 1a9f1119d..000000000
 -const workflowAgentDefinitions = AGENT_OPTIONS
 -
 -const agentOptions = computed<WorkflowSelectOption[]>(() => workflowAgentDefinitions.filter(option =>
--  isAgentStatusAvailable(agentStatusSnapshot.value, option.value),
+-  isAgentAvailable(agentAvailabilitySnapshot.value, option.value),
 -))
 -
 -const firstAvailableWorkflowAgent = computed(() =>
@@ -6345,9 +6202,9 @@ index 1a9f1119d..000000000
 -
 -async function refreshAgentAvailability() {
 -  try {
--    agentStatusSnapshot.value = await fetchAgentStatusSnapshot()
+-    agentAvailabilitySnapshot.value = await fetchAgentAvailabilitySnapshot()
 -  } catch {
--    agentStatusSnapshot.value = null
+-    agentAvailabilitySnapshot.value = null
 -  }
 -}
 -const workflowRunBudgetOptions = computed(() => WORKFLOW_RUN_BUDGET_PRESETS.map(option => ({
@@ -6590,7 +6447,7 @@ index 1a9f1119d..000000000
 -const edges = ref<WorkflowEdge[]>([])
 -
 -function unavailableWorkflowAgent() {
--  return nodes.value.find(node => !isAgentStatusAvailable(agentStatusSnapshot.value, node.data.agent))
+-  return nodes.value.find(node => !isAgentAvailable(agentAvailabilitySnapshot.value, node.data.agent))
 -}
 -
 -const edgeEditorEdge = computed(() => edges.value.find(edge => edge.id === edgeEditorId.value) || null)
@@ -11319,3 +11176,6 @@ index 1a9f1119d..000000000
 -  }
 -}
 -</style>
+-- 
+2.53.0
+

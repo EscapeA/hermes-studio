@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 0c644a71460528f4c27fe09d5bb958e00e69482a Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
 Subject: [PATCH] perf(chat): use highlight.js core + register ~19 languages on
@@ -112,3 +112,6 @@ index b8aca7bc3..c0222ba69 100644
  vi.mock('@/utils/clipboard', () => ({
    copyToClipboard: copyToClipboardMock,
  }))
+-- 
+2.53.0
+

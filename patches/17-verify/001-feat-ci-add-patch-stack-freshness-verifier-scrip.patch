@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 1fbe358043abdb3add2d154dff0bcf1223b3b0f7 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:31:30 +0800
 Subject: [PATCH] feat(ci): add patch-stack freshness verifier script
@@ -148,3 +148,6 @@ index 000000000..58922f7b2
 +fi
 +
 +log "OK：${#PATCHES[@]} 个补丁在 $BASE_REF 上重放后，源码树与 $STACK_REF 逐字节一致。"
+-- 
+2.53.0
+

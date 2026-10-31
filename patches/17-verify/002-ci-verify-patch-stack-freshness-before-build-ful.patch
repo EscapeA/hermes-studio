@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 2eb0d6f4b8ac2d98bfb2f56c9aca7ab6513c2478 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:31:13 +0800
 Subject: [PATCH] ci: verify patch stack freshness before build (full-history
@@ -9,7 +9,7 @@ Subject: [PATCH] ci: verify patch stack freshness before build (full-history
  1 file changed, 8 insertions(+)
 
 diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
-index 4a330ab50..d824f640f 100644
+index db893f1be..483302308 100644
 --- a/.github/workflows/build.yml
 +++ b/.github/workflows/build.yml
 @@ -24,6 +24,10 @@ jobs:
@@ -33,3 +33,6 @@ index 4a330ab50..d824f640f 100644
 +
        - name: Build
          run: npm run build
+-- 
+2.53.0
+

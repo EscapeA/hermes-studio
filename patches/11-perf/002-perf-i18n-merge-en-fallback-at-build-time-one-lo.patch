@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 9c1b280150270b5a97a6a0f9c53d5b53c3915ab4 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
 Subject: [PATCH] perf(i18n): merge en fallback at build time, one locale chunk
@@ -18,7 +18,7 @@ wire for zh users).
  create mode 100644 packages/client/src/i18n/locales.d.ts
 
 diff --git a/packages/client/src/i18n/index.ts b/packages/client/src/i18n/index.ts
-index d3ea2745e..b3a9a7bd5 100644
+index e59639b70..55b827085 100644
 --- a/packages/client/src/i18n/index.ts
 +++ b/packages/client/src/i18n/index.ts
 @@ -1,5 +1,5 @@
@@ -27,8 +27,8 @@ index d3ea2745e..b3a9a7bd5 100644
 +import { loadLocaleMessages, supportedLocales } from './messages'
  import type { SupportedLocale } from './messages'
  import { applyDocumentDirection } from './direction'
- 
-@@ -43,20 +43,10 @@ const locale = resolveLocale(saved)
+ import { uiLocale } from './locale-state'
+@@ -45,20 +45,10 @@ const locale = resolveLocale(saved)
  setHtmlLang(locale)
  
  async function createAppI18n() {
@@ -53,7 +53,7 @@ index d3ea2745e..b3a9a7bd5 100644
  
    return createI18n({
      legacy: false,
-@@ -105,12 +95,7 @@ export async function switchLocale(newLocale: string): Promise<void> {
+@@ -107,12 +97,7 @@ export async function switchLocale(newLocale: string): Promise<void> {
    if (!(globalI18n.availableLocales as readonly string[]).includes(nextLocale)) {
      const nextMessages = await loadLocaleMessages(nextLocale)
      if (sequence !== localeSwitchSequence) return
@@ -117,7 +117,7 @@ index 1c22efd55..3f0768854 100644
  
  const localeMessagePromises = new Map<SupportedLocale, Promise<LocaleMessages>>()
 diff --git a/vite.config.ts b/vite.config.ts
-index cda92565c..67a8f6190 100644
+index bf7806e05..aa6eb43fa 100644
 --- a/vite.config.ts
 +++ b/vite.config.ts
 @@ -1,7 +1,9 @@
@@ -204,3 +204,6 @@ index cda92565c..67a8f6190 100644
    define: {
      __APP_VERSION__: JSON.stringify(pkg.version),
    },
+-- 
+2.53.0
+

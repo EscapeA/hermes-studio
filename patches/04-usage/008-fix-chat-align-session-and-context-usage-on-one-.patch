@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From cb4f19e3effdda7aaa578ecb32f41282cbd8e27b Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 00:08:44 +0800
 Subject: [PATCH] fix(chat): align session and context usage on one composer
@@ -11,10 +11,10 @@ Put both token lines in the same flex row so they share height, size, and percen
  2 files changed, 38 insertions(+), 48 deletions(-)
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index 9b2961789..ea6c89123 100644
+index a51cd3ebd..11e57dbfd 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -805,7 +805,6 @@ useKeyboard();
+@@ -819,7 +819,6 @@ useKeyboard();
      backdrop-filter: none;
    }
  
@@ -23,10 +23,10 @@ index 9b2961789..ea6c89123 100644
      background-color: var(--theme-input-bg, rgba(var(--bg-main-surface-rgb), 0.72));
      -webkit-backdrop-filter: var(--theme-input-filter, blur(8px) saturate(110%));
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 65e350d36..7152b9d8f 100644
+index 654cdadb9..de6dd73fb 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -1296,19 +1296,19 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1325,19 +1325,19 @@ function openAttachmentPreview(attachment: Attachment) {
        </button>
      </div>
  
@@ -58,7 +58,7 @@ index 65e350d36..7152b9d8f 100644
        <span class="context-info" :class="{ 'context-warning': showContextLimit && usagePercent > 80 }">
          <template v-if="showSessionUsage">{{ t('chat.sessionUsage') }} </template>
          {{ formatTokens(totalTokens) }}
-@@ -2026,53 +2026,40 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2057,53 +2057,40 @@ function openAttachmentPreview(attachment: Attachment) {
    color: $text-muted;
  }
  
@@ -132,7 +132,7 @@ index 65e350d36..7152b9d8f 100644
    color: inherit;
    min-width: 0;
    white-space: nowrap;
-@@ -2082,10 +2069,13 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2113,10 +2100,13 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -147,7 +147,7 @@ index 65e350d36..7152b9d8f 100644
    &.context-percent-warn {
      color: #e8a735;
    }
-@@ -2096,7 +2086,8 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2127,7 +2117,8 @@ function openAttachmentPreview(attachment: Attachment) {
  }
  
  .session-tokens-used {
@@ -157,3 +157,6 @@ index 65e350d36..7152b9d8f 100644
    color: inherit;
    min-width: 0;
    white-space: nowrap;
+-- 
+2.53.0
+

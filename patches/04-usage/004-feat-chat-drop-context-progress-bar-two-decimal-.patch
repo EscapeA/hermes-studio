@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From c18c42418f11ff2f4e27141d5856d9f7589adca9 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 14:27:20 +0800
 Subject: [PATCH] feat(chat): drop context progress bar, two-decimal usage
@@ -9,10 +9,10 @@ Subject: [PATCH] feat(chat): drop context progress bar, two-decimal usage
  1 file changed, 8 insertions(+), 64 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index a727482e4..795e9e3e1 100644
+index 25879eefb..3729d8f8a 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -1239,19 +1239,16 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1268,19 +1268,16 @@ function openAttachmentPreview(attachment: Attachment) {
              </template>
              <span>{{ t('chat.contextClickToEdit') }}</span>
            </NTooltip>
@@ -40,7 +40,7 @@ index a727482e4..795e9e3e1 100644
      </div>
  
      <div
-@@ -2006,34 +2003,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2037,34 +2034,6 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -75,7 +75,7 @@ index a727482e4..795e9e3e1 100644
  .dark .context-limit-editable {
    color: var(--text-secondary);
  
-@@ -2043,26 +2012,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2074,26 +2043,6 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -102,7 +102,7 @@ index a727482e4..795e9e3e1 100644
  @media (max-width: 768px) {
    .chat-input-area {
      --voice-overlay-mobile-bottom-offset: 146px;
-@@ -2122,11 +2071,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2153,11 +2102,6 @@ function openAttachmentPreview(attachment: Attachment) {
      font-size: calc(var(--font-size-base, 14px) * 10 / 14);
      line-height: var(--line-height, calc(var(--font-size-base, 14px) * 14 / 14));
    }
@@ -114,3 +114,6 @@ index a727482e4..795e9e3e1 100644
  }
  
  .attachment-previews {
+-- 
+2.53.0
+

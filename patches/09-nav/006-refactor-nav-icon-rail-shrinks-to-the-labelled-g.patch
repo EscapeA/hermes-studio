@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 8467591b0a1b2ca3ad55e950b965ea68b11d74ad Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 2 Oct 2026 12:40:05 +0800
 Subject: [PATCH] refactor(nav): icon rail shrinks to the labelled glyph size
@@ -9,9 +9,9 @@ icon-only item goes 44x44 -> 36x36, and $navigation-rail-width 64 -> 52 (the dra
 RAIL_WIDTH collapses with it).
 ---
  .../layout/MobileNavigationDrawer.vue         |  5 +++--
- .../layout/StudioNavigationRail.vue           | 19 +++++++++++++------
+ .../layout/StudioNavigationRail.vue           | 20 ++++++++++++-------
  packages/client/src/styles/variables.scss     |  8 ++++----
- 3 files changed, 20 insertions(+), 12 deletions(-)
+ 3 files changed, 20 insertions(+), 13 deletions(-)
 
 diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
 index 970984cea..0b0865ce5 100644
@@ -30,10 +30,10 @@ index 970984cea..0b0865ce5 100644
  
  function storedLabelsOpen(): boolean {
 diff --git a/packages/client/src/components/layout/StudioNavigationRail.vue b/packages/client/src/components/layout/StudioNavigationRail.vue
-index d2ca890f8..895af9855 100644
+index f2515bee5..9b37ff94d 100644
 --- a/packages/client/src/components/layout/StudioNavigationRail.vue
 +++ b/packages/client/src/components/layout/StudioNavigationRail.vue
-@@ -27,7 +27,7 @@ interface RailEntry {
+@@ -30,7 +30,7 @@ interface RailEntry {
  
  const props = withDefaults(
    defineProps<{
@@ -42,7 +42,7 @@ index d2ca890f8..895af9855 100644
      labeled?: boolean
      /** Mobile drawer: also list the app-level destinations (logs … settings). */
      withAppEntries?: boolean
-@@ -68,7 +68,7 @@ const modelsEntry: RailEntry = {
+@@ -77,7 +77,7 @@ const modelsEntry: RailEntry = {
  
  /** The app-level destinations, same routes/icons/labels as AppSidebar's nav list.
   *  Only rendered in the mobile drawer (`withAppEntries`), because the desktop rail
@@ -51,8 +51,16 @@ index d2ca890f8..895af9855 100644
  const appEntries: RailEntry[] = [
    { key: 'logs', route: 'hermes.logs', label: 'sidebar.logs', icon: [{ d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' }, { pts: '14 2 14 8 20 8' }, { l: ['16', '13', '8', '13'] }, { l: ['16', '17', '8', '17'] }, { pts: '10 9 9 9 8 9' }] },
    { key: 'usage', route: 'hermes.usage', label: 'sidebar.usage', icon: [{ r: ['3', '12', '4', '9', '1'] }, { r: ['10', '7', '4', '14', '1'] }, { r: ['17', '3', '4', '18', '1'] }] },
-@@ -194,15 +194,22 @@ $rail-labeled-width: 140px;
- .studio-navigation-rail__bottom { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; }.studio-navigation-rail__item {
+@@ -98,7 +98,6 @@ const entries = computed(() => [
+   modelsEntry,
+   ...(props.withAppEntries ? appEntries.filter(entry => !entry.admin || canManageAgents.value) : []),
+ ])
+-])
+ 
+ const activeKey = computed(() => {
+   const name = String(route.name || '')
+@@ -216,15 +215,22 @@ $rail-labeled-width: 140px;
+ .studio-navigation-rail__item {
    display: grid;
    place-items: center;
 -  flex: 0 0 44px;
@@ -77,7 +85,7 @@ index d2ca890f8..895af9855 100644
    &:hover { color: $text-primary; background: rgba(var(--accent-primary-rgb), 0.06); }
    &.active { color: $accent-primary; background: rgba(var(--accent-primary-rgb), 0.12); }
    &:focus-visible { outline: 2px solid $accent-primary; outline-offset: -2px; }
-@@ -223,7 +230,7 @@ $rail-labeled-width: 140px;
+@@ -245,7 +251,7 @@ $rail-labeled-width: 140px;
  }
  
  // ── labelled mode (mobile drawer) ────────────────────────────────────────────
@@ -126,3 +134,6 @@ index 885bf949a..e0306ae4f 100644
  $sidebar-width: var(--studio-sidebar-width, 240px);
  $sidebar-collapsed-width: 64px;
  $header-height: 60px;
+-- 
+2.53.0
+
