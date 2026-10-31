@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
 }))
 vi.mock('@/api/studio/chat', () => ({
   onUnobservedRunStarted: vi.fn(() => vi.fn()),
+  onChatRunConnected: vi.fn(() => vi.fn()),
   ...api,
   unregisterSessionHandlers: vi.fn(),
   getChatRunSocket: vi.fn(() => ({ emit: vi.fn() })),

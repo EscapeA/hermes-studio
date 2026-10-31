@@ -33,14 +33,17 @@ describe('ChatPanel tool drawer resizing support', () => {
   })
 
   it('renders the workspace, terminal, and desktop browser tabs as a full-height right icon rail', () => {
-    const source = readFileSync('packages/client/src/components/hermes/chat/ChatPanel.vue', 'utf8')
+    // 0.8.0 moved the tabs into their own ChatToolsPanel component.
+    const source = readFileSync('packages/client/src/components/hermes/chat/ChatToolsPanel.vue', 'utf8')
 
     expect(source).toContain('class="chat-tool-tabs" role="tablist"')
     expect(source).toContain(':aria-label="t(\'drawer.files\')"')
     expect(source).toContain(':aria-label="t(\'drawer.terminal\')"')
     expect(source).toContain(':aria-label="t(\'browser.title\')"')
-    expect(source).toContain('v-if="desktopBrowserAvailable"')
-    expect(source).toMatch(/\.chat-tool-panel-inner\s*\{[\s\S]*background: \$bg-main-surface;/)
+    expect(source).toContain('v-if="browserAvailable"')
+    // The panel background shell stayed in ChatPanel.
+    const panelSource = readFileSync('packages/client/src/components/hermes/chat/ChatPanel.vue', 'utf8')
+    expect(panelSource).toMatch(/\.chat-tool-panel-inner\s*\{[\s\S]*background: \$bg-main-surface;/)
     expect(source).toMatch(/\.chat-tool-tabs\s*\{[\s\S]*flex-direction: column;[\s\S]*order: 2;[\s\S]*height: 100%;[\s\S]*border-inline-start:/)
     expect(source).toMatch(/\.chat-tool-content\s*\{\s*order: 1;[\s\S]*background: \$bg-main-surface;/)
   })
@@ -61,7 +64,8 @@ describe('ChatPanel tool drawer resizing support', () => {
       expect(source).not.toMatch(/:global\(\[dir=['"]rtl['"]\]\)/)
     }
 
-    expect(chatSource).toContain(':visible="toolPanelTransitionReady"')
+    // 0.8.0 routes the transition-ready guard through ChatToolsPanel.
+    expect(chatSource).toContain(':browser-visible="toolPanelTransitionReady"')
     expect(chatSource).toMatch(/\.tool-panel-enter-active,[\s\S]*transition:[\s\S]*width 0\.25s/)
     expect(chatSource).toMatch(/\.tool-panel-enter-from,[\s\S]*width: 0 !important;[\s\S]*min-width: 0;/)
     expect(browserSource).toContain('visible?: boolean')
