@@ -41,6 +41,7 @@ import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-spee
 
 const props = withDefaults(defineProps<{
   userLabel?: string
+  hideAuthor?: boolean
   hideToolCalls?: boolean
   hideRunUsage?: boolean
   hideReasoning?: boolean
@@ -1045,6 +1046,7 @@ defineExpose({
                 :message="msg"
                 :hide-run-usage="hideRunUsage"
                 :hide-reasoning="hideReasoning"
+                :hide-author="hideAuthor"
                 :assistant-agent="assistantAgent"
                 :user-profile-name="userProfileName"
                 :user-profile-avatar="userProfileAvatar"
