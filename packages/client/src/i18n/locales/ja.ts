@@ -1369,6 +1369,7 @@ export default {
     importSessionSuccess: 'セッションを Web UI にインポートしました',
     importSessionAlreadyExists: 'セッションは既に Web UI に存在します',
     importSessionFailed: 'セッションのインポートに失敗しました',
+    sessionLive: 'セッション実行中',
     sessionDeleted: 'セッションを削除しました',
     rename: '名前変更',
     archiveSession: 'アーカイブ',

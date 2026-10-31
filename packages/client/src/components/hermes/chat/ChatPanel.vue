@@ -2425,7 +2425,6 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
             :completed-unread="sessionStates.isUnread(s.id, chatStore.isSessionCompletedUnread(s.id))"
             :selectable="isBatchMode"
             :selected="isSessionSelected(s)"
-            :show-profile="true"
             :to="sessionHref(s.id)"
             :intercept-modified-navigation="desktopChatWindowAvailable"
             @select="handleSessionClick(s.id)"
@@ -2479,7 +2478,6 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
               :completed-unread="sessionStates.isUnread(s.id, chatStore.isSessionCompletedUnread(s.id))"
               :selectable="isBatchMode"
               :selected="isSessionSelected(s)"
-              :show-profile="true"
               :category-label="recentCategoryLabel(s)"
               :to="sessionHref(s.id)"
               :intercept-modified-navigation="desktopChatWindowAvailable"
@@ -2935,6 +2933,7 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
             <template v-else>
             <MessageList
               ref="messageListRef"
+              hide-author
               :selection-actions-target="messageSelectionActionsTarget"
               :approval-portal-to-body="showRealtimeVoice"
               scroll-scope="chat"

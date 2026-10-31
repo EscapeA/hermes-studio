@@ -1369,6 +1369,7 @@ export default {
     importSessionSuccess: 'Session importée dans Web UI',
     importSessionAlreadyExists: 'La session existe déjà dans Web UI',
     importSessionFailed: 'Échec de l’import de la session',
+    sessionLive: 'Session en cours',
     sessionDeleted: 'Session supprimee',
     rename: 'Renommer',
     archiveSession: 'Archiver',
