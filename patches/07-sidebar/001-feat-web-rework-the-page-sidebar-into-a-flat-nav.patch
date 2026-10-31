@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From b08ccdf2f2f85dd6da55369acbde7866b6c0e21d Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 18:23:53 +0800
 Subject: [PATCH] feat(web): rework the page sidebar into a flat nav with a
@@ -29,7 +29,7 @@ Subject: [PATCH] feat(web): rework the page sidebar into a flat nav with a
  12 files changed, 43 insertions(+), 109 deletions(-)
 
 diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
-index 9053b7894..acb3783d4 100644
+index e784365e8..b6efd713c 100644
 --- a/packages/client/src/components/layout/PageSidebarNav.vue
 +++ b/packages/client/src/components/layout/PageSidebarNav.vue
 @@ -1,6 +1,5 @@
@@ -208,10 +208,10 @@ index 9053b7894..acb3783d4 100644
 -}
  </style>
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 8653d2092..94bb1a101 100644
+index 64a183f20..5308ecdf3 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -505,7 +505,6 @@ export default {
+@@ -671,7 +671,6 @@ export default {
      gateways: 'البوابات',
      terminal: 'الطرفية',
      browser: 'المتصفح',
@@ -220,10 +220,10 @@ index 8653d2092..94bb1a101 100644
      files: 'الملفات',
      devices: 'الأجهزة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 16b70e90b..4e4f3e83c 100644
+index ca4bbc4c7..8b389092b 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -515,7 +515,6 @@ export default {
+@@ -681,7 +681,6 @@ export default {
      socialMessages: 'Nachrichten senden',
      terminal: 'Konsole',
      browser: 'Browser',
@@ -232,10 +232,10 @@ index 16b70e90b..4e4f3e83c 100644
      files: 'Dateien',
      devices: 'Gerate',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index dd2fb8fb6..6abe6e9b0 100644
+index 345eb9c7b..f752b4c5b 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -505,7 +505,6 @@ export default {
+@@ -671,7 +671,6 @@ export default {
      gateways: 'Gateways',
      terminal: 'Terminal',
      browser: 'Browser',
@@ -244,10 +244,10 @@ index dd2fb8fb6..6abe6e9b0 100644
      files: 'Files',
      devices: 'Devices',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 0131000ab..a6948515f 100644
+index 25715f8f3..7f22d2aa0 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -515,7 +515,6 @@ export default {
+@@ -681,7 +681,6 @@ export default {
      socialMessages: 'Enviar mensajes',
      terminal: 'Terminal',
      browser: 'Navegador',
@@ -256,10 +256,10 @@ index 0131000ab..a6948515f 100644
      files: 'Archivos',
      devices: 'Dispositivos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 8a76fbc49..fffeb8d8f 100644
+index a0164632b..5046b3c81 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -515,7 +515,6 @@ export default {
+@@ -681,7 +681,6 @@ export default {
      socialMessages: 'Envoyer des messages',
      terminal: 'Terminal',
      browser: 'Navigateur',
@@ -268,10 +268,10 @@ index 8a76fbc49..fffeb8d8f 100644
      files: 'Fichiers',
      devices: 'Appareils',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 97c157aa8..8526d671a 100644
+index 5fe12ead3..91cf0ef95 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -516,7 +516,6 @@ export default {
+@@ -682,7 +682,6 @@ export default {
      socialMessages: 'メッセージ送信',
      terminal: 'ターミナル',
      browser: 'ブラウザー',
@@ -280,10 +280,10 @@ index 97c157aa8..8526d671a 100644
      files: 'ファイル',
      devices: 'デバイス',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 6cdb0eb9f..f58270679 100644
+index 25717efd1..ab64a0fca 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -516,7 +516,6 @@ export default {
+@@ -682,7 +682,6 @@ export default {
      socialMessages: '메시지 보내기',
      terminal: '터미널',
      browser: '브라우저',
@@ -292,10 +292,10 @@ index 6cdb0eb9f..f58270679 100644
      files: '파일',
      devices: '기기',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index dcabb5f36..20f457a66 100644
+index addfc5727..ebfa3a3a0 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -515,7 +515,6 @@ export default {
+@@ -681,7 +681,6 @@ export default {
      socialMessages: 'Enviar mensagens',
      terminal: 'Terminal',
      browser: 'Navegador',
@@ -304,10 +304,10 @@ index dcabb5f36..20f457a66 100644
      files: 'Arquivos',
      devices: 'Dispositivos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 093c9654e..ba4580d8f 100644
+index cbdb780c2..0625f07f5 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -430,7 +430,6 @@ export default {
+@@ -596,7 +596,6 @@ export default {
      gateways: 'Шлюзы',
      terminal: 'Терминал',
      browser: 'Браузер',
@@ -316,10 +316,10 @@ index 093c9654e..ba4580d8f 100644
      files: 'Файлы',
      devices: 'Устройства',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 450d99fd1..c99fb5302 100644
+index bd1bf9d5f..22dca4600 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -506,7 +506,6 @@ export default {
+@@ -672,7 +672,6 @@ export default {
      gateways: '閘道',
      terminal: '終端機',
      browser: '瀏覽器',
@@ -328,10 +328,10 @@ index 450d99fd1..c99fb5302 100644
      files: '檔案',
      devices: '裝置',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 1efe5e5c4..487a06a50 100644
+index 1fddf405d..e2f9b1ab8 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -506,7 +506,6 @@ export default {
+@@ -672,7 +672,6 @@ export default {
      gateways: '网关',
      terminal: '终端',
      browser: '浏览器',
@@ -339,3 +339,6 @@ index 1efe5e5c4..487a06a50 100644
      globalAgent: '全局',
      files: '文件',
      devices: '设备',
+-- 
+2.53.0
+

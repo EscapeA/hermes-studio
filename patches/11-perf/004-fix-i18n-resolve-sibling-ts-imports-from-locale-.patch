@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From f491d1729a17cd8b4530e2a4629391b77507daf3 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Tue, 25 Aug 2026 14:13:45 +0800
 Subject: [PATCH] fix(i18n): resolve sibling TS imports from locale dir in
@@ -9,7 +9,7 @@ Subject: [PATCH] fix(i18n): resolve sibling TS imports from locale dir in
  1 file changed, 41 insertions(+), 6 deletions(-)
 
 diff --git a/vite.config.ts b/vite.config.ts
-index 7e589a935..bad4f1408 100644
+index aa6eb43fa..cc61b9cee 100644
 --- a/vite.config.ts
 +++ b/vite.config.ts
 @@ -1,8 +1,8 @@
@@ -76,3 +76,6 @@ index 7e589a935..bad4f1408 100644
    return exported
  }
  
+-- 
+2.53.0
+

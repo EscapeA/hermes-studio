@@ -1,4 +1,4 @@
-From cf0ee54c6f69b68a16a1260a80e62018ea775cfa Mon Sep 17 00:00:00 2001
+From 3a76c836d2b1f0e91e288763f9dae16c671a63f0 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 24 Oct 2026 15:51:09 +0800
 Subject: [PATCH] fix(mobile): keep drawer headers below the status bar

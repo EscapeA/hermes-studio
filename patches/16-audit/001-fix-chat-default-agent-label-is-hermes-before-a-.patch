@@ -1,42 +1,48 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From ffce2b6e39f23abb2da2d0a09950aabcb364b7b4 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
-Date: Wed, 7 Oct 2026 00:26:54 +0800
-Subject: [PATCH] fix(chat): default agent label is Hermes before a session
+Date: Sat, 31 Oct 2026 11:52:52 +0800
+Subject: [PATCH] fix(chat): default agent avatar is Hermes before a session
  loads
 
 ---
- packages/client/src/utils/chat-agent-label.ts | 4 +++-
- tests/client/chat-agent-label.test.ts         | 4 ++--
- 2 files changed, 5 insertions(+), 3 deletions(-)
+ packages/client/src/utils/chat-agent-avatar.ts | 4 +++-
+ tests/client/chat-agent-avatar.test.ts         | 6 +++---
+ 2 files changed, 6 insertions(+), 4 deletions(-)
 
-diff --git a/packages/client/src/utils/chat-agent-label.ts b/packages/client/src/utils/chat-agent-label.ts
-index e6be4da15..d8c407488 100644
---- a/packages/client/src/utils/chat-agent-label.ts
-+++ b/packages/client/src/utils/chat-agent-label.ts
-@@ -20,7 +20,9 @@ const AGENT_LABELS = {
- } as const satisfies Record<string, ChatAgentLabel>
+diff --git a/packages/client/src/utils/chat-agent-avatar.ts b/packages/client/src/utils/chat-agent-avatar.ts
+index d35f1aaaf..36c22ca22 100644
+--- a/packages/client/src/utils/chat-agent-avatar.ts
++++ b/packages/client/src/utils/chat-agent-avatar.ts
+@@ -60,7 +60,9 @@ const AGENT_AVATARS = {
+ } as const satisfies Record<string, ChatAgentAvatar>
  
- export function chatSessionAgentLabel(session?: ChatAgentSessionIdentity | null): ChatAgentLabel {
--  if (!session) return AGENT_LABELS['ekko-agent']
-+  // No session yet (before the first load) — the fork's default agent is Hermes
-+  // (34-new-chat-default-hermes), so don't flash the legacy Ekko label.
-+  if (!session) return AGENT_LABELS.hermes
-   const runtime = String(session?.codingAgentId || session?.agent || '').trim().toLowerCase()
-   if (runtime === 'ekko-agent' || runtime === 'ekko_agent' || runtime === 'ekko') return AGENT_LABELS['ekko-agent']
-   if (runtime === 'claude' || runtime === 'claude-code') return AGENT_LABELS['claude-code']
-diff --git a/tests/client/chat-agent-label.test.ts b/tests/client/chat-agent-label.test.ts
-index c1c5d65ee..bcf72c5b1 100644
---- a/tests/client/chat-agent-label.test.ts
-+++ b/tests/client/chat-agent-label.test.ts
-@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
- import { chatSessionAgentLabel } from '@/utils/chat-agent-label'
+ export function chatSessionAgentAvatar(session?: ChatAgentSessionIdentity | null): ChatAgentAvatar {
+-  if (!session) return AGENT_AVATARS['ekko-agent']
++  // No session yet (before the first load) — the fork's default agent is Hermes,
++  // so don't flash the legacy Ekko label.
++  if (!session) return AGENT_AVATARS.hermes
+   const botType = session.botType || session.bot_type || (session.id?.startsWith('person-main-') ? DEFAULT_PERSON_BOT_TYPE : '')
+   const bot = personBot(botType)
+   if (bot) return { label: personBotLabel(bot), src: deploymentUrl(bot.avatar) }
+diff --git a/tests/client/chat-agent-avatar.test.ts b/tests/client/chat-agent-avatar.test.ts
+index fd392e89d..204a1e0a1 100644
+--- a/tests/client/chat-agent-avatar.test.ts
++++ b/tests/client/chat-agent-avatar.test.ts
+@@ -36,11 +36,11 @@ describe('single chat Agent avatars', () => {
+     })
+   })
  
- describe('single chat Agent labels', () => {
 -  it('shows Ekko before the session loads while preserving legacy Hermes sessions', () => {
 +  it('shows the Hermes default before the session loads while preserving legacy Hermes sessions', () => {
      for (const session of [null, undefined]) {
--      expect(chatSessionAgentLabel(session)).toEqual({ label: 'Ekko' })
-+      expect(chatSessionAgentLabel(session)).toEqual({ label: 'Hermes' })
+       expect(chatSessionAgentAvatar(session)).toEqual({
+-        label: 'Ekko',
+-        src: '/coding-agents/ekko-agent.png',
++        label: 'Hermes',
++        src: '/coding-agents/hermes.png',
+       })
      }
-     expect(chatSessionAgentLabel({ source: 'cli' })).toEqual({ label: 'Hermes' })
-   })
+     expect(chatSessionAgentAvatar({ source: 'cli' })).toEqual({
+-- 
+2.53.0
+

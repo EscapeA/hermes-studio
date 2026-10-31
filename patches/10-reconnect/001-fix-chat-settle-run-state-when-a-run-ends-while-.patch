@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 317e12b97e62acf1bc353517a54dbab47f25ffbd Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 11:22:27 +0800
 Subject: [PATCH] fix(chat): settle run state when a run ends while the socket
@@ -22,21 +22,22 @@ transcript. The UI stayed in run state forever.
   mid-stream run keeps its locally accumulated deltas.
 ---
  packages/client/src/api/studio/chat.ts    |  27 ++++
- packages/client/src/stores/hermes/chat.ts | 151 ++++++++++++++++------
- 2 files changed, 138 insertions(+), 40 deletions(-)
+ packages/client/src/stores/hermes/chat.ts | 153 ++++++++++++++++------
+ 2 files changed, 140 insertions(+), 40 deletions(-)
 
 diff --git a/packages/client/src/api/studio/chat.ts b/packages/client/src/api/studio/chat.ts
-index 6724df2a2..8c747dc95 100644
+index 62c8901b7..04ebbde94 100644
 --- a/packages/client/src/api/studio/chat.ts
 +++ b/packages/client/src/api/studio/chat.ts
-@@ -262,12 +262,35 @@ const sessionTitleUpdatedHandlers = new Set<(event: RunEvent) => void>()
+@@ -267,6 +267,7 @@ const sessionTitleUpdatedHandlers = new Set<(event: RunEvent) => void>()
  const sessionWorkspaceUpdatedHandlers = new Set<(event: RunEvent) => void>()
  const sessionSettingsUpdatedHandlers = new Set<(event: RunEvent) => void>()
  const runUsageUpdatedHandlers = new Set<(event: RunEvent) => void>()
 +const chatRunConnectedHandlers = new Set<() => void>()
  
- export function onRunUsageUpdated(handler: (event: RunEvent) => void): () => void {
-   runUsageUpdatedHandlers.add(handler)
+ export function onUnobservedRunStarted(handler: (event: RunEvent) => void): () => void {
+   unobservedRunStartedHandlers.add(handler)
+@@ -278,6 +279,28 @@ export function onRunUsageUpdated(handler: (event: RunEvent) => void): () => voi
    return () => { runUsageUpdatedHandlers.delete(handler) }
  }
  
@@ -65,7 +66,7 @@ index 6724df2a2..8c747dc95 100644
  function globalRunUsageUpdatedHandler(event: RunEvent): void {
    if (!event.session_id) return
    for (const handler of runUsageUpdatedHandlers) handler(event)
-@@ -892,6 +915,10 @@ export function connectChatRun(requestedProfile?: string | null, transport: Chat
+@@ -917,6 +940,10 @@ export function connectChatRun(requestedProfile?: string | null, transport: Chat
      on('session.workspace.updated', globalSessionWorkspaceUpdatedHandler)
      on('session.settings.updated', globalSessionSettingsUpdatedHandler)
  
@@ -77,10 +78,19 @@ index 6724df2a2..8c747dc95 100644
    }
  
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 7663a5629..fd75879c3 100644
+index 51e9f828f..c3e9f0b7a 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -5378,6 +5378,70 @@ export const useChatStore = defineStore('chat', () => {
+@@ -6,7 +6,7 @@ import { historySessionSource, isBuiltinEkkoSession } from '@/utils/hermes/sessi
+ import { isKnownEkkoSessionCommand } from '@/utils/hermes/bridge-session-commands'
+ import { normalizeRunUsage, type RunUsageSummary } from '@/utils/run-usage'
+ import { mergeTaskPlanMessages, type TaskPlanSnapshot } from '@/utils/task-plan'
+-import { startRunViaSocket, onUnobservedRunStarted, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, onRunUsageUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
++import { startRunViaSocket, onChatRunConnected, onUnobservedRunStarted, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, onRunUsageUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
+ import { archiveSession as archiveSessionApi, deleteSession as deleteSessionApi, fetchSessionMessagesPage, fetchSessions, fetchWorkspaceRunChangeFile, setSessionModel, setSessionPushEnabled as persistSessionPushEnabled, setSessionReasoningEffort as persistSessionReasoningEffort, type HermesMessage, type SessionSummary, type WorkspaceRunChangeFileDetail, type WorkspaceRunChangeSummary } from '@/api/studio/sessions'
+ import { getActiveProfileName } from '@/api/client'
+ import { onAuthInvalidated } from '@/api/auth-invalidation'
+@@ -5411,6 +5411,70 @@ function createChatState(scopedSessionId?: string) {
      if (!passive) ensureAbortHandle()
    }
  
@@ -150,29 +160,17 @@ index 7663a5629..fd75879c3 100644
 +
    function handlePeerUserMessage(evt: RunEvent) {
      const sid = evt.session_id
-     if (evt.event === 'approval.requested') return setPendingApproval(evt)
-@@ -5507,48 +5571,55 @@ export const useChatStore = defineStore('chat', () => {
+     if (scopedSessionId ? sid !== scopedSessionId : sid?.startsWith('person-task-')) return
+@@ -5558,50 +5622,59 @@ function createChatState(scopedSessionId?: string) {
    // Tab visibility: re-sync when returning to foreground
    if (typeof document !== 'undefined') {
-     document.addEventListener('visibilitychange', () => {
--      if (document.visibilityState === 'visible' && !isStreaming.value) {
--        // Live-sync the session list so sessions created elsewhere (CLI,
--        // Telegram, another device) appear without a manual reload.
--        void refreshSessionListOnly()
+     const onVisibilityChange = () => {
+-      if (!scopedSessionId && document.visibilityState === 'visible' && !isStreaming.value) {
 +      if (document.visibilityState !== 'visible') return
-+      // Live-sync the session list so sessions created elsewhere (CLI,
-+      // Telegram, another device) appear without a manual reload.
-+      void refreshSessionListOnly()
-+      const sid = activeSessionId.value
-+      if (!sid) return
-+      if (isStreaming.value) {
-+        // The client believes a run is in flight. Ask the server about the run
-+        // state only — replacing messages mid-stream would clobber the live
-+        // response. A terminal event lost while the tab was hidden would
-+        // otherwise leave the UI stuck in run state forever, while the stall
-+        // watchdog keeps refreshing the transcript underneath it.
-+        probeRunState(sid)
-+        return
++      if (!scopedSessionId && !isStreaming.value) {
+         // Live-sync the session list so sessions created elsewhere (CLI,
+         // Telegram, another device) appear without a manual reload.
+         void refreshSessionListOnly()
        }
 -      if (document.visibilityState === 'visible' && activeSessionId.value && !isStreaming.value) {
 -        const sid = activeSessionId.value
@@ -201,49 +199,67 @@ index 7663a5629..fd75879c3 100644
 -                activeSession.value.isLocalOnly = false
 -              }
 -              activeSession.value.messages = mapHermesMessages(data.messages as any[], data.taskPlans, activeSession.value.messages)
+-              activeSession.value.messagesLoaded = true
 -              restorePersistedSubagentStreams(sid)
 -              setWorkspaceRunChanges(sid, data.workspaceRunChanges || [])
 -              activeSession.value.loadedMessageCount = data.messageLoadedCount ?? data.messages.length
 -              activeSession.value.messageTotal = data.messageTotal ?? activeSession.value.messageCount ?? activeSession.value.loadedMessageCount
 -              activeSession.value.messageCount = activeSession.value.messageTotal
 -              activeSession.value.hasMoreBefore = data.hasMoreBefore ?? activeSession.value.loadedMessageCount < activeSession.value.messageTotal
-+      if (!streamStates.value.has(sid)) {
-+        // Re-load messages via resume (server loads from DB)
-+        const generation = runtimeGeneration
-+        resumeSession(sid, (data) => {
-+          if (generation !== runtimeGeneration || data.session_id !== sid || activeSessionId.value !== sid) return
-+          if (data.isWorking) {
-+            serverWorking.value.add(sid)
-+          } else {
-+            serverWorking.value.delete(sid)
-+          }
-+          applyResumedRunActivity(sid, data as any)
-+          if (data.isAborting) {
-+            setAbortState(sid, { aborting: true, synced: null })
-+          } else if (!data.isWorking) {
-+            setAbortState(sid, null)
-+          }
-+          if (!data.isWorking) setCompressionState(sid, null)
-+          applyResumedSessionSettings(data)
-+          if (activeSession.value) applySessionTokenUsage(activeSession.value, data)
-+          if (Array.isArray(data.messages) && activeSession.value) {
-+            if (typeof data.workspace === 'string') {
-+              activeSession.value.workspace = data.workspace.trim() || null
-+              activeSession.value.isLocalOnly = false
-             }
+-            }
 -            resumeServerWorkingRun(sid, (data.backgroundPending || 0) > 0, !data.isWorking)
 -          }, activeSession.value?.profile, runtimeTransport())
 -        }
-+            activeSession.value.messages = mapHermesMessages(data.messages as any[], data.taskPlans, activeSession.value.messages)
-+            restorePersistedSubagentStreams(sid)
-+            setWorkspaceRunChanges(sid, data.workspaceRunChanges || [])
-+            activeSession.value.loadedMessageCount = data.messageLoadedCount ?? data.messages.length
-+            activeSession.value.messageTotal = data.messageTotal ?? activeSession.value.messageCount ?? activeSession.value.loadedMessageCount
-+            activeSession.value.messageCount = activeSession.value.messageTotal
-+            activeSession.value.hasMoreBefore = data.hasMoreBefore ?? activeSession.value.loadedMessageCount < activeSession.value.messageTotal
-+          }
-+          resumeServerWorkingRun(sid, (data.backgroundPending || 0) > 0, !data.isWorking)
-+        }, activeSession.value?.profile, runtimeTransport())
++      const sid = activeSessionId.value
++      if (!sid || !activeSession.value) return
++      if (scopedSessionId && scopedSessionId !== sid) return
++      if (isStreaming.value) {
++        // The client believes a run is in flight. Ask the server about the run
++        // state only — replacing messages mid-stream would clobber the live
++        // response. A terminal event lost while the tab was hidden would
++        // otherwise leave the UI stuck in run state forever, while the stall
++        // watchdog keeps refreshing the transcript underneath it.
++        probeRunState(sid)
++        return
        }
-     })
-   }
++      if (streamStates.value.has(sid)) return
++      // Re-load messages via resume (server loads from DB)
++      const generation = runtimeGeneration
++      resumeSession(sid, (data) => {
++        if (generation !== runtimeGeneration || data.session_id !== sid || activeSessionId.value !== sid) return
++        if (data.isWorking) {
++          serverWorking.value.add(sid)
++        } else {
++          serverWorking.value.delete(sid)
++        }
++        applyResumedRunActivity(sid, data as any)
++        if (data.isAborting) {
++          setAbortState(sid, { aborting: true, synced: null })
++        } else if (!data.isWorking) {
++          setAbortState(sid, null)
++        }
++        if (!data.isWorking) setCompressionState(sid, null)
++        applyResumedSessionSettings(data)
++        if (activeSession.value) applySessionTokenUsage(activeSession.value, data)
++        if (Array.isArray(data.messages) && activeSession.value) {
++          if (typeof data.workspace === 'string') {
++            activeSession.value.workspace = data.workspace.trim() || null
++            activeSession.value.isLocalOnly = false
++          }
++          activeSession.value.messages = mapHermesMessages(data.messages as any[], data.taskPlans, activeSession.value.messages)
++          activeSession.value.messagesLoaded = true
++          restorePersistedSubagentStreams(sid)
++          setWorkspaceRunChanges(sid, data.workspaceRunChanges || [])
++          activeSession.value.loadedMessageCount = data.messageLoadedCount ?? data.messages.length
++          activeSession.value.messageTotal = data.messageTotal ?? activeSession.value.messageCount ?? activeSession.value.loadedMessageCount
++          activeSession.value.messageCount = activeSession.value.messageTotal
++          activeSession.value.hasMoreBefore = data.hasMoreBefore ?? activeSession.value.loadedMessageCount < activeSession.value.messageTotal
++        }
++        resumeServerWorkingRun(sid, (data.backgroundPending || 0) > 0, !data.isWorking)
++      }, activeSession.value?.profile, runtimeTransport())
+     }
+     document.addEventListener('visibilitychange', onVisibilityChange)
+     onScopeDispose(() => document.removeEventListener('visibilitychange', onVisibilityChange))
+-- 
+2.53.0
+

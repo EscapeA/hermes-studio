@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 55abb50329e63700dd9c2663f0de74b8f98a6c21 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 12:33:27 +0800
 Subject: [PATCH] fix(chat): tighten run indicator and composer spacing
@@ -18,10 +18,10 @@ Subject: [PATCH] fix(chat): tighten run indicator and composer spacing
  2 files changed, 13 insertions(+), 4 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
-index d0cbc5fd0..94554d002 100644
+index 62018da41..9b1684a59 100644
 --- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
 +++ b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
-@@ -82,7 +82,7 @@ watch(
+@@ -91,7 +91,7 @@ watch(
    display: flex;
    flex-direction: column;
    align-items: flex-start;
@@ -30,7 +30,7 @@ index d0cbc5fd0..94554d002 100644
    width: 100%;
    max-width: 100%;
    min-width: 0;
-@@ -94,7 +94,7 @@ watch(
+@@ -103,7 +103,7 @@ watch(
    gap: calc(10px * var(--spacing-scale, 1));
    width: 100%;
    min-width: 0;
@@ -40,10 +40,10 @@ index d0cbc5fd0..94554d002 100644
  
  .thinking-avatar {
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index a37e69ab2..346d388dc 100644
+index 662640977..b5724e47d 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -346,6 +346,10 @@ const virtualListPadding = computed(() => {
+@@ -455,6 +455,10 @@ const virtualListPadding = computed(() => {
    if (queuedMessages.value.length > 0 && hasFloatingPrompt.value) return "20px 20px 380px";
    if (queuedMessages.value.length > 0) return "20px 20px 260px";
    if (hasFloatingPrompt.value) return clarifyCompact.value ? "20px 20px 80px" : "20px 20px 260px";
@@ -54,7 +54,7 @@ index a37e69ab2..346d388dc 100644
    return "20px";
  });
  
-@@ -1792,11 +1796,16 @@ defineExpose({
+@@ -2029,11 +2033,16 @@ defineExpose({
    display: flex;
    flex-direction: column;
    align-items: flex-start;
@@ -73,3 +73,6 @@ index a37e69ab2..346d388dc 100644
    box-sizing: border-box;
  }
  
+-- 
+2.53.0
+

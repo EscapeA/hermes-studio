@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 4a8e119f5b7bf0ec225ac08b3efc57ae843edc63 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 23 Aug 2026 08:51:56 +0800
 Subject: [PATCH] fix(server): support archived=1 on GET /sessions (restore
@@ -14,10 +14,10 @@ default exclude archived (original behavior).
  1 file changed, 12 insertions(+), 4 deletions(-)
 
 diff --git a/packages/server/src/modules/studio/controllers/sessions.ts b/packages/server/src/modules/studio/controllers/sessions.ts
-index ede2456de..32baeb3eb 100644
+index 82264a70c..114cc82e8 100644
 --- a/packages/server/src/modules/studio/controllers/sessions.ts
 +++ b/packages/server/src/modules/studio/controllers/sessions.ts
-@@ -507,6 +507,9 @@ export async function list(ctx: any) {
+@@ -517,6 +517,9 @@ export async function list(ctx: any) {
      .map(value => String(value).trim()).filter(Boolean)
    const includedIds = ctx.query.include === undefined ? undefined : readIds(ctx.query.include)
    const excludedIds = readIds(ctx.query.exclude)
@@ -27,7 +27,7 @@ index ede2456de..32baeb3eb 100644
  
    const knownProfiles = profile ? null : new Set(listProfileNamesFromDisk())
    const allowedProfiles = allowedProfileSet(ctx)
-@@ -526,10 +529,15 @@ export async function list(ctx: any) {
+@@ -536,10 +539,15 @@ export async function list(ctx: any) {
      ...listOptions,
      ...(paginated ? { offset } : {}),
    })
@@ -47,3 +47,6 @@ index ede2456de..32baeb3eb 100644
    ctx.body = {
      sessions: paginated ? sessions.slice(0, effectiveLimit) : sessions,
      ...(paginated ? {
+-- 
+2.53.0
+

@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From a75e58323cece53c05ff827bf3bcb2dfe08fd37f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 2 Oct 2026 12:40:05 +0800
 Subject: [PATCH] feat(mobile-nav): frosted drawer surface
@@ -78,3 +78,6 @@ index 023bc3a83..970984cea 100644
 +  }
 +}
 +</style>
+-- 
+2.53.0
+

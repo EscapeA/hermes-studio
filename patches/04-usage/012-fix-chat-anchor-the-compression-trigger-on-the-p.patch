@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 1bbd5a9e08d842ab7ba829d8d3ceaaa571684603 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 15 Oct 2026 17:51:44 +0800
 Subject: [PATCH] fix(chat): anchor the compression trigger on the provider
@@ -22,10 +22,10 @@ already drops those.
  2 files changed, 106 insertions(+), 4 deletions(-)
 
 diff --git a/packages/server/src/modules/studio/services/chat-run/compression.ts b/packages/server/src/modules/studio/services/chat-run/compression.ts
-index b8b5d4be4..424cfa6c1 100644
+index d4c9c204c..0729f884b 100644
 --- a/packages/server/src/modules/studio/services/chat-run/compression.ts
 +++ b/packages/server/src/modules/studio/services/chat-run/compression.ts
-@@ -271,7 +271,10 @@ export async function buildCompressedHistory(
+@@ -272,7 +272,10 @@ export async function buildCompressedHistory(
        ? Math.floor(currentInputTokens)
        : 0
      // Exact prompt size the provider reported for this session's latest Hermes call since the last
@@ -37,7 +37,7 @@ index b8b5d4be4..424cfa6c1 100644
      // Usage from before the last history clear (ms cutoff on the session) describes deleted history.
      const contextStartMs = Math.max(snapshot?.updatedAt ?? 0, getSession(sessionId)?.history_cleared_at ?? 0)
      const lastUsage = getUsage(sessionId, 'hermes')
-@@ -280,14 +283,20 @@ export async function buildCompressedHistory(
+@@ -281,14 +284,20 @@ export async function buildCompressedHistory(
        : 0
      const estimateLocalContextTokens = async (messages: ChatMessage[], messageTokens: number) => {
        const localMessageTokens = Math.max(0, Math.floor(messageTokens))
@@ -163,3 +163,6 @@ index aad21e412..61d3ca3f1 100644
 +    expect(summarizerRun).toHaveBeenCalledTimes(1)
 +  })
  })
+-- 
+2.53.0
+

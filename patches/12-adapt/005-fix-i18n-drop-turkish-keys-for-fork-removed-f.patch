@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 93b3c25f60264547cde552316580eb8ca3f1e054 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Tue, 13 Oct 2026 16:36:41 +0800
 Subject: [PATCH] fix(i18n): drop Turkish keys for features the fork removed
@@ -8,10 +8,10 @@ Subject: [PATCH] fix(i18n): drop Turkish keys for features the fork removed
  1 file changed, 4 insertions(+), 296 deletions(-)
 
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index 201a5a0ac..6aa2d4b3c 100644
+index 1d5e3b002..e5bae41f4 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -453,12 +453,10 @@ export default {
+@@ -542,12 +542,10 @@ export default {
    },
  
    sidebar: {
@@ -27,7 +27,7 @@ index 201a5a0ac..6aa2d4b3c 100644
      agentManager: 'Aracı yöneticisi', groupConversation: 'Konuşma', groupConversationShort: 'Kon', groupPlatform: 'Platform', groupAgent: 'Aracı',
      groupAgentShort: 'Aracı', groupSystem: 'Sistem', groupSystemShort: 'Sis', groupMonitoring: 'İzleme', groupMonitoringShort: 'İzl',
      groupTools: 'Araçlar', groupToolsShort: 'Araçlar', codingAgents: 'Kodlama araçları', versionPreview: 'Sürüm önizlemesi', theme: 'Tema',
-@@ -527,245 +525,7 @@ export default {
+@@ -616,245 +614,7 @@ export default {
      contextRemaining: 'kaldı', contextClickToEdit: 'Bağlam uzunluğunu düzenlemek için tıklayın', contextEditTitle: 'Bağlam uzunluğunu düzenle',
      contextEditDesc: 'Mevcut model için bağlam uzunluğu sınırını belirleyin (jeton cinsinden)', contextEditPlaceholder: 'Bağlam uzunluğunu girin',
      contextEditSave: 'Kaydet', contextEditCancel: 'İptal', contextEditInvalid: 'Lütfen geçerli bir bağlam uzunluğu girin', contextEditSuccess: 'Bağlam uzunluğu güncellendi', contextEditFailed: 'Güncelleme başarısız oldu',
@@ -274,7 +274,7 @@ index 201a5a0ac..6aa2d4b3c 100644
    },
    skillsUsage: {
      title: 'Yetenek kullanımı',
-@@ -833,58 +593,6 @@ export default {
+@@ -922,58 +682,6 @@ export default {
      message: { taskArchived: 'Görev arşivlendi' },
    },
    journey: { nodeKinds: 'Düğüm türleri' },
@@ -333,3 +333,6 @@ index 201a5a0ac..6aa2d4b3c 100644
    settings: {
      privacy: {
        policy: 'Gizlilik bildirimi',
+-- 
+2.53.0
+

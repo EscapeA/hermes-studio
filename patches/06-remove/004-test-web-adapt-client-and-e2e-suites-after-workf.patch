@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From f67fdc38144aff457062cff16619605dc253e6ab Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:35:42 +0800
 Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
@@ -16,13 +16,13 @@ Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
 ---
  tests/client/api.test.ts                      |   10 +-
  ...approval-system-notification-click.test.ts |   18 -
- tests/client/drawer-panel-resize.test.ts      |    9 -
+ tests/client/drawer-panel-resize.test.ts      |   84 +
  tests/client/ekko-display-name.test.ts        |   10 -
- tests/client/global-pending-actions.test.ts   |  133 +-
+ tests/client/global-pending-actions.test.ts   |  132 +-
  tests/client/i18n-coverage.test.ts            |   70 -
- .../page-sidebar-nav-history-position.test.ts |    7 +-
+ .../page-sidebar-nav-history-position.test.ts |   29 +
  tests/client/schedule-frequency-ui.test.ts    |   11 -
- tests/client/style-system.test.ts             |   10 +-
+ tests/client/style-system.test.ts             |  166 ++
  tests/client/workflow-approval-key.test.ts    |   11 -
  tests/client/workflow-canvas.test.ts          |   25 -
  tests/client/workflow-edge-authoring.test.ts  |  269 ---
@@ -31,19 +31,18 @@ Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
  .../workflow-import-confirmation.test.ts      |   19 -
  tests/client/workflow-locales.test.ts         |  108 --
  .../workflow-notification-target.test.ts      |   34 -
- .../client/workflow-reasoning-effort.test.ts  |   60 -
  tests/client/workflow-run-budget.test.ts      |   99 --
- .../workflow-run-evidence-layout.test.ts      |  121 --
  tests/client/workflow-run-pager.test.ts       |   21 -
- .../workflow-run-snapshot-indicator.test.ts   |   17 -
  tests/client/workflow-run-snapshot.test.ts    |   80 -
  tests/client/workflow-skills.test.ts          |   42 -
  tests/client/workflow-socket.test.ts          |   79 -
  tests/e2e/desktop-window-chrome.spec.ts       |   10 -
  tests/e2e/fixtures.ts                         |  126 +-
- tests/e2e/workflow-cursor-mode.spec.ts        |   70 -
  tests/e2e/workflow-ui.spec.ts                 | 1575 -----------------
- 29 files changed, 15 insertions(+), 3593 deletions(-)
+ 25 files changed, 288 insertions(+), 3304 deletions(-)
+ create mode 100644 tests/client/drawer-panel-resize.test.ts
+ create mode 100644 tests/client/page-sidebar-nav-history-position.test.ts
+ create mode 100644 tests/client/style-system.test.ts
  delete mode 100644 tests/client/workflow-approval-key.test.ts
  delete mode 100644 tests/client/workflow-canvas.test.ts
  delete mode 100644 tests/client/workflow-edge-authoring.test.ts
@@ -52,15 +51,11 @@ Subject: [PATCH] test(web): adapt client and e2e suites after workflow removal
  delete mode 100644 tests/client/workflow-import-confirmation.test.ts
  delete mode 100644 tests/client/workflow-locales.test.ts
  delete mode 100644 tests/client/workflow-notification-target.test.ts
- delete mode 100644 tests/client/workflow-reasoning-effort.test.ts
  delete mode 100644 tests/client/workflow-run-budget.test.ts
- delete mode 100644 tests/client/workflow-run-evidence-layout.test.ts
  delete mode 100644 tests/client/workflow-run-pager.test.ts
- delete mode 100644 tests/client/workflow-run-snapshot-indicator.test.ts
  delete mode 100644 tests/client/workflow-run-snapshot.test.ts
  delete mode 100644 tests/client/workflow-skills.test.ts
  delete mode 100644 tests/client/workflow-socket.test.ts
- delete mode 100644 tests/e2e/workflow-cursor-mode.spec.ts
  delete mode 100644 tests/e2e/workflow-ui.spec.ts
 
 diff --git a/tests/client/api.test.ts b/tests/client/api.test.ts
@@ -89,10 +84,10 @@ index bc2cca44e..0bab81bb0 100644
      })
  
 diff --git a/tests/client/approval-system-notification-click.test.ts b/tests/client/approval-system-notification-click.test.ts
-index 17cd46cd2..8b26bca07 100644
+index ef966dbf0..b43d6d3b4 100644
 --- a/tests/client/approval-system-notification-click.test.ts
 +++ b/tests/client/approval-system-notification-click.test.ts
-@@ -19,22 +19,4 @@ describe('approval system notification click targets', () => {
+@@ -32,22 +32,4 @@ describe('approval system notification click targets', () => {
      expect(desktopBridge).toContain('clickUrl?: string')
    })
  
@@ -116,32 +111,95 @@ index 17cd46cd2..8b26bca07 100644
 -  })
  })
 diff --git a/tests/client/drawer-panel-resize.test.ts b/tests/client/drawer-panel-resize.test.ts
-index d805cb639..36fabdc31 100644
---- a/tests/client/drawer-panel-resize.test.ts
+new file mode 100644
+index 000000000..36fabdc31
+--- /dev/null
 +++ b/tests/client/drawer-panel-resize.test.ts
-@@ -17,22 +17,13 @@ describe('ChatPanel tool drawer resizing support', () => {
-     expect(source).toMatch(/\.chat-tool-resize-handle\s*\{[\s\S]*inset-inline-start: -7px;/)
-   })
- 
--  it('mirrors workflow resize seams without changing LTR sizing', () => {
--    const workflowSource = readFileSync('packages/client/src/views/hermes/WorkflowView.vue', 'utf8')
--
--    expect(workflowSource).toContain("deltaSign: document.documentElement.dir === 'rtl' ? -1 : 1")
--    expect(workflowSource).toMatch(/\.workflow-chat-resize-handle\s*\{[\s\S]*inset-inline-end: -7px;/)
--  })
--
-   it('uses a full-width mobile workspace tree and replaces it with the selected file', () => {
-     const filesSource = readFileSync('packages/client/src/components/hermes/chat/FilesPanel.vue', 'utf8')
--    const workflowSource = readFileSync('packages/client/src/views/hermes/WorkflowView.vue', 'utf8')
- 
-     expect(filesSource).toContain("'mobile-file-open': mobileFileOpen")
-     expect(filesSource).toMatch(/\.files-tree-panel\s*\{[\s\S]*width: 100% !important;/)
-     expect(filesSource).toMatch(/\.files-panel-drawer\.mobile-file-open \.files-tree-panel\s*\{\s*display: none;/)
-     expect(filesSource).toContain('@click="handleMobileBack"')
--    expect(workflowSource).toMatch(/\.workflow-runs-panel\s*\{[\s\S]*inset-inline-end: 0;[\s\S]*&:dir\(rtl\)\s*\{[\s\S]*box-shadow: 8px/)
-   })
- 
-   it('keeps native Windows title-bar geometry LTR in every app language', () => {
+@@ -0,0 +1,84 @@
++import { readPresetStyleSource as readFileSync } from './preset-style-source'
++import { describe, expect, it } from 'vitest'
++
++describe('ChatPanel tool drawer resizing support', () => {
++  it('persists and clamps the live chat tool panel width while keeping mobile full width', () => {
++    const source = readFileSync('packages/client/src/components/hermes/chat/ChatPanel.vue', 'utf8')
++
++    expect(source).toContain('class="chat-tool-panel"')
++    expect(source).toContain('const TOOL_PANEL_STORAGE_KEY = "hermes.chat.toolPanelWidth"')
++    expect(source).toContain('function clampToolPanelWidth')
++    expect(source).toContain('Math.floor(available * 0.88)')
++    expect(source).toContain('window.localStorage.setItem(TOOL_PANEL_STORAGE_KEY')
++    expect(source).toContain('window.addEventListener("resize", handleToolPanelViewportResize)')
++    expect(source).toContain('watch(showToolPanel')
++    expect(source).toContain('width: 100% !important;')
++    expect(source).toContain('deltaSign: document.documentElement.dir === "rtl" ? 1 : -1')
++    expect(source).toMatch(/\.chat-tool-resize-handle\s*\{[\s\S]*inset-inline-start: -7px;/)
++  })
++
++  it('uses a full-width mobile workspace tree and replaces it with the selected file', () => {
++    const filesSource = readFileSync('packages/client/src/components/hermes/chat/FilesPanel.vue', 'utf8')
++
++    expect(filesSource).toContain("'mobile-file-open': mobileFileOpen")
++    expect(filesSource).toMatch(/\.files-tree-panel\s*\{[\s\S]*width: 100% !important;/)
++    expect(filesSource).toMatch(/\.files-panel-drawer\.mobile-file-open \.files-tree-panel\s*\{\s*display: none;/)
++    expect(filesSource).toContain('@click="handleMobileBack"')
++  })
++
++  it('keeps native Windows title-bar geometry LTR in every app language', () => {
++    const source = readFileSync('packages/client/src/components/layout/DesktopTitleBar.vue', 'utf8')
++
++    expect(source).toMatch(/\.desktop-titlebar\s*\{[\s\S]*direction: ltr;/)
++  })
++
++  it('renders the workspace, terminal, and desktop browser tabs as a full-height right icon rail', () => {
++    const source = readFileSync('packages/client/src/components/hermes/chat/ChatPanel.vue', 'utf8')
++
++    expect(source).toContain('class="chat-tool-tabs" role="tablist"')
++    expect(source).toContain(':aria-label="t(\'drawer.files\')"')
++    expect(source).toContain(':aria-label="t(\'drawer.terminal\')"')
++    expect(source).toContain(':aria-label="t(\'browser.title\')"')
++    expect(source).toContain('v-if="desktopBrowserAvailable"')
++    expect(source).toMatch(/\.chat-tool-panel-inner\s*\{[\s\S]*background: \$bg-main-surface;/)
++    expect(source).toMatch(/\.chat-tool-tabs\s*\{[\s\S]*flex-direction: column;[\s\S]*order: 2;[\s\S]*height: 100%;[\s\S]*border-inline-start:/)
++    expect(source).toMatch(/\.chat-tool-content\s*\{\s*order: 1;[\s\S]*background: \$bg-main-surface;/)
++  })
++
++  it('animates the chat tool panel without exposing the native browser mid-transition', () => {
++    const chatSource = readFileSync('packages/client/src/components/hermes/chat/ChatPanel.vue', 'utf8')
++    const browserSource = readFileSync('packages/client/src/components/hermes/chat/DesktopBrowserPanel.vue', 'utf8')
++
++    for (const source of [chatSource]) {
++      expect(source).toContain('<Transition')
++      expect(source).toContain('name="tool-panel"')
++      expect(source).toContain('@before-enter="handleToolPanelBeforeEnter"')
++      expect(source).toContain('@after-enter="handleToolPanelAfterEnter"')
++      expect(source).toContain('@before-leave="handleToolPanelBeforeLeave"')
++      expect(source).toContain('@leave-cancelled="handleToolPanelLeaveCancelled"')
++      expect(source).toContain('@media (prefers-reduced-motion: reduce)')
++      expect(source).toContain('.tool-panel-enter-from:dir(rtl)')
++      expect(source).not.toMatch(/:global\(\[dir=['"]rtl['"]\]\)/)
++    }
++
++    expect(chatSource).toContain(':visible="toolPanelTransitionReady"')
++    expect(chatSource).toMatch(/\.tool-panel-enter-active,[\s\S]*transition:[\s\S]*width 0\.25s/)
++    expect(chatSource).toMatch(/\.tool-panel-enter-from,[\s\S]*width: 0 !important;[\s\S]*min-width: 0;/)
++    expect(browserSource).toContain('visible?: boolean')
++    expect(browserSource).toContain('props.visible && !externalOverlayOpen.value')
++  })
++
++  it('uses the drawer content surface for the conversation outline', () => {
++    const source = readFileSync('packages/client/src/components/hermes/chat/OutlinePanel.vue', 'utf8')
++
++    expect(source).toMatch(/\.outline-panel\s*\{[\s\S]*background-color: \$bg-main-surface;/)
++  })
++
++  it('keeps workspace diffs and their editor stretched across the drawer', () => {
++    const source = readFileSync('packages/client/src/components/hermes/files/WorkspaceDiffPreview.vue', 'utf8')
++
++    expect(source).toMatch(/\.workspace-diff-preview\s*\{[\s\S]*flex: 1;[\s\S]*width: 100%;[\s\S]*min-width: 0;/)
++    expect(source).toMatch(/\.diff-preview-content\s*\{[\s\S]*min-width: 0;/)
++    expect(source).toMatch(/:deep\(\.file-editor\)\s*\{[\s\S]*width: 100%;[\s\S]*min-width: 0;/)
++  })
++})
 diff --git a/tests/client/ekko-display-name.test.ts b/tests/client/ekko-display-name.test.ts
 index 5edc9d64f..404c7e966 100644
 --- a/tests/client/ekko-display-name.test.ts
@@ -171,24 +229,23 @@ index 5edc9d64f..404c7e966 100644
      const logs = readFileSync('packages/client/src/views/hermes/LogsView.vue', 'utf8')
  
 diff --git a/tests/client/global-pending-actions.test.ts b/tests/client/global-pending-actions.test.ts
-index e971c5494..515361c9b 100644
+index 5671b50fa..8c4ee871c 100644
 --- a/tests/client/global-pending-actions.test.ts
 +++ b/tests/client/global-pending-actions.test.ts
-@@ -19,13 +19,6 @@ const created: any[] = []
- const clipboardMock = vi.hoisted(() => ({ copyToClipboard: vi.fn(async () => true) }))
+@@ -20,12 +20,6 @@ const clipboardMock = vi.hoisted(() => ({ copyToClipboard: vi.fn(async () => tru
  const uiMock = vi.hoisted(() => ({ messageError: vi.fn(), messageWarning: vi.fn() }))
  const systemNotificationMock = vi.hoisted(() => ({ showSystemNotification: vi.fn(async () => true) }))
+ const chatConnectionMock = vi.hoisted(() => ({ connectChatRun: vi.fn(), getChatRunSocket: vi.fn(() => null as unknown) }))
 -const workflowMock = vi.hoisted(() => ({
 -  statusHandlers: [] as Array<(status: any) => void>,
 -  approveWorkflowNode: vi.fn(),
 -  listWorkflowsSocket: vi.fn(async (_profile?: string) => [{ id: 'workflow-b', name: 'Workflow B' }]),
 -  subscribeWorkflowStatuses: vi.fn(async (_ids?: string[], _profile?: string) => [] as any[]),
 -}))
--
+ 
  vi.mock('@/stores/hermes/chat', () => ({ useChatStore: () => chatState }))
  vi.mock('@/stores/hermes/profiles', () => ({ useProfilesStore: () => profileState }))
- vi.mock('@/stores/hermes/settings', () => ({ useSettingsStore: () => settingsState }))
-@@ -33,13 +26,6 @@ vi.mock('@/utils/clipboard', () => clipboardMock)
+@@ -35,13 +29,6 @@ vi.mock('@/utils/clipboard', () => clipboardMock)
  vi.mock('@/utils/completion-notification', () => systemNotificationMock)
  vi.mock('@/utils/completion-sound', () => ({ playCompletionSound: vi.fn(async () => true) }))
  vi.mock('vue-router', () => ({ useRoute: () => routeState, useRouter: () => ({ push: routerPush }) }))
@@ -202,11 +259,16 @@ index e971c5494..515361c9b 100644
  vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }))
  vi.mock('naive-ui', async () => {
    const button = defineComponent({ name: 'NButton', emits: ['click'], template: '<button @click="$emit(\'click\')"><slot /></button>' })
-@@ -85,10 +71,9 @@ describe('GlobalPendingActions', () => {
-     routeState.name = 'hermes.chat'
+@@ -88,7 +75,6 @@ describe('GlobalPendingActions', () => {
      vi.clearAllMocks()
+     chatConnectionMock.getChatRunSocket.mockReturnValue(null)
      settingsState.fetchSettings.mockImplementation(async () => true)
 -    workflowMock.statusHandlers.splice(0)
+   })
+ 
+   it('opens the existing chat transport on non-chat pages without replacing a connected runtime', () => {
+@@ -103,7 +89,7 @@ describe('GlobalPendingActions', () => {
+     wrapper.unmount()
    })
  
 -  it('sends privacy-safe system notifications for new direct and workflow pending keys with exact navigation', async () => {
@@ -214,7 +276,7 @@ index e971c5494..515361c9b 100644
      settingsState.display.notify_on_approval = true
      const wrapper = mount(GlobalPendingActions)
      await nextTick()
-@@ -102,13 +87,7 @@ describe('GlobalPendingActions', () => {
+@@ -117,13 +103,7 @@ describe('GlobalPendingActions', () => {
      }]])
      await nextTick()
  
@@ -229,7 +291,7 @@ index e971c5494..515361c9b 100644
      for (const [payload] of systemNotificationMock.showSystemNotification.mock.calls) {
        expect(payload.title).toMatch(/^settings\.display\.approvalNotification/)
        expect(payload.body).toMatch(/^settings\.display\.approvalNotification/)
-@@ -120,9 +99,6 @@ describe('GlobalPendingActions', () => {
+@@ -135,9 +115,6 @@ describe('GlobalPendingActions', () => {
      const systemCalls = systemNotificationMock.showSystemNotification.mock.calls as any[][]
      const chatPayload = systemCalls.find(([payload]) => payload.tag.includes('chat-approval'))?.[0]
      expect(chatPayload?.clickUrl).toBe('/hermes/global-agent/session/session-b?profile=default')
@@ -239,7 +301,7 @@ index e971c5494..515361c9b 100644
      wrapper.unmount()
    })
  
-@@ -349,7 +325,7 @@ describe('GlobalPendingActions', () => {
+@@ -364,7 +341,7 @@ describe('GlobalPendingActions', () => {
    })
  
    it('shows a stored active-session approval globally when the chat route is not visible', async () => {
@@ -248,7 +310,7 @@ index e971c5494..515361c9b 100644
      chatState.pendingApprovals = new Map([['session-a', {
        sessionId: 'session-a', approvalId: 'approval-a', description: 'Run', command: 'pwd', choices: ['once'],
      }]])
-@@ -477,107 +453,4 @@ describe('GlobalPendingActions', () => {
+@@ -492,107 +469,4 @@ describe('GlobalPendingActions', () => {
      expect(instance.destroy).toHaveBeenCalledOnce()
    })
  
@@ -445,26 +507,40 @@ index 7aafd9ec1..a5226d1bd 100644
      const untranslated = Object.entries(rawMessages).flatMap(([locale, localeMessages]) => {
        if (locale === 'en') return []
 diff --git a/tests/client/page-sidebar-nav-history-position.test.ts b/tests/client/page-sidebar-nav-history-position.test.ts
-index 6a58ec4a6..4a8c280a9 100644
---- a/tests/client/page-sidebar-nav-history-position.test.ts
+new file mode 100644
+index 000000000..4a8c280a9
+--- /dev/null
 +++ b/tests/client/page-sidebar-nav-history-position.test.ts
-@@ -11,13 +11,12 @@ const historyViewSource = readFileSync(
- )
- 
- describe('page sidebar conversation switch', () => {
--  it('places history after single chat and workflow', () => {
--    const switchStart = navSource.indexOf('conversation-switch conversation-switch--three')
+@@ -0,0 +1,29 @@
++import { readFileSync } from 'node:fs'
++import { describe, expect, it } from 'vitest'
++
++const navSource = readFileSync(
++  'packages/client/src/components/layout/PageSidebarNav.vue',
++  'utf8',
++)
++const historyViewSource = readFileSync(
++  'packages/client/src/views/hermes/HistoryView.vue',
++  'utf8',
++)
++
++describe('page sidebar conversation switch', () => {
 +  it('places history after single chat', () => {
 +    const switchStart = navSource.indexOf('conversation-switch conversation-switch--two')
-     const switchSource = navSource.slice(switchStart)
- 
-     expect(switchStart).toBeGreaterThan(-1)
--    expect(switchSource.indexOf('@click="openChat"')).toBeLessThan(switchSource.indexOf('@click="openWorkflow"'))
--    expect(switchSource.indexOf('@click="openWorkflow"')).toBeLessThan(switchSource.indexOf('@click="openHistory"'))
++    const switchSource = navSource.slice(switchStart)
++
++    expect(switchStart).toBeGreaterThan(-1)
 +    expect(switchSource.indexOf('@click="openChat"')).toBeLessThan(switchSource.indexOf('@click="openHistory"'))
-     expect(navSource.match(/@click="openHistory"/g)).toHaveLength(1)
-   })
- 
++    expect(navSource.match(/@click="openHistory"/g)).toHaveLength(1)
++  })
++
++  it('shows the conversation switch on the history page', () => {
++    const historyNav = historyViewSource.match(/<PageSidebarNav[\s\S]*?\/>/)?.[0] || ''
++
++    expect(historyNav).toContain('active="history"')
++    expect(historyNav).not.toContain('hide-mode-switch')
++  })
++})
 diff --git a/tests/client/schedule-frequency-ui.test.ts b/tests/client/schedule-frequency-ui.test.ts
 index b6fad18e2..d03b125e3 100644
 --- a/tests/client/schedule-frequency-ui.test.ts
@@ -486,47 +562,177 @@ index b6fad18e2..d03b125e3 100644
 -  })
  })
 diff --git a/tests/client/style-system.test.ts b/tests/client/style-system.test.ts
-index d62371df7..7ca83c4f5 100644
---- a/tests/client/style-system.test.ts
+new file mode 100644
+index 000000000..7ca83c4f5
+--- /dev/null
 +++ b/tests/client/style-system.test.ts
-@@ -47,14 +47,10 @@ describe('client style system', () => {
- 
-   it('keeps selected conversation titles on the primary text color', () => {
-     const sessionListItem = readClientFile('components/hermes/chat/SessionListItem.vue')
--    const workflowView = readClientFile('views/hermes/WorkflowView.vue')
- 
-     expect(sessionListItem).toMatch(
-       /\.session-item\.active \.session-item-title\s*\{\s*color: var\(--text-primary\);/,
-     )
--    expect(workflowView).toMatch(
--      /&\.selected \.workflow-list-name\s*\{\s*color: var\(--text-primary\);/,
--    )
-   })
- 
-   it('uses the custom selection color for the active profile', () => {
-@@ -77,11 +73,11 @@ describe('client style system', () => {
-     expect(historyMessageList).toContain('animation: history-message-surface-fade-in 1.5s ease both;')
-   })
- 
--  it('keeps the three-way conversation switch active state visible in dark mode', () => {
+@@ -0,0 +1,166 @@
++import { readPresetStyleSource as readFileSync } from './preset-style-source'
++import { describe, expect, it } from 'vitest'
++
++const readClientFile = (path: string) => readFileSync(`packages/client/src/${path}`, 'utf8')
++
++describe('client style system', () => {
++  it('keeps shared page headers on one layout baseline', () => {
++    const globalStyles = readClientFile('styles/global.scss')
++
++    expect(globalStyles).toContain('min-height: 64px;')
++    expect(globalStyles).toContain('padding: 14px 20px;')
++    expect(globalStyles).toContain('.page-header > .header-actions')
++  })
++
++  it('aligns SCSS surfaces and radii with the Naive UI theme', () => {
++    const variables = readClientFile('styles/variables.scss')
++    const theme = readClientFile('styles/theme.ts')
++
++    expect(variables).toContain('--bg-card: #2a2a2a;')
++    expect(theme).toContain("cardColor: '#2a2a2a'")
++    expect(variables).toContain('$radius-sm: 6px;')
++    expect(variables).toContain('$radius-md: 8px;')
++    expect(variables).toContain('$radius-lg: 8px;')
++    expect(theme).toContain("borderRadius: '8px'")
++    expect(theme).toContain("borderRadiusSmall: '6px'")
++  })
++
++  it('keeps chat and composer surfaces aligned in dark mode', () => {
++    const chatInput = readClientFile('components/hermes/chat/ChatInput.vue')
++    const virtualMessageList = readClientFile('components/hermes/chat/VirtualMessageList.vue')
++
++    expect(chatInput).toContain('background-color: $bg-main-surface;')
++    expect(virtualMessageList).toContain('background-color: $bg-main-surface;')
++    expect(chatInput).not.toContain('background-color: #333333;')
++  })
++
++  it('keeps message metadata and context usage on custom theme text colors', () => {
++    const chatInput = readClientFile('components/hermes/chat/ChatInput.vue')
++    const messageItem = readClientFile('components/hermes/chat/MessageItem.vue')
++
++    expect(messageItem).toMatch(/\.message-meta\s*\{[^}]*color: \$text-muted;/s)
++    expect(messageItem).not.toContain('color: #999999;')
++    expect(chatInput).toMatch(/\.context-usage-row\s*\{[^}]*color: \$text-muted;/s)
++    expect(chatInput).not.toContain('color: rgba(255, 255, 255, 0.68);')
++    expect(chatInput).toContain('rgba(var(--text-muted-rgb), 0.85)')
++  })
++
++  it('keeps selected conversation titles on the primary text color', () => {
++    const sessionListItem = readClientFile('components/hermes/chat/SessionListItem.vue')
++
++    expect(sessionListItem).toMatch(
++      /\.session-item\.active \.session-item-title\s*\{\s*color: var\(--text-primary\);/,
++    )
++  })
++
++  it('uses the custom selection color for the active profile', () => {
++    const profileCard = readClientFile('components/hermes/profiles/ProfileCard.vue')
++
++    expect(profileCard).toContain(
++      '<NTag v-if="profile.active" size="tiny" type="primary" :bordered="false">',
++    )
++    expect(profileCard).toMatch(
++      /&\.active\s*\{\s*border-color: rgba\(var\(--accent-primary-rgb\), 0\.4\);/,
++    )
++    expect(profileCard).not.toContain('rgba(var(--success-rgb), 0.4)')
++  })
++
++  it('replays the history detail fade when the selected session changes', () => {
++    const historyView = readClientFile('views/hermes/HistoryView.vue')
++    const historyMessageList = readClientFile('components/hermes/chat/HistoryMessageList.vue')
++
++    expect(historyView).toContain(`:key="historySession?.id || 'history-empty'"`)
++    expect(historyMessageList).toContain('animation: history-message-surface-fade-in 1.5s ease both;')
++  })
++
 +  it('keeps the two-way conversation switch active state visible in dark mode', () => {
-     const pageSidebarNav = readClientFile('components/layout/PageSidebarNav.vue')
- 
-     expect(pageSidebarNav).toContain(
--      ':global(.dark .conversation-switch--three .conversation-switch-tab.active)',
++    const pageSidebarNav = readClientFile('components/layout/PageSidebarNav.vue')
++
++    expect(pageSidebarNav).toContain(
 +      ':global(.dark .conversation-switch--two .conversation-switch-tab.active)',
-     )
-     expect(pageSidebarNav).toContain('background: $bg-card-hover;')
-     expect(pageSidebarNav).toContain('inset 0 0 0 1px $border-color')
-@@ -130,7 +126,7 @@ describe('client style system', () => {
-     expect(customBackgroundStyles).toContain(':deep(.virtual-message-list)')
-     expect(customBackgroundStyles).toContain(':deep(.agent-manager-panel)')
-     expect(customBackgroundStyles).toMatch(
--      /:deep\(\.workflow-view\),[\s\S]*:deep\(\.petdex-view\)\s*\{\s*background-color: transparent;/,
++    )
++    expect(pageSidebarNav).toContain('background: $bg-card-hover;')
++    expect(pageSidebarNav).toContain('inset 0 0 0 1px $border-color')
++  })
++
++  it('keeps the agent manager page aligned with the app main surface', () => {
++    const agentManagerView = readClientFile('views/hermes/AgentManagerView.vue')
++    const chatPanel = readClientFile('components/hermes/chat/ChatPanel.vue')
++
++    expect(agentManagerView).toMatch(
++      /\.agent-manager-panel\s*\{[^}]*height: 100%;[^}]*background: \$bg-main-surface;/s,
++    )
++    expect(agentManagerView).not.toContain('class="agent-manager-sidebar"')
++    expect(agentManagerView).not.toContain('.sidebar-summary')
++    expect(agentManagerView).not.toContain('.agent-manager-main')
++    expect(chatPanel).toContain('<AgentManagerPanel')
++    expect(chatPanel).not.toContain(':sidebar-collapsed="!showSessions"')
++    expect(agentManagerView).not.toContain('min-height: 72px;')
++    expect(agentManagerView).not.toContain('padding: 14px 24px;')
++    expect(agentManagerView).not.toContain("<p>{{ t('agentManager.subtitle') }}</p>")
++    expect(agentManagerView).not.toContain('<HeaderSidebarToggle')
++    expect(agentManagerView).toMatch(
++      /\.coding-agent-grid\s*\{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/s,
++    )
++    expect(agentManagerView).not.toContain('class="cli-path"')
++    expect(agentManagerView).not.toContain('class="source-panel"')
++  })
++
++  it('makes current theme surfaces translucent over custom backgrounds', () => {
++    const variables = readClientFile('styles/variables.scss')
++    const app = readClientFile('App.vue')
++    const globalStyles = readClientFile('styles/global.scss')
++    const useTheme = readClientFile('composables/useTheme.ts')
++    const messageItem = readClientFile('components/hermes/chat/MessageItem.vue')
++    const customBackgroundStyles = app
++      .split('.app-shell--custom-background {')[1]
++      ?.split('.app-shell.desktop-platform-darwin')[0]
++
++    expect(variables).toContain('--bg-main-surface-rgb: var(--bg-card-rgb);')
++    expect(variables).toContain('--bg-main-surface-rgb: var(--bg-primary-rgb);')
++    expect(customBackgroundStyles).toContain('rgba(var(--bg-main-surface-rgb), 0.72)')
++    expect(customBackgroundStyles).toContain('background-color: var(--glass-sidebar-bg)')
++    expect(customBackgroundStyles).toContain('background-color: var(--glass-content-bg)')
++    expect(customBackgroundStyles).toContain('backdrop-filter: blur(8px) saturate(110%)')
++    expect(customBackgroundStyles).toContain(':deep(.chat-panel > .chat-main)')
++    expect(customBackgroundStyles).toContain(':deep(.virtual-message-list)')
++    expect(customBackgroundStyles).toContain(':deep(.agent-manager-panel)')
++    expect(customBackgroundStyles).toMatch(
 +      /:deep\(\.chat-panel\),[\s\S]*:deep\(\.history-panel\),[\s\S]*:deep\(\.petdex-view\)\s*\{\s*background-color: transparent;/,
-     )
-     expect(customBackgroundStyles).toMatch(
-       /:deep\(\.chat-main-content\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);[\s\S]*backdrop-filter: none;/,
++    )
++    expect(customBackgroundStyles).toMatch(
++      /:deep\(\.chat-main-content\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);[\s\S]*backdrop-filter: none;/,
++    )
++    expect(customBackgroundStyles).toMatch(
++      /:deep\(\.virtual-message-list\)\s*\{[\s\S]*background-color: transparent;[\s\S]*backdrop-filter: none;/,
++    )
++    expect(customBackgroundStyles).toMatch(
++      /:deep\(\.chat-panel > \.chat-main\)\s*\{[\s\S]*background-color: transparent;[\s\S]*backdrop-filter: none;/,
++    )
++    expect(customBackgroundStyles).toMatch(
++      /:deep\(\.chat-panel > \.chat-main > \.chat-header\),?[\s\S]*background-color: var\(--glass-chrome-bg\);[\s\S]*backdrop-filter: blur\(16px\) saturate\(110%\);/,
++    )
++    expect(customBackgroundStyles).toMatch(
++      /:deep\(\.desktop-titlebar:not\(\.desktop-titlebar--flush\)\),[\s\S]*:deep\(\.chat-panel > \.chat-main > \.chat-header\),?[\s\S]*background-color: var\(--glass-chrome-bg\);[\s\S]*backdrop-filter: blur\(16px\) saturate\(110%\);/,
++    )
++    expect(customBackgroundStyles).toMatch(
++      /:deep\(\.chat-input-area \.input-wrapper\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.72\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
++    )
++    expect(customBackgroundStyles).toMatch(
++      /:deep\(\.browser-settings-page > \.settings-card\)\s*\{\s*background-color: transparent;/,
++    )
++    expect(messageItem).toMatch(
++      /:global\(html\.theme-has-custom-background \.message\.user \.message-bubble:not\(\.system\):not\(\.command\):not\(\.agent-error\)\),[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.78\);[\s\S]*border: 1px solid rgba\(var\(--text-primary-rgb\), 0\.18\);[\s\S]*backdrop-filter: blur\(8px\) saturate\(110%\);/,
++    )
++    expect(customBackgroundStyles).toMatch(
++      /:deep\(\.chat-main-content\)\s*\{[\s\S]*background-color: rgba\(var\(--bg-main-surface-rgb\), 0\.42\);/,
++    )
++    expect(useTheme).toContain(
++      "document.documentElement.classList.toggle('theme-has-custom-background', active)",
++    )
++    // Popup behavior is covered by theme-overlays.spec.ts; global styles must
++    // load the shared regional mapping for teleported surfaces.
++    expect(globalStyles).toContain("@use 'theme-surfaces'")
++  })
++
++})
 diff --git a/tests/client/workflow-approval-key.test.ts b/tests/client/workflow-approval-key.test.ts
 deleted file mode 100644
 index a2396ddd9..000000000
@@ -1606,72 +1812,6 @@ index 73b2fdd50..000000000
 -  })
 -})
 \ No newline at end of file
-diff --git a/tests/client/workflow-reasoning-effort.test.ts b/tests/client/workflow-reasoning-effort.test.ts
-deleted file mode 100644
-index c5fac6157..000000000
---- a/tests/client/workflow-reasoning-effort.test.ts
-+++ /dev/null
-@@ -1,60 +0,0 @@
--import { readFileSync } from 'node:fs'
--import { describe, expect, it } from 'vitest'
--import { DEFAULT_REASONING_EFFORTS, modelReasoningEfforts } from '@/utils/model-reasoning-effort'
--
--const read = (path: string) => readFileSync(path, 'utf8')
--const locales = ['de.ts', 'en.ts', 'es.ts', 'fr.ts', 'ja.ts', 'ko.ts', 'pt.ts', 'ru.ts', 'zh-TW.ts', 'zh.ts']
--
--describe('workflow reasoning effort authoring contract', () => {
--  it('preserves reasoning effort through node editing, loading, and serialization', () => {
--    const types = read('packages/client/src/components/hermes/workflow/types.ts')
--    const node = read('packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue')
--    const view = read('packages/client/src/views/hermes/WorkflowView.vue')
--    expect(types).toMatch(/reasoningEffort:\s*string/)
--    expect(types).toMatch(/WorkflowAgentNodeEditableData[^\n]+reasoningEffort/)
--    expect(node).toContain(':value="reasoningEffortValue"')
--    expect(node).toContain("updateField('reasoningEffort'")
--    expect(view).toContain("reasoningEffort: hasLegacyGlobalSelection ? 'default' : data.reasoningEffort || 'default'")
--    expect(view).toContain('reasoningEffort: node.data.reasoningEffort')
--    expect(view).toContain("reasoningEffort: typeof data.reasoningEffort === 'string'")
--  })
--
--  it('offers every canonical reasoning effort in every locale', () => {
--    expect(modelReasoningEfforts([], '', '')).toEqual(DEFAULT_REASONING_EFFORTS)
--    for (const locale of locales) {
--      const text = read(`packages/client/src/i18n/locales/${locale}`)
--      expect(text, locale).toMatch(/reasoningEffort:\s*\{/)
--      expect(text, locale).toMatch(/max:\s*['"]/)
--    }
--  })
--  it('supports global CLI mode for Claude, Codex, Pi, and Grok workflow nodes', () => {
--    const types = read('packages/client/src/components/hermes/workflow/types.ts')
--    const node = read('packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue')
--    const view = read('packages/client/src/views/hermes/WorkflowView.vue')
--    expect(types).toMatch(/agentMode:\s*'scoped' \| 'global'/)
--    expect(node).toContain("['claude-code', 'codex', 'pi', 'grok', 'opencode', 'dsh', 'cursor', 'antigravity', 'qwen', 'kimi', 'codebuddy', 'qoder', 'copilot', 'zcode'].includes(props.data.agent)")
--    expect(node).toContain("updateField('agentMode'")
--    expect(node).toContain('v-if="usesScopedModel"')
--    expect(view).toContain('agentMode: node.data.agentMode')
--    expect(view).toContain('nextCodingAgentMode({')
--    expect(view).toContain('agentMode: switched.agentMode')
--    expect(view).toContain('priorAgentMode: switched.priorAgentMode')
--  })
--  it('keeps Workflow nodes aligned with upstream defaults instead of exposing execution-policy controls', () => {
--    const types = read('packages/client/src/components/hermes/workflow/types.ts')
--    const node = read('packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue')
--    const view = read('packages/client/src/views/hermes/WorkflowView.vue')
--    for (const removed of ['executionPolicy', 'allowedToolsets', 'allowedTools', 'skipMemory', 'skipContextFiles']) {
--      expect(types).not.toContain(removed)
--      expect(node).not.toContain(removed)
--      expect(view).not.toContain(removed)
--    }
--    for (const locale of locales) {
--      const text = read(`packages/client/src/i18n/locales/${locale}`)
--      for (const removed of ['allowedToolsets', 'allowedTools', 'skipMemory', 'skipContextFiles']) {
--        expect(text, locale).not.toContain(removed)
--      }
--    }
--  })
--
--})
 diff --git a/tests/client/workflow-run-budget.test.ts b/tests/client/workflow-run-budget.test.ts
 deleted file mode 100644
 index 430abfe1f..000000000
@@ -1777,133 +1917,6 @@ index 430abfe1f..000000000
 -    expect(view).toContain('aria-describedby="workflow-run-budget-error"')
 -  })
 -})
-diff --git a/tests/client/workflow-run-evidence-layout.test.ts b/tests/client/workflow-run-evidence-layout.test.ts
-deleted file mode 100644
-index e068dca34..000000000
---- a/tests/client/workflow-run-evidence-layout.test.ts
-+++ /dev/null
-@@ -1,121 +0,0 @@
--import { readFileSync } from 'node:fs'
--import { describe, expect, it } from 'vitest'
--
--const read = (path: string) => readFileSync(path, 'utf8')
--const view = () => read('packages/client/src/views/hermes/WorkflowView.vue')
--
--const locales = ['de', 'en', 'es', 'fr', 'ja', 'ko', 'pt', 'ru', 'zh-TW', 'zh']
--
--describe('Workflow run explainer horizontal pages', () => {
--  it('renders history and selected-run details as two discrete full-width pages', () => {
--    const source = view()
--    const history = source.indexOf('data-testid="workflow-runs-history-page"')
--    const details = source.indexOf('data-testid="workflow-run-details-page"')
--
--    expect(history).toBeGreaterThanOrEqual(0)
--    expect(details).toBeGreaterThan(history)
--    expect(source).toContain('data-testid="workflow-runs-pages"')
--    expect(source).toContain("workflowRunPage === 'details'")
--    expect(source).toMatch(/\.workflow-runs-pages\s*\{[^}]*width:\s*200%/s)
--    expect(source).toMatch(/\.workflow-runs-page\s*\{[^}]*width:\s*50%[^}]*flex:\s*0 0 50%/s)
--    expect(source).toMatch(/\.workflow-runs-pages\.show-details\s*\{[^}]*transform:\s*translateX\(-50%\)/s)
--  })
--
--  it('removes the old vertical conclusion resize and keeps one vertical scroller per page', () => {
--    const source = view()
--
--    for (const obsolete of [
--      'workflowEvidenceHeight',
--      'workflowEvidenceResizeStart',
--      'startWorkflowEvidenceResize',
--      'workflow-evidence-resize-handle',
--      'resizeConclusion',
--    ]) expect(source).not.toContain(obsolete)
--    expect(source).toMatch(/\.workflow-runs-page-scroll\s*\{[^}]*overflow-y:\s*auto/s)
--    expect(source).toMatch(/\.workflow-evidence-list\s*\{[^}]*overflow:\s*visible/s)
--  })
--
--  it('provides explicit back navigation, constrained pointer paging, focus, live announcements, and reduced motion', () => {
--    const source = view()
--
--    expect(source).toContain('data-testid="workflow-run-back"')
--    expect(source).toContain('ref="workflowRunsPanelRef"')
--    expect(source).toContain('@click="showWorkflowRunHistory"')
--    expect(source).toContain('@pointerdown="startWorkflowRunPageSwipe"')
--    expect(source).toContain('@pointerup="finishWorkflowRunPageSwipe"')
--    expect(source).toContain('setPointerCapture(event.pointerId)')
--    expect(source).toContain('releasePointerCapture(event.pointerId)')
--    expect(source).toContain('resolveWorkflowRunPageSwipe')
--    expect(source).toContain('workflowRunPagerModalOpen')
--    expect(source).toContain('workflowRunPageScrollTops')
--    expect(source).toContain('aria-live="polite"')
--    expect(source).toContain('tabindex="-1"')
--    expect(source).toMatch(/\.workflow-runs-pages\s*\{[^}]*transition:\s*transform 220ms/s)
--    expect(source).toContain('@media (prefers-reduced-motion: reduce)')
--    expect(source).toMatch(/prefers-reduced-motion:[\s\S]*transition-duration:\s*0\.01ms/s)
--  })
--})
--
--describe('Workflow run explainer information hierarchy', () => {
--  it('keeps result status, duration, and budget above process tabs', () => {
--    const source = view()
--    const overview = source.indexOf('data-testid="workflow-evidence-overview"')
--    const tabs = source.indexOf('data-testid="workflow-evidence-tabs"')
--    const detailsTrigger = source.indexOf('data-testid="workflow-run-evidence-details-trigger"')
--
--    expect(overview).toBeGreaterThanOrEqual(0)
--    expect(tabs).toBeGreaterThan(overview)
--    expect(detailsTrigger).toBeGreaterThan(overview)
--    expect(source.slice(overview, tabs)).toContain('data-testid="workflow-run-result-status"')
--    expect(source.slice(overview, tabs)).toContain('data-testid="workflow-run-result-duration"')
--    expect(source.slice(overview, tabs)).toContain('data-testid="workflow-run-budget-compact"')
--    expect(source).toContain('data-testid="workflow-run-evidence-details-modal"')
--  })
--
--  it('uses accessible tabs for actual execution, other judgments, and loop events with category counts', () => {
--    const source = view()
--
--    expect(source).toContain('role="tablist"')
--    expect(source.match(/id="workflow-evidence-tab-(actual|other|loops)"/g)).toHaveLength(3)
--    expect(source).toContain("workflowEvidenceTab === 'actual'")
--    expect(source).toContain("workflowEvidenceTab === 'other'")
--    expect(source).toContain("workflowEvidenceTab === 'loops'")
--    expect(source).toContain('workflowEvidenceTabCounts.actual')
--    expect(source).toContain('workflowEvidenceTabCounts.other')
--    expect(source).toContain('workflowEvidenceTabCounts.loops')
--    expect(source).toContain('aria-controls="workflow-evidence-tabpanel"')
--    expect(source).toContain('handleWorkflowEvidenceTabKeydown')
--  })
--
--  it('keeps compact cards business-only while existing evidence modal retains technical condition fields', () => {
--    const source = view()
--    const cardsStart = source.indexOf('data-testid="workflow-evidence-tabpanel"')
--    const cardsEnd = source.indexOf('</section>', cardsStart)
--    const modalStart = source.indexOf('data-testid="workflow-evidence-detail-modal"')
--    const modalEnd = source.indexOf('</NModal>', modalStart)
--    const cards = source.slice(cardsStart, cardsEnd)
--    const modal = source.slice(modalStart, modalEnd)
--
--    expect(cards).toContain('workflowEvidenceTitle(row)')
--    expect(cards).toContain('workflowEvidenceStatusLabel(row)')
--    expect(cards).toContain('workflowEvidenceRowDescription(row)')
--    expect(cards).toContain("t('workflow.evidence.judgmentDetails')")
--    for (const technical of ['row.conditionPath', 'workflowEvidenceConditionOperatorLabel(row)', 'row.expectedValue', 'row.conditionActualValue', 'row.technicalId', 'row.sequence', 'row.iterationPath']) {
--      expect(cards).not.toContain(technical)
--    }
--    for (const technical of ['conditionPath', 'workflowEvidenceConditionOperatorLabel', 'expectedValue', 'conditionActualValue', 'iterationPath']) {
--      expect(modal).toContain(technical)
--    }
--    expect(source).toMatch(/\.workflow-evidence-row-title\s*\{[^}]*-webkit-line-clamp:\s*2/s)
--  })
--
--  it('localizes the ten run-explainer controls for every supported locale', () => {
--    for (const locale of locales) {
--      const source = read(`packages/client/src/i18n/locales/${locale}.ts`)
--      for (const key of [
--        'historyPage:', 'detailsPage:', 'backToRuns:', 'resultStatus:', 'duration:',
--        'budgetLabel:', 'actualExecution:', 'otherJudgments:', 'loopEvents:', 'evaluatedNotExecuted:',
--      ]) expect(source, `${locale} missing ${key}`).toContain(key)
--    }
--  })
--})
 diff --git a/tests/client/workflow-run-pager.test.ts b/tests/client/workflow-run-pager.test.ts
 deleted file mode 100644
 index 4fb376cda..000000000
@@ -1929,29 +1942,6 @@ index 4fb376cda..000000000
 -    expect(resolveWorkflowRunPageSwipe({ page: 'history', dx: -80, dy: 0, hasSelectedRun: false, modalOpen: false })).toBeNull()
 -    expect(resolveWorkflowRunPageSwipe({ page: 'history', dx: -80, dy: 0, hasSelectedRun: true, modalOpen: true })).toBeNull()
 -    expect(resolveWorkflowRunPageSwipe({ page: 'details', dx: 80, dy: 0, hasSelectedRun: true, modalOpen: true })).toBeNull()
--  })
--})
-diff --git a/tests/client/workflow-run-snapshot-indicator.test.ts b/tests/client/workflow-run-snapshot-indicator.test.ts
-deleted file mode 100644
-index 716469771..000000000
---- a/tests/client/workflow-run-snapshot-indicator.test.ts
-+++ /dev/null
-@@ -1,17 +0,0 @@
--import { readFileSync } from 'node:fs'
--import { describe, expect, it } from 'vitest'
--
--const read = (path: string) => readFileSync(path, 'utf8')
--
--describe('Workflow run snapshot indicator', () => {
--  it('labels the selected run canvas as an immutable launch-time snapshot', () => {
--    const view = read('packages/client/src/views/hermes/WorkflowView.vue')
--    const zh = read('packages/client/src/i18n/locales/zh.ts')
--    const en = read('packages/client/src/i18n/locales/en.ts')
--
--    expect(view).toContain('v-if="selectedWorkflowRun" class="workflow-run-snapshot-indicator"')
--    expect(view).toContain("t('workflow.runs.snapshotIndicator')")
--    expect(zh).toContain("snapshotIndicator: '本次运行启动时的冻结快照'")
--    expect(en).toContain("snapshotIndicator: 'Immutable snapshot from this run’s launch'")
 -  })
 -})
 diff --git a/tests/client/workflow-run-snapshot.test.ts b/tests/client/workflow-run-snapshot.test.ts
@@ -2174,10 +2164,10 @@ index 71fecce20..000000000
 -
 -})
 diff --git a/tests/e2e/desktop-window-chrome.spec.ts b/tests/e2e/desktop-window-chrome.spec.ts
-index f8aa893b1..10d030705 100644
+index 9d537f4ed..bd9b0c9ee 100644
 --- a/tests/e2e/desktop-window-chrome.spec.ts
 +++ b/tests/e2e/desktop-window-chrome.spec.ts
-@@ -462,16 +462,6 @@ test('routes the desktop session popup action to the native chat window bridge',
+@@ -315,16 +315,6 @@ test('routes the desktop session popup action to the native chat window bridge',
    ])
  })
  
@@ -2195,7 +2185,7 @@ index f8aa893b1..10d030705 100644
    await openDesktopPageSidebar(page, 'win32', '/#/hermes/chat')
  
 diff --git a/tests/e2e/fixtures.ts b/tests/e2e/fixtures.ts
-index 86577170a..809317734 100644
+index dbacf792d..9301e7a5a 100644
 --- a/tests/e2e/fixtures.ts
 +++ b/tests/e2e/fixtures.ts
 @@ -59,15 +59,6 @@ interface MockHermesApiOptions {
@@ -2214,7 +2204,7 @@ index 86577170a..809317734 100644
    channelCredentials?: boolean
    channelConfig?: Record<string, unknown>
    providerEditor?: Record<string, unknown>
-@@ -172,7 +163,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
+@@ -190,7 +181,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
    const tokenValidationStatus = options.tokenValidationStatus ?? 200
    let activeProfileName = options.initialProfileName ?? 'research'
    const sessionCategories = [...(options.sessionCategories ?? [])]
@@ -2222,7 +2212,7 @@ index 86577170a..809317734 100644
    const skillBundles = [...(options.bundles ?? [])]
    let channelCredentialsPresent = options.channelCredentials ?? false
    let delegationModel: Record<string, string> = {}
-@@ -491,113 +481,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
+@@ -509,113 +499,6 @@ export async function mockHermesApi(page: Page, options: MockHermesApiOptions =
        return
      }
  
@@ -2336,7 +2326,7 @@ index 86577170a..809317734 100644
      if (pathname === '/api/studio/sessions') {
        await route.fulfill(jsonResponse({ sessions: options.sessions ?? [] }, tokenValidationStatus))
        return
-@@ -1187,14 +1070,7 @@ function makeSocket(url, options) {
+@@ -1218,14 +1101,7 @@ function makeSocket(url, options) {
      emit(event, payload, ack) {
        state.emitted.push({ event, payload })
        if ((event === 'run' || event === 'resume') && payload?.session_id) this.rooms.add(payload.session_id)
@@ -2352,82 +2342,6 @@ index 86577170a..809317734 100644
          setTimeout(() => ack({
            roomId: payload && payload.roomId,
            messages: [],
-diff --git a/tests/e2e/workflow-cursor-mode.spec.ts b/tests/e2e/workflow-cursor-mode.spec.ts
-deleted file mode 100644
-index 5457b6526..000000000
---- a/tests/e2e/workflow-cursor-mode.spec.ts
-+++ /dev/null
-@@ -1,70 +0,0 @@
--import { expect, test } from '@playwright/test'
--import { authenticate, mockHermesApi, TEST_ACCESS_KEY } from './fixtures'
--
--for (const target of [
--  { label: 'Hermes', agent: 'hermes', mode: 'scoped' },
--  { label: 'Ekko', agent: 'ekko-agent', mode: 'scoped' },
--  { label: 'Codex', agent: 'codex', mode: 'global' },
--]) {
--  test(`workflow saves a valid ${target.label} mode after Codex global → Cursor`, async ({ page }) => {
--    await authenticate(page, TEST_ACCESS_KEY, 'research')
--    const api = await mockHermesApi(page, {
--      workflows: [{
--        id: 'wf-cursor-mode', name: 'Cursor mode', profile: 'research', workspace: null,
--        nodes: [{
--          id: 'agent', type: 'agent', position: { x: 80, y: 80 },
--          data: {
--            title: 'Agent', agent: 'codex', agentMode: 'global',
--            provider: 'test-provider', model: 'test-model', apiMode: 'chat_completions',
--            input: 'Run', skills: [], images: [], approvalRequired: false,
--          },
--        }],
--        edges: [], viewport: { x: 80, y: 80, zoom: .75 }, created_at: 1, updated_at: 1,
--      }],
--      workflowRuns: [],
--    })
--    await page.route('**/api/agents/status', route => route.fulfill({ json: {
--      revision: 1, updatedAt: new Date().toISOString(),
--      agents: ['hermes', 'ekko-agent', 'codex', 'cursor'].map(id => ({
--        id, installed: true, source: 'user-cli', path: `/test/${id}`, version: '1.0.0',
--      })),
--    } }))
--
--    await page.goto('/#/hermes/workflow')
--    const node = page.locator('.vue-flow__node[data-id="agent"]')
--    await node.locator('.n-select').first().click()
--    await expect.poll(async () => (await page.locator('.n-base-select-option__content:visible').allTextContents())
--      .map(label => label.split(' · ')[0])).toEqual(['Ekko', 'Hermes', 'Codex', 'Cursor'])
--    await page.getByText('Cursor', { exact: true }).last().click()
--    await expect(node.locator('.n-select').first()).toContainText('Cursor')
--    await expect.poll(() => api.requests.some(request => (
--      request.pathname === '/api/hermes/skills' && new URLSearchParams(request.search).get('target') === 'cursor'
--    ))).toBe(true)
--    await node.locator('.n-select').first().click()
--    // NSelect restores scroll around Cursor; the first Hermes option is outside
--    // the virtual list until the dropdown is scrolled back to the top.
--    await page.locator('.n-base-select-menu:visible .n-virtual-list').evaluate(element => { element.scrollTop = 0 })
--    await page.locator('.n-base-select-option:visible').filter({ has: page.locator('.n-base-select-option__content', { hasText: new RegExp(`^${target.label}(?: ·|$)`) }) }).click()
--    await expect(node.locator('.n-select').first()).toContainText(target.label)
--    if (target.mode === 'scoped') {
--      await expect(node.locator('.model-trigger')).toContainText('test-model')
--    } else {
--      // The legacy Global node's Studio provider/model was never a native choice.
--      await expect(node.locator('.native-model-trigger')).toHaveText('Agent default model')
--    }
--
--    await page.locator('.header-actions').getByRole('button', { name: 'Save', exact: true }).click()
--    const saves = () => api.requests.filter(request => (
--      request.method === 'PATCH' && request.pathname === '/api/studio/workflows/wf-cursor-mode'
--    ))
--    await expect.poll(() => saves().length).toBe(1)
--    const data = JSON.parse(saves()[0].postData || '{}').nodes[0].data
--    expect(data).toMatchObject({
--      agent: target.agent, agentMode: target.mode,
--      provider: target.mode === 'global' ? '' : 'test-provider',
--      model: target.mode === 'global' ? '' : 'test-model',
--    })
--    expect(data.priorAgentMode).toBeUndefined()
--    expect(api.unexpectedRequests).toEqual([])
--  })
--}
 diff --git a/tests/e2e/workflow-ui.spec.ts b/tests/e2e/workflow-ui.spec.ts
 deleted file mode 100644
 index bf0a84bfa..000000000
@@ -4009,3 +3923,6 @@ index bf0a84bfa..000000000
 -  await expect(api.requests.filter(request => request.method === 'PATCH' && request.pathname.endsWith('/schedules/schedule-a'))).toHaveLength(1)
 -  await expect(scheduleA.getByText('Disabled', { exact: true })).toBeVisible()
 -})
+-- 
+2.53.0
+

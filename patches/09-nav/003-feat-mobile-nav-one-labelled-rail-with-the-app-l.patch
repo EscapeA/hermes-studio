@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 0e3a1cc8a2530245bdde239d796dc0d46cbe358b Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 1 Oct 2026 12:39:49 +0800
 Subject: [PATCH] feat(mobile-nav): one labelled rail with the app-level
@@ -18,11 +18,11 @@ Desktop is untouched: App.vue renders the rail without either prop, so it stays 
 64px icon column with the Settings link at the bottom.
 ---
  .../layout/MobileNavigationDrawer.vue         |  37 +++-
- .../layout/StudioNavigationRail.vue           | 161 +++++++++++++++++-
- 2 files changed, 186 insertions(+), 12 deletions(-)
+ .../layout/StudioNavigationRail.vue           | 183 ++++++++++++++++--
+ 2 files changed, 206 insertions(+), 14 deletions(-)
 
 diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
-index f8354d2fa..bf39dceb2 100644
+index fb54bb762..023bc3a83 100644
 --- a/packages/client/src/components/layout/MobileNavigationDrawer.vue
 +++ b/packages/client/src/components/layout/MobileNavigationDrawer.vue
 @@ -1,25 +1,56 @@
@@ -86,10 +86,16 @@ index f8354d2fa..bf39dceb2 100644
          <div :ref="element => emit('target', element as HTMLElement | null)" class="studio-mobile-navigation__content" />
        </section>
 diff --git a/packages/client/src/components/layout/StudioNavigationRail.vue b/packages/client/src/components/layout/StudioNavigationRail.vue
-index 2db79af32..1c6602607 100644
+index 294d1e840..f2515bee5 100644
 --- a/packages/client/src/components/layout/StudioNavigationRail.vue
 +++ b/packages/client/src/components/layout/StudioNavigationRail.vue
-@@ -8,16 +8,87 @@ import RouteLinkItem from '@/components/common/RouteLinkItem.vue'
+@@ -1,4 +1,5 @@
+ <script setup lang="ts">
++import { deploymentUrl } from '@/utils/deployment-url'
+ import { computed } from 'vue'
+ import { useRoute } from 'vue-router'
+ import { useI18n } from 'vue-i18n'
+@@ -8,17 +9,97 @@ import RouteLinkItem from '@/components/common/RouteLinkItem.vue'
  import PageSidebarFooter from './PageSidebarFooter.vue'
  import { useMobileNavigation } from '@/composables/usePageSidebar'
  
@@ -107,7 +113,9 @@ index 2db79af32..1c6602607 100644
 +  route: string
 +  label: string
 +  admin?: boolean
-+  icon: RailIconPart[]
++  icon?: RailIconPart[]
++  /** Person BOTs render their idle animation instead of an icon. */
++  avatar?: string
 +}
 +
 +const props = withDefaults(
@@ -125,6 +133,12 @@ index 2db79af32..1c6602607 100644
  const { t } = useI18n()
  const canManageAgents = computed(() => isStoredSuperAdmin())
 +
++const personEntry: RailEntry = {
++  key: 'person',
++  route: 'hermes.person',
++  label: 'person.subtitle',
++  avatar: deploymentUrl('/person/idle.gif'),
++}
 +const chatEntry: RailEntry = {
 +  key: 'chat',
 +  route: 'hermes.chat',
@@ -167,22 +181,25 @@ index 2db79af32..1c6602607 100644
 +]
 +
  const entries = computed(() => [
--  { key: 'chat', route: 'hermes.chat', label: 'sidebar.chat', path: 'M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
+-  { key: 'person', route: 'hermes.person', label: 'person.subtitle', avatar: deploymentUrl('/person/idle.gif') },
+-  { key: 'chat', route: 'hermes.chat', label: 'sidebar.singleChat', path: 'M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
 -  { key: 'history', route: 'hermes.history', label: 'sidebar.history', path: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 7v5l3 2' },
 -  ...(canManageAgents.value ? [{ key: 'agents', route: 'hermes.agentManager', label: 'sidebar.agentManager', path: 'M12 8V4H8M7 8h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3M2 14h2M20 14h2M9 13v2M15 13v2' }] : []),
 -  { key: 'models', route: 'hermes.models', label: 'sidebar.models', path: 'M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1' },
 -  { key: 'usage', route: 'hermes.usage', label: 'sidebar.usage', path: 'M3 12h4v9H3zM10 7h4v14h-4zM17 3h4v18h-4z' },
++  personEntry,
 +  chatEntry,
 +  historyEntry,
 +  ...(canManageAgents.value ? [agentsEntry] : []),
 +  modelsEntry,
 +  ...(props.withAppEntries ? appEntries.filter(entry => !entry.admin || canManageAgents.value) : []),
  ])
++])
 +
  const activeKey = computed(() => {
    const name = String(route.name || '')
    if (route.meta.hermesConfig || route.meta.ekkoConfig || route.meta.codingAgentConfig) return 'agents'
-@@ -34,20 +105,48 @@ function handleNavigate(key: string) {
+@@ -35,21 +116,57 @@ function handleNavigate(key: string) {
  </script>
  
  <template>
@@ -193,7 +210,8 @@ index 2db79af32..1c6602607 100644
        <NTooltip v-for="entry in entries" :key="entry.key" placement="right" trigger="hover">
          <template #trigger>
 -          <RouteLinkItem class="studio-navigation-rail__item" :to="{ name: entry.route }" :active="activeKey === entry.key" :aria-label="t(entry.label)" @click="handleNavigate(entry.key)">
--            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="entry.path" /></svg>
+-            <img v-if="entry.avatar" class="studio-navigation-rail__avatar" :src="entry.avatar" width="32" height="32" alt="" aria-hidden="true" />
+-            <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="entry.path" /></svg>
 +          <RouteLinkItem
 +            class="studio-navigation-rail__item"
 +            :to="{ name: entry.route }"
@@ -201,7 +219,16 @@ index 2db79af32..1c6602607 100644
 +            :aria-label="t(entry.label)"
 +            @click="handleNavigate(entry.key)"
 +          >
-+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
++            <img
++              v-if="entry.avatar"
++              class="studio-navigation-rail__avatar"
++              :src="entry.avatar"
++              width="32"
++              height="32"
++              alt=""
++              aria-hidden="true"
++            />
++            <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 +              <template v-for="(part, index) in entry.icon" :key="index">
 +                <path v-if="part.d" :d="part.d" />
 +                <polyline v-else-if="part.pts" :points="part.pts" />
@@ -235,7 +262,7 @@ index 2db79af32..1c6602607 100644
          <template #trigger>
            <RouteLinkItem class="studio-navigation-rail__item" :to="{ name: 'hermes.settings' }" :active="activeKey === 'settings'" :aria-label="t('sidebar.settings')">
              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
-@@ -62,6 +161,10 @@ function handleNavigate(key: string) {
+@@ -64,6 +181,10 @@ function handleNavigate(key: string) {
  <style scoped lang="scss">
  @use '@/styles/variables' as *;
  
@@ -246,7 +273,7 @@ index 2db79af32..1c6602607 100644
  .studio-navigation-rail {
    position: relative;
    z-index: 2;
-@@ -104,4 +207,44 @@ function handleNavigate(key: string) {
+@@ -108,4 +229,44 @@ function handleNavigate(key: string) {
    &.active { color: $accent-primary; background: rgba(var(--accent-primary-rgb), 0.12); }
    &:focus-visible { outline: 2px solid $accent-primary; outline-offset: -2px; }
  }
@@ -291,3 +318,6 @@ index 2db79af32..1c6602607 100644
 +  :deep(.page-sidebar-account-btn) { height: 38px; }
 +}
  </style>
+-- 
+2.53.0
+

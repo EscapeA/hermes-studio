@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 3e7ae51d0a0416d3476d30cfb9a7f71333ab93ca Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:24:13 +0800
 Subject: [PATCH] perf(chat): memoize per-message thinking parse in MessageList
@@ -9,11 +9,11 @@ Subject: [PATCH] perf(chat): memoize per-message thinking parse in MessageList
  1 file changed, 20 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 4717745c5..94daeb725 100644
+index d67bc74af..b8217a080 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -325,8 +325,27 @@ const emptyState = computed(() => {
-   };
+@@ -347,8 +347,27 @@ const showEmptyConversation = computed(() => {
+     && chatStore.messages.length === 0 && (session.messageTotal ?? session.messageCount ?? 0) === 0;
  });
  
 +// Perf: `hasRenderableAssistantContent` runs `parseThinking` (regex-heavy) over
@@ -41,3 +41,6 @@ index 4717745c5..94daeb725 100644
  }
  
  function hasRenderableAssistantContent(message: Message): boolean {
+-- 
+2.53.0
+

@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 4d5cac15ccefc8671a988112708a4320b0982ebc Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 12:02:00 +0800
 Subject: [PATCH] fix(ci): verify-patch-stack materialises patches as untracked
@@ -59,3 +59,6 @@ index bd0ee0143..c8f827924 100755
    CONFLICTED="$(git am --show-current-patch 2>/dev/null || echo '?')"
    tail -15 "$AM_LOG" >&2 || true
    git am --abort >/dev/null 2>&1 || true
+-- 
+2.53.0
+

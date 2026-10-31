@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 5ca163b7f3c6c9d5ad7165dc1c1764649430dd47 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
 Subject: [PATCH] perf(web): drop logo.png CSS-mask request from boot shimmer
@@ -12,7 +12,7 @@ one logo.png request on first paint.
  1 file changed, 7 insertions(+)
 
 diff --git a/packages/client/index.html b/packages/client/index.html
-index e93d1d33a..c3e9a8422 100644
+index 6c9ea8f0d..ad8a7d627 100644
 --- a/packages/client/index.html
 +++ b/packages/client/index.html
 @@ -59,6 +59,13 @@
@@ -29,3 +29,6 @@ index e93d1d33a..c3e9a8422 100644
    </style>
  
    <!-- Prevent FOUC by applying theme classes immediately -->
+-- 
+2.53.0
+

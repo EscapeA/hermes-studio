@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 8ee107241a2dd132d7bd0e309119f8b0175a9c82 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 07:49:19 +0800
 Subject: [PATCH] fix(theme): keep the run indicators on palette tokens and
@@ -18,16 +18,15 @@ as a black border.
   drop the literal #fff plate in favour of the registered card preset.
 - Baseline inventory shrinks by the eleven literals those rules occupied.
 ---
- .../hermes/chat/LiveReasoningStatus.vue       | 43 +++++++++++++------
- .../hermes/chat/SessionListItem.vue           | 22 +++++-----
- scripts/ui-theme-baseline.json                | 41 +-----------------
- 3 files changed, 44 insertions(+), 62 deletions(-)
+ .../hermes/chat/LiveReasoningStatus.vue       | 47 +++++++++++++------
+ scripts/ui-theme-baseline.json                | 38 ++++-----------
+ 2 files changed, 41 insertions(+), 44 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
-index d38dc3e93..fdf343cd6 100644
+index 0fc2abd31..7c57b6ad2 100644
 --- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
 +++ b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
-@@ -61,9 +61,10 @@ watch(
+@@ -57,9 +57,10 @@ watch(
          @error="($event.target as HTMLImageElement).dataset.agentDeploymentImage = 'error'"
          alt=""
          aria-hidden="true"
@@ -35,12 +34,30 @@ index d38dc3e93..fdf343cd6 100644
 +        class="thinking-avatar thinking-avatar--logo"
 +        data-theme-surface="card"
          :data-agent-deployment-target="deploymentSessionId || ''"
--        :class="isEkko ? 'thinking-avatar--animated' : 'thinking-avatar--logo'"
-+        :class="isEkko ? 'thinking-avatar--animated' : ''"
+-        :class="isPerson ? 'thinking-avatar--person' : isEkko ? 'thinking-avatar--animated' : 'thinking-avatar--logo'"
++        :class="isPerson ? 'thinking-avatar--person' : isEkko ? 'thinking-avatar--animated' : ''"
+         :style="personAvatarStyle(agent, 'thinking')"
        >
        <div class="thinking-status-copy">
-         <span class="thinking-status-label">{{ t('chat.thinkingInProgress') }}</span>
-@@ -126,10 +127,25 @@ watch(
+@@ -70,7 +71,7 @@ watch(
+       </div>
+     </div>
+     <div
+-      v-if="!hideReasoning"
++      v-if="reasoning && !hideReasoning"
+       :key="reasoningId ?? 'live-reasoning'"
+       class="live-reasoning-detail"
+       :data-reasoning-id="reasoningId"
+@@ -80,7 +81,7 @@ watch(
+         <span>{{ t('chat.thinkingLabel') }}</span>
+       </div>
+       <div ref="reasoningBodyRef" class="live-reasoning-body">
+-        <MarkdownRenderer :content="reasoning" />
++        <MarkdownRenderer :content="reasoning ?? ''" />
+       </div>
+     </div>
+   </div>
+@@ -124,10 +125,25 @@ watch(
  }
  
  .thinking-avatar--logo {
@@ -69,7 +86,7 @@ index d38dc3e93..fdf343cd6 100644
 +  }
  }
  
- .thinking-status-copy {
+ .thinking-avatar--person { @include person-avatar(40px); }
 @@ -151,7 +167,12 @@ watch(
    display: inline-flex;
    align-items: center;
@@ -99,51 +116,8 @@ index d38dc3e93..fdf343cd6 100644
    }
  }
  
-diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
-index d7c8ddea0..7afd0a551 100644
---- a/packages/client/src/components/hermes/chat/SessionListItem.vue
-+++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
-@@ -298,26 +298,28 @@ onUnmounted(() => {
- 
- /* Live/working indicator lives in the title row so it stays visible no matter
-    which optional rows (identity, category) the session renders. */
-+/* Fill is --text-primary, not a literal near-black/near-white: #171717 and
-+   #f5f5f5 only track the ink palette, so on the blueprint dark card (#122436)
-+   and its accent-tinted active row the dot measured 1.1-1.3:1 and read as
-+   gone. --text-primary is near-black on every light palette and near-white on
-+   every dark one, which is the same intent the literals encoded, and keeps the
-+   dot at 17.4:1 / 15.5:1 (light) and 10.9:1 / 12.4:1 (dark) — strictly higher
-+   than --accent-primary would give on the light palettes. The ring follows the
-+   fill; the soft halo is the theme accent so it still reads on the blueprint
-+   surface where the old fixed red glow vanished. */
- .session-item-live-dot {
-   flex: 0 0 auto;
-   width: 7px;
-   height: 7px;
-   margin-top: 5px;
-   border-radius: 50%;
--  background: #171717;
-+  background: var(--text-primary);
-   box-shadow:
--    0 0 0 2px rgba(23, 23, 23, 0.12),
--    0 0 8px rgba(255, 107, 107, 0.35);
-+    0 0 0 2px rgba(var(--text-primary-rgb), 0.16),
-+    0 0 8px rgba(var(--accent-primary-rgb), 0.45);
-   animation: session-live-pulse 1.5s ease-in-out infinite;
- }
- 
--.dark .session-item-live-dot {
--  background: #f5f5f5;
--  box-shadow:
--    0 0 0 2px rgba(245, 245, 245, 0.16),
--    0 0 10px rgba(255, 107, 107, 0.4);
--}
--
- @keyframes session-live-pulse {
-   0%,
-   100% {
 diff --git a/scripts/ui-theme-baseline.json b/scripts/ui-theme-baseline.json
-index b6fb77f8c..f46218039 100644
+index a1232554d..b7ef62bc7 100644
 --- a/scripts/ui-theme-baseline.json
 +++ b/scripts/ui-theme-baseline.json
 @@ -42,14 +42,6 @@
@@ -161,7 +135,7 @@ index b6fb77f8c..f46218039 100644
        "unowned-background | .attachment-preview | background-color: $bg-secondary": 1,
        "literal-color | .attachment-thumb-button | background: linear-gradient(45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%)": 1,
        "unowned-background | .attachment-thumb-button | background: linear-gradient(45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%)": 1,
-@@ -137,11 +129,6 @@
+@@ -133,11 +125,6 @@
        "literal-color | .image-preview-img | box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35)": 1
      },
      "packages/client/src/components/hermes/chat/LiveReasoningStatus.vue": {
@@ -173,7 +147,7 @@ index b6fb77f8c..f46218039 100644
        "literal-color | .live-reasoning-detail | background: rgba(0, 0, 0, 0.025)": 1,
        "unowned-background | .live-reasoning-detail | background: rgba(0, 0, 0, 0.025)": 1,
        "literal-color | .dark .live-reasoning-detail | background: rgba(255, 255, 255, 0.045)": 1,
-@@ -161,8 +148,6 @@
+@@ -157,8 +144,6 @@
        "unowned-background | .markdown-body code:not(.hljs) | background: $code-bg": 1
      },
      "packages/client/src/components/hermes/chat/MessageItem.vue": {
@@ -182,7 +156,18 @@ index b6fb77f8c..f46218039 100644
        "literal-color | .message-bubble.speech-playing | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
        "literal-color | 0% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
        "literal-color | 16.66% | box-shadow: 0 0 0 2px #feca57, 0 0 10px rgba(254, 202, 87, 0.4), 0 0 20px rgba(254, 202, 87, 0.2)": 1,
-@@ -428,28 +413,12 @@
+@@ -179,7 +164,9 @@
+       "literal-color | .copy-bubble-btn:hover, .reference-bubble-btn:hover, .speech-bubble-btn:hover, .fork-bubble-btn:hover | background: rgba(0, 0, 0, 0.06)": 1,
+       "literal-color | .tool-line.expandable:hover, .tool-line.expandable:focus-visible | background: rgba(0, 0, 0, 0.03)": 1,
+       "literal-color | .tool-detail-code-block :deep(.code-header) | background: rgba(0, 0, 0, 0.02)": 1,
+-      "unowned-background | .tool-detail-code-block :deep(.code-header) | background: rgba(0, 0, 0, 0.02)": 1
++      "unowned-background | .tool-detail-code-block :deep(.code-header) | background: rgba(0, 0, 0, 0.02)": 1,
++      "literal-color | .message.assistant .msg-avatar | border: var(--border-width, 1px) solid #fff": 1,
++      "literal-color | .user-profile-avatar | border: var(--border-width, 1px) solid #fff": 1
+     },
+     "packages/client/src/components/hermes/chat/MessageList.vue": {
+       "literal-color | .scroll-bottom-button | background: rgba(255, 255, 255, 0.94)": 1,
+@@ -424,13 +411,13 @@
        "literal-color | .session-item.missing-models .session-item-title, .session-item.missing-models .session-item-profile-name, .session-item.missing-models .session-item-time | color: #b42318": 1,
        "literal-color | .session-item.missing-models:hover | background: rgba(220, 38, 38, 0.12)": 1,
        "literal-color | .session-item-global-icon | color: #d6a019": 1,
@@ -192,15 +177,15 @@ index b6fb77f8c..f46218039 100644
        "literal-color | .session-item-warning | border: var(--border-width, 1px) solid rgba(180, 35, 24, 0.35)": 1,
        "literal-color | .session-item-warning | background: rgba(220, 38, 38, 0.1)": 1,
        "unowned-background | .session-item-warning | background: rgba(220, 38, 38, 0.1)": 1,
--      "literal-color | .session-item-warning | color: #b42318": 1,
--      "literal-color | .session-item-agent-logo-wrap.streaming::before | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
--      "literal-color | .session-item-agent-logo | border: var(--border-width, 1px) solid #fff": 1,
--      "literal-color | 0% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
--      "literal-color | 16.66% | box-shadow: 0 0 0 2px #feca57, 0 0 10px rgba(254, 202, 87, 0.4), 0 0 20px rgba(254, 202, 87, 0.2)": 1,
--      "literal-color | 33.33% | box-shadow: 0 0 0 2px #48dbfb, 0 0 10px rgba(72, 219, 251, 0.4), 0 0 20px rgba(72, 219, 251, 0.2)": 1,
--      "literal-color | 50% | box-shadow: 0 0 0 2px #ff9ff3, 0 0 10px rgba(255, 159, 243, 0.4), 0 0 20px rgba(255, 159, 243, 0.2)": 1,
--      "literal-color | 66.66% | box-shadow: 0 0 0 2px #54a0ff, 0 0 10px rgba(84, 160, 255, 0.4), 0 0 20px rgba(84, 160, 255, 0.2)": 1,
--      "literal-color | 83.33% | box-shadow: 0 0 0 2px #5f27cd, 0 0 10px rgba(95, 39, 205, 0.4), 0 0 20px rgba(95, 39, 205, 0.2)": 1,
+       "literal-color | .session-item-warning | color: #b42318": 1,
++      "unowned-background | .session-item-profile-avatar | background: var(--bg-secondary)": 1,
+       "literal-color | .session-item-agent-logo-wrap.streaming::before | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
+       "literal-color | .session-item-agent-logo | border: var(--border-width, 1px) solid #fff": 1,
+       "literal-color | 0% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
+@@ -439,13 +426,7 @@
+       "literal-color | 50% | box-shadow: 0 0 0 2px #ff9ff3, 0 0 10px rgba(255, 159, 243, 0.4), 0 0 20px rgba(255, 159, 243, 0.2)": 1,
+       "literal-color | 66.66% | box-shadow: 0 0 0 2px #54a0ff, 0 0 10px rgba(84, 160, 255, 0.4), 0 0 20px rgba(84, 160, 255, 0.2)": 1,
+       "literal-color | 83.33% | box-shadow: 0 0 0 2px #5f27cd, 0 0 10px rgba(95, 39, 205, 0.4), 0 0 20px rgba(95, 39, 205, 0.2)": 1,
 -      "literal-color | 100% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1,
 -      "literal-color | .dark .session-item-live-dot | background: #f5f5f5": 1,
 -      "literal-color | .dark .session-item-live-dot | box-shadow: 0 0 0 2px rgba(245, 245, 245, 0.16), 0 0 10px rgba(255, 107, 107, 0.4)": 1,
@@ -208,11 +193,11 @@ index b6fb77f8c..f46218039 100644
 -      "literal-color | .session-item-live-dot | box-shadow: 0 0 0 2px rgba(23, 23, 23, 0.12), 0 0 8px rgba(255, 107, 107, 0.35)": 1,
 -      "unowned-background | .dark .session-item-live-dot | background: #f5f5f5": 1,
 -      "unowned-background | .session-item-live-dot | background: #171717": 1
-+      "literal-color | .session-item-warning | color: #b42318": 1
++      "literal-color | 100% | box-shadow: 0 0 0 2px #ff6b6b, 0 0 10px rgba(255, 107, 107, 0.4), 0 0 20px rgba(255, 107, 107, 0.2)": 1
      },
      "packages/client/src/components/hermes/chat/SubagentStreamPanel.vue": {
        "literal-color | .subagent-live-tool | background: rgba(0, 0, 0, 0.03)": 1,
-@@ -766,14 +735,8 @@
+@@ -762,10 +743,6 @@
        "literal-color | .n-notification:has(.global-approval-content, .global-clarify-content) | box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14)": 1,
        "literal-color | .global-approval-command | box-shadow: 0 4px 14px rgba(0, 0, 0, 0.035)": 1
      },
@@ -221,10 +206,20 @@ index b6fb77f8c..f46218039 100644
 -      "literal-color | :global(.dark .conversation-switch--four .conversation-switch-tab.active) | box-shadow: inset 0 0 0 1px $border-color, 0 2px 5px rgba(0, 0, 0, 0.22)": 1
 -    },
      "packages/client/src/components/layout/ProfileSelector.vue": {
--      "unowned-background | .profile-display | background: $bg-secondary": 1,
--      "unowned-background | .profile-popover-avatar | background: $bg-secondary": 1,
--      "unowned-background | .profile-runtime-avatar | background: $bg-secondary": 1
-+      "unowned-background | .profile-display | background: $bg-secondary": 1
-     },
-     "packages/client/src/components/layout/SidebarAccountControls.vue": {
-       "unowned-background | .docker-update-modal .docker-command | background: $code-bg": 1
+       "unowned-background | .profile-display | background: $bg-secondary": 1,
+       "unowned-background | .profile-popover-avatar | background: $bg-secondary": 1,
+@@ -1101,6 +1078,9 @@
+       "unowned-background | html.tech body::after | background-image: radial-gradient(130% 60% at 50% -10%, rgba(34, 211, 238, 0.16), transparent 58%), linear-gradient(rgba(148, 190, 255, 0.13) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 190, 255, 0.13) 1px, transparent 1px), linear-gradient(rgba(148, 190, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 190, 255, 0.07) 1px, transparent 1px)": 1,
+       "unowned-background | html.warm .app-layout | background-image: radial-gradient(130% 75% at 50% -12%, rgba(244, 222, 190, 0.17), transparent 66%)": 1,
+       "unowned-background | html.warm body::after | background-image: radial-gradient(130% 75% at 50% -12%, rgba(244, 222, 190, 0.16), transparent 64%)": 1
++    },
++    "packages/client/src/components/hermes/profiles/ProfileAvatar.vue": {
++      "unowned-background | .profile-avatar-view | background: var(--bg-secondary)": 1
+     }
+   }
+-}
++}
+\ No newline at end of file
+-- 
+2.53.0
+

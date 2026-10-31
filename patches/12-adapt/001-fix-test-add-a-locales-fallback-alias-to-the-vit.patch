@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 2c3ccbae50a515a48136b73b42aa1c09992c4a57 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Mon, 28 Sep 2026 23:05:58 +0800
 Subject: [PATCH] fix(test): add a @locales fallback alias to the vitest config
@@ -27,3 +27,6 @@ index 16c1a1d89..8f0dba54f 100644
        electron: resolve(__dirname, 'tests/mocks/electron.ts'),
        'dbus-next': resolve(__dirname, 'tests/mocks/dbus-next.ts'),
        'electron-updater': resolve(__dirname, 'tests/mocks/electron-updater.ts'),
+-- 
+2.53.0
+

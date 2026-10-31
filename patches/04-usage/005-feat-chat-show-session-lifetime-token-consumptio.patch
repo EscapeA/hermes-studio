@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 19c793a144a42bb5b0d8e3e610820ca3cdef7fe6 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Fri, 14 Aug 2026 18:54:27 +0800
 Subject: [PATCH] feat(chat): show session-lifetime token consumption in input
@@ -36,10 +36,10 @@ cache read/cache write/reasoning).
  14 files changed, 194 insertions(+), 2 deletions(-)
 
 diff --git a/packages/client/src/api/studio/sessions.ts b/packages/client/src/api/studio/sessions.ts
-index 983e02020..a48574211 100644
+index d33777179..bb8539c0d 100644
 --- a/packages/client/src/api/studio/sessions.ts
 +++ b/packages/client/src/api/studio/sessions.ts
-@@ -736,6 +736,23 @@ export async function fetchSessionUsage(ids: string[]): Promise<Record<string, {
+@@ -738,6 +738,23 @@ export async function fetchSessionUsage(ids: string[]): Promise<Record<string, {
    return request(`/api/studio/sessions/usage?${params}`)
  }
  
@@ -64,7 +64,7 @@ index 983e02020..a48574211 100644
    try {
      return await request<{ input_tokens: number; output_tokens: number }>(`/api/studio/sessions/${id}/usage`)
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 795e9e3e1..f03cebcd3 100644
+index 3729d8f8a..36374a5c0 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -8,7 +8,7 @@ import { useChatStore } from '@/stores/hermes/chat'
@@ -76,7 +76,7 @@ index 795e9e3e1..f03cebcd3 100644
  import { setModelContext } from '@/api/hermes/model-context'
  import { fetchSkills, type SkillCategory, type SkillInfo } from '@/api/hermes/skills'
  import { deleteSkillBundleApi, fetchSkillBundles, type SkillBundleInfo } from '@/api/hermes/skill-bundles'
-@@ -896,6 +896,76 @@ function formatTokens(n: number | null): string {
+@@ -919,6 +919,76 @@ function formatTokens(n: number | null): string {
    return String(n)
  }
  
@@ -153,7 +153,7 @@ index 795e9e3e1..f03cebcd3 100644
  // --- File attachment helpers ---
  
  function addFile(file: File) {
-@@ -1226,6 +1296,16 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1255,6 +1325,16 @@ function openAttachmentPreview(attachment: Attachment) {
  
      <slot name="before-context-usage" />
      <div v-if="showContextUsage" class="context-usage-row">
@@ -170,7 +170,7 @@ index 795e9e3e1..f03cebcd3 100644
        <span class="context-info" :class="{ 'context-warning': showContextLimit && usagePercent > 80 }">
          <template v-if="showSessionUsage">{{ t('chat.sessionUsage') }} </template>
          {{ formatTokens(totalTokens) }}
-@@ -1990,6 +2070,38 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2021,6 +2101,38 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -210,10 +210,10 @@ index 795e9e3e1..f03cebcd3 100644
    cursor: pointer;
    border-bottom: var(--border-width, 1px) dashed transparent;
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index f26c34b35..dd4f45302 100644
+index 2b5ec386d..486a9da41 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1149,6 +1149,8 @@ export default {
+@@ -1178,6 +1178,8 @@ export default {
      runUsageEstimatedSpeedHint: "Ausgabetokens / (Laufzeit − Werkzeugzeit). Überlappungen zählen einmal. Enthält Start- und Netzwerkaufwand; kein gemessenes Modelltempo.",
  
      contextRemaining: 'übrig',
@@ -223,10 +223,10 @@ index f26c34b35..dd4f45302 100644
      contextEditTitle: 'Kontextlänge bearbeiten',
      contextEditDesc: 'Kontextlängenlimit für aktuelles Modell festlegen (in Tokens)',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 0522b71c2..c9c22533e 100644
+index 030180dc2..9cac729b4 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1170,6 +1170,8 @@ export default {
+@@ -1199,6 +1199,8 @@ export default {
      runUsageEstimatedSpeedHint: "Output tokens / (run time − tool time). Overlapping tools count once. Includes startup and network overhead; not measured model speed.",
  
      contextRemaining: 'remaining',
@@ -236,10 +236,10 @@ index 0522b71c2..c9c22533e 100644
      contextEditTitle: 'Edit Context Length',
      contextEditDesc: 'Set context length limit for current model (in tokens)',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index db8eb238a..92e5d3ac6 100644
+index 70d9a6a7d..f57ccd487 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1149,6 +1149,8 @@ export default {
+@@ -1178,6 +1178,8 @@ export default {
      runUsageEstimatedSpeedHint: "Tokens de salida / (duración total − herramientas). Los solapamientos cuentan una vez. Incluye inicio y red; no es la velocidad medida del modelo.",
  
      contextRemaining: 'restante',
@@ -249,10 +249,10 @@ index db8eb238a..92e5d3ac6 100644
      contextEditTitle: 'Editar longitud del contexto',
      contextEditDesc: 'Establecer el límite de longitud del contexto para el modelo actual (en tokens)',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 7aca7a2c0..fec7ab01b 100644
+index dd0a92443..515308833 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1149,6 +1149,8 @@ export default {
+@@ -1178,6 +1178,8 @@ export default {
      runUsageEstimatedSpeedHint: "Tokens de sortie / (durée totale − outils). Les chevauchements comptent une fois. Inclut démarrage et réseau ; vitesse du modèle non mesurée.",
  
      contextRemaining: 'restant',
@@ -262,10 +262,10 @@ index 7aca7a2c0..fec7ab01b 100644
      contextEditTitle: 'Modifier la longueur du contexte',
      contextEditDesc: 'Définir la limite de longueur du contexte pour le modèle actuel (en tokens)',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 787a60b24..c391b3987 100644
+index fca466852..3e41d38ae 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1149,6 +1149,8 @@ export default {
+@@ -1178,6 +1178,8 @@ export default {
      runUsageEstimatedSpeedHint: "出力トークン /（実行時間 − ツール時間）。並列ツールの重複時間は一度だけ除外。起動や通信の時間を含むため、モデルの実測速度ではありません。",
  
      contextRemaining: '残り',
@@ -275,10 +275,10 @@ index 787a60b24..c391b3987 100644
      contextEditTitle: 'コンテキスト長を編集',
      contextEditDesc: '現在のモデルのコンテキスト長制限を設定（トークン数）',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 7c24bc84d..b563a05f0 100644
+index 484843845..95c6e4089 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1149,6 +1149,8 @@ export default {
+@@ -1178,6 +1178,8 @@ export default {
      runUsageEstimatedSpeedHint: "출력 토큰 / (실행 시간 − 도구 시간). 병렬 도구의 겹치는 시간은 한 번만 제외합니다. 시작 및 네트워크 시간이 포함되어 모델 실측 속도는 아닙니다.",
  
      contextRemaining: '남음',
@@ -288,10 +288,10 @@ index 7c24bc84d..b563a05f0 100644
      contextEditTitle: '컨텍스트 길이 편집',
      contextEditDesc: '현재 모델의 컨텍스트 길이 제한 설정 (토큰 수)',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index a6cdee3d1..cc13862d1 100644
+index d3b4d6ed5..5ef322cd3 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1149,6 +1149,8 @@ export default {
+@@ -1178,6 +1178,8 @@ export default {
      runUsageEstimatedSpeedHint: "Tokens de saída / (duração total − ferramentas). Sobreposições contam uma vez. Inclui inicialização e rede; não é a velocidade medida do modelo.",
  
      contextRemaining: 'restante',
@@ -301,10 +301,10 @@ index a6cdee3d1..cc13862d1 100644
      contextEditTitle: 'Editar tamanho do contexto',
      contextEditDesc: 'Definir o limite de tamanho do contexto para o modelo atual (em tokens)',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 82c53e5b1..d7ab36699 100644
+index 87fcadc0a..7282fb3a9 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1076,6 +1076,8 @@ export default {
+@@ -1105,6 +1105,8 @@ export default {
      runUsageEstimatedSpeedHint: "Выходные токены / (время запуска − время инструментов). Пересечения учитываются один раз. Включает запуск и сеть; это не измеренная скорость модели.",
  
      contextRemaining: 'Осталось',
@@ -314,10 +314,10 @@ index 82c53e5b1..d7ab36699 100644
      contextEditTitle: 'Изменить размер контекста',
      contextEditDesc: 'Установите лимит размера контекста для текущей модели (в токенах)',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index cac71d9e5..a8b96e856 100644
+index e42610d41..e2213f957 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1163,6 +1163,8 @@ export default {
+@@ -1192,6 +1192,8 @@ export default {
      runUsageEstimatedSpeedHint: "輸出 token /（本輪耗時 − 工具占用時間）。並行工具重疊時間只扣一次；仍包含啟動、網路等開銷，非實測模型速度。",
  
      contextRemaining: '剩餘',
@@ -327,10 +327,10 @@ index cac71d9e5..a8b96e856 100644
      contextEditTitle: '編輯上下文長度',
      contextEditDesc: '設定目前模型的上下文長度限制（token 數量）',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 1d5c4fa59..d9f26445f 100644
+index c65e2f637..e69196102 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1170,6 +1170,8 @@ export default {
+@@ -1199,6 +1199,8 @@ export default {
      runUsageEstimatedSpeedHint: "输出 token /（本轮耗时 − 工具占用时间）。并行工具重叠时间只扣一次；仍包含启动、网络等开销，非实测模型速度。",
  
      contextRemaining: '剩余',
@@ -340,10 +340,10 @@ index 1d5c4fa59..d9f26445f 100644
      contextEditTitle: '编辑上下文长度',
      contextEditDesc: '设置当前模型的上下文长度限制（token 数量）',
 diff --git a/packages/server/src/modules/studio/controllers/sessions.ts b/packages/server/src/modules/studio/controllers/sessions.ts
-index 8f32d6752..c0805fdea 100644
+index e8c2a3944..82264a70c 100644
 --- a/packages/server/src/modules/studio/controllers/sessions.ts
 +++ b/packages/server/src/modules/studio/controllers/sessions.ts
-@@ -42,7 +42,7 @@ import {
+@@ -45,7 +45,7 @@ import {
    updateSessionStats as localUpdateSessionStats,
  } from '../public/sessions'
  import { buildDbExportHistory, ExportCompressor } from '../services/context-compressor/export-compressor'
@@ -352,7 +352,7 @@ index 8f32d6752..c0805fdea 100644
  import {
    SESSION_CATEGORY_NAME_MAX_LENGTH,
    createSessionCategory,
-@@ -1507,6 +1507,10 @@ export async function usageBatch(ctx: any) {
+@@ -1593,6 +1593,10 @@ export async function usageBatch(ctx: any) {
  export async function usageSingle(ctx: any) {
    const session = localGetSession(ctx.params.id)
    if (denySessionAccess(ctx, session)) return
@@ -364,10 +364,10 @@ index 8f32d6752..c0805fdea 100644
    if (!result) {
      ctx.body = { input_tokens: 0, output_tokens: 0 }
 diff --git a/packages/server/src/modules/studio/repositories/usage-store.ts b/packages/server/src/modules/studio/repositories/usage-store.ts
-index 810e8e2bf..82491d415 100644
+index 72d046c0a..ce9b30284 100644
 --- a/packages/server/src/modules/studio/repositories/usage-store.ts
 +++ b/packages/server/src/modules/studio/repositories/usage-store.ts
-@@ -276,6 +276,45 @@ export function getRecordedSessionTokensBatch(sessionIds: string[], source: stri
+@@ -289,6 +289,45 @@ export function getRecordedSessionTokensBatch(sessionIds: string[], source: stri
    return Object.fromEntries(rows.map(({ session_id, ...usage }) => [session_id, usage]))
  }
  
@@ -413,3 +413,6 @@ index 810e8e2bf..82491d415 100644
  export function getUsageBatch(sessionIds: string[]): Record<string, UsageRecord> {
    if (sessionIds.length === 0) return {}
    if (isSqliteAvailable()) {
+-- 
+2.53.0
+

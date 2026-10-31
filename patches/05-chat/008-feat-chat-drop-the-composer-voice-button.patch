@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From c505823f2d923154dd1a82d4de7165778f80d10c Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 12:52:40 +0800
 Subject: [PATCH] feat(chat): drop the composer voice button
@@ -16,7 +16,7 @@ Subject: [PATCH] feat(chat): drop the composer voice button
  2 files changed, 5 insertions(+), 45 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index bce884547..b9ab25c1f 100644
+index de6dd73fb..6cff91014 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -17,11 +17,9 @@ import { computed, ref, nextTick, onMounted, onUnmounted, watch, h } from 'vue'
@@ -31,7 +31,7 @@ index bce884547..b9ab25c1f 100644
  import { extractRepresentativeVideoFrames, isVideoFile } from '@/utils/video-frame-extraction'
  import ImagePreviewOverlay from './ImagePreviewOverlay.vue'
  import ScreenshotButton from './ScreenshotButton.vue'
-@@ -198,34 +196,6 @@ type SlashCommandOption = {
+@@ -220,34 +218,6 @@ type SlashCommandOption = {
    opensBundleCreator?: boolean
  }
  
@@ -66,7 +66,7 @@ index bce884547..b9ab25c1f 100644
  function clearMessageReference() {
    const sessionId = chatStore.activeSessionId
    if (sessionId) chatStore.clearMessageReference(sessionId)
-@@ -240,10 +210,6 @@ watch(
+@@ -262,10 +232,6 @@ watch(
    },
  )
  
@@ -77,7 +77,7 @@ index bce884547..b9ab25c1f 100644
  const CODING_AGENT_SLASH_COMMANDS = ['context', 'compact', 'usage', 'status']
  
  const bridgeCommands = computed<SlashCommandOption[]>(() =>
-@@ -1518,15 +1484,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1549,15 +1515,6 @@ function openAttachmentPreview(attachment: Attachment) {
  
          </div>
          <div class="input-actions">
@@ -93,7 +93,7 @@ index bce884547..b9ab25c1f 100644
            <NButton
              size="medium"
              type="primary"
-@@ -2128,7 +2085,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2160,7 +2117,6 @@ function openAttachmentPreview(attachment: Attachment) {
  
  @media (max-width: 768px) {
    .chat-input-area {
@@ -118,3 +118,6 @@ index ac3927e7b..d5bd01797 100644
    await installMockVoiceCapture(page)
    await page.addInitScript(() => {
      window.localStorage.setItem('hermes-stt-settings-v1', JSON.stringify({
+-- 
+2.53.0
+

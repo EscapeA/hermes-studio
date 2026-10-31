@@ -1,4 +1,4 @@
-From 1a62f122d0e15e78de9d88272d8e111952609bc5 Mon Sep 17 00:00:00 2001
+From 3a58078349f71dd2cd56535bd2fe926a9c61f995 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 21:42:28 +0800
 Subject: [PATCH] feat(chat): flatten the session sidebar to pinned and recent
@@ -15,7 +15,7 @@ row appends older sessions instead of leaving them unreachable.
 The category tag may use the full subtitle row width; the subtitle row holds
 nothing else, so the previous 45% cap only truncated long category names.
 ---
- .../src/components/hermes/chat/ChatPanel.vue  | 322 +++---------------
+ .../src/components/hermes/chat/ChatPanel.vue  | 322 ++++--------------
  .../hermes/chat/SessionListItem.vue           |   3 +-
  .../hermes/chat/session-category-groups.ts    |  62 +---
  .../src/components/layout/ListActionsMenu.vue |  23 ++
@@ -32,22 +32,22 @@ nothing else, so the previous 45% cap only truncated long category names.
  packages/client/src/i18n/locales/zh.ts        |   1 +
  tests/client/session-category-groups.test.ts  | 116 ++-----
  tests/e2e/session-categories.spec.ts          | 165 +++------
- 17 files changed, 177 insertions(+), 525 deletions(-)
+ 17 files changed, 179 insertions(+), 523 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
-index ca356e97c..a54fcf4f8 100644
+index 8fe097bb9..95432c64a 100644
 --- a/packages/client/src/components/hermes/chat/ChatPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
-@@ -65,7 +65,7 @@ import OutlinePanel from "./OutlinePanel.vue";
- import TerminalPanel from "./TerminalPanel.vue";
+@@ -68,7 +68,7 @@ import ChatToolsPanel from "./ChatToolsPanel.vue";
  import SubagentStreamPanel from "./SubagentStreamPanel.vue";
+ import { chatSessionAgentAvatar } from "@/utils/chat-agent-avatar";
  import { isHermesSession } from "@/utils/hermes/session-agent";
 -import { buildVisibleSessionCategoryGroups, partitionRecentSessions } from "./session-category-groups";
 +import { partitionRecentSessions } from "./session-category-groups";
  import { buildSessionCategoryMenuChildren, resolveRecentSessionCategoryLabel } from "./session-category-menu";
  import { buildActiveSessionMenuOptions, buildSessionContextMenuOptions } from "./session-menu-options";
  import PageSidebarNav from "@/components/layout/PageSidebarNav.vue";
-@@ -369,14 +369,8 @@ async function submitBrowserAnnotations(payload: BrowserAnnotationSubmission): P
+@@ -371,14 +371,8 @@ async function submitBrowserAnnotations(payload: BrowserAnnotationSubmission): P
    return true;
  }
  
@@ -63,7 +63,7 @@ index ca356e97c..a54fcf4f8 100644
    chatStore.clearSessionCompletedUnread(sessionId);
    if (isMobile.value) showSessions.value = false;
    await router.push({
-@@ -388,12 +382,6 @@ async function handleSessionClick(
+@@ -390,12 +384,6 @@ async function handleSessionClick(
    }
  }
  
@@ -76,7 +76,7 @@ index ca356e97c..a54fcf4f8 100644
  
  watch(
    pageSidebarExpanded,
-@@ -627,61 +615,9 @@ const createCategoryPendingCategory = ref<SessionCategory | null>(null);
+@@ -612,61 +600,9 @@ const createCategoryPendingCategory = ref<SessionCategory | null>(null);
  const createCategorySubmitting = ref(false);
  const createCategoryInputRef = ref<InstanceType<typeof NInput> | null>(null);
  let sessionCategoriesLoadPromise: Promise<void> | null = null;
@@ -138,7 +138,7 @@ index ca356e97c..a54fcf4f8 100644
  async function handleProfileFilterChange(value: string | null) {
    chatStore.setSessionProfileFilter(value);
    await chatStore.loadSessions(chatStore.sessionProfileFilter);
-@@ -696,13 +632,30 @@ function sortSessionsForSidebar(items: Session[]): Session[] {
+@@ -681,13 +617,32 @@ function sortSessionsForSidebar(items: Session[]): Session[] {
    });
  }
  
@@ -155,10 +155,12 @@ index ca356e97c..a54fcf4f8 100644
 +const recentPageCount = ref(1);
 +const recentPageSize = computed(() => sessionBrowserPrefsStore.recentCount);
 +const unpinnedSessions = computed(() =>
-+  sortSessionsForSidebar(chatStore.sessions.filter((session) => !session.isPinned)),
++  sortSessionsForSidebar(
++    chatStore.sessions.filter((session) => !/^person-(main|task)-/.test(session.id) && !session.isPinned),
++  ),
 +);
  const recentSessionPartition = computed(() => partitionRecentSessions(
--  chatStore.sessions.filter((session) => !session.isPinned),
+-  chatStore.sessions.filter((session) => !/^person-(main|task)-/.test(session.id) && !session.isPinned),
 -  sessionBrowserPrefsStore.recentCount,
 +  unpinnedSessions.value,
 +  recentPageSize.value * recentPageCount.value,
@@ -172,7 +174,7 @@ index ca356e97c..a54fcf4f8 100644
  const sessionCategoryNames = computed(() => new Map(
    sessionCategories.value.map(category => [category.id, category.name]),
  ));
-@@ -717,31 +670,18 @@ function recentCategoryLabel(session: Session): string | undefined {
+@@ -702,31 +657,18 @@ function recentCategoryLabel(session: Session): string | undefined {
    );
  }
  
@@ -184,7 +186,7 @@ index ca356e97c..a54fcf4f8 100644
  
 -const pinnedSessions = computed(() =>
 -  sortSessionsForSidebar(
--    chatStore.sessions.filter((session) =>
+-    chatStore.sessions.filter((session) => !/^person-(main|task)-/.test(session.id) &&
 -      session.isPinned,
 -    ),
 -  ),
@@ -212,7 +214,7 @@ index ca356e97c..a54fcf4f8 100644
  
  function openRecentCountModal(event: MouseEvent) {
    event.stopPropagation();
-@@ -754,46 +694,6 @@ function saveRecentCount() {
+@@ -739,46 +681,6 @@ function saveRecentCount() {
    showRecentCountModal.value = false;
  }
  
@@ -259,7 +261,7 @@ index ca356e97c..a54fcf4f8 100644
  async function loadSessionCategories() {
    if (sessionCategoriesLoadPromise) return sessionCategoriesLoadPromise;
    sessionCategoriesLoading.value = true;
-@@ -1837,57 +1737,22 @@ const contextSession = computed(() =>
+@@ -1834,57 +1736,22 @@ const contextSession = computed(() =>
      : null,
  );
  
@@ -322,7 +324,7 @@ index ca356e97c..a54fcf4f8 100644
      showDeleteCategoryModal.value = true;
    }
  }
-@@ -1918,13 +1783,6 @@ async function handleDeleteCategoryConfirm() {
+@@ -1915,13 +1782,6 @@ async function handleDeleteCategoryConfirm() {
      for (const session of chatStore.sessions) {
        if (session.categoryId === categoryId) session.categoryId = null;
      }
@@ -336,7 +338,7 @@ index ca356e97c..a54fcf4f8 100644
      message.success(t("chat.categoryDeleted"));
      showDeleteCategoryModal.value = false;
    } catch (error: any) {
-@@ -1985,7 +1843,6 @@ const contextMenuCategoriesKey = computed(() => [
+@@ -1982,7 +1842,6 @@ const contextMenuCategoriesKey = computed(() => [
  
  function handleContextMenu(e: MouseEvent, sessionId: string) {
    e.preventDefault();
@@ -344,7 +346,7 @@ index ca356e97c..a54fcf4f8 100644
    contextSessionId.value = sessionId;
    showContextMenu.value = true;
    contextMenuX.value = e.clientX;
-@@ -2512,9 +2369,11 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+@@ -2513,9 +2372,11 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
                :profiles="profilesStore.profiles"
                :profile="sessionProfileFilter"
                :loading="profilesStore.loading"
@@ -356,7 +358,7 @@ index ca356e97c..a54fcf4f8 100644
              />
              <button
                v-if="isMobile"
-@@ -2685,12 +2544,20 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+@@ -2626,12 +2487,20 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
                :category-label="recentCategoryLabel(s)"
                :to="sessionHref(s.id)"
                :intercept-modified-navigation="desktopChatWindowAvailable"
@@ -378,7 +380,7 @@ index ca356e97c..a54fcf4f8 100644
            </template>
          </template>
  
-@@ -2708,73 +2575,6 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+@@ -2649,71 +2518,6 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
              {{ t("common.retry") }}
            </button>
          </div>
@@ -431,14 +433,12 @@ index ca356e97c..a54fcf4f8 100644
 -              :session="s"
 -              :active="s.id === chatStore.activeSessionId"
 -              :pinned="false"
--              :can-delete="
--                s.id !== chatStore.activeSessionId ||
--                chatStore.sessions.length > 1
--              "
--              :streaming="chatStore.isSessionWorking(s.id)"
--              :completed-unread="chatStore.isSessionCompletedUnread(s.id)"
+-              can-delete
+-              :streaming="sessionStates.isWorking(s.id, chatStore.isSessionWorking(s.id))"
+-              :completed-unread="sessionStates.isUnread(s.id, chatStore.isSessionCompletedUnread(s.id))"
 -              :selectable="isBatchMode"
 -              :selected="isSessionSelected(s)"
+-              :show-profile="true"
 -              :to="sessionHref(s.id)"
 -              :intercept-modified-navigation="desktopChatWindowAvailable"
 -              @select="handleSessionClick(s.id)"
@@ -449,10 +449,10 @@ index ca356e97c..a54fcf4f8 100644
 -            />
 -          </template>
 -        </template>
-       </div>
-       <PageSidebarFooter v-if="showSessions" />
-     </aside>
-@@ -2858,17 +2658,6 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+       </template>
+     </SessionListSidebar>
+ 
+@@ -2795,17 +2599,6 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
        <NInputNumber v-model:value="recentCountDraft" :min="1" :max="100" />
      </NModal>
  
@@ -470,7 +470,7 @@ index ca356e97c..a54fcf4f8 100644
      <NModal
        v-model:show="showCreateCategoryModal"
        preset="dialog"
-@@ -3823,20 +3612,19 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+@@ -3526,20 +3319,19 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
    font-weight: 400;
  }
  
@@ -501,10 +501,10 @@ index ca356e97c..a54fcf4f8 100644
    &:hover,
    &:focus-visible {
 diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
-index af656c26c..f963f94fd 100644
+index df775fba3..f2e00137b 100644
 --- a/packages/client/src/components/hermes/chat/SessionListItem.vue
 +++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
-@@ -367,7 +367,8 @@ onUnmounted(() => {
+@@ -384,7 +384,8 @@ onUnmounted(() => {
  .session-item-category-tag {
    flex: 0 1 auto;
    min-width: 0;
@@ -656,10 +656,10 @@ index 151f35f7c..a49cb7a74 100644
  </script>
  
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index e934870a8..b12216294 100644
+index 10a75aa08..98ef11d51 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -1288,6 +1288,7 @@ export default {
+@@ -1315,6 +1315,7 @@ export default {
      noSessions: 'لا توجد جلسات',
      recent: 'الأخيرة',
      recentCount: 'عدد الجلسات الأخيرة',
@@ -668,10 +668,10 @@ index e934870a8..b12216294 100644
      searchTitle: 'البحث في الجلسات',
      searchSubtitle: 'ابحث بالعنوان أو بمحتوى الرسالة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 571a06dde..44c26e6ed 100644
+index 431b21687..b12e0b556 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1247,6 +1247,7 @@ export default {
+@@ -1274,6 +1274,7 @@ export default {
      noSessions: 'Keine Sitzungen',
      recent: 'Zuletzt',
      recentCount: 'Anzahl letzter Sitzungen',
@@ -680,10 +680,10 @@ index 571a06dde..44c26e6ed 100644
      newChat: 'Neuer Chat',
      newChatCardTitle: "Jede Idee verdient einen guten Partner.",
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 01b07546a..050932020 100644
+index 13a6f1373..11e6b42b8 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1297,6 +1297,7 @@ export default {
+@@ -1324,6 +1324,7 @@ export default {
      noSessions: 'No sessions',
      recent: 'Recent',
      recentCount: 'Recent session count',
@@ -692,10 +692,10 @@ index 01b07546a..050932020 100644
      searchTitle: 'Search Sessions',
      searchSubtitle: 'Search by title or message content',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 33f34d120..8e327308e 100644
+index 22545e8f7..257c6ee50 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1247,6 +1247,7 @@ export default {
+@@ -1274,6 +1274,7 @@ export default {
      noSessions: 'Sin sesiones',
      recent: 'Recientes',
      recentCount: 'Cantidad de sesiones recientes',
@@ -704,10 +704,10 @@ index 33f34d120..8e327308e 100644
      newChat: 'Nuevo chat',
      newChatCardTitle: "Cada idea merece un buen compañero.",
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 77f2389c1..e655dc0a5 100644
+index d8d8ec36f..55e4e0a86 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1247,6 +1247,7 @@ export default {
+@@ -1274,6 +1274,7 @@ export default {
      noSessions: 'Aucune session',
      recent: 'Récentes',
      recentCount: 'Nombre de sessions récentes',
@@ -716,10 +716,10 @@ index 77f2389c1..e655dc0a5 100644
      newChat: 'Nouvelle discussion',
      newChatCardTitle: "Chaque idée mérite un bon partenaire.",
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 3539929e1..aed6b7c83 100644
+index ea210db23..fe8d57dbb 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1248,6 +1248,7 @@ export default {
+@@ -1275,6 +1275,7 @@ export default {
      noSessions: 'セッションがありません',
      recent: '最近',
      recentCount: '最近のセッション数',
@@ -728,10 +728,10 @@ index 3539929e1..aed6b7c83 100644
      newChat: '新しいチャット',
      newChatCardTitle: "どんなアイデアにも、頼れるパートナーを。",
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 9ecf04f4e..b1dad9e70 100644
+index ae66f8e0a..e99ef01ca 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1248,6 +1248,7 @@ export default {
+@@ -1275,6 +1275,7 @@ export default {
      noSessions: '세션 없음',
      recent: '최근',
      recentCount: '최근 세션 수',
@@ -740,10 +740,10 @@ index 9ecf04f4e..b1dad9e70 100644
      newChat: '새 채팅',
      newChatCardTitle: "모든 아이디어에는 좋은 파트너가 필요합니다.",
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 1553fd917..8842694d9 100644
+index b47cef9f0..49045628c 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1247,6 +1247,7 @@ export default {
+@@ -1274,6 +1274,7 @@ export default {
      noSessions: 'Sem sessões',
      recent: 'Recentes',
      recentCount: 'Quantidade de sessões recentes',
@@ -752,10 +752,10 @@ index 1553fd917..8842694d9 100644
      newChat: 'Novo chat',
      newChatCardTitle: "Toda ideia merece um bom parceiro.",
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 531fee232..198177a13 100644
+index ec22fb42d..c59a808e9 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1188,6 +1188,7 @@ export default {
+@@ -1215,6 +1215,7 @@ export default {
      noSessions: 'Нет сеансов',
      recent: 'Недавние',
      recentCount: 'Количество недавних сессий',
@@ -764,10 +764,10 @@ index 531fee232..198177a13 100644
      searchTitle: 'Поиск сеансов',
      searchSubtitle: 'Поиск по заголовку или содержимому сообщений',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 15c6f5f3c..5b16e18fb 100644
+index d3719c53a..50e1c702b 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1289,6 +1289,7 @@ export default {
+@@ -1316,6 +1316,7 @@ export default {
      noSessions: '目前無工作階段',
      recent: '最近',
      recentCount: '最近會話數量',
@@ -776,10 +776,10 @@ index 15c6f5f3c..5b16e18fb 100644
      searchTitle: '搜尋工作階段',
      searchSubtitle: '依標題或訊息內容搜尋',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index eb97381a7..ac4e3c01a 100644
+index e60137f58..9c5f1cdf6 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1298,6 +1298,7 @@ export default {
+@@ -1325,6 +1325,7 @@ export default {
      noSessions: '暂无会话',
      recent: '最近',
      recentCount: '最近会话数量',

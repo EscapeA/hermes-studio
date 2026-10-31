@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 33410293bf7ccd6b6d3a89487ef0f03ae656f355 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 14 Oct 2026 22:43:31 +0800
 Subject: [PATCH] fix(ci): point the patch-stack verifier and docs at
@@ -10,7 +10,7 @@ Subject: [PATCH] fix(ci): point the patch-stack verifier and docs at
  2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
-index d824f640f..57be459ac 100644
+index 483302308..536ffe296 100644
 --- a/.github/workflows/build.yml
 +++ b/.github/workflows/build.yml
 @@ -45,7 +45,7 @@ jobs:
@@ -35,3 +35,6 @@ index c8f827924..11876b1bc 100755
  VERIFY_TAG="refs/verify-patch-stack-base"  # 临时引用前缀
  WORK_BRANCH="refs/verify-patch-stack-work"
  
+-- 
+2.53.0
+

@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From a09513e62ce277dc2475ceffa02b4747a2ce8ac3 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 1 Oct 2026 12:05:54 +0800
 Subject: [PATCH] feat(theme): cover the 0.7.26 navigation chrome with the
@@ -15,18 +15,18 @@ custom-background glass group.
  create mode 100644 packages/client/src/styles/style-layers.scss
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index def5f3949..3b25ebc9c 100644
+index dac76f0ca..ed4b672e0 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -709,6 +709,8 @@ useKeyboard();
+@@ -756,6 +756,8 @@ useKeyboard();
    :deep(.hermes-config-sidebar),
    :deep(.ekko-config-sidebar),
    :deep(.coding-agent-config-sidebar),
 +  :deep(.studio-mobile-navigation),
 +  :deep(.studio-mobile-navigation__content > .session-list),
    :deep(.chat-panel > .session-list),
+   :deep(.person-layout > .person-sidebar),
    :deep(.history-panel > .page-loading-content > .session-list) {
-     background-color: var(--theme-sidebar-bg, var(--glass-sidebar-bg));
 diff --git a/packages/client/src/styles/style-layers.scss b/packages/client/src/styles/style-layers.scss
 new file mode 100644
 index 000000000..6eb391b37
@@ -375,3 +375,6 @@ index 000000000..6eb391b37
 +    animation: none;
 +  }
 +}
+-- 
+2.53.0
+

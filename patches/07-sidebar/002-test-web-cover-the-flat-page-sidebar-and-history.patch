@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From e6e74004bd237d80dbc029d11a05e0a7ae3d73a6 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 18:23:53 +0800
 Subject: [PATCH] test(web): cover the flat page sidebar and history toggle
@@ -58,7 +58,7 @@ index 4a8c280a9..5b95811c4 100644
  
      expect(historyNav).toContain('active="history"')
 diff --git a/tests/client/style-system.test.ts b/tests/client/style-system.test.ts
-index 0308de1c2..1d816cd85 100644
+index 7ca83c4f5..494ab19b3 100644
 --- a/tests/client/style-system.test.ts
 +++ b/tests/client/style-system.test.ts
 @@ -73,16 +73,6 @@ describe('client style system', () => {
@@ -78,3 +78,6 @@ index 0308de1c2..1d816cd85 100644
    it('keeps the agent manager page aligned with the app main surface', () => {
      const agentManagerView = readClientFile('views/hermes/AgentManagerView.vue')
      const chatPanel = readClientFile('components/hermes/chat/ChatPanel.vue')
+-- 
+2.53.0
+

@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 09ce2a52df614360591a5b0193d89770d9b6b50f Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Wed, 19 Aug 2026 23:13:59 +0800
 Subject: [PATCH] feat(chat): anti-flicker collapsible tool strip
@@ -13,17 +13,17 @@ single-line strip ("Calling N tools · name ▾") that expands to the full
 list; finished tools leave the strip immediately. Timers are cleared on
 unmount so session switches never leak stale tools into the new panel.
 ---
- .../components/hermes/chat/MessageList.vue    | 166 +++++++++++++++++-
+ .../components/hermes/chat/MessageList.vue    | 168 +++++++++++++++++-
  packages/client/src/i18n/locales/en.ts        |   4 +
  packages/client/src/i18n/locales/zh-TW.ts     |   4 +
  packages/client/src/i18n/locales/zh.ts        |   4 +
- 4 files changed, 173 insertions(+), 5 deletions(-)
+ 4 files changed, 175 insertions(+), 5 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index a4a98d956..a1980d291 100644
+index b5724e47d..225ced87c 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -144,10 +144,64 @@ const currentToolCalls = computed(() => {
+@@ -150,10 +150,66 @@ const currentToolCalls = computed(() => {
    return [...tools].reverse();
  });
  
@@ -65,10 +65,12 @@ index a4a98d956..a1980d291 100644
 +
 +// Tools that have been running longer than the reveal delay (still running).
  const visibleToolCalls = computed(() =>
--  currentToolCalls.value.filter((tool) => !!tool.toolName),
-+  currentToolCalls.value.filter(
-+    (tool) => !!tool.toolName && stripVisibleToolIds.value.has(tool.id),
-+  ),
+-  props.hideToolCalls ? [] : currentToolCalls.value.filter((tool) => !!tool.toolName),
++  props.hideToolCalls
++    ? []
++    : currentToolCalls.value.filter(
++      (tool) => !!tool.toolName && stripVisibleToolIds.value.has(tool.id),
++    ),
  );
  
 +const stripSummaryText = computed(() => {
@@ -89,7 +91,7 @@ index a4a98d956..a1980d291 100644
  const liveReasoningDetail = computed<{
    messageId: Message["id"]
    reasoning: string
-@@ -771,6 +825,8 @@ onBeforeUnmount(() => {
+@@ -785,6 +841,8 @@ onBeforeUnmount(() => {
    closeSelectionMenu();
    stopThinkingTimer();
    saveSessionScrollPosition(activeSessionScrollKey.value);
@@ -98,7 +100,7 @@ index a4a98d956..a1980d291 100644
  });
  
  onMounted(() => {
-@@ -977,7 +1033,29 @@ defineExpose({
+@@ -996,7 +1054,29 @@ defineExpose({
                  class="tool-call-spinner"
                ></span>
              </div>
@@ -129,7 +131,7 @@ index a4a98d956..a1980d291 100644
              <div
                v-for="tc in visibleToolCalls"
                :key="tc.id"
-@@ -1056,6 +1134,14 @@ defineExpose({
+@@ -1075,6 +1155,14 @@ defineExpose({
                  />
                </svg>
              </div>
@@ -144,7 +146,7 @@ index a4a98d956..a1980d291 100644
            </div>
          </div>
          </Transition>
-@@ -2034,10 +2120,76 @@ defineExpose({
+@@ -2056,10 +2144,76 @@ defineExpose({
    width: 520px;
    min-width: 0;
    max-width: 100%;
@@ -224,7 +226,7 @@ index a4a98d956..a1980d291 100644
    scrollbar-width: none;
    -ms-overflow-style: none;
    &::-webkit-scrollbar {
-@@ -2045,6 +2197,10 @@ defineExpose({
+@@ -2067,6 +2221,10 @@ defineExpose({
    }
  }
  
@@ -236,10 +238,10 @@ index a4a98d956..a1980d291 100644
    display: flex;
    flex: 1 1 0;
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 339829cdc..e87a78649 100644
+index 8f948d3ea..23309d8b7 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1459,6 +1459,10 @@ export default {
+@@ -1488,6 +1488,10 @@ export default {
      thinkingHide: 'Hide thinking',
      thinkingDuration: 'Observed {duration}',
      thinkingChars: '{count} chars',
@@ -251,10 +253,10 @@ index 339829cdc..e87a78649 100644
      copiedBubble: 'Message copied',
      copyFailed: 'Copy failed',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index dbd59b9b2..413ac1532 100644
+index 1f3a1bf5f..bc3ee0dc3 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1442,6 +1442,10 @@ export default {
+@@ -1471,6 +1471,10 @@ export default {
      thinkingHide: '收起思考過程',
      thinkingDuration: '已觀察 {duration}',
      thinkingChars: '{count} 字',
@@ -266,10 +268,10 @@ index dbd59b9b2..413ac1532 100644
      copiedBubble: '已複製',
      copyFailed: '複製失敗',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 672d806b0..8343c7a7d 100644
+index 83abe7687..b69a44b26 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1460,6 +1460,10 @@ export default {
+@@ -1489,6 +1489,10 @@ export default {
      thinkingHide: '收起思考过程',
      thinkingDuration: '已观察 {duration}',
      thinkingChars: '{count} 字',
@@ -280,3 +282,6 @@ index 672d806b0..8343c7a7d 100644
      copyBubble: '复制消息',
      copiedBubble: '已复制',
      copyFailed: '复制失败',
+-- 
+2.53.0
+
