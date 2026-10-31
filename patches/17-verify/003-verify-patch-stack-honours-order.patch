@@ -1,4 +1,4 @@
-From 0616fb718ac3bfe413787fffd939863978b198ce Mon Sep 17 00:00:00 2001
+From d3536c375b2ef1ab0d30de45731ef1057edc51ca Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 11:54:16 +0800
 Subject: [PATCH] fix(ci): verify-patch-stack honours patches/ORDER when

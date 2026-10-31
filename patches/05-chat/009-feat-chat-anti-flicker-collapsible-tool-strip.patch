@@ -1,4 +1,4 @@
-From 09ce2a52df614360591a5b0193d89770d9b6b50f Mon Sep 17 00:00:00 2001
+From d7b8ed0adf7a5283db808960ff2b87262b5833f1 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Wed, 19 Aug 2026 23:13:59 +0800
 Subject: [PATCH] feat(chat): anti-flicker collapsible tool strip

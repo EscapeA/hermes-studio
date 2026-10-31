@@ -1,4 +1,4 @@
-From b085fb7cc4a384ccf0d794f7c3012bf005f75df5 Mon Sep 17 00:00:00 2001
+From 4767222e0350d9eff941edd2da5d29a2ac0c1f20 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 15 Oct 2026 12:00:00 +0800
 Subject: [PATCH] fix(mobile-nav): drop the drawer's own close row and the

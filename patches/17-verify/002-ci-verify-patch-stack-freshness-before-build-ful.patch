@@ -1,4 +1,4 @@
-From 2eb0d6f4b8ac2d98bfb2f56c9aca7ab6513c2478 Mon Sep 17 00:00:00 2001
+From fd4becae083e8b8c2b8935a393ae66ce602b5d3f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:31:13 +0800
 Subject: [PATCH] ci: verify patch stack freshness before build (full-history

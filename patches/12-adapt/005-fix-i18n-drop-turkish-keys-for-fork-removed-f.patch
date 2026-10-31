@@ -1,4 +1,4 @@
-From 93b3c25f60264547cde552316580eb8ca3f1e054 Mon Sep 17 00:00:00 2001
+From 441262ec0c7370eed4e29347d4076134ae262644 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Tue, 13 Oct 2026 16:36:41 +0800
 Subject: [PATCH] fix(i18n): drop Turkish keys for features the fork removed

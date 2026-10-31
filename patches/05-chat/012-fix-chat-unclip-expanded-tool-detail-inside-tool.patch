@@ -1,4 +1,4 @@
-From 95990f6720481eb5dd0faa533a5bd19aa2a08e49 Mon Sep 17 00:00:00 2001
+From 180b3fea251c1c24e1674ce5fa36e8f1475bfe57 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 20:36:41 +0800
 Subject: [PATCH] fix(chat): unclip expanded tool detail inside tool strip body

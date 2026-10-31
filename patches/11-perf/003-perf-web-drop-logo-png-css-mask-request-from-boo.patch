@@ -1,4 +1,4 @@
-From 5ca163b7f3c6c9d5ad7165dc1c1764649430dd47 Mon Sep 17 00:00:00 2001
+From be63d87f75196c0774bd39129e391ce25f7f0545 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
 Subject: [PATCH] perf(web): drop logo.png CSS-mask request from boot shimmer

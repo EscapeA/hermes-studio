@@ -1,4 +1,4 @@
-From 889a253364c4a5e464f83a17afb9c265c435a4b3 Mon Sep 17 00:00:00 2001
+From b257491d765519cdaef84c6b640b405f1ac268df Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 20:14:05 +0800
 Subject: [PATCH] feat(chat): expandable detail for live running tool items

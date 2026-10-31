@@ -1,4 +1,4 @@
-From fbb64a4a36844702267a70e1007f69c0b3df2d0f Mon Sep 17 00:00:00 2001
+From c7b62775a3cbbbcd738521530ffe296e6a2d6a8e Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:03:03 +0800
 Subject: [PATCH] fix(client): bound subagentStreams with LRU eviction

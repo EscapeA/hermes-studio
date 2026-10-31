@@ -1,4 +1,4 @@
-From 914a6558f872da0441f424a9394e578dd26da837 Mon Sep 17 00:00:00 2001
+From 529bd550bcddcf70d9048c7ff983bf1556c330d3 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:03:19 +0800
 Subject: [PATCH] fix(server): restrict avatar mime whitelist and add nosniff

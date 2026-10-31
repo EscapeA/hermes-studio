@@ -1,4 +1,4 @@
-From 56ccc2130b5fc5f54fe85f7aa510a854ec0179eb Mon Sep 17 00:00:00 2001
+From a8aebab6836d53162660b8212614321a7c5f75c8 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Tue, 20 Oct 2026 21:23:32 +0800
 Subject: [PATCH] fix(i18n): give the provider import modal its own profile

@@ -1,4 +1,4 @@
-From 4d5cac15ccefc8671a988112708a4320b0982ebc Mon Sep 17 00:00:00 2001
+From 940d705898a4200a05c2ecef04bcdc07c1cfd9a2 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 9 Oct 2026 12:02:00 +0800
 Subject: [PATCH] fix(ci): verify-patch-stack materialises patches as untracked

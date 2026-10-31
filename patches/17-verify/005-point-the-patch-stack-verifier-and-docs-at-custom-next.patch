@@ -1,4 +1,4 @@
-From 33410293bf7ccd6b6d3a89487ef0f03ae656f355 Mon Sep 17 00:00:00 2001
+From 1e3dfb5ce9dc63d51d6e18b24feff8cecce86421 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 14 Oct 2026 22:43:31 +0800
 Subject: [PATCH] fix(ci): point the patch-stack verifier and docs at

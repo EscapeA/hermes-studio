@@ -1,4 +1,4 @@
-From 6f1fe9d479ceedae042ff72c0e9b11badfd44e9e Mon Sep 17 00:00:00 2001
+From 0ceab2591eb0fa95fb524a34eb84fbe1f1ec64c6 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Mon, 21 Sep 2026 23:26:11 +0800
 Subject: [PATCH] feat(settings): configurable Agent Management entry target

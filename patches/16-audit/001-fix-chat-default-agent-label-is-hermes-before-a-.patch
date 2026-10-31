@@ -1,4 +1,4 @@
-From ffce2b6e39f23abb2da2d0a09950aabcb364b7b4 Mon Sep 17 00:00:00 2001
+From fbc02e7961140228c9810fce10047574edfa2965 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 31 Oct 2026 11:52:52 +0800
 Subject: [PATCH] fix(chat): default agent avatar is Hermes before a session
