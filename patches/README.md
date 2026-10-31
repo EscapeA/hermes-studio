@@ -5,12 +5,18 @@
 ```
 main        = 纯上游同步（不含任何自定义）
 custom      = main + patches/*.patch 线性重放（旧集成分支，2026-10-14 前的 128 条补丁串）
-custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重整后的 75 条）
+custom-next = main + patches/*.patch 线性重放（集成分支，0.8.0 升级后 80 条）
 ```
 
-⚠️ **本轮（2026-10-14）以 `custom-next` 为唯一集成分支**：`custom` 保留作历史对照，不再更新。
+⚠️ **以 `custom-next` 为唯一集成分支**：`custom` 保留作历史对照，不再更新。
 
-## 分组总览（25 组 / 86 条）
+> **0.8.0 升级（2026-10-31）**：上游把「角色形象」做成 Person 的核心，fork 不再全局去头像 ⇒
+> 退役 `06-remove/005`(去头像) `06-remove/006`(其套件)、`05-chat/015`+`016`(0.7.35 rebase 结构修正，
+> 上游已吸收)、`21-session-live-dot`(上游 agent-logo 自带 streaming 光晕)、`25-identity-rows`
+> (上游 0.8.0 恢复了作者行)。新增 `12-adapt/008`（0.8.0 传输/面板拆分的套件适配）。
+> 当前 **24 组 / 80 条**。
+
+## 分组总览（24 组 / 80 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -18,14 +24,14 @@ custom-next = main + patches/*.patch 线性重放（新集成分支，本轮重�
 | 02-server | 2 | GET /sessions `archived=1`（过滤分支 + 数据源放行，成对） |
 | 03-mobile-input | 1 | 移动端 Enter 换行而非发送 |
 | 04-usage | 11 | API prompt_tokens 接入、完整 in=、resume 轮询兜底、去进度条、会话累计、左上排版、去 cache-write、同排对齐、速率解码、当前/平均双读数（含测试） |
-| 05-chat | 16 | 隐藏未分类组、clarify 单列、多行流式思考、工具卡锚定、反闪烁工具条（4 条）、工具卡按用户轮、收紧间距、去语音按钮、移动端模型卡片、live-reasoning 套件适配、rebase 结构修正、套件适配 |
-| 06-remove | 6 | 群聊整体移除、工作流整体移除、头像整体移除（各含测试适配） |
+| 05-chat | 14 | 隐藏未分类组、clarify 单列、多行流式思考、工具卡锚定、反闪烁工具条（4 条）、工具卡按用户轮、收紧间距、去语音按钮、移动端模型卡片、live-reasoning 套件适配、rebase 结构修正、套件适配 |
+| 06-remove | 4 | 群聊整体移除、工作流整体移除（各含测试适配）；头像移除已于 0.8.0 退役 |
 | 07-sidebar | 2 | 页面侧栏扁平化 + 历史切换（含测试） |
 | 08-agent-entry | 1 | 侧栏 Agent 管理可配置直达 |
 | 09-nav | 6 | 抽屉去自有关闭行+幽灵入口、0.7.26 导航外壳适配/材质、抽屉一级菜单合并、磨砂抽屉、图标栏尺寸 |
 | 10-reconnect | 2 | socket 重连对账 run 态（含测试） |
 | 11-perf | 4 | highlight 按需注册、i18n 构建期合并、启动光晕单请求、locale 同级 import 解析 |
-| 12-adapt | 7 | 0.7.25 / 0.7.28 / 0.7.29 / 0.7.34 套件与 locale 适配 + 0.7.38 ProviderImportModal 改用 models.profile（上游复用被删的 workflow.* 键） |
+| 12-adapt | 8 | 0.7.25 / 0.7.28 / 0.7.29 / 0.7.34 套件与 locale 适配 + 0.7.38 ProviderImportModal 改用 models.profile（上游复用被删的 workflow.* 键） |
 | 13-memory | 1 | subagentStreams LRU 上限 |
 | 14-cleanup | 2 | 去 apikey.fun 推广、去侧栏设备互联入口 |
 | 15-userwait | 2 | 压缩 timer per-session、parseThinking 缓存 |
