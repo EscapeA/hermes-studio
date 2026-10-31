@@ -67,7 +67,9 @@ export function personTaskAgentAvatar(task: { selection_json: string }): ChatAge
 }
 
 export function chatSessionAgentAvatar(session?: ChatAgentSessionIdentity | null): ChatAgentAvatar {
-  if (!session) return AGENT_AVATARS['ekko-agent']
+  // No session yet (before the first load) — the fork's default agent is Hermes,
+  // so don't flash the legacy Ekko label.
+  if (!session) return AGENT_AVATARS.hermes
   const botType = session.botType || session.bot_type || (session.id?.startsWith('person-main-') ? DEFAULT_PERSON_BOT_TYPE : '')
   const bot = personBot(botType)
   if (bot) return { label: personBotLabel(bot), src: deploymentUrl(bot.avatar) }
