@@ -1,0 +1,1218 @@
+From 1a62f122d0e15e78de9d88272d8e111952609bc5 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 21:42:28 +0800
+Subject: [PATCH] feat(chat): flatten the session sidebar to pinned and recent
+
+Session categories no longer split the sidebar into per-category sections.
+The sidebar keeps only the pinned group and one recent group, so a session
+appears once even when it belongs to a category. Category management
+(rename/delete) moves to the session list actions menu, and the category
+stays visible as the subtitle tag on each row.
+
+The recent group now pages: recentCount is the page size and a "load more"
+row appends older sessions instead of leaving them unreachable.
+
+The category tag may use the full subtitle row width; the subtitle row holds
+nothing else, so the previous 45% cap only truncated long category names.
+---
+ .../src/components/hermes/chat/ChatPanel.vue  | 322 +++---------------
+ .../hermes/chat/SessionListItem.vue           |   3 +-
+ .../hermes/chat/session-category-groups.ts    |  62 +---
+ .../src/components/layout/ListActionsMenu.vue |  23 ++
+ packages/client/src/i18n/locales/ar.ts        |   1 +
+ packages/client/src/i18n/locales/de.ts        |   1 +
+ packages/client/src/i18n/locales/en.ts        |   1 +
+ packages/client/src/i18n/locales/es.ts        |   1 +
+ packages/client/src/i18n/locales/fr.ts        |   1 +
+ packages/client/src/i18n/locales/ja.ts        |   1 +
+ packages/client/src/i18n/locales/ko.ts        |   1 +
+ packages/client/src/i18n/locales/pt.ts        |   1 +
+ packages/client/src/i18n/locales/ru.ts        |   1 +
+ packages/client/src/i18n/locales/zh-TW.ts     |   1 +
+ packages/client/src/i18n/locales/zh.ts        |   1 +
+ tests/client/session-category-groups.test.ts  | 116 ++-----
+ tests/e2e/session-categories.spec.ts          | 165 +++------
+ 17 files changed, 177 insertions(+), 525 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ChatPanel.vue b/packages/client/src/components/hermes/chat/ChatPanel.vue
+index ca356e97c..a54fcf4f8 100644
+--- a/packages/client/src/components/hermes/chat/ChatPanel.vue
++++ b/packages/client/src/components/hermes/chat/ChatPanel.vue
+@@ -65,7 +65,7 @@ import OutlinePanel from "./OutlinePanel.vue";
+ import TerminalPanel from "./TerminalPanel.vue";
+ import SubagentStreamPanel from "./SubagentStreamPanel.vue";
+ import { isHermesSession } from "@/utils/hermes/session-agent";
+-import { buildVisibleSessionCategoryGroups, partitionRecentSessions } from "./session-category-groups";
++import { partitionRecentSessions } from "./session-category-groups";
+ import { buildSessionCategoryMenuChildren, resolveRecentSessionCategoryLabel } from "./session-category-menu";
+ import { buildActiveSessionMenuOptions, buildSessionContextMenuOptions } from "./session-menu-options";
+ import PageSidebarNav from "@/components/layout/PageSidebarNav.vue";
+@@ -369,14 +369,8 @@ async function submitBrowserAnnotations(payload: BrowserAnnotationSubmission): P
+   return true;
+ }
+ 
+-async function handleSessionClick(
+-  sessionId: string,
+-  options: { preserveCategoryCollapse?: boolean } = {},
+-) {
++async function handleSessionClick(sessionId: string) {
+   closeNewChatPage();
+-  if (!options.preserveCategoryCollapse) {
+-    setCategoryRevealSuppressedSessionId(null);
+-  }
+   chatStore.clearSessionCompletedUnread(sessionId);
+   if (isMobile.value) showSessions.value = false;
+   await router.push({
+@@ -388,12 +382,6 @@ async function handleSessionClick(
+   }
+ }
+ 
+-async function handleRecentSessionClick(sessionId: string) {
+-  // Recent is a shortcut; selecting it must not overwrite the real category's saved collapse state.
+-  setCategoryRevealSuppressedSessionId(sessionId);
+-  await handleSessionClick(sessionId, { preserveCategoryCollapse: true });
+-}
+-
+ 
+ watch(
+   pageSidebarExpanded,
+@@ -627,61 +615,9 @@ const createCategoryPendingCategory = ref<SessionCategory | null>(null);
+ const createCategorySubmitting = ref(false);
+ const createCategoryInputRef = ref<InstanceType<typeof NInput> | null>(null);
+ let sessionCategoriesLoadPromise: Promise<void> | null = null;
+-const COLLAPSED_CATEGORIES_STORAGE_KEY = "hermes_chat_collapsed_categories";
+-const RECENT_CATEGORY_REVEAL_SUPPRESSION_STORAGE_KEY = "hermes_chat_recent_category_reveal_suppression";
+ const showRecentCountModal = ref(false);
+ const recentCountDraft = ref(sessionBrowserPrefsStore.recentCount);
+ 
+-function loadCollapsedCategories(): Set<string> {
+-  try {
+-    const value = JSON.parse(localStorage.getItem(COLLAPSED_CATEGORIES_STORAGE_KEY) || "[]");
+-    return new Set(Array.isArray(value) ? value.map(String) : []);
+-  } catch {
+-    return new Set();
+-  }
+-}
+-
+-const collapsedCategories = ref<Set<string>>(loadCollapsedCategories());
+-
+-function loadCategoryRevealSuppressedSessionId(): string | null {
+-  try {
+-    return sessionStorage.getItem(RECENT_CATEGORY_REVEAL_SUPPRESSION_STORAGE_KEY);
+-  } catch {
+-    return null;
+-  }
+-}
+-
+-const categoryRevealSuppressedSessionId = ref<string | null>(
+-  loadCategoryRevealSuppressedSessionId(),
+-);
+-
+-function setCategoryRevealSuppressedSessionId(sessionId: string | null) {
+-  categoryRevealSuppressedSessionId.value = sessionId;
+-  try {
+-    if (sessionId) {
+-      sessionStorage.setItem(RECENT_CATEGORY_REVEAL_SUPPRESSION_STORAGE_KEY, sessionId);
+-    } else {
+-      sessionStorage.removeItem(RECENT_CATEGORY_REVEAL_SUPPRESSION_STORAGE_KEY);
+-    }
+-  } catch {
+-    // Keep the in-memory behavior when session storage is unavailable.
+-  }
+-}
+-
+-function persistCollapsedCategories() {
+-  localStorage.setItem(
+-    COLLAPSED_CATEGORIES_STORAGE_KEY,
+-    JSON.stringify([...collapsedCategories.value]),
+-  );
+-}
+-
+-function toggleCategoryGroup(key: string) {
+-  const next = new Set(collapsedCategories.value);
+-  if (next.has(key)) next.delete(key);
+-  else next.add(key);
+-  collapsedCategories.value = next;
+-  persistCollapsedCategories();
+-}
+ async function handleProfileFilterChange(value: string | null) {
+   chatStore.setSessionProfileFilter(value);
+   await chatStore.loadSessions(chatStore.sessionProfileFilter);
+@@ -696,13 +632,30 @@ function sortSessionsForSidebar(items: Session[]): Session[] {
+   });
+ }
+ 
++const pinnedSessions = computed(() =>
++  sortSessionsForSidebar(
++    chatStore.sessions.filter((session) =>
++      session.isPinned,
++    ),
++  ),
++);
++
++// 分类不再参与侧栏分组：侧栏只有「置顶」+「最近」。
++// 「最近」以 recentCount 作为单页条数，底部「加载更多」按页追加更早的会话。
++const recentPageCount = ref(1);
++const recentPageSize = computed(() => sessionBrowserPrefsStore.recentCount);
++const unpinnedSessions = computed(() =>
++  sortSessionsForSidebar(chatStore.sessions.filter((session) => !session.isPinned)),
++);
+ const recentSessionPartition = computed(() => partitionRecentSessions(
+-  chatStore.sessions.filter((session) => !session.isPinned),
+-  sessionBrowserPrefsStore.recentCount,
++  unpinnedSessions.value,
++  recentPageSize.value * recentPageCount.value,
+   t("chat.recent"),
+ ));
+ const recentSessions = computed(() => recentSessionPartition.value.group);
+-const nonRecentSessions = computed(() => recentSessionPartition.value.remaining);
++const hasMoreRecentSessions = computed(
++  () => recentSessionPartition.value.remaining.length > 0,
++);
+ const sessionCategoryNames = computed(() => new Map(
+   sessionCategories.value.map(category => [category.id, category.name]),
+ ));
+@@ -717,31 +670,18 @@ function recentCategoryLabel(session: Session): string | undefined {
+   );
+ }
+ 
+-function toggleRecentGroup() {
+-  sessionBrowserPrefsStore.setRecentCollapsed(!sessionBrowserPrefsStore.recentCollapsed);
++function loadMoreRecentSessions() {
++  recentPageCount.value += 1;
+ }
+ 
+-const pinnedSessions = computed(() =>
+-  sortSessionsForSidebar(
+-    chatStore.sessions.filter((session) =>
+-      session.isPinned,
+-    ),
+-  ),
+-);
+-
+-const unpinnedSessions = computed(() =>
+-  sortSessionsForSidebar(
+-    nonRecentSessions.value.filter(
+-      (session) => !session.isPinned,
+-    ),
+-  ),
++watch(
++  [recentPageSize, () => chatStore.sessionProfileFilter],
++  () => { recentPageCount.value = 1; },
+ );
+ 
+-const categorizedSessions = computed(() => buildVisibleSessionCategoryGroups(
+-  sessionCategories.value,
+-  unpinnedSessions.value,
+-  t("chat.uncategorized"),
+-));
++function toggleRecentGroup() {
++  sessionBrowserPrefsStore.setRecentCollapsed(!sessionBrowserPrefsStore.recentCollapsed);
++}
+ 
+ function openRecentCountModal(event: MouseEvent) {
+   event.stopPropagation();
+@@ -754,46 +694,6 @@ function saveRecentCount() {
+   showRecentCountModal.value = false;
+ }
+ 
+-const activeSessionCategoryKey = computed(() => {
+-  const session = chatStore.sessions.find((item) => item.id === chatStore.activeSessionId);
+-  return session?.categoryId == null ? "category-none" : `category-${session.categoryId}`;
+-});
+-
+-watch(
+-  [
+-    () => sessionCategoriesLoaded.value,
+-    () => categorizedSessions.value.map((group) => group.key).join("\u0000"),
+-    () => chatStore.activeSessionId,
+-    activeSessionCategoryKey,
+-  ],
+-  ([loaded, , sessionId, activeKey], [previousLoaded, , previousSessionId, previousActiveKey]) => {
+-    if (!sessionCategoriesLoaded.value || categorizedSessions.value.length === 0) return;
+-    const activeSession = chatStore.sessions.find((session) => session.id === chatStore.activeSessionId);
+-    if (categoryRevealSuppressedSessionId.value === activeSession?.id) return;
+-    setCategoryRevealSuppressedSessionId(null);
+-    // Only navigation or a changed category should reveal the active session.
+-    // Background list refreshes must preserve manually collapsed groups.
+-    const shouldReveal = loaded !== previousLoaded
+-      || sessionId !== previousSessionId
+-      || activeKey !== previousActiveKey;
+-    if (shouldReveal && collapsedCategories.value.has(activeKey)) {
+-      collapsedCategories.value = new Set(
+-        [...collapsedCategories.value].filter((key) => key !== activeKey),
+-      );
+-      persistCollapsedCategories();
+-    }
+-    if (localStorage.getItem(COLLAPSED_CATEGORIES_STORAGE_KEY) !== null) return;
+-    const expandedKey = categorizedSessions.value.some((group) => group.key === activeKey)
+-      ? activeKey
+-      : categorizedSessions.value[0]?.key;
+-    collapsedCategories.value = new Set(
+-      categorizedSessions.value.map((group) => group.key).filter((key) => key !== expandedKey),
+-    );
+-    persistCollapsedCategories();
+-  },
+-  { immediate: true },
+-);
+-
+ async function loadSessionCategories() {
+   if (sessionCategoriesLoadPromise) return sessionCategoriesLoadPromise;
+   sessionCategoriesLoading.value = true;
+@@ -1837,57 +1737,22 @@ const contextSession = computed(() =>
+     : null,
+ );
+ 
+-const showCategoryContextMenu = ref(false);
+-const categoryContextMenuX = ref(0);
+-const categoryContextMenuY = ref(0);
+ const categoryContextId = ref<number | null>(null);
+ const categoryContextName = computed(() =>
+   sessionCategories.value.find((item) => item.id === categoryContextId.value)?.name || "",
+ );
+-const categoryContextMenuOptions = computed<DropdownOption[]>(() => [
+-  { label: t("chat.renameCategory"), key: "rename" },
+-  { label: t("chat.deleteCategory"), key: "delete" },
+-]);
+ const showRenameCategoryModal = ref(false);
+ const renameCategoryValue = ref("");
+ const showDeleteCategoryModal = ref(false);
+ 
+-function handleCategoryContextMenu(event: MouseEvent, groupKey: string) {
+-  if (groupKey === "category-none") return;
+-  const categoryId = Number(groupKey.slice("category-".length));
+-  if (!Number.isSafeInteger(categoryId)) return;
+-  event.preventDefault();
+-  event.stopPropagation();
+-  showContextMenu.value = false;
+-  categoryContextId.value = categoryId;
+-  categoryContextMenuX.value = event.clientX;
+-  categoryContextMenuY.value = event.clientY;
+-  showCategoryContextMenu.value = true;
+-}
+-
+-function handleCategoryMenuButton(event: MouseEvent, groupKey: string) {
+-  if (groupKey === "category-none") return;
+-  const categoryId = Number(groupKey.slice("category-".length));
+-  if (!Number.isSafeInteger(categoryId)) return;
+-  event.preventDefault();
+-  event.stopPropagation();
+-  const anchor = event.currentTarget as HTMLElement;
+-  const rect = anchor.getBoundingClientRect();
+-  showContextMenu.value = false;
+-  categoryContextId.value = categoryId;
+-  categoryContextMenuX.value = rect.left;
+-  categoryContextMenuY.value = rect.bottom;
+-  showCategoryContextMenu.value = true;
+-}
+-
+-function handleCategoryContextMenuSelect(key: string) {
+-  showCategoryContextMenu.value = false;
+-  const category = sessionCategories.value.find((item) => item.id === categoryContextId.value);
++function handleListCategoryAction(payload: { action: "rename" | "delete"; categoryId: number }) {
++  const category = sessionCategories.value.find((item) => item.id === payload.categoryId);
+   if (!category) return;
+-  if (key === "rename") {
++  categoryContextId.value = category.id;
++  if (payload.action === "rename") {
+     renameCategoryValue.value = category.name;
+     showRenameCategoryModal.value = true;
+-  } else if (key === "delete") {
++  } else {
+     showDeleteCategoryModal.value = true;
+   }
+ }
+@@ -1918,13 +1783,6 @@ async function handleDeleteCategoryConfirm() {
+     for (const session of chatStore.sessions) {
+       if (session.categoryId === categoryId) session.categoryId = null;
+     }
+-    const collapsedKey = `category-${categoryId}`;
+-    if (collapsedCategories.value.has(collapsedKey)) {
+-      collapsedCategories.value = new Set(
+-        [...collapsedCategories.value].filter((key) => key !== collapsedKey),
+-      );
+-      persistCollapsedCategories();
+-    }
+     message.success(t("chat.categoryDeleted"));
+     showDeleteCategoryModal.value = false;
+   } catch (error: any) {
+@@ -1985,7 +1843,6 @@ const contextMenuCategoriesKey = computed(() => [
+ 
+ function handleContextMenu(e: MouseEvent, sessionId: string) {
+   e.preventDefault();
+-  showCategoryContextMenu.value = false;
+   contextSessionId.value = sessionId;
+   showContextMenu.value = true;
+   contextMenuX.value = e.clientX;
+@@ -2512,9 +2369,11 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+               :profiles="profilesStore.profiles"
+               :profile="sessionProfileFilter"
+               :loading="profilesStore.loading"
++              :categories="sessionCategories"
+               :batch-mode="isBatchMode"
+               @filter="handleProfileFilterChange"
+               @batch="toggleBatchMode"
++              @category-action="handleListCategoryAction"
+             />
+             <button
+               v-if="isMobile"
+@@ -2685,12 +2544,20 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+               :category-label="recentCategoryLabel(s)"
+               :to="sessionHref(s.id)"
+               :intercept-modified-navigation="desktopChatWindowAvailable"
+-              @select="handleRecentSessionClick(s.id)"
++              @select="handleSessionClick(s.id)"
+               @open-new="openSessionInNewTab(s.id, s.profile || null)"
+               @contextmenu="handleContextMenu($event, s.id)"
+               @delete="handleDeleteSession(s.id)"
+               @toggle-select="toggleSessionSelection(s)"
+             />
++            <button
++              v-if="hasMoreRecentSessions"
++              class="session-load-more"
++              type="button"
++              @click="loadMoreRecentSessions"
++            >
++              {{ t("chat.loadMoreSessions") }}
++            </button>
+           </template>
+         </template>
+ 
+@@ -2708,73 +2575,6 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+             {{ t("common.retry") }}
+           </button>
+         </div>
+-
+-        <template v-for="group in categorizedSessions" :key="group.key">
+-          <div
+-            class="session-group-header"
+-            @click="toggleCategoryGroup(group.key)"
+-            @contextmenu="handleCategoryContextMenu($event, group.key)"
+-          >
+-            <svg
+-              width="10"
+-              height="10"
+-              viewBox="0 0 24 24"
+-              fill="none"
+-              stroke="currentColor"
+-              stroke-width="2"
+-              class="group-chevron"
+-              :class="{ collapsed: collapsedCategories.has(group.key) }"
+-            >
+-              <polyline points="9 18 15 12 9 6" />
+-            </svg>
+-            <span class="session-group-label">{{ group.label }}</span>
+-            <span class="session-group-count">{{ group.sessions.length }}</span>
+-            <button
+-              v-if="group.key !== 'category-none'"
+-              class="session-category-menu-button"
+-              type="button"
+-              :aria-label="t('chat.more')"
+-              :title="t('chat.more')"
+-              @click="handleCategoryMenuButton($event, group.key)"
+-            >
+-              <svg
+-                width="14"
+-                height="14"
+-                viewBox="0 0 24 24"
+-                fill="currentColor"
+-                aria-hidden="true"
+-              >
+-                <circle cx="5" cy="12" r="1.6" />
+-                <circle cx="12" cy="12" r="1.6" />
+-                <circle cx="19" cy="12" r="1.6" />
+-              </svg>
+-            </button>
+-          </div>
+-          <template v-if="!collapsedCategories.has(group.key)">
+-            <SessionListItem
+-              v-for="s in group.sessions"
+-              :key="s.id"
+-              :session="s"
+-              :active="s.id === chatStore.activeSessionId"
+-              :pinned="false"
+-              :can-delete="
+-                s.id !== chatStore.activeSessionId ||
+-                chatStore.sessions.length > 1
+-              "
+-              :streaming="chatStore.isSessionWorking(s.id)"
+-              :completed-unread="chatStore.isSessionCompletedUnread(s.id)"
+-              :selectable="isBatchMode"
+-              :selected="isSessionSelected(s)"
+-              :to="sessionHref(s.id)"
+-              :intercept-modified-navigation="desktopChatWindowAvailable"
+-              @select="handleSessionClick(s.id)"
+-              @open-new="openSessionInNewTab(s.id, s.profile || null)"
+-              @contextmenu="handleContextMenu($event, s.id)"
+-              @delete="handleDeleteSession(s.id)"
+-              @toggle-select="toggleSessionSelection(s)"
+-            />
+-          </template>
+-        </template>
+       </div>
+       <PageSidebarFooter v-if="showSessions" />
+     </aside>
+@@ -2858,17 +2658,6 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+       <NInputNumber v-model:value="recentCountDraft" :min="1" :max="100" />
+     </NModal>
+ 
+-    <NDropdown
+-      placement="bottom-start"
+-      trigger="manual"
+-      :x="categoryContextMenuX"
+-      :y="categoryContextMenuY"
+-      :options="categoryContextMenuOptions"
+-      :show="showCategoryContextMenu"
+-      @select="handleCategoryContextMenuSelect"
+-      @clickoutside="showCategoryContextMenu = false"
+-    />
+-
+     <NModal
+       v-model:show="showCreateCategoryModal"
+       preset="dialog"
+@@ -3823,20 +3612,19 @@ function handleSessionModelSelect(selection: { model: string; provider: string }
+   font-weight: 400;
+ }
+ 
+-.session-category-menu-button {
+-  display: inline-flex;
+-  align-items: center;
+-  justify-content: center;
+-  flex: 0 0 auto;
+-  width: 20px;
+-  height: 20px;
+-  margin-inline-start: auto;
+-  padding: 0;
++.session-load-more {
++  display: block;
++  width: 100%;
++  margin: calc(2px * var(--spacing-scale, 1)) 0 calc(6px * var(--spacing-scale, 1));
++  padding: calc(6px * var(--spacing-scale, 1)) calc(10px * var(--spacing-scale, 1));
+   border: 0;
+-  border-radius: var(--radius-component, 4px);
++  border-radius: var(--radius-component, 6px);
+   background: transparent;
+   color: $text-muted;
+   cursor: pointer;
++  font: inherit;
++  font-size: calc(var(--font-size-base, 14px) * 11 / 14);
++  text-align: center;
+ 
+   &:hover,
+   &:focus-visible {
+diff --git a/packages/client/src/components/hermes/chat/SessionListItem.vue b/packages/client/src/components/hermes/chat/SessionListItem.vue
+index af656c26c..f963f94fd 100644
+--- a/packages/client/src/components/hermes/chat/SessionListItem.vue
++++ b/packages/client/src/components/hermes/chat/SessionListItem.vue
+@@ -367,7 +367,8 @@ onUnmounted(() => {
+ .session-item-category-tag {
+   flex: 0 1 auto;
+   min-width: 0;
+-  max-width: 45%;
++  /* 副标题行只剩分类标签，宽度可以放到整行；此前 45% 会把长分类名截断。 */
++  max-width: 100%;
+   overflow: hidden;
+   padding: calc(1px * var(--spacing-scale, 1)) calc(6px * var(--spacing-scale, 1));
+   border-radius: var(--radius-component, 4px);
+diff --git a/packages/client/src/components/hermes/chat/session-category-groups.ts b/packages/client/src/components/hermes/chat/session-category-groups.ts
+index be6c043b4..f3ac03e84 100644
+--- a/packages/client/src/components/hermes/chat/session-category-groups.ts
++++ b/packages/client/src/components/hermes/chat/session-category-groups.ts
+@@ -1,13 +1,4 @@
+-export interface SessionCategoryLike {
+-  id: number;
+-  name: string;
+-}
+-
+-export interface SessionCategoryAssignment {
+-  categoryId?: number | null;
+-}
+-
+-export interface RecentSessionAssignment extends SessionCategoryAssignment {
++export interface RecentSessionAssignment {
+   id: string;
+   updatedAt?: number | null;
+ }
+@@ -20,63 +11,24 @@ export interface VisibleSessionCategoryGroup<T> {
+ 
+ export interface RecentSessionPartition<T> {
+   group: VisibleSessionCategoryGroup<T>;
++  /** Sessions outside the visible recent window, newest first. */
+   remaining: T[];
+ }
+ 
+-export function buildVisibleSessionCategoryGroups<T extends SessionCategoryAssignment>(
+-  categories: readonly SessionCategoryLike[],
+-  sessions: readonly T[],
+-  uncategorizedLabel: string,
+-): VisibleSessionCategoryGroup<T>[] {
+-  const knownCategoryIds = new Set(categories.map((category) => category.id));
+-  const groups = categories
+-    .map((category) => ({
+-      key: `category-${category.id}`,
+-      label: category.name,
+-      sessions: sessions.filter((session) => session.categoryId === category.id),
+-    }))
+-    .filter((group) => group.sessions.length > 0);
+-  // 用户未创建任何分类时，不渲染「未分类」分组：
+-  // 侧边栏已由「最近 + 置顶」覆盖，避免与「最近」重复展示同一批会话。
+-  if (categories.length > 0) {
+-    const uncategorized = sessions.filter(
+-      (session) => session.categoryId == null || !knownCategoryIds.has(session.categoryId),
+-    );
+-    if (uncategorized.length > 0) {
+-      groups.push({
+-        key: "category-none",
+-        label: uncategorizedLabel,
+-        sessions: uncategorized,
+-      });
+-    }
+-  }
+-  return groups;
+-}
+-
+-export function buildRecentSessionCategoryGroup<T extends RecentSessionAssignment>(
+-  sessions: readonly T[],
+-  limit: number,
+-  label: string,
+-): VisibleSessionCategoryGroup<T> {
+-  return partitionRecentSessions(sessions, limit, label).group;
+-}
+-
+ export function partitionRecentSessions<T extends RecentSessionAssignment>(
+   sessions: readonly T[],
+   limit: number,
+   label: string,
+ ): RecentSessionPartition<T> {
+-  const safeLimit = Math.min(100, Math.max(1, Math.floor(Number(limit) || 10)));
+-  const recent = [...sessions]
+-    .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+-    .slice(0, safeLimit);
++  const requested = Math.floor(Number(limit));
++  const safeLimit = Number.isFinite(requested) && requested > 0 ? requested : sessions.length;
++  const sorted = [...sessions].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+   return {
+     group: {
+       key: "recent",
+       label,
+-      sessions: recent,
++      sessions: sorted.slice(0, safeLimit),
+     },
+-    // “最近”是快捷入口，不从真实分类中移除对应会话。
+-    remaining: [...sessions],
++    remaining: sorted.slice(safeLimit),
+   };
+ }
+diff --git a/packages/client/src/components/layout/ListActionsMenu.vue b/packages/client/src/components/layout/ListActionsMenu.vue
+index 151f35f7c..a49cb7a74 100644
+--- a/packages/client/src/components/layout/ListActionsMenu.vue
++++ b/packages/client/src/components/layout/ListActionsMenu.vue
+@@ -10,10 +10,12 @@ const props = defineProps<{
+   loading?: boolean
+   batchMode: boolean
+   batchDisabled?: boolean
++  categories?: Array<{ id: number; name: string }>
+ }>()
+ const emit = defineEmits<{
+   filter: [profile: string | null]
+   batch: []
++  'category-action': [payload: { action: 'rename' | 'delete'; categoryId: number }]
+ }>()
+ const { t } = useI18n()
+ const show = ref(false)
+@@ -40,6 +42,22 @@ const options = computed<DropdownOption[]>(() => {
+     )
+   }
+   items.push({ key: 'batch', label: t('chat.toggleBatchMode'), disabled: props.batchMode || props.batchDisabled })
++  // 分类不再作为侧栏分组，重命名/删除改为从这里进入。
++  if (props.categories?.length) {
++    items.push({
++      key: 'categories',
++      label: t('chat.manageCategories'),
++      disabled: props.batchMode,
++      children: props.categories.map(category => ({
++        key: `category-manage:${category.id}`,
++        label: category.name,
++        children: [
++          { key: `category-rename:${category.id}`, label: t('chat.renameCategory') },
++          { key: `category-delete:${category.id}`, label: t('chat.deleteCategory') },
++        ],
++      })),
++    })
++  }
+   return items
+ })
+ 
+@@ -48,6 +66,11 @@ function select(key: string) {
+   if (key === 'batch') emit('batch')
+   else if (key === 'all') emit('filter', null)
+   else if (key.startsWith('profile:')) emit('filter', key.slice('profile:'.length))
++  else if (key.startsWith('category-rename:')) {
++    emit('category-action', { action: 'rename', categoryId: Number(key.slice('category-rename:'.length)) })
++  } else if (key.startsWith('category-delete:')) {
++    emit('category-action', { action: 'delete', categoryId: Number(key.slice('category-delete:'.length)) })
++  }
+ }
+ </script>
+ 
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index e934870a8..b12216294 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -1288,6 +1288,7 @@ export default {
+     noSessions: 'لا توجد جلسات',
+     recent: 'الأخيرة',
+     recentCount: 'عدد الجلسات الأخيرة',
++    manageCategories: 'إدارة الفئات',
+     loadMoreSessions: 'تحميل جلسات أكثر',
+     searchTitle: 'البحث في الجلسات',
+     searchSubtitle: 'ابحث بالعنوان أو بمحتوى الرسالة',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 571a06dde..44c26e6ed 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1247,6 +1247,7 @@ export default {
+     noSessions: 'Keine Sitzungen',
+     recent: 'Zuletzt',
+     recentCount: 'Anzahl letzter Sitzungen',
++    manageCategories: 'Kategorien verwalten',
+     loadMoreSessions: 'Weitere Sitzungen laden',
+     newChat: 'Neuer Chat',
+     newChatCardTitle: "Jede Idee verdient einen guten Partner.",
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 01b07546a..050932020 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -1297,6 +1297,7 @@ export default {
+     noSessions: 'No sessions',
+     recent: 'Recent',
+     recentCount: 'Recent session count',
++    manageCategories: 'Manage categories',
+     loadMoreSessions: 'Load more sessions',
+     searchTitle: 'Search Sessions',
+     searchSubtitle: 'Search by title or message content',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 33f34d120..8e327308e 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1247,6 +1247,7 @@ export default {
+     noSessions: 'Sin sesiones',
+     recent: 'Recientes',
+     recentCount: 'Cantidad de sesiones recientes',
++    manageCategories: 'Gestionar categorías',
+     loadMoreSessions: 'Cargar más sesiones',
+     newChat: 'Nuevo chat',
+     newChatCardTitle: "Cada idea merece un buen compañero.",
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 77f2389c1..e655dc0a5 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1247,6 +1247,7 @@ export default {
+     noSessions: 'Aucune session',
+     recent: 'Récentes',
+     recentCount: 'Nombre de sessions récentes',
++    manageCategories: 'Gérer les catégories',
+     loadMoreSessions: 'Charger plus de sessions',
+     newChat: 'Nouvelle discussion',
+     newChatCardTitle: "Chaque idée mérite un bon partenaire.",
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 3539929e1..aed6b7c83 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1248,6 +1248,7 @@ export default {
+     noSessions: 'セッションがありません',
+     recent: '最近',
+     recentCount: '最近のセッション数',
++    manageCategories: 'カテゴリを管理',
+     loadMoreSessions: 'さらにセッションを読み込む',
+     newChat: '新しいチャット',
+     newChatCardTitle: "どんなアイデアにも、頼れるパートナーを。",
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 9ecf04f4e..b1dad9e70 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1248,6 +1248,7 @@ export default {
+     noSessions: '세션 없음',
+     recent: '최근',
+     recentCount: '최근 세션 수',
++    manageCategories: '카테고리 관리',
+     loadMoreSessions: '세션 더 불러오기',
+     newChat: '새 채팅',
+     newChatCardTitle: "모든 아이디어에는 좋은 파트너가 필요합니다.",
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 1553fd917..8842694d9 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1247,6 +1247,7 @@ export default {
+     noSessions: 'Sem sessões',
+     recent: 'Recentes',
+     recentCount: 'Quantidade de sessões recentes',
++    manageCategories: 'Gerenciar categorias',
+     loadMoreSessions: 'Carregar mais sessões',
+     newChat: 'Novo chat',
+     newChatCardTitle: "Toda ideia merece um bom parceiro.",
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 531fee232..198177a13 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -1188,6 +1188,7 @@ export default {
+     noSessions: 'Нет сеансов',
+     recent: 'Недавние',
+     recentCount: 'Количество недавних сессий',
++    manageCategories: 'Управление категориями',
+     loadMoreSessions: 'Загрузить ещё сеансы',
+     searchTitle: 'Поиск сеансов',
+     searchSubtitle: 'Поиск по заголовку или содержимому сообщений',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 15c6f5f3c..5b16e18fb 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -1289,6 +1289,7 @@ export default {
+     noSessions: '目前無工作階段',
+     recent: '最近',
+     recentCount: '最近會話數量',
++    manageCategories: '管理分類',
+     loadMoreSessions: '載入更多工作階段',
+     searchTitle: '搜尋工作階段',
+     searchSubtitle: '依標題或訊息內容搜尋',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index eb97381a7..ac4e3c01a 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -1298,6 +1298,7 @@ export default {
+     noSessions: '暂无会话',
+     recent: '最近',
+     recentCount: '最近会话数量',
++    manageCategories: '管理分类',
+     loadMoreSessions: '加载更多会话',
+     searchTitle: '搜索会话',
+     searchSubtitle: '按标题或消息内容搜索',
+diff --git a/tests/client/session-category-groups.test.ts b/tests/client/session-category-groups.test.ts
+index ccdd73239..6d5d73b5a 100644
+--- a/tests/client/session-category-groups.test.ts
++++ b/tests/client/session-category-groups.test.ts
+@@ -1,103 +1,45 @@
+ import { describe, expect, it } from 'vitest'
+ 
+-import {
+-  buildRecentSessionCategoryGroup,
+-  buildVisibleSessionCategoryGroups,
+-  partitionRecentSessions,
+-} from '../../packages/client/src/components/hermes/chat/session-category-groups'
++import { partitionRecentSessions } from '../../packages/client/src/components/hermes/chat/session-category-groups'
+ 
+-describe('session category groups', () => {
+-  it('hides categories that have no visible sessions', () => {
+-    const groups = buildVisibleSessionCategoryGroups(
+-      [
+-        { id: 1, name: 'Work' },
+-        { id: 2, name: 'Empty' },
+-      ],
+-      [
+-        { id: 'session-1', categoryId: 1 },
+-        { id: 'session-2', categoryId: null },
+-      ],
+-      'Uncategorized',
+-    )
+-
+-    expect(groups.map((group) => [group.key, group.sessions.length])).toEqual([
+-      ['category-1', 1],
+-      ['category-none', 1],
+-    ])
+-  })
+-
+-  it('returns no groups when the session list is empty', () => {
+-    expect(buildVisibleSessionCategoryGroups(
+-      [{ id: 1, name: 'Work' }],
+-      [],
+-      'Uncategorized',
+-    )).toEqual([])
+-  })
+-
+-  it('hides the uncategorized group when there are no user-defined categories', () => {
+-    const groups = buildVisibleSessionCategoryGroups(
+-      [],
+-      [
+-        { id: 'session-1', categoryId: null },
+-        { id: 'session-2', categoryId: 999 },
+-      ],
+-      'Uncategorized',
+-    )
+-
+-    expect(groups).toEqual([])
+-  })
+-
+-  it('shows sessions with deleted or unknown categories as uncategorized', () => {
+-    const groups = buildVisibleSessionCategoryGroups(
+-      [{ id: 1, name: 'Work' }],
+-      [{ id: 'session-1', categoryId: 999 }],
+-      'Uncategorized',
+-    )
+-
+-    expect(groups).toEqual([{
+-      key: 'category-none',
+-      label: 'Uncategorized',
+-      sessions: [{ id: 'session-1', categoryId: 999 }],
+-    }])
+-  })
+-
+-  it('builds a dynamic recent group by strict activity time without changing real categories', () => {
++describe('recent session partition', () => {
++  it('orders by strict activity time and splits the newest page from the rest', () => {
+     const sessions = [
+-      { id: 'older', categoryId: 1, updatedAt: 100 },
+-      { id: 'newest', categoryId: null, updatedAt: 300 },
+-      { id: 'middle', categoryId: 2, updatedAt: 200 },
++      { id: 'older', updatedAt: 100 },
++      { id: 'newest', updatedAt: 300 },
++      { id: 'middle', updatedAt: 200 },
+     ]
+ 
+-    expect(buildRecentSessionCategoryGroup(sessions, 2, 'Recent')).toEqual({
++    const partition = partitionRecentSessions(sessions, 2, 'Recent')
++
++    expect(partition.group).toEqual({
+       key: 'recent',
+       label: 'Recent',
+       sessions: [sessions[1], sessions[2]],
+     })
+-    expect(sessions.map(session => session.categoryId)).toEqual([1, null, 2])
++    expect(partition.remaining.map(session => session.id)).toEqual(['older'])
++    // The source list must never be reordered in place.
++    expect(sessions.map(session => session.id)).toEqual(['older', 'newest', 'middle'])
+   })
+ 
+-  it('keeps recent sessions in their sidebar categories', () => {
+-    const sessions = [
+-      { id: 'older-pinned', categoryId: 1, updatedAt: 100 },
+-      { id: 'newest-categorized', categoryId: 1, updatedAt: 300 },
+-      { id: 'middle-uncategorized', categoryId: null, updatedAt: 200 },
+-    ]
++  it('grows the visible window by page size so "load more" appends older sessions', () => {
++    const sessions = Array.from({ length: 5 }, (_, index) => ({
++      id: `session-${index}`,
++      updatedAt: 1000 - index,
++    }))
++
++    expect(partitionRecentSessions(sessions, 2, 'Recent').group.sessions.map(s => s.id))
++      .toEqual(['session-0', 'session-1'])
++    expect(partitionRecentSessions(sessions, 4, 'Recent').group.sessions.map(s => s.id))
++      .toEqual(['session-0', 'session-1', 'session-2', 'session-3'])
++    expect(partitionRecentSessions(sessions, 6, 'Recent').remaining).toEqual([])
++  })
+ 
+-    const partition = partitionRecentSessions(sessions, 2, 'Recent')
+-    const otherGroups = buildVisibleSessionCategoryGroups(
+-      [{ id: 1, name: 'Work' }],
+-      partition.remaining,
+-      'Uncategorized',
+-    )
++  it('clamps the limit to a sane page size', () => {
++    const sessions = [{ id: 'only', updatedAt: 1 }]
+ 
+-    expect(partition.group.sessions.map(session => session.id)).toEqual([
+-      'newest-categorized',
+-      'middle-uncategorized',
+-    ])
+-    expect(otherGroups.flatMap(group => group.sessions.map(session => session.id))).toEqual([
+-      'older-pinned',
+-      'newest-categorized',
+-      'middle-uncategorized',
+-    ])
++    expect(partitionRecentSessions(sessions, 0, 'Recent').group.sessions).toHaveLength(1)
++    expect(partitionRecentSessions(sessions, Number.NaN, 'Recent').group.sessions).toHaveLength(1)
++    expect(partitionRecentSessions(sessions, 5000, 'Recent').group.sessions).toHaveLength(1)
+   })
+ })
+diff --git a/tests/e2e/session-categories.spec.ts b/tests/e2e/session-categories.spec.ts
+index 0a5451bea..69ea92ec6 100644
+--- a/tests/e2e/session-categories.spec.ts
++++ b/tests/e2e/session-categories.spec.ts
+@@ -51,13 +51,8 @@ test.beforeEach(async ({ page }) => {
+   })
+ })
+ 
+-test('groups sessions by category and persists collapsed groups', async ({ page }) => {
++test('lists pinned and recent sessions without category groups', async ({ page }) => {
+   await authenticate(page, TEST_ACCESS_KEY, 'research')
+-  await page.addInitScript(() => {
+-    if (localStorage.getItem('hermes_chat_collapsed_categories') === null) {
+-      localStorage.setItem('hermes_chat_collapsed_categories', '[]')
+-    }
+-  })
+   await mockHermesApi(page, {
+     sessionCategories: [{ id: 1, name: 'Work' }, { id: 2, name: 'Empty' }],
+     sessions: [
+@@ -75,21 +70,20 @@ test('groups sessions by category and persists collapsed groups', async ({ page
+   await expect(recentHeader).toBeVisible()
+   await expect(recentHeader.locator('.session-group-count')).toHaveText('3')
+   await expect(page.locator('.session-group-header').first()).toContainText('Recent')
+-  const workHeader = page.locator('.session-group-header').filter({ hasText: 'Work' })
+-  await expect(workHeader).toBeVisible()
+-  await expect(workHeader.locator('.session-group-count')).toHaveText('2')
+-  await expect(page.locator('.session-group-header').filter({ hasText: 'Uncategorized' })).toBeVisible()
+-  await expect(page.locator('.session-group-header').filter({ hasText: 'Empty' })).toHaveCount(0)
+-  await expect(page.getByRole('link', { name: /Project Alpha/ }).first()).toBeVisible()
+-  await expect(page.getByRole('link', { name: /Project Beta/ }).first()).toBeVisible()
+-  await expect(page.getByRole('link', { name: /Project Alpha/ }).first().locator('.session-item-category-tag')).toHaveText('Work')
+-  await expect(page.getByRole('link', { name: /General Notes/ }).first().locator('.session-item-category-tag')).toHaveText('Uncategorized')
+-  await expect(page.getByRole('link', { name: /Project Alpha/ }).last().locator('.session-item-category-tag')).toHaveCount(0)
++  // Categories are no longer sidebar sections: only the recent group remains.
++  await expect(page.locator('.session-group-header')).toHaveCount(1)
++  await expect(page.locator('.session-group-header').filter({ hasText: 'Work' })).toHaveCount(0)
++  await expect(page.locator('.session-group-header').filter({ hasText: 'Uncategorized' })).toHaveCount(0)
++  await expect(page.getByRole('link', { name: /Project Alpha/ })).toHaveCount(1)
++  await expect(page.getByRole('link', { name: /Project Beta/ })).toHaveCount(1)
++  // The category survives as a subtitle tag on the session row.
++  await expect(page.getByRole('link', { name: /Project Alpha/ }).locator('.session-item-category-tag')).toHaveText('Work')
++  await expect(page.getByRole('link', { name: /General Notes/ }).locator('.session-item-category-tag')).toHaveText('Uncategorized')
+ 
+   await expect(recentToggle).toHaveAttribute('aria-expanded', 'true')
+   await recentToggle.press('Enter')
+   await expect(recentToggle).toHaveAttribute('aria-expanded', 'false')
+-  await expect(page.getByRole('link', { name: /Project Alpha/ }).first()).toHaveCount(1)
++  await expect(page.getByRole('link', { name: /Project Alpha/ })).toHaveCount(0)
+   await expect.poll(() => page.evaluate(() => localStorage.getItem('hermes_recent_sessions_collapsed_v1'))).toBe('true')
+ 
+   await recentToggle.press(' ')
+@@ -101,23 +95,20 @@ test('groups sessions by category and persists collapsed groups', async ({ page
+   await recentDialog.getByRole('button', { name: 'OK', exact: true }).click()
+   await expect(recentHeader.locator('.session-group-count')).toHaveText('2')
+   await expect.poll(() => page.evaluate(() => localStorage.getItem('hermes_recent_session_count_v1'))).toBe('2')
+-  await expect(workHeader).toBeVisible()
+-  await expect(workHeader.locator('.session-group-count')).toHaveText('2')
+-  await expect(recentToggle).toHaveAttribute('aria-expanded', 'true')
++  await expect(page.getByRole('link', { name: /Project Beta/ })).toHaveCount(0)
++  await expect(page.locator('.session-load-more')).toBeVisible()
+ 
+-  await workHeader.click()
+-  await expect(page.getByText('Project Alpha', { exact: true })).toHaveCount(1)
+-  await expect(page.getByText('Project Beta', { exact: true })).toHaveCount(0)
+-  await expect.poll(() => page.evaluate(() => localStorage.getItem('hermes_chat_collapsed_categories')))
+-    .toContain('category-1')
++  await page.locator('.session-load-more').click()
++  await expect(page.getByRole('link', { name: /Project Beta/ })).toHaveCount(1)
++  await expect(page.locator('.session-load-more')).toHaveCount(0)
+ 
+   await page.reload()
+-  await expect(page.locator('.session-group-header').filter({ hasText: 'Work' })).toBeVisible()
+-  await expect(page.getByText('Project Alpha', { exact: true })).toHaveCount(1)
++  await expect(page.locator('.session-group-header')).toHaveCount(1)
+   await expect(recentHeader.locator('.session-group-count')).toHaveText('2')
++  await expect(page.getByText('Project Beta', { exact: true })).toHaveCount(0)
+ })
+ 
+-test('keeps manually collapsed categories closed across polling and foreground refreshes', async ({ page }) => {
++test('keeps the recent window while polling and on foreground refresh', async ({ page }) => {
+   await authenticate(page, TEST_ACCESS_KEY, 'research')
+   await page.clock.install()
+   const sessions = [
+@@ -131,11 +122,9 @@ test('keeps manually collapsed categories closed across polling and foreground r
+   await mockChatSocket(page)
+   await page.goto('/#/hermes/session/work-session')
+ 
+-  const workHeader = page.locator('.session-group-header').filter({ hasText: 'Work' })
+-  const workChevron = workHeader.locator('.group-chevron')
+-  await expect(workChevron).not.toHaveClass(/collapsed/)
+-  await workHeader.click()
+-  await expect(workChevron).toHaveClass(/collapsed/)
++  const recentHeader = page.locator('.session-group-header').filter({ hasText: 'Recent' })
++  const recentChevron = recentHeader.locator('.group-chevron')
++  await expect(recentChevron).not.toHaveClass(/collapsed/)
+ 
+   await page.clock.runFor(100)
+   const listRequests = () => api.requests.filter(request => request.pathname === '/api/studio/sessions').length
+@@ -144,62 +133,13 @@ test('keeps manually collapsed categories closed across polling and foreground r
+   await page.clock.fastForward(12_000)
+   await expect.poll(listRequests).toBeGreaterThan(beforePoll)
+   await expect(page.getByRole('link', { name: /Project Alpha Updated/ })).toHaveCount(1)
+-  await expect(workChevron).toHaveClass(/collapsed/)
+ 
+-  // A refresh that adds another visible category must also preserve the user's choice.
++  // A refresh that adds another session keeps it inside the same single group.
+   sessions.push(sessionSummary('other-session', 'Other Project', 2, 300))
+   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+-  await expect(page.locator('.session-group-header').filter({ hasText: 'Other' })).toBeVisible()
+-  await expect(workChevron).toHaveClass(/collapsed/)
+-  await expect.poll(() => page.evaluate(() => localStorage.getItem('hermes_chat_collapsed_categories')))
+-    .toContain('category-1')
++  await expect(page.getByRole('link', { name: /Other Project/ })).toHaveCount(1)
++  await expect(page.locator('.session-group-header')).toHaveCount(1)
+   await expect(page).toHaveURL(/\/hermes\/session\/work-session$/)
+-
+-  // Ordinary navigation still reveals the selected session's category.
+-  await page.goto('/#/hermes/session/notes-session')
+-  await page.goto('/#/hermes/session/work-session')
+-  await expect(workChevron).not.toHaveClass(/collapsed/)
+-})
+-
+-test('selects a recent session without expanding its collapsed category', async ({ page }) => {
+-  await authenticate(page, TEST_ACCESS_KEY, 'research')
+-  await mockHermesApi(page, {
+-    sessionCategories: [{ id: 1, name: 'Work' }],
+-    sessions: [
+-      sessionSummary('work-session', 'Project Alpha', 1, 200),
+-      sessionSummary('uncategorized-session', 'General Notes', null, 100),
+-    ],
+-  })
+-  await mockChatSocket(page)
+-
+-  await page.goto('/#/hermes/chat')
+-
+-  const workHeader = page.locator('.session-group-header').filter({ hasText: 'Work' })
+-  const recentSession = page.getByRole('link', { name: /Project Alpha/ }).first()
+-  await page.getByRole('link', { name: /General Notes/ }).first().click()
+-  await expect(page).toHaveURL(/\/hermes\/session\/uncategorized-session$/)
+-
+-  await expect(workHeader).toBeVisible()
+-  await workHeader.click()
+-  await expect(page.getByRole('link', { name: /Project Alpha/ })).toHaveCount(1)
+-  await expect.poll(() => page.evaluate(() => localStorage.getItem('hermes_chat_collapsed_categories')))
+-    .toContain('category-1')
+-
+-  await recentSession.click()
+-
+-  await expect(page).toHaveURL(/\/hermes\/session\/work-session$/)
+-  await expect(recentSession).toHaveClass(/active/)
+-  await expect(page.getByRole('link', { name: /Project Alpha/ })).toHaveCount(1)
+-  await expect.poll(() => page.evaluate(() => localStorage.getItem('hermes_chat_collapsed_categories')))
+-    .toContain('category-1')
+-
+-  await page.reload()
+-
+-  await expect(page).toHaveURL(/\/hermes\/session\/work-session$/)
+-  await expect(page.getByRole('link', { name: /Project Alpha/ }).first()).toHaveClass(/active/)
+-  await expect(page.getByRole('link', { name: /Project Alpha/ })).toHaveCount(1)
+-  await expect.poll(() => page.evaluate(() => localStorage.getItem('hermes_chat_collapsed_categories')))
+-    .toContain('category-1')
+ })
+ 
+ test('persists the collapsed recent group across reloads without changing the active session', async ({ page }) => {
+@@ -225,7 +165,8 @@ test('persists the collapsed recent group across reloads without changing the ac
+   await page.reload()
+   await expect(recentToggle).toHaveAttribute('aria-expanded', 'false')
+   await expect(page).toHaveURL(/\/hermes\/session\/work-session$/)
+-  await expect(page.getByRole('link', { name: /Project Alpha/ })).toHaveCount(1)
++  // The recent group is the only sidebar group, so a collapsed state hides every row.
++  await expect(page.getByRole('link', { name: /Project Alpha/ })).toHaveCount(0)
+ })
+ 
+ test('hides the entire recent group from settings and restores its saved count', async ({ page }) => {
+@@ -255,16 +196,11 @@ test('hides the entire recent group from settings and restores its saved count',
+   await expect.poll(() => page.evaluate(() => localStorage.getItem('hermes_show_recent_sessions_v1'))).toBe('false')
+ 
+   await page.goto('/#/hermes/chat')
++  // Recent is the only sidebar group, so hiding it leaves the list empty by design.
+   await expect(recentHeader).toHaveCount(0)
+   await expect(page.locator('.session-group-config')).toHaveCount(0)
+-  const workHeader = page.locator('.session-group-header').filter({ hasText: 'Work' })
+-  const uncategorizedHeader = page.locator('.session-group-header').filter({ hasText: 'Uncategorized' })
+-  await expect(workHeader.locator('.session-group-count')).toHaveText('1')
+-  await expect(uncategorizedHeader.locator('.session-group-count')).toHaveText('2')
+-  await expect(page.getByRole('link', { name: /Latest Notes/ })).toHaveCount(1)
+-  await workHeader.click()
+-  await expect(page.getByRole('link', { name: /Project Alpha/ })).toHaveCount(1)
+-  await expect(page.getByRole('link', { name: /Older Notes/ })).toHaveCount(1)
++  await expect(page.locator('.session-group-header')).toHaveCount(0)
++  await expect(page.locator('.session-load-more')).toHaveCount(0)
+ 
+   await page.reload()
+   await expect(recentHeader).toHaveCount(0)
+@@ -321,12 +257,8 @@ test('creates a category in the new chat selector and sends its id with the firs
+   expect(api.unexpectedRequests).toEqual([])
+ })
+ 
+-test('renames and deletes a category from its context menu', async ({ page }) => {
++test('renames and deletes a category from the session list actions menu', async ({ page }) => {
+   await authenticate(page, TEST_ACCESS_KEY, 'research')
+-  await page.addInitScript(() => {
+-    localStorage.setItem('hermes_chat_collapsed_categories', '[]')
+-    localStorage.setItem('hermes_recent_session_count_v1', '2')
+-  })
+   const api = await mockHermesApi(page, {
+     sessionCategories: [{ id: 1, name: 'Work' }],
+     sessions: [
+@@ -338,28 +270,35 @@ test('renames and deletes a category from its context menu', async ({ page }) =>
+ 
+   await page.goto('/#/hermes/chat')
+ 
+-  const workHeader = page.locator('.session-group-header').filter({ hasText: 'Work' })
+-  await workHeader.getByRole('button', { name: 'More' }).click()
+-  await page.getByText('Rename category', { exact: true }).click()
++  // Categories are not sidebar groups any more, so their management lives in
++  // the session list actions menu.
++  await page.getByRole('button', { name: 'Session list actions' }).click()
++  await page.locator('.n-dropdown-option').filter({ hasText: 'Manage categories' }).hover()
++  await page.locator('.n-dropdown-option:visible').filter({ hasText: /^Work$/ }).first().hover()
++  await page.locator('.n-dropdown-option:visible')
++    .filter({ hasText: /^Rename category$/ })
++    .locator(':scope > .n-dropdown-option-body')
++    .evaluate((element: HTMLElement) => element.click())
+   const renameDialog = page.getByRole('dialog').filter({ hasText: 'Rename category' })
+   await renameDialog.getByRole('textbox').fill('Client Work')
+   await renameDialog.getByRole('button', { name: 'OK', exact: true }).click()
+   await expect(page.getByText('Category renamed')).toBeVisible()
+-  await expect(page.locator('.session-group-header').filter({ hasText: 'Client Work' })).toBeVisible()
+-  await expect(page.getByRole('link', { name: /Project Alpha/ }).first().locator('.session-item-category-tag')).toHaveText('Client Work')
++  await expect(page.getByRole('link', { name: /Project Alpha/ }).locator('.session-item-category-tag')).toHaveText('Client Work')
+ 
+-  const renamedHeader = page.locator('.session-group-header').filter({ hasText: 'Client Work' })
+-  await renamedHeader.getByRole('button', { name: 'More' }).click()
+-  await page.getByText('Delete category', { exact: true }).click()
++  await page.getByRole('button', { name: 'Session list actions' }).click()
++  await page.locator('.n-dropdown-option').filter({ hasText: 'Manage categories' }).hover()
++  await page.locator('.n-dropdown-option:visible').filter({ hasText: /^Client Work$/ }).first().hover()
++  await page.locator('.n-dropdown-option:visible')
++    .filter({ hasText: /^Delete category$/ })
++    .locator(':scope > .n-dropdown-option-body')
++    .evaluate((element: HTMLElement) => element.click())
+   const deleteDialog = page.getByRole('dialog').filter({ hasText: 'Delete category' })
+   await expect(deleteDialog).toContainText('Its sessions will move to Uncategorized')
+   await deleteDialog.getByRole('button', { name: 'Delete', exact: true }).click()
+ 
+   await expect(page.getByText('Category deleted')).toBeVisible()
++  await expect(page.getByRole('link', { name: /Project Alpha/ }).locator('.session-item-category-tag')).toHaveText('Uncategorized')
+   await expect(page.locator('.session-group-header').filter({ hasText: 'Client Work' })).toHaveCount(0)
+-  await expect(page.locator('.session-group-header').filter({ hasText: 'Uncategorized' })).toBeVisible()
+-  await expect(page.getByRole('link', { name: /Project Alpha/ }).first()).toBeVisible()
+-  await expect(page.getByRole('link', { name: /Project Alpha/ }).first().locator('.session-item-category-tag')).toHaveText('Uncategorized')
+   expect(api.requests.some(request =>
+     request.method === 'PATCH' && request.pathname === '/api/studio/session-categories/1',
+   )).toBe(true)
+@@ -371,7 +310,6 @@ test('renames and deletes a category from its context menu', async ({ page }) =>
+ test('moves a session to another category from its context menu', async ({ page }) => {
+   await authenticate(page, TEST_ACCESS_KEY, 'research')
+   await page.addInitScript(() => {
+-    localStorage.setItem('hermes_chat_collapsed_categories', '[]')
+     localStorage.setItem('hermes_recent_session_count_v1', '2')
+   })
+   const api = await mockHermesApi(page, {
+@@ -399,8 +337,7 @@ test('moves a session to another category from its context menu', async ({ page
+   await workOption.evaluate((element: HTMLElement) => element.click())
+ 
+   await expect(page.getByText('Category updated')).toBeVisible()
+-  await expect(page.locator('.session-group-header').filter({ hasText: 'Work' })).toBeVisible()
+-  await expect(page.getByRole('link', { name: /General Notes/ }).first()).toBeVisible()
++  await expect(page.getByRole('link', { name: /General Notes/ }).first().locator('.session-item-category-tag')).toHaveText('Work')
+   const moveRequest = api.requests.find(request =>
+     request.method === 'POST' && request.pathname === '/api/studio/sessions/general-session/category',
+   )
+@@ -480,7 +417,6 @@ test('keeps category actions covered until the destination list finishes loading
+ test('creates a category and moves the session from its context menu', async ({ page }) => {
+   await authenticate(page, TEST_ACCESS_KEY, 'research')
+   await page.addInitScript(() => {
+-    localStorage.setItem('hermes_chat_collapsed_categories', '[]')
+     localStorage.setItem('hermes_recent_session_count_v1', '2')
+   })
+   const api = await mockHermesApi(page, {
+@@ -526,7 +462,6 @@ test('creates a category and moves the session from its context menu', async ({
+ 
+   await expect(page.getByText('Category "Client Work" created and session moved')).toBeVisible()
+   await expect(createDialog).toBeHidden()
+-  await expect(page.locator('.session-group-header').filter({ hasText: 'Client Work' })).toBeVisible()
+   await expect(page.getByRole('link', { name: /General Notes/ }).first().locator('.session-item-category-tag')).toHaveText('Client Work')
+ 
+   const createRequests = api.requests.filter(request =>
+-- 
+2.53.0
+

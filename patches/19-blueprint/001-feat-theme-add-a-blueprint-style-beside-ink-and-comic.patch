@@ -1,0 +1,587 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 14 Oct 2026 23:10:09 +0800
+Subject: [PATCH] feat(theme): add a blueprint style beside ink and comic
+
+Light-first drafting look: cold-paper body with an ink-blue accent and a 16px
+fine + 80px module grid on the app background; the dark variant switches to a
+deep navy paper with a sky-blue accent. Wired as a third ThemeStyle next to the
+upstream ink/comic pair (no table-driven generalisation): the composable learns
+one more value and class, getThemeOverrides takes an isBlueprint flag with its
+own palette, and the style picker gains one option in all 12 locales.
+---
+ packages/client/src/App.vue                   |  9 +-
+ packages/client/src/api/studio/theme.ts       |  2 +-
+ packages/client/src/composables/useTheme.ts   | 13 ++-
+ packages/client/src/i18n/locales/ar.ts        |  1 +
+ packages/client/src/i18n/locales/de.ts        |  1 +
+ packages/client/src/i18n/locales/en.ts        |  1 +
+ packages/client/src/i18n/locales/es.ts        |  1 +
+ packages/client/src/i18n/locales/fr.ts        |  1 +
+ packages/client/src/i18n/locales/ja.ts        |  1 +
+ packages/client/src/i18n/locales/ko.ts        |  1 +
+ packages/client/src/i18n/locales/pt.ts        |  1 +
+ packages/client/src/i18n/locales/ru.ts        |  1 +
+ packages/client/src/i18n/locales/tr.ts        |  2 +-
+ packages/client/src/i18n/locales/zh-TW.ts     |  1 +
+ packages/client/src/i18n/locales/zh.ts        |  1 +
+ packages/client/src/styles/global.scss        |  1 +
+ packages/client/src/styles/style-layers.scss  |  7 ++
+ packages/client/src/styles/theme.ts           | 87 +++++++++++++++++-
+ packages/client/src/styles/variables.scss     | 91 +++++++++++++++++++
+ .../client/src/views/hermes/ThemeView.vue     |  1 +
+ .../studio/repositories/user-theme-store.ts   | 10 +-
+ packages/shared/theme-archive.ts              |  2 +-
+ 22 files changed, 222 insertions(+), 14 deletions(-)
+
+diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
+index 9356f30e7..e341ae276 100644
+--- a/packages/client/src/App.vue
++++ b/packages/client/src/App.vue
+@@ -95,6 +95,7 @@ const {
+   customization,
+   hasCustomBackground,
+   syncThemeFromServer,
++  isBlueprint,
+ } = useTheme();
+ const { t, locale } = useI18n();
+ const naiveLocale = computed(() => naiveLocaleFor(locale.value));
+@@ -105,7 +106,13 @@ const route = useRoute();
+ const { sessionSearchOpen } = useSessionSearch();
+ 
+ const themeOverrides = computed(() =>
+-  getThemeOverrides(isDark.value, isComic.value, customization.value, hasCustomBackground.value),
++  getThemeOverrides(
++    isDark.value,
++    isComic.value,
++    customization.value,
++    hasCustomBackground.value,
++    isBlueprint.value,
++  ),
+ );
+ const naiveTheme = computed(() => (isDark.value ? darkTheme : null));
+ 
+diff --git a/packages/client/src/api/studio/theme.ts b/packages/client/src/api/studio/theme.ts
+index 2545ba62d..aa2656676 100644
+--- a/packages/client/src/api/studio/theme.ts
++++ b/packages/client/src/api/studio/theme.ts
+@@ -9,7 +9,7 @@ import {
+ export interface UserThemeSettings {
+   activePresetId?: string
+   brightness?: 'system' | 'light' | 'dark'
+-  style?: 'ink' | 'comic'
++  style?: 'ink' | 'comic' | 'blueprint'
+   fontSize: number
+   textColor: string | null
+   accentColor: string | null
+diff --git a/packages/client/src/composables/useTheme.ts b/packages/client/src/composables/useTheme.ts
+index bae59edae..fce9a106c 100644
+--- a/packages/client/src/composables/useTheme.ts
++++ b/packages/client/src/composables/useTheme.ts
+@@ -22,7 +22,7 @@ import {
+ } from '@/styles/theme-customization'
+ 
+ export type BrightnessMode = 'light' | 'dark' | 'system'
+-export type ThemeStyle = 'ink' | 'comic'
++export type ThemeStyle = 'ink' | 'comic' | 'blueprint'
+ 
+ const BRIGHTNESS_KEY = 'hermes_brightness'
+ const STYLE_KEY = 'hermes_style'
+@@ -76,7 +76,7 @@ function normalizeServerTheme(value: unknown): UserThemeSettings {
+     ...customization,
+     ...(typeof record.activePresetId === 'string' ? { activePresetId: record.activePresetId } : {}),
+     ...(['system', 'light', 'dark'].includes(String(record.brightness)) ? { brightness: record.brightness as BrightnessMode } : {}),
+-    ...(['ink', 'comic'].includes(String(record.style)) ? { style: record.style as ThemeStyle } : {}),
++    ...(['ink', 'comic', 'blueprint'].includes(String(record.style)) ? { style: record.style as ThemeStyle } : {}),
+     appearance: normalizeThemeAppearance(record.appearance),
+     background,
+     updatedAt: Number.isFinite(Number(record.updatedAt)) ? Number(record.updatedAt) : 0,
+@@ -97,9 +97,13 @@ const brightness = ref<BrightnessMode>(
+   (localStorage.getItem(BRIGHTNESS_KEY) as BrightnessMode) || 'system',
+ )
+ // Keep this in sync with the pre-render theme in index.html.
+-const style = ref<ThemeStyle>(localStorage.getItem(STYLE_KEY) === 'comic' ? 'comic' : 'ink')
++const storedStyle = localStorage.getItem(STYLE_KEY)
++const style = ref<ThemeStyle>(
++  storedStyle === 'comic' ? 'comic' : storedStyle === 'blueprint' ? 'blueprint' : 'ink',
++)
+ const isDark = ref(false)
+ const isComic = ref(false)
++const isBlueprint = ref(false)
+ const activeUserId = ref<number | null>(storedUserId())
+ const serverTheme = ref<UserThemeSettings>(loadCachedTheme(activeUserId.value))
+ const themePresets = ref<ThemePreset[]>([])
+@@ -182,8 +186,10 @@ function applyClasses() {
+   const dark = resolveDark(brightness.value)
+   isDark.value = dark
+   isComic.value = style.value === 'comic'
++  isBlueprint.value = style.value === 'blueprint'
+   document.documentElement.classList.toggle('dark', dark)
+   document.documentElement.classList.toggle('comic', isComic.value)
++  document.documentElement.classList.toggle('blueprint', isBlueprint.value)
+   applyCustomization()
+ }
+ 
+@@ -475,6 +481,7 @@ export function useTheme() {
+     style,
+     isDark,
+     isComic,
++    isBlueprint,
+     themeName,
+     customization,
+     appearance: computed(() => normalizeThemeAppearance(serverTheme.value.appearance)),
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index 76612ad20..213b733bc 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -2221,6 +2221,7 @@ export default {
+     styleHint: 'اختر طابع الواجهة',
+     styleInk: 'حبري',
+     styleComic: 'كوميك',
++    styleBlueprint: 'مخطط',
+     fontSize: 'حجم النص',
+     fontSizeHint: 'حجم النص الأساسي في الواجهة والمحادثة',
+     textColor: 'لون النص',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 104005a4b..e7eeba2bf 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -2023,6 +2023,7 @@ jobTriggered: 'Job ausgelost',
+     styleHint: 'Charakter der Oberfläche wählen',
+     styleInk: 'Tusche',
+     styleComic: 'Comic',
++    styleBlueprint: 'Blaupause',
+     fontSize: 'Textgröße',
+     fontSizeHint: 'Grundgröße für Oberfläche und Unterhaltungen',
+     textColor: 'Textfarbe',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index c8c86d9d3..ef08ba46c 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -2234,6 +2234,7 @@ export default {
+     styleHint: 'Choose the interface character',
+     styleInk: 'Ink',
+     styleComic: 'Comic',
++    styleBlueprint: 'Blueprint',
+     fontSize: 'Text size',
+     fontSizeHint: 'Base interface and conversation text size',
+     textColor: 'Text color',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 43ff591d2..4011c1751 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -2023,6 +2023,7 @@ jobTriggered: 'Job ejecutado',
+     styleHint: 'Elige el carácter de la interfaz',
+     styleInk: 'Tinta',
+     styleComic: 'Cómic',
++    styleBlueprint: 'Plano',
+     fontSize: 'Tamaño del texto',
+     fontSizeHint: 'Tamaño base de la interfaz y las conversaciones',
+     textColor: 'Color del texto',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index aca229393..918d49d1d 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -2023,6 +2023,7 @@ jobTriggered: 'Job declenche',
+     styleHint: 'Choisissez le caractère de l’interface',
+     styleInk: 'Encre',
+     styleComic: 'BD',
++    styleBlueprint: 'Plan',
+     fontSize: 'Taille du texte',
+     fontSizeHint: 'Taille de base de l’interface et des conversations',
+     textColor: 'Couleur du texte',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index bdb8ab92d..a0fb7ccbf 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -2024,6 +2024,7 @@ export default {
+     styleHint: '画面の雰囲気を選択',
+     styleInk: '墨',
+     styleComic: 'コミック',
++    styleBlueprint: 'ブループリント',
+     fontSize: '文字サイズ',
+     fontSizeHint: '画面と会話テキストの基本サイズ',
+     textColor: '文字色',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 612dc8058..30752ac4b 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -2024,6 +2024,7 @@ export default {
+     styleHint: '인터페이스 분위기 선택',
+     styleInk: '수묵',
+     styleComic: '코믹',
++    styleBlueprint: '블루프린트',
+     fontSize: '텍스트 크기',
+     fontSizeHint: '인터페이스와 대화의 기본 텍스트 크기',
+     textColor: '텍스트 색상',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 81e75fa74..9f0846921 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -2023,6 +2023,7 @@ jobTriggered: 'Job acionado',
+     styleHint: 'Escolha o caráter da interface',
+     styleInk: 'Tinta',
+     styleComic: 'Quadrinhos',
++    styleBlueprint: 'Planta',
+     fontSize: 'Tamanho do texto',
+     fontSizeHint: 'Tamanho base da interface e das conversas',
+     textColor: 'Cor do texto',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 2df4496f7..c5e3dcb9e 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -2014,6 +2014,7 @@ export default {
+     styleHint: 'Выберите характер интерфейса',
+     styleInk: 'Тушь',
+     styleComic: 'Комикс',
++    styleBlueprint: 'Чертёж',
+     fontSize: 'Размер текста',
+     fontSizeHint: 'Базовый размер текста интерфейса и диалогов',
+     textColor: 'Цвет текста',
+diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
+index 3bef90690..792aa4b9f 100644
+--- a/packages/client/src/i18n/locales/tr.ts
++++ b/packages/client/src/i18n/locales/tr.ts
+@@ -351,7 +351,7 @@ export default {
+     customization: themeAppearanceMessages['tr'],
+     title: 'Tema', saved: 'Tema kaydedildi', saveFailed: 'Tema kaydedilemedi', reset: 'Varsayılanları geri yükle', resetSuccess: 'Varsayılan tema geri yüklendi',
+     appearance: 'Görünüm', appearanceHint: 'Değişiklikler arayüz genelinde önizlenir', mode: 'Parlaklık', modeHint: 'Açık veya koyu palet seçin',
+-    modeSystem: 'Sistemi takip et', modeLight: 'Açık', modeDark: 'Koyu', style: 'Stil', styleHint: 'Arayüz karakterini seçin', styleInk: 'Mürekkep', styleComic: 'Çizgi roman',
++    modeSystem: 'Sistemi takip et', modeLight: 'Açık', modeDark: 'Koyu', style: 'Stil', styleHint: 'Arayüz karakterini seçin', styleInk: 'Mürekkep', styleComic: 'Çizgi roman', styleBlueprint: 'Teknik Çizim',
+     fontSize: 'Metin boyutu', fontSizeHint: 'Temel arayüz ve konuşma metni boyutu', textColor: 'Metin rengi', textColorHint: 'İkincil metin tonları otomatik oluşturulur',
+     accentColor: 'Seçim rengi', accentColorHint: 'Etkin öğelerde, seçimlerde ve birincil düğmelerde kullanılır', background: 'Arka plan görseli',
+     backgroundHint: 'Bir görsel veya hareketli duvar kâğıdı yükleyin', backgroundTypeError: 'PNG, JPEG, WebP, GIF veya APNG görseli kullanın', backgroundSizeError: 'Arka plan görselleri en fazla 30 MB olabilir',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index e51437876..000f5a14f 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -2181,6 +2181,7 @@ export default {
+     styleHint: '選擇介面的視覺風格',
+     styleInk: '水墨',
+     styleComic: '漫畫',
++    styleBlueprint: '藍圖',
+     fontSize: '文字大小',
+     fontSizeHint: '介面與對話內容的基礎字級',
+     textColor: '文字顏色',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 2000d2800..b2575e598 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -2227,6 +2227,7 @@ export default {
+     styleHint: '选择界面的视觉风格',
+     styleInk: '水墨',
+     styleComic: '漫画',
++    styleBlueprint: '蓝图',
+     fontSize: '文字大小',
+     fontSizeHint: '界面和对话内容的基础字号',
+     textColor: '文字颜色',
+diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
+index 15b552fb4..493938db5 100644
+--- a/packages/client/src/styles/global.scss
++++ b/packages/client/src/styles/global.scss
+@@ -1,6 +1,7 @@
+ @use 'variables' as *;
+ @use 'code-block';
+ @use 'theme-surfaces';
++@use 'style-layers';
+ 
+ @font-face {
+   font-family: 'Comic Neue';
+diff --git a/packages/client/src/styles/style-layers.scss b/packages/client/src/styles/style-layers.scss
+index 6eb391b37..f48d8905a 100644
+--- a/packages/client/src/styles/style-layers.scss
++++ b/packages/client/src/styles/style-layers.scss
+@@ -304,6 +304,13 @@ html.dark.blueprint body::after {
+     linear-gradient(90deg, rgba(125, 200, 255, 0.13) 1px, transparent 1px);
+ }
+ 
++// 蓝图：网格只铺页面底层（.app-shell/.app-layout），不叠加到内容之上 ——
++// body::after 是 z-index:3 的全屏层，会把网格压在文字与气泡上，观感发脏。
++html.blueprint body::after,
++html.dark.blueprint body::after {
++  background-image: none;
++}
++
+ // warm carries only the vignette at page level (see its block above); graphite
+ // gets no overlay at all, which is the point of that style.
+ html.warm body::after {
+diff --git a/packages/client/src/styles/theme.ts b/packages/client/src/styles/theme.ts
+index 3f07b0c83..d9e4bb05a 100644
+--- a/packages/client/src/styles/theme.ts
++++ b/packages/client/src/styles/theme.ts
+@@ -181,14 +181,97 @@ export const darkThemeOverrides: GlobalThemeOverrides = {
+   },
+ }
+ 
++
++// ─── 蓝图 (blueprint) 调色板 ─────────────────────────────────────
++// Light-first: 冷白纸面 + 墨蓝主色；暗色为深海军蓝纸面 + 天蓝主色。
++const BLUEPRINT_LIGHT = {
++  primary: '#0b6bcb',
++  primaryHover: '#0f82f0',
++  primaryPressed: '#0955a3',
++  textOnPrimary: '#ffffff',
++  body: '#f4f7fb',
++  surface: '#ffffff',
++  action: '#eaf1f9',
++  sider: '#eaf0f7',
++  text1: '#10233a',
++  text2: '#46617f',
++  text3: '#7c93ab',
++  border: '#cfdcea',
++  hover: 'rgba(11, 107, 203, 0.06)',
++  menuActive: 'rgba(11, 107, 203, 0.10)',
++  menuActiveHover: 'rgba(11, 107, 203, 0.16)',
++}
++
++const BLUEPRINT_DARK = {
++  primary: '#38bdf8',
++  primaryHover: '#7dd3fc',
++  primaryPressed: '#0ea5e9',
++  textOnPrimary: '#04141f',
++  body: '#0d1b2a',
++  surface: '#122436',
++  action: '#0f1f2f',
++  sider: '#0b1725',
++  text1: '#d7e6f5',
++  text2: '#93aec7',
++  text3: '#62809b',
++  border: '#1e3448',
++  hover: 'rgba(120, 180, 240, 0.08)',
++  menuActive: 'rgba(56, 189, 248, 0.14)',
++  menuActiveHover: 'rgba(56, 189, 248, 0.24)',
++}
++
++function blueprintOverrides(isDark: boolean): GlobalThemeOverrides {
++  const p = isDark ? BLUEPRINT_DARK : BLUEPRINT_LIGHT
++  return {
++    common: {
++      primaryColor: p.primary,
++      primaryColorHover: p.primaryHover,
++      primaryColorPressed: p.primaryPressed,
++      primaryColorSuppl: p.primary,
++      bodyColor: p.body,
++      cardColor: p.surface,
++      modalColor: p.surface,
++      popoverColor: p.surface,
++      tableColor: p.surface,
++      inputColor: p.surface,
++      actionColor: p.action,
++      textColorBase: p.text1,
++      textColor1: p.text1,
++      textColor2: p.text2,
++      textColor3: p.text3,
++      dividerColor: p.border,
++      borderColor: p.border,
++      hoverColor: p.hover,
++    },
++    Layout: { color: p.body, siderColor: p.sider, headerColor: p.body },
++    Menu: {
++      itemTextColorActive: p.text1,
++      itemTextColorActiveHover: p.text1,
++      itemColorActive: p.menuActive,
++      itemColorActiveHover: p.menuActiveHover,
++      itemIconColorActiveHover: p.primaryHover,
++    },
++    Button: {
++      textColorPrimary: p.textOnPrimary,
++      colorPrimary: p.primary,
++      colorHoverPrimary: p.primaryHover,
++      colorPressedPrimary: p.primaryPressed,
++    },
++    Input: { color: p.surface, border: `1px solid ${p.border}` },
++  }
++}
++
+ export function getThemeOverrides(
+   isDark: boolean,
+   isComic?: boolean,
+   customization?: ThemeCustomization,
+   hasCustomBackground = false,
++  isBlueprint?: boolean,
+ ): GlobalThemeOverrides {
+-  const base = isDark ? darkThemeOverrides : lightThemeOverrides
+-  if (!isComic && !customization && !hasCustomBackground) return base
++  const base = isBlueprint
++    ? blueprintOverrides(isDark)
++    : isDark ? darkThemeOverrides : lightThemeOverrides
++  if (!isComic && !customization && !isBlueprint && !hasCustomBackground) return base
+   const comicFont = "'Comic Neue', 'ZCOOL KuaiLe', 'Zen Maru Gothic', 'Gaegu', cursive, sans-serif"
+   const custom = customization ? resolveThemeCustomization(customization, isDark) : null
+   const common = {
+diff --git a/packages/client/src/styles/variables.scss b/packages/client/src/styles/variables.scss
+index 54d4cd8c5..54a8529c0 100644
+--- a/packages/client/src/styles/variables.scss
++++ b/packages/client/src/styles/variables.scss
+@@ -176,6 +176,97 @@
+   --comic-shadow: 3px 3px 0px rgba(255, 255, 255, 0.08);
+ }
+ 
++
++// ─── 蓝图 (blueprint) ───────────────────────────────────────────
++// 制图网格：16px 细网格 + 80px 模块网格，墨蓝线；浅/暗只差线透明度。
++.blueprint {
++  // 冷白蓝图纸面 + 墨蓝主色
++  --bg-primary: #f4f7fb;
++  --bg-primary-rgb: 244, 247, 251;
++  --bg-secondary: #eaf0f7;
++  --bg-sidebar: #eaf0f7;
++  // 半透明卡面（style-layers 的设计契约：材质层要透出来，卡面必须半透明）
++  --bg-card: rgba(255, 255, 255, 0.72);
++  --bg-card-rgb: 255, 255, 255;
++  --bg-card-hover: rgba(244, 247, 251, 0.90);
++  --bg-input: rgba(255, 255, 255, 0.92);
++  --bg-main-surface: rgba(255, 255, 255, 0.72);
++  --bg-main-surface-rgb: 255, 255, 255;
++  --bg-sidebar-surface: rgba(255, 255, 255, 0.72);
++  --bg-sidebar-surface-rgb: 255, 255, 255;
++  --border-color: #cfdcea;
++  --border-light: #dde8f3;
++  --accent-primary: #0b6bcb;
++  --accent-hover: #0f82f0;
++  --accent-muted: #7c93ab;
++  --accent-primary-rgb: 11, 107, 203;
++  --text-primary: #10233a;
++  --text-primary-rgb: 16, 35, 58;
++  --text-secondary: #46617f;
++  --text-muted: #7c93ab;
++  --blueprint-line-weak: rgba(11, 107, 203, 0.11);
++  --blueprint-line-strong: rgba(11, 107, 203, 0.20);
++  // 气泡半透明，令底层制图网格透出（上游气泡默认不透明会整片盖住）
++  --msg-user-bg: rgba(248, 250, 253, 0.62);
++  --msg-assistant-bg: rgba(248, 250, 253, 0.62);
++}
++
++.dark.blueprint {
++  // 深海军蓝纸面 + 天蓝主色
++  --bg-primary: #0d1b2a;
++  --bg-primary-rgb: 13, 27, 42;
++  --bg-secondary: #0f1f2f;
++  --bg-sidebar: #0b1725;
++  --bg-card: rgba(18, 36, 54, 0.74);
++  --bg-card-rgb: 18, 36, 54;
++  --bg-card-hover: rgba(22, 41, 58, 0.90);
++  --bg-input: rgba(18, 36, 54, 0.92);
++  --bg-main-surface: rgba(18, 36, 54, 0.74);
++  --bg-main-surface-rgb: 18, 36, 54;
++  --bg-sidebar-surface: rgba(18, 36, 54, 0.74);
++  --bg-sidebar-surface-rgb: 18, 36, 54;
++  --border-color: #1e3448;
++  --border-light: #16293a;
++  --accent-primary: #38bdf8;
++  --accent-hover: #7dd3fc;
++  --accent-muted: #62809b;
++  --accent-primary-rgb: 56, 189, 248;
++  --text-primary: #d7e6f5;
++  --text-primary-rgb: 215, 230, 245;
++  --text-secondary: #93aec7;
++  --text-muted: #62809b;
++  --blueprint-line-weak: rgba(125, 200, 255, 0.10);
++  --blueprint-line-strong: rgba(125, 200, 255, 0.18);
++  --msg-user-bg: rgba(24, 43, 63, 0.66);
++  --msg-assistant-bg: rgba(24, 43, 63, 0.66);
++}
++
++// 制图网格：铺在「滚动面」自身（气泡的下一层），内容与气泡浮在网格之上，
++// 文字不被网格切割；气泡半透明后网格在其内部也读得出来。
++html.blueprint .app-shell,
++html.blueprint .app-layout,
++html.blueprint .virtual-message-list,
++html.blueprint .chat-main-content,
++html.blueprint .session-list,
++html.blueprint .message-list-shell {
++  background-image:
++    linear-gradient(var(--blueprint-line-weak) 1px, transparent 1px),
++    linear-gradient(90deg, var(--blueprint-line-weak) 1px, transparent 1px),
++    linear-gradient(var(--blueprint-line-strong) 1px, transparent 1px),
++    linear-gradient(90deg, var(--blueprint-line-strong) 1px, transparent 1px);
++  background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
++  background-attachment: fixed, fixed, fixed, fixed;
++}
++
++html.blueprint .app-main {
++  background-color: transparent;
++}
++
++html.blueprint .chat-main,
++html.blueprint .session-list {
++  border-color: var(--blueprint-line-strong);
++}
++
+ // ─── SCSS Variables (delegate to CSS custom properties) ────────
+ 
+ // Backgrounds
+diff --git a/packages/client/src/views/hermes/ThemeView.vue b/packages/client/src/views/hermes/ThemeView.vue
+index cceb46c7f..3a2d03bde 100644
+--- a/packages/client/src/views/hermes/ThemeView.vue
++++ b/packages/client/src/views/hermes/ThemeView.vue
+@@ -54,6 +54,7 @@ const brightnessOptions = computed(() => [
+ const styleOptions = computed(() => [
+   { label: t('theme.styleInk'), value: 'ink' },
+   { label: t('theme.styleComic'), value: 'comic' },
++  { label: t('theme.styleBlueprint'), value: 'blueprint' },
+ ])
+ const resolvedTextColor = computed(() =>
+   textColor.value || (isDark.value ? '#e0e0e0' : '#1a1a1a'),
+diff --git a/packages/server/src/modules/studio/repositories/user-theme-store.ts b/packages/server/src/modules/studio/repositories/user-theme-store.ts
+index 6250afd1d..91bb739f0 100644
+--- a/packages/server/src/modules/studio/repositories/user-theme-store.ts
++++ b/packages/server/src/modules/studio/repositories/user-theme-store.ts
+@@ -12,7 +12,7 @@ export interface UserThemeRecord {
+   userId: number
+   activePresetId: string | null
+   brightness: 'system' | 'light' | 'dark' | null
+-  style: 'ink' | 'comic' | null
++  style: 'ink' | 'comic' | 'blueprint' | null
+   fontSize: number
+   textColor: string | null
+   accentColor: string | null
+@@ -198,7 +198,7 @@ export function saveUserTheme(userIdValue: unknown, patch: UserThemePatch): User
+   }
+   assertActiveTheme(userId, patch.presetId)
+   const brightness = patch.brightness === undefined ? current.brightness : normalizeChoice(patch.brightness, ['system', 'light', 'dark'] as const)
+-  const style = patch.style === undefined ? current.style : normalizeChoice(patch.style, ['ink', 'comic'] as const)
++  const style = patch.style === undefined ? current.style : normalizeChoice(patch.style, ['ink', 'comic', 'blueprint'] as const)
+   return writeTheme({ ...current, fontSize, textColor, accentColor, appearance, brightness, style })
+ }
+ 
+@@ -319,7 +319,7 @@ export function normalizeImportedTheme(value: unknown): ThemeArchiveSettings {
+   catch (error) { throw new UserThemeValidationError((error as Error).message) }
+   return {
+     brightness: normalizeChoice(settings.brightness, ['system', 'light', 'dark'] as const),
+-    style: normalizeChoice(settings.style, ['ink', 'comic'] as const),
++    style: normalizeChoice(settings.style, ['ink', 'comic', 'blueprint'] as const),
+     fontSize: normalizeFontSize(settings.fontSize),
+     textColor: normalizeColor(settings.textColor, 'Text color'),
+     accentColor: normalizeColor(settings.accentColor, 'Accent color'),
+@@ -337,7 +337,7 @@ export function importThemePreset(
+   const name = normalizeName(input.name)
+   const settings = normalizeImportedTheme(input.settings)
+   const brightness = normalizeChoice(preferences.brightness ?? 'system', ['system', 'light', 'dark'] as const)
+-  const style = normalizeChoice(preferences.style ?? 'ink', ['ink', 'comic'] as const)
++  const style = normalizeChoice(preferences.style ?? 'ink', ['ink', 'comic', 'blueprint'] as const)
+   const db = requireDb()
+   db.exec('SAVEPOINT theme_import')
+   try {
+@@ -375,7 +375,7 @@ export function createThemePreset(userIdValue: unknown, input: { name?: unknown;
+   const userId = normalizeUserId(userIdValue)
+   const name = normalizeName(input.name)
+   const brightness = normalizeChoice(input.brightness ?? 'system', ['system', 'light', 'dark'] as const)
+-  const style = normalizeChoice(input.style ?? 'ink', ['ink', 'comic'] as const)
++  const style = normalizeChoice(input.style ?? 'ink', ['ink', 'comic', 'blueprint'] as const)
+   if (input.sourceId !== undefined) getThemePreset(userId, input.sourceId)
+   const db = requireDb()
+   db.exec('SAVEPOINT theme_create')
+diff --git a/packages/shared/theme-archive.ts b/packages/shared/theme-archive.ts
+index 6495e1149..b410a199e 100644
+--- a/packages/shared/theme-archive.ts
++++ b/packages/shared/theme-archive.ts
+@@ -8,7 +8,7 @@ export const MAX_THEME_MANIFEST_BYTES = 64 * 1024
+ 
+ export interface ThemeArchiveSettings {
+   brightness: 'system' | 'light' | 'dark'
+-  style: 'ink' | 'comic'
++  style: 'ink' | 'comic' | 'blueprint'
+   fontSize: number
+   textColor: string | null
+   accentColor: string | null

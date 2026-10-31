@@ -1,0 +1,204 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Wed, 14 Oct 2026 22:14:48 +0800
+Subject: [PATCH] fix(chat): rebase fork deltas onto upstream 0.7.35 structures
+
+- LiveReasoningStatus: keep the upstream agent-logo deployment target, carry the
+  fork speed/averageSpeed readings, source the logo from chat-agent-label
+- MessageItem: drop the ProfileAvatar import but keep the upstream author row
+- ChatInput: drop the now-unused remainingTokens computed
+---
+ docs/openapi.json                             | 48 +++++++++----------
+ .../src/components/hermes/chat/ChatInput.vue  |  1 -
+ .../hermes/chat/LiveReasoningStatus.vue       | 24 +++++++---
+ .../components/hermes/chat/MessageItem.vue    | 15 ++----
+ 4 files changed, 45 insertions(+), 43 deletions(-)
+
+diff --git a/docs/openapi.json b/docs/openapi.json
+index 23016a8c6..7d53d5a57 100644
+--- a/docs/openapi.json
++++ b/docs/openapi.json
+@@ -5216,32 +5216,6 @@
+         }
+       }
+     },
+-    "/api/hermes/api-relay/usage": {
+-      "get": {
+-        "tags": [
+-          "Providers"
+-        ],
+-        "summary": "Get usage",
+-        "description": "Read APIKEY.FAN usage, deduplicated across the current user's accessible profiles.",
+-        "operationId": "getRelayUsage",
+-        "security": [
+-          {
+-            "BearerAuth": []
+-          }
+-        ],
+-        "responses": {
+-          "200": {
+-            "description": "Success"
+-          },
+-          "401": {
+-            "$ref": "#/components/responses/Unauthorized"
+-          },
+-          "404": {
+-            "description": "Not found"
+-          }
+-        }
+-      }
+-    },
+     "/api/hermes/auth/anthropic/start": {
+       "post": {
+         "tags": [
+@@ -19746,6 +19720,17 @@
+           }
+         },
+         "parameters": [
++          {
++            "name": "archived",
++            "in": "query",
++            "required": false,
++            "schema": {
++              "type": "boolean",
++              "enum": [
++                "1"
++              ]
++            }
++          },
+           {
+             "name": "category",
+             "in": "query",
+@@ -21672,6 +21657,17 @@
+             "schema": {
+               "type": "string"
+             }
++          },
++          {
++            "name": "scope",
++            "in": "query",
++            "required": false,
++            "schema": {
++              "type": "string",
++              "enum": [
++                "total"
++              ]
++            }
+           }
+         ],
+         "x-session-share-permission": "read"
+diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
+index 336c7abc1..315a6a252 100644
+--- a/packages/client/src/components/hermes/chat/ChatInput.vue
++++ b/packages/client/src/components/hermes/chat/ChatInput.vue
+@@ -860,7 +860,6 @@ const totalTokens = computed(() => {
+ const showContextUsage = computed(() => !!composerSession.value)
+ const showContextLimit = computed(() => !showSessionUsage.value)
+ 
+-const remainingTokens = computed(() => totalTokens.value == null ? null : Math.max(0, contextLength.value - totalTokens.value))
+ 
+ const usagePercent = computed(() =>
+   Math.min(((totalTokens.value ?? 0) / contextLength.value) * 100, 100),
+diff --git a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+index d6cf91385..1ce001df7 100644
+--- a/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
++++ b/packages/client/src/components/hermes/chat/LiveReasoningStatus.vue
+@@ -1,24 +1,36 @@
+ <script setup lang="ts">
+-import { deploymentUrl } from '@/utils/deployment-url'
+ import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
+ import { useI18n } from 'vue-i18n'
+ import thinkingImage from '@/assets/thinking.gif'
+-import type { ChatAgentAvatar } from '@/utils/chat-agent-avatar'
++import type { ChatAgentLabel } from '@/utils/chat-agent-label'
++
++const AGENT_LOGOS: Record<string, string> = {
++  Hermes: '/coding-agents/hermes.png',
++  Ekko: '/coding-agents/ekko-agent.png',
++  Claude: '/coding-agents/claude-code.svg',
++  Codex: '/coding-agents/codex-openai.png',
++  Pi: '/coding-agents/pi.svg',
++  Grok: '/coding-agents/grok.svg',
++  OpenCode: '/coding-agents/opencode.png',
++  'DeepSeek Harness': '/coding-agents/deepseek.svg',
++}
+ const MarkdownRenderer = defineAsyncComponent(async () => (await import('./MarkdownRenderer.vue')).default)
+ 
+ const props = withDefaults(defineProps<{
+   reasoning?: string | null
+   reasoningId?: string | number | null
+   elapsed: string
++  agent?: ChatAgentLabel
+   deploymentSessionId?: string
+   /** Decode speed of the run's latest finished call, e.g. `当前：94 tok/s`; hidden when null. */
+   speed?: string | null
+   /** Run-wide average decode speed, e.g. `平均：88 tok/s`; hidden when null. */
+   averageSpeed?: string | null
+ }>(), {
+-  agent: () => ({ label: 'Hermes', src: deploymentUrl('/coding-agents/hermes.png') }),
++  agent: () => ({ label: 'Hermes' }),
+ })
+-const isEkko = computed(() => props.agent.label === 'Ekko')
++const agentLogoSrc = computed(() => AGENT_LOGOS[props.agent?.label || 'Hermes'] || '/coding-agents/hermes.png')
++const isEkko = computed(() => props.agent?.label === 'Ekko')
+ 
+ const { t } = useI18n()
+ 
+@@ -42,8 +54,8 @@ watch(
+   <div class="live-reasoning-status">
+     <div class="thinking-status">
+       <img
+-        :key="isEkko ? thinkingImage : agent.src"
+-        :src="isEkko ? thinkingImage : agent.src"
++        :key="isEkko ? thinkingImage : agentLogoSrc"
++        :src="isEkko ? thinkingImage : agentLogoSrc"
+         data-agent-deployment-image="pending"
+         @load="($event.target as HTMLImageElement).dataset.agentDeploymentImage = 'ready'"
+         @error="($event.target as HTMLImageElement).dataset.agentDeploymentImage = 'error'"
+diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
+index cec0f94a3..49438388c 100644
+--- a/packages/client/src/components/hermes/chat/MessageItem.vue
++++ b/packages/client/src/components/hermes/chat/MessageItem.vue
+@@ -16,7 +16,8 @@ import { useChatStore } from "@/stores/hermes/chat";
+ import { useFilesStore } from "@/stores/hermes/files";
+ import { useToolPanelStore } from "@/stores/hermes/tool-panel";
+ import { useSettingsStore } from "@/stores/hermes/settings";
+-import { chatSessionAgentAvatar, type ChatAgentAvatar } from "@/utils/chat-agent-avatar";import TaskPlanCard from './TaskPlanCard.vue';
++import { chatSessionAgentLabel, type ChatAgentLabel } from "@/utils/chat-agent-label";
++import TaskPlanCard from './TaskPlanCard.vue';
+ import ToolChangeCard from "./ToolChangeCard.vue";
+ import {
+   copyTextToClipboard,
+@@ -32,8 +33,7 @@ import { formatChatTimestamp } from "@/utils/chat-timestamp";
+ import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
+ import type { WorkspaceRunChangeSummary } from "@/api/studio/sessions";
+ import { isServerTtsProvider } from "@/api/studio/tts";
+-import type { ProfileAvatar as ProfileAvatarData } from "@/api/hermes/profiles";
+-import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";import ImagePreviewOverlay from "./ImagePreviewOverlay.vue";
++import ImagePreviewOverlay from "./ImagePreviewOverlay.vue";
+ import MarkdownRenderer from "./MarkdownRenderer.vue";
+ 
+ const TOOL_PAYLOAD_DISPLAY_LIMIT = 1000;
+@@ -234,7 +234,7 @@ const toolPanelStore = useToolPanelStore();
+ const settingsStore = useSettingsStore();
+ const speech = useGlobalSpeech();
+ const voiceSettings = useVoiceSettings();
+-const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentAvatar(chatStore.activeSession));
++const assistantAgent = computed(() => props.assistantAgent || chatSessionAgentLabel(chatStore.activeSession));
+ // Copy entire bubble content
+ const copyableContent = computed(() => {
+   if (props.message.role === 'tool') return null
+@@ -1022,12 +1022,7 @@ onBeforeUnmount(() => {
+             <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
+           </div>
+           <div v-if="message.role === 'assistant'" class="message-author assistant-message-author">
+-            <img
+-              class="msg-avatar"
+-              :src="assistantAgent.src"
+-              :alt="assistantAgent.label"
+-              draggable="false"
+-            >            <span class="message-author-name" dir="auto">{{ assistantAgent.label }}</span>
++            <span class="message-author-name" dir="auto">{{ assistantAgent.label }}</span>
+           </div>
+           <div
+             class="message-bubble"

@@ -1,0 +1,183 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Tue, 20 Oct 2026 21:23:32 +0800
+Subject: [PATCH] fix(i18n): give the provider import modal its own profile
+ label
+
+Upstream reuses t('workflow.profile') in ProviderImportModal, but the fork
+removes the whole workflow namespace, so the label rendered as a raw key and
+i18n-coverage flagged it. Add models.profile to every locale and point the
+modal at it.
+---
+ .../client/src/components/hermes/models/ProviderImportModal.vue | 2 +-
+ packages/client/src/i18n/locales/ar.ts                          | 1 +
+ packages/client/src/i18n/locales/de.ts                          | 1 +
+ packages/client/src/i18n/locales/en.ts                          | 1 +
+ packages/client/src/i18n/locales/es.ts                          | 1 +
+ packages/client/src/i18n/locales/fr.ts                          | 1 +
+ packages/client/src/i18n/locales/ja.ts                          | 1 +
+ packages/client/src/i18n/locales/ko.ts                          | 1 +
+ packages/client/src/i18n/locales/pt.ts                          | 1 +
+ packages/client/src/i18n/locales/ru.ts                          | 1 +
+ packages/client/src/i18n/locales/tr.ts                          | 1 +
+ packages/client/src/i18n/locales/zh-TW.ts                       | 1 +
+ packages/client/src/i18n/locales/zh.ts                          | 1 +
+ 13 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/packages/client/src/components/hermes/models/ProviderImportModal.vue b/packages/client/src/components/hermes/models/ProviderImportModal.vue
+index 76dab857b..0b45c0917 100644
+--- a/packages/client/src/components/hermes/models/ProviderImportModal.vue
++++ b/packages/client/src/components/hermes/models/ProviderImportModal.vue
+@@ -77,7 +77,7 @@ async function save() {
+     @update:show="value => { if (!value && !saving) emit('close') }">
+     <NAlert type="warning" :show-icon="false">{{ t('models.importNotice') }}</NAlert>
+     <NForm label-placement="top" autocomplete="off">
+-      <NFormItem :label="t('workflow.profile')" required>
++      <NFormItem :label="t('models.profile')" required>
+         <NSelect v-model:value="targetProfile" :disabled="saving"
+           :options="profiles.map(p => ({ label: p.name, value: p.name }))" />
+       </NFormItem>
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index cdc17753b..20977f06d 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -1871,6 +1871,7 @@ export default {
+ 
+   // Models
+   models: {
++    profile: 'البروفايل',
+     importTitle: "استيراد مزوّد",
+     importNotice: "تحقق من العنوان والنموذج والملف المستهدف. عند التأكيد يحفظ Studio مفتاح API ويعيّن النموذج افتراضيًا لهذا الملف. لا يتم الاستيراد قبل التأكيد.",
+     importConfirm: "تأكيد الاستيراد",
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 22e1d7fb4..cce3da8bb 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1720,6 +1720,7 @@ jobTriggered: 'Job ausgelost',
+ 
+   // Models
+   models: {
++    profile: 'Profil',
+     importTitle: "Anbieter importieren",
+     importNotice: "Prüfen Sie Adresse, Modell und Zielprofil. Nach der Bestätigung speichert Studio den API-Schlüssel und setzt das Modell als Profilstandard. Vorher wird nichts importiert.",
+     importConfirm: "Import bestätigen",
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 707557ba1..b63738468 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -1884,6 +1884,7 @@ export default {
+ 
+   // Models
+   models: {
++    profile: 'Profile',
+     importTitle: "Import provider",
+     importNotice: "Review the address, model and target Profile. Confirming saves the API key to Studio and selects this model as the Profile default. Nothing is imported before confirmation.",
+     importConfirm: "Confirm import",
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index c949ec4d5..5f8df6a44 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1720,6 +1720,7 @@ jobTriggered: 'Job ejecutado',
+ 
+   // Models
+   models: {
++    profile: 'Perfil',
+     importTitle: "Importar proveedor",
+     importNotice: "Comprueba la dirección, el modelo y el perfil de destino. Al confirmar, Studio guarda la clave API y establece el modelo como predeterminado del perfil. No se importa nada antes de confirmar.",
+     importConfirm: "Confirmar importación",
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 1f71de7e0..aad8cff0c 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1720,6 +1720,7 @@ jobTriggered: 'Job declenche',
+ 
+   // Models
+   models: {
++    profile: 'Profil',
+     importTitle: "Importer un fournisseur",
+     importNotice: "Vérifiez l’adresse, le modèle et le profil cible. La confirmation enregistre la clé API dans Studio et définit ce modèle par défaut pour le profil. Rien n’est importé avant confirmation.",
+     importConfirm: "Confirmer l’importation",
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 6257907c3..1dc0ec46b 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1721,6 +1721,7 @@ export default {
+ 
+   // モデル
+   models: {
++    profile: 'プロファイル',
+     importTitle: "プロバイダーをインポート",
+     importNotice: "アドレス、モデル、対象の Profile を確認してください。確認すると API キーが Studio に保存され、このモデルが Profile の既定になります。確認前にはインポートされません。",
+     importConfirm: "インポートを確認",
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index edc87eb2a..6b94a6f10 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1721,6 +1721,7 @@ export default {
+ 
+   // 모델
+   models: {
++    profile: '프로필',
+     importTitle: "공급자 가져오기",
+     importNotice: "주소, 모델 및 대상 Profile을 확인하세요. 확인하면 API 키가 Studio에 저장되고 이 모델이 Profile의 기본 모델로 설정됩니다. 확인 전에는 가져오지 않습니다.",
+     importConfirm: "가져오기 확인",
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index c7d880dbb..1b6458ecd 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1720,6 +1720,7 @@ jobTriggered: 'Job acionado',
+ 
+   // Models
+   models: {
++    profile: 'Perfil',
+     importTitle: "Importar fornecedor",
+     importNotice: "Verifique o endereço, o modelo e o perfil de destino. A confirmação salva a chave API no Studio e define o modelo como padrão do perfil. Nada é importado antes da confirmação.",
+     importConfirm: "Confirmar importação",
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index e3a0dee55..d7e702444 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -1715,6 +1715,7 @@ export default {
+   },
+ 
+   models: {
++    profile: 'Профиль',
+     importTitle: "Импорт провайдера",
+     importNotice: "Проверьте адрес, модель и целевой профиль. После подтверждения Studio сохранит ключ API и назначит модель по умолчанию для профиля. До подтверждения ничего не импортируется.",
+     importConfirm: "Подтвердить импорт",
+diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
+index fcb9b5fde..f9a54b316 100644
+--- a/packages/client/src/i18n/locales/tr.ts
++++ b/packages/client/src/i18n/locales/tr.ts
+@@ -554,6 +554,7 @@ export default {
+     writeApprovalUnsupported: 'Bu Hermes Aracısı sürümü yazma onaylarını desteklemiyor. Bu özelliği kullanmak için Hermes Aracısını yükseltin.',
+   },
+   models: {
++    profile: 'Profil',
+     apiModeAuto: 'Otomatik (modele göre)',
+     importTitle: "Sağlayıcıyı içe aktar",
+     importNotice: "Adresi, modeli ve hedef profili kontrol edin. Onaylandığında API anahtarı Studio’ya kaydedilir ve model profilin varsayılanı olur. Onaydan önce hiçbir şey içe aktarılmaz.",
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index b347651cd..08c909e51 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -1878,6 +1878,7 @@ export default {
+ 
+   // 模型
+   models: {
++    profile: '設定檔',
+     importTitle: "匯入供應商",
+     importNotice: "請核對位址、模型與目標 Profile。確認後將 API Key 儲存至 Studio，並將此模型設為該 Profile 的預設模型。確認前不會匯入。",
+     importConfirm: "確認匯入",
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index e9c6e08fb..9e7d4ce49 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -1885,6 +1885,7 @@ export default {
+ 
+   // 模型
+   models: {
++    profile: '配置',
+     importTitle: "导入供应商",
+     importNotice: "请核对地址、模型和目标 Profile。确认后将 API Key 保存到 Studio，并将此模型设为该 Profile 的默认模型。确认前不会导入。",
+     importConfirm: "确认导入",

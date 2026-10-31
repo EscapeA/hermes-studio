@@ -1,0 +1,165 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 15 Oct 2026 17:51:44 +0800
+Subject: [PATCH] fix(chat): anchor the compression trigger on the provider
+ prompt_tokens
+
+The local cl100k estimate over-counts what the wire carries: replayed
+assistant turns keep their stored reasoning_content in the DB but ship as a
+1-space must-echo pad, and tool results are truncated to 5.5k. On a long
+session the estimate read 953,856 tokens while the endpoint reported 571,012
+for the same conversation, so the 0.95 x window trigger fired at ~54% real
+occupancy and forced a multi-minute LLM summarization.
+
+Use the provider reading as the decision value and add only the current
+turn's input on top. The local estimate stays the fallback for cold starts
+and for turns whose newest reading predates the last compression (that
+reading describes folded history); the existing contextStartMs cutoff
+already drops those.
+---
+ .../studio/services/chat-run/compression.ts   | 17 +++-
+ .../server/compression-provider-floor.test.ts | 93 +++++++++++++++++++
+ 2 files changed, 106 insertions(+), 4 deletions(-)
+
+diff --git a/packages/server/src/modules/studio/services/chat-run/compression.ts b/packages/server/src/modules/studio/services/chat-run/compression.ts
+index b8b5d4be4..424cfa6c1 100644
+--- a/packages/server/src/modules/studio/services/chat-run/compression.ts
++++ b/packages/server/src/modules/studio/services/chat-run/compression.ts
+@@ -271,7 +271,10 @@ export async function buildCompressedHistory(
+       ? Math.floor(currentInputTokens)
+       : 0
+     // Exact prompt size the provider reported for this session's latest Hermes call since the last
+-    // compression. The local cl100k estimate can undercount it badly, so it is a floor for the decision.
++    // compression. This reading is authoritative for the decision: the endpoint counted the real
++    // request itself, whereas the local cl100k estimate over-counts what the wire carries (replayed
++    // assistant turns keep their stored reasoning here but ship as a 1-space pad, and tool results
++    // are truncated), so a local-only reading compresses long sessions far too early.
+     // Usage from before the last history clear (ms cutoff on the session) describes deleted history.
+     const contextStartMs = Math.max(snapshot?.updatedAt ?? 0, getSession(sessionId)?.history_cleared_at ?? 0)
+     const lastUsage = getUsage(sessionId, 'hermes')
+@@ -280,14 +283,20 @@ export async function buildCompressedHistory(
+       : 0
+     const estimateLocalContextTokens = async (messages: ChatMessage[], messageTokens: number) => {
+       const localMessageTokens = Math.max(0, Math.floor(messageTokens))
+-      const floor = messages.length > 0 ? realPromptTokens : 0
++      let localTokens = localMessageTokens
+       try {
+         const estimate = await contextTokenEstimator?.(messages, localMessageTokens)
+-        if (typeof estimate === 'number' && Number.isFinite(estimate) && estimate > 0) return Math.max(Math.floor(estimate), floor)
++        if (typeof estimate === 'number' && Number.isFinite(estimate) && estimate > 0) {
++          localTokens = Math.max(Math.floor(estimate), localMessageTokens)
++        }
+       } catch (err) {
+         logger.warn(err, '[context-compress] session=%s: fixed context token estimate failed; using message-only estimate', sessionId)
+       }
+-      return Math.max(localMessageTokens, floor)
++      // Anchor on the provider's reading and add only what this turn appends on top of it. The local
++      // estimate remains the fallback for cold starts and for the turns right after a compression —
++      // the cutoff above drops readings that predate the summary, since they describe folded history.
++      if (realPromptTokens <= 0 || messages.length === 0) return localTokens
++      return realPromptTokens + currentRunInputTokens
+     }
+     const emitContextUsage = (contextTokens: number) => {
+       cState.contextTokens = contextTokens
+diff --git a/tests/server/compression-provider-floor.test.ts b/tests/server/compression-provider-floor.test.ts
+index aad21e412..61d3ca3f1 100644
+--- a/tests/server/compression-provider-floor.test.ts
++++ b/tests/server/compression-provider-floor.test.ts
+@@ -191,4 +191,97 @@ describe('compression decisions with the provider usage floor', () => {
+     expect(getCompressionSnapshot('large')).toMatchObject({ summary: 'new summary', compressedThroughMessageId: largeCursor })
+     expect(getCompressionSnapshot('large')?.updatedAt).toBeGreaterThan(200_000)
+   })
++
++  it('anchors the decision on the provider reading when the local estimate over-counts the wire', async () => {
++    const { addMessage, createSession } = await import('../../packages/server/src/modules/studio/repositories/session-store')
++    const { getCompressionSnapshot } = await import('../../packages/server/src/modules/studio/repositories/compression-snapshot')
++    const { updateUsage } = await import('../../packages/server/src/modules/studio/repositories/usage-store')
++    createSession({ id: 'anchor', source: 'cli' })
++    // Stored history keeps full reasoning and un-truncated tool payload, so the local cl100k estimate
++    // reads far more than the endpoint actually received (replayed assistant turns ship a 1-space
++    // reasoning pad and tool results are truncated to 5.5k). A local-only reading compresses here.
++    const padding = Array.from({ length: 100_000 }, (_, index) => `row ${index}`).join('\n')
++    addMessage({ session_id: 'anchor', role: 'user', content: 'start', timestamp: 1 })
++    addMessage({ session_id: 'anchor', role: 'assistant', content: padding, timestamp: 2 })
++    addMessage({ session_id: 'anchor', role: 'user', content: 'next', timestamp: 3 })
++    addMessage({ session_id: 'anchor', role: 'assistant', content: 'ok', timestamp: 4 })
++    addMessage({ session_id: 'anchor', role: 'user', content: 'more', timestamp: 5 })
++    addMessage({ session_id: 'anchor', role: 'assistant', content: 'fine', timestamp: 6 })
++    addMessage({ session_id: 'anchor', role: 'user', content: 'current input', timestamp: 7 })
++    // The endpoint counted the real request: 50k, well under the 128k trigger (256k window x 0.5).
++    updateUsage('anchor', { source: 'hermes', inputTokens: 1_000, cacheReadTokens: 49_000, outputTokens: 10, createdAt: 2_000 })
++
++    await run('anchor')
++    expect(summarizerRun).not.toHaveBeenCalled()
++    expect(getCompressionSnapshot('anchor')).toBeFalsy()
++  })
++
++  it('adds only the current turn on top of the provider reading', async () => {
++    const { addMessage, createSession } = await import('../../packages/server/src/modules/studio/repositories/session-store')
++    const { getCompressionSnapshot } = await import('../../packages/server/src/modules/studio/repositories/compression-snapshot')
++    const { updateUsage } = await import('../../packages/server/src/modules/studio/repositories/usage-store')
++    const { buildCompressedHistory } = await import('../../packages/server/src/modules/studio/services/chat-run/compression')
++    createSession({ id: 'turn', source: 'cli' })
++    for (let index = 0; index < 6; index++) {
++      addMessage({ session_id: 'turn', role: index % 2 ? 'assistant' : 'user', content: `small ${index}`, timestamp: index + 1 })
++    }
++    addMessage({ session_id: 'turn', role: 'user', content: 'current input', timestamp: 9 })
++    // Reading plus this turn's input crosses the trigger; either alone would not.
++    updateUsage('turn', { source: 'hermes', inputTokens: 1_000, cacheReadTokens: 118_000, outputTokens: 10, createdAt: 2_000 })
++    const currentInput = 'x'.repeat(40_000)
++
++    await buildCompressedHistory('turn', 'default', '', undefined, vi.fn(), new Map(), { model: 'm', provider: 'p' },
++      undefined, currentInput.length / 4)
++
++    expect(summarizerRun).toHaveBeenCalledTimes(1)
++    expect(getCompressionSnapshot('turn')?.summary).toBe('new summary')
++  })
++
++  it('falls back to the local estimate when the reading predates the last compression', async () => {
++    const { addMessage, createSession } = await import('../../packages/server/src/modules/studio/repositories/session-store')
++    const { saveCompressionSnapshot } = await import('../../packages/server/src/modules/studio/repositories/compression-snapshot')
++    const { updateUsage } = await import('../../packages/server/src/modules/studio/repositories/usage-store')
++    const { buildCompressedHistory } = await import('../../packages/server/src/modules/studio/services/chat-run/compression')
++    createSession({ id: 'post-compress', source: 'cli' })
++    const ids = ['u', 'a', 'u', 'a', 'u', 'a'].map((role, index) => addMessage({
++      session_id: 'post-compress', role: role === 'u' ? 'user' : 'assistant',
++      content: 'detail '.repeat(4_000), timestamp: index + 1,
++    })!)
++    // A compression happened at t=1000; the 500k reading is older and describes folded history,
++    // so it must NOT anchor this decision. The fresh history alone is still small.
++    expect(saveCompressionSnapshot('post-compress', 'old summary', 1, 2, {
++      compressedThroughMessageId: ids[1], protectedHeadThroughMessageId: null, expectedHistoryRevision: 0,
++    })).toBe(true)
++    db.prepare('UPDATE chat_compression_snapshots SET updated_at = 1000 WHERE session_id = ?').run('post-compress')
++    updateUsage('post-compress', { source: 'hermes', inputTokens: 1_000, cacheReadTokens: 499_000, outputTokens: 10, createdAt: 900 })
++    addMessage({ session_id: 'post-compress', role: 'user', content: 'current input', timestamp: 20 })
++
++    await buildCompressedHistory('post-compress', 'default', '', undefined, vi.fn(), new Map(), { model: 'm', provider: 'p' })
++
++    // The stale 500k reading would sit at the 128k trigger; discarding it keeps the decision under.
++    expect(summarizerRun).not.toHaveBeenCalled()
++  })
++
++  it('anchors on a reading taken after the last compression', async () => {
++    const { addMessage, createSession } = await import('../../packages/server/src/modules/studio/repositories/session-store')
++    const { saveCompressionSnapshot } = await import('../../packages/server/src/modules/studio/repositories/compression-snapshot')
++    const { updateUsage } = await import('../../packages/server/src/modules/studio/repositories/usage-store')
++    const { buildCompressedHistory } = await import('../../packages/server/src/modules/studio/services/chat-run/compression')
++    createSession({ id: 'regrown', source: 'cli' })
++    const ids = ['u', 'a', 'u', 'a', 'u', 'a'].map((role, index) => addMessage({
++      session_id: 'regrown', role: role === 'u' ? 'user' : 'assistant', content: `small ${index}`, timestamp: index + 1,
++    })!)
++    expect(saveCompressionSnapshot('regrown', 'summary after compress', 1, 2, {
++      compressedThroughMessageId: ids[1], protectedHeadThroughMessageId: null, expectedHistoryRevision: 0,
++    })).toBe(true)
++    db.prepare('UPDATE chat_compression_snapshots SET updated_at = 1000 WHERE session_id = ?').run('regrown')
++    // Post-compression growth: the endpoint now reports a prompt over the 128k trigger.
++    updateUsage('regrown', { source: 'hermes', inputTokens: 4_000, cacheReadTokens: 140_000, outputTokens: 10, createdAt: 2_000 })
++    addMessage({ session_id: 'regrown', role: 'user', content: 'current input', timestamp: 20 })
++
++    await buildCompressedHistory('regrown', 'default', '', undefined, vi.fn(), new Map(), { model: 'm', provider: 'p' })
++
++    // Anchoring must still compress when the session genuinely regrows past the threshold.
++    expect(summarizerRun).toHaveBeenCalledTimes(1)
++  })
+ })
