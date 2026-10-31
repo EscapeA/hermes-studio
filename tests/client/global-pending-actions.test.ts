@@ -19,7 +19,7 @@ const created: any[] = []
 const clipboardMock = vi.hoisted(() => ({ copyToClipboard: vi.fn(async () => true) }))
 const uiMock = vi.hoisted(() => ({ messageError: vi.fn(), messageWarning: vi.fn() }))
 const systemNotificationMock = vi.hoisted(() => ({ showSystemNotification: vi.fn(async () => true) }))
-const chatConnectionMock = vi.hoisted(() => ({ connectChatRun: vi.fn(), getChatRunSocket: vi.fn(() => null as unknown) }))
+const chatConnectionMock = vi.hoisted(() => ({ connectChatRun: vi.fn(), getChatRunSocket: vi.fn(() => null as unknown), onChatRunConnected: vi.fn(() => vi.fn()) }))
 
 vi.mock('@/stores/hermes/chat', () => ({ useChatStore: () => chatState }))
 vi.mock('@/stores/hermes/profiles', () => ({ useProfilesStore: () => profileState }))

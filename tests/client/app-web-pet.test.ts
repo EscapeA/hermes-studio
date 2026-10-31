@@ -47,6 +47,7 @@ vi.mock('@/composables/useTheme', async () => {
       isComic: ref(false),
       customization: ref({ fontSize: 14, textColor: null, accentColor: null }),
       hasCustomBackground: ref(false),
+      isBlueprint: ref(false),
       syncThemeFromServer: vi.fn().mockResolvedValue(undefined),
     }),
   }
