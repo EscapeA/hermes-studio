@@ -22,6 +22,7 @@ Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
  packages/client/src/i18n/locales/ko.ts        |  32 --
  packages/client/src/i18n/locales/pt.ts        |  33 --
  packages/client/src/i18n/locales/ru.ts        |  56 ----
+ packages/client/src/i18n/locales/tr.ts        |   5 -
  packages/client/src/i18n/locales/zh-TW.ts     |  32 --
  packages/client/src/i18n/locales/zh.ts        |  32 --
  packages/client/src/router/index.ts           |   5 -
@@ -30,7 +31,7 @@ Subject: [PATCH] chore(cleanup): remove apikey.fun affiliate promo (sidebar
  .../src/modules/hermes/routes/providers.ts    |   4 -
  .../services/providers/api-relay-usage.ts     | 176 -----------
  .../src/modules/studio/contracts/api-relay.ts |  43 ---
- 25 files changed, 25 insertions(+), 1167 deletions(-)
+ 26 files changed, 25 insertions(+), 1172 deletions(-)
  delete mode 100644 packages/client/public/relay-logo.png
  delete mode 100644 packages/client/src/api/hermes/api-relay.ts
  delete mode 100644 packages/client/src/components/hermes/ApiRelayUsageCard.vue
@@ -1161,6 +1162,22 @@ index eb28c5aa9..2c14ecfba 100644
    usage: {
      origin: {
        label: "Категория использования",
+diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
+index 5294d8a91..bd1fd9989 100644
+--- a/packages/client/src/i18n/locales/tr.ts
++++ b/packages/client/src/i18n/locales/tr.ts
+@@ -31,11 +31,6 @@ const writeApprovalMessages = {
+ }
+ 
+ export default {
+-  apiRelay: {
+-    campaignSlogan: "Çifte 11: yüklemelerde %11.11 ek kredi, en fazla 1111 ek kredi",
+-    campaignBadge: "11.11",
+-    campaignLabel: "Çifte 11",
+-  },
+   person: personMessages['tr'],
+   sessionTasks: {
+       "title": "Görevler",
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
 index f811bf991..cd8c9ef47 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
