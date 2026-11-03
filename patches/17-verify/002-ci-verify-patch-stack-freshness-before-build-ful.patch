@@ -9,7 +9,7 @@ Subject: [PATCH] ci: verify patch stack freshness before build (full-history
  1 file changed, 8 insertions(+)
 
 diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
-index db893f1be..483302308 100644
+index e0eb8089f..07e784b4b 100644
 --- a/.github/workflows/build.yml
 +++ b/.github/workflows/build.yml
 @@ -24,6 +24,10 @@ jobs:
@@ -23,7 +23,7 @@ index db893f1be..483302308 100644
  
        - name: Setup Node.js
          uses: actions/setup-node@v4
-@@ -40,5 +44,9 @@ jobs:
+@@ -40,6 +44,10 @@ jobs:
        - name: Check repository harness
          run: npm run harness:check
  
@@ -33,3 +33,4 @@ index db893f1be..483302308 100644
 +
        - name: Build
          run: npm run build
+ 
