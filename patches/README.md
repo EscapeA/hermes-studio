@@ -88,6 +88,20 @@ while read n p; do git am --3way "patches/$p"; done < patches/ORDER
   （独立 worktree 从 `upstream/main` 重放比对）、`npm run build` 通过、`harness:check` 通过。
 - 部署：`package.json` 仅 version ⇒ **纯 dist 热替**（不需 `npm i -g`），未重启服务。
 
+## 增量：0.8.14 升级（2026-11-03）
+
+- 上游 0.8.12 → 0.8.14：**10 提交 / 110 文件 / +5068 −290**，线性。主体是 Person 任务线的
+  「自动验收（acceptance）+ 任务重定向（redirection）+ 任务产物外置（task-artifacts）」。
+- 依赖：`package.json` / `package-lock.json` 只有 version 串（0.8.12→0.8.14）与三条新脚本，
+  **dependencies/devDependencies 零增删** ⇒ 不需 `npm ci`。
+- 补丁串处置：补丁数不变 **67**。真冲突面只有 15 个文件（12 个 locale、`PersonView.vue`、
+  `contracts/runs/session.ts`、`build.yml`），其余 95 个是上游纯新增 ⇒ `git rebase main` **71/71 零冲突**。
+- 回写：`scripts/writeback-conflict-patches.py --order patches/ORDER` 三档比较后
+  **1 条重写（`17-verify/002`，`build.yml` 上下文行变了）/ 5 条仅行号漂移 / 62 条未变**。
+- 验证：`scripts/verify-patch-stack.sh` 67 补丁从 main 重放**逐字节一致**、`harness:check`、
+  `artifacts:check`、`npm run build` 全通过。
+- 部署：`bin/` 与 deps 零实质改动 ⇒ **纯 dist 热替**（不需 `npm i -g`），未重启服务。
+
 ## 修改补丁串的约定
 
 - **新增一个补丁组**：目录名 `NN-<slug>`，序号取现有末组 +1；同时更新本文件的分组总览与 ORDER。
