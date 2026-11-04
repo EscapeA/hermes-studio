@@ -1051,6 +1051,19 @@ export default {
     files: 'Workspace',
   },
 
+  toolStream: {
+    format: 'Format',
+    highlight: 'Syntax highlighting',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    zoomReset: 'Reset zoom',
+    truncatedAtSource: '… (truncated upstream at the {size} cap)',
+    tool: 'tool',
+    title: 'Agent activity',
+    empty: 'No tool runs yet',
+    count: '{count} tool calls',
+  },
+
   subagent: {
     title: 'Background task', noGoal: 'Untitled background task', open: 'Open live background task output', close: 'Close background task output',
     waiting: 'Waiting for live output...', tool: 'Tool', tools: '{count} tools', tokens: '{input} in · {output} out',
