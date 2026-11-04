@@ -1045,6 +1045,19 @@ export default {
     files: '工作區',
   },
 
+  toolStream: {
+    format: '格式化',
+    highlight: '語法高亮',
+    zoomIn: '放大',
+    zoomOut: '縮小',
+    zoomReset: '重設縮放',
+    truncatedAtSource: '…（已在上游依 {size} 上限截斷）',
+    tool: '工具',
+    title: 'Agent 執行直播',
+    empty: '尚無工具執行',
+    count: '共 {count} 次工具呼叫',
+  },
+
   subagent: {
     title: '背景子任務', noGoal: '未命名背景子任務', open: '開啟背景子任務即時輸出', close: '關閉背景子任務輸出',
     waiting: '正在等待即時輸出…', tool: '工具', tools: '{count} 次工具呼叫', tokens: '輸入 {input} · 輸出 {output}',
