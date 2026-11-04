@@ -1058,6 +1058,19 @@ export default {
     files: '작업 공간',
   },
 
+  toolStream: {
+    format: '서식',
+    highlight: '구문 강조',
+    zoomIn: '확대',
+    zoomOut: '축소',
+    zoomReset: '확대/축소 초기화',
+    truncatedAtSource: '… (업스트림에서 {size} 한도로 잘림)',
+    tool: '도구',
+    title: 'Agent 실행 라이브',
+    empty: '아직 도구 실행이 없습니다',
+    count: '도구 호출 {count}회',
+  },
+
   subagent: {
     title: '백그라운드 작업', noGoal: '제목 없는 백그라운드 작업', open: '백그라운드 작업 실시간 출력 열기', close: '백그라운드 작업 출력 닫기',
     waiting: '실시간 출력을 기다리는 중…', tool: '도구', tools: '도구 호출 {count}회', tokens: '입력 {input} · 출력 {output}',

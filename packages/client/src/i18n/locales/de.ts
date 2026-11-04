@@ -1057,6 +1057,19 @@ export default {
     files: 'Arbeitsbereich',
   },
 
+  toolStream: {
+    format: 'Formatieren',
+    highlight: 'Syntaxhervorhebung',
+    zoomIn: 'Vergrößern',
+    zoomOut: 'Verkleinern',
+    zoomReset: 'Zoom zurücksetzen',
+    truncatedAtSource: '… (vorgelagert auf {size}-Grenze gekürzt)',
+    tool: 'Werkzeug',
+    title: 'Agent-Aktivität',
+    empty: 'Noch keine Tool-Ausführung',
+    count: '{count} Tool-Aufrufe',
+  },
+
   subagent: {
     title: 'Hintergrundaufgabe', noGoal: 'Unbenannte Hintergrundaufgabe', open: 'Live-Ausgabe der Hintergrundaufgabe öffnen', close: 'Ausgabe der Hintergrundaufgabe schließen',
     waiting: 'Warte auf Live-Ausgabe…', tool: 'Werkzeug', tools: '{count} Werkzeuge', tokens: '{input} ein · {output} aus',
