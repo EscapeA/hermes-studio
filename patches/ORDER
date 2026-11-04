@@ -65,3 +65,4 @@
 084 24-drawer-safe-top/001-fix-mobile-keep-drawer-headers-below-the-status-bar.patch
 086 26-sidebar-recent-only/001-feat-chat-flatten-the-session-sidebar-to-pinned-and-r.patch
 088 27-identity-cleanup/001-feat-chat-drop-the-identity-rows-and-session-ag.patch
+089 28-exec-stream/001-feat-chat-add-a-read-only-agent-execution-stream-pan.patch

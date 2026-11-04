@@ -14,10 +14,10 @@ custom-next = main + patches/*.patch 线性重放（当前唯一集成分支）
 > `README.md` 与 `e2e/README.md`）并简化 CI（`vitest.config.ts` 加 `passWithNoTests`,
 > `test:e2e` 改 `--pass-with-no-tests`, 删 `harness:memory` / `test:pi-rpc-real` / `test:workflow-live`）。
 > 因此补丁串做了「去测试化」：**退役 13 条 test-only 补丁**，并把其余补丁里的 `tests/**`
-> 文件段剥掉 ⇒ **25 组 / 67 条**。`scripts/verify-patch-stack.sh` 保留（它不依赖测试树）。
+> 文件段剥掉 ⇒ **25 组 / 67 条**（2026-11-05 增补 `28-exec-stream` ⇒ 26 组 / 68 条）。`scripts/verify-patch-stack.sh` 保留（它不依赖测试树）。
 > 上游删测试后 `harness:check` 也不再要求 `tests/client|server|e2e` 目录存在。
 
-## 分组总览（25 组 / 67 条）
+## 分组总览（26 组 / 68 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -46,6 +46,7 @@ custom-next = main + patches/*.patch 线性重放（当前唯一集成分支）
 | 24-drawer-safe-top | 1 | 抽屉顶栏让开状态栏（`NDrawer` 是 body 级 portal，不吃 `env(safe-area-inset-top)`） |
 | 26-sidebar-recent-only | 1 | 会话侧栏拍平成「置顶 + 最近」两组；「最近」分页加载更多；分类标签 `max-width` 放开 |
 | 27-identity-cleanup | 1 | 去掉会话界面的身份噪音：列表副标题 profile 名与头像行、气泡作者行（`hideAuthor`），Person 视图仍保留身份行 |
+| 28-exec-stream | 1 | 「Agent 执行直播」只读面板：按会话 tool 消息流回放调用（解包 JSON 信封 / MCP `{"result"}` 嵌套 / `untrusted_tool_result` 包装，参数归一化，shell 结构化着色，Python 与白名单 highlightAuto，底部留白两行，缩放/格式化/高亮开关持久化） |
 
 ## ORDER 的语义
 
