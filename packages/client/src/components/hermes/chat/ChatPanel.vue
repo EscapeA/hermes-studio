@@ -157,7 +157,7 @@ const isChatDropActive = ref(false);
 const showToolPanel = ref(false);
 const previewOnlyFileOpen = ref(false);
 const toolPanelTransitionReady = ref(false);
-const activeToolPanel = ref<"files" | "terminal" | "browser">("files");
+const activeToolPanel = ref<"files" | "terminal" | "stream" | "browser">("files");
 const desktopBrowserAvailable = hasDesktopBrowserBridge();
 const desktopChatWindowAvailable = desktopBridge()?.isDesktop === true
   && typeof desktopBridge()?.openChatWindow === "function";
@@ -189,9 +189,38 @@ const hasPageSidebar = computed(
   () => !props.standalone && currentMode.value === "chat" && props.contentMode === "chat",
 );
 const pageSidebarExpanded = computed(() => hasPageSidebar.value && showSessions.value);
+/**
+ * 输入区实测高度。
+ *
+ * 输入框会随内容长高（44~220px），还有 safe-area 内边距，
+ * 所以不能写死数值——这里用 ResizeObserver 跟随真实高度。
+ */
+const composerHeight = ref(0)
+let composerObserver: ResizeObserver | null = null
+
+function observeComposerHeight() {
+  if (typeof ResizeObserver === 'undefined') return
+  composerObserver?.disconnect()
+  composerObserver = new ResizeObserver((entries) => {
+    const height = entries[0]?.contentRect.height ?? 0
+    composerHeight.value = Math.round(height)
+  })
+  const el = chatMainContentRef.value?.querySelector('.chat-input-area')
+  if (el) composerObserver.observe(el)
+}
+
+onMounted(() => nextTick(observeComposerHeight))
+onUnmounted(() => {
+  composerObserver?.disconnect()
+  composerObserver = null
+})
+
 const toolPanelStyle = computed(() => ({
   width: isMobile.value ? "100%" : `min(${toolPanelWidth.value}px, 100%)`,
-}));
+  // 移动端工具面板是 absolute 全屏覆盖，而输入区 z-index 更高会压住它底部。
+  // 把实测的输入区高度作为底部留白，面板内容就不会被用量信息遮住。
+  "--tool-panel-bottom-inset": `${composerHeight.value}px`,
+}))
 
 function openRealtimeVoice() {
   if (!chatStore.activeSessionId) return;
@@ -745,6 +774,13 @@ const showNewChatSettings = ref(false);
 const showNewChatCategory = ref(false);
 const newChatCategoryTriggerRef = ref<InstanceType<typeof NButton> | null>(null);
 const newChatCategoryAnchor = ref({ x: 0, y: 0 });
+
+// 输入区可能晚于本组件渲染（新会话页切到会话、切换 session），
+// 所以会话变化时重新挂观察，否则底部留白会一直停在 0。
+watch(
+  () => [chatStore.activeSessionId, currentMode.value, showNewChatPage.value],
+  () => nextTick(observeComposerHeight),
+)
 
 const showNewChatPresetMode = ref(false);
 const newChatComposerRevision = ref(0);
@@ -3600,7 +3636,8 @@ watch([isEmptySingleChat, () => route.fullPath], ([empty]) => {
     position: absolute;
     top: 0;
     right: 0;
-    bottom: 0;
+    /* 给输入区让位：它 z-index 80 > 面板 70，全屏覆盖时会把面板底部压住。 */
+    bottom: var(--tool-panel-bottom-inset, 0px);
     z-index: 70;
     left: 0;
     width: 100% !important;

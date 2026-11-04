@@ -1088,6 +1088,19 @@ export default {
     files: 'Espaço de trabalho',
   },
 
+  toolStream: {
+    format: 'Formatar',
+    highlight: 'Realce de sintaxe',
+    zoomIn: 'Aumentar zoom',
+    zoomOut: 'Diminuir zoom',
+    zoomReset: 'Redefinir zoom',
+    truncatedAtSource: '… (truncado na origem no limite de {size})',
+    tool: 'ferramenta',
+    title: 'Atividade do agente',
+    empty: 'Nenhuma execução ainda',
+    count: '{count} chamadas de ferramentas',
+  },
+
   subagent: {
     title: 'Tarefa em segundo plano', noGoal: 'Tarefa em segundo plano sem título', open: 'Abrir saída ao vivo da tarefa', close: 'Fechar saída da tarefa',
     waiting: 'Aguardando saída ao vivo…', tool: 'Ferramenta', tools: '{count} ferramentas', tokens: '{input} entrada · {output} saída',

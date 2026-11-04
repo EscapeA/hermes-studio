@@ -1076,6 +1076,19 @@ export default {
     files: 'مساحة العمل',
   },
 
+  toolStream: {
+    format: 'تنسيق',
+    highlight: 'إبراز بناء الجملة',
+    zoomIn: 'تكبير',
+    zoomOut: 'تصغير',
+    zoomReset: 'إعادة ضبط التكبير',
+    truncatedAtSource: '… (مقطوع في المنبع عند حد {size})',
+    tool: 'أداة',
+    title: 'نشاط الوكيل',
+    empty: 'لا توجد عمليات أدوات بعد',
+    count: '{count} استدعاءات أدوات',
+  },
+
   subagent: {
     title: 'مهمة في الخلفية', noGoal: 'مهمة في الخلفية بدون عنوان', open: 'فتح المخرجات الحية للمهمة في الخلفية', close: 'إغلاق مخرجات المهمة في الخلفية',
     waiting: 'في انتظار المخرجات الحية...', tool: 'أداة', tools: '{count} أداة', tokens: '{input} داخل · {output} خارج',
