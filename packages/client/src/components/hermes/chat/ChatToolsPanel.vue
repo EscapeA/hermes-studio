@@ -5,6 +5,7 @@ import type { BrowserAnnotationSubmission } from '@/utils/browser-annotation-sub
 
 const FilesPanel = defineAsyncComponent(() => import('./FilesPanel.vue'))
 const TerminalPanel = defineAsyncComponent(() => import('./TerminalPanel.vue'))
+const ToolStreamPanel = defineAsyncComponent(() => import('./ToolStreamPanel.vue'))
 const DesktopBrowserPanel = defineAsyncComponent(() => import('./DesktopBrowserPanel.vue'))
 withDefaults(defineProps<{
   contextReady?: boolean
@@ -15,7 +16,7 @@ withDefaults(defineProps<{
   browserAvailable: boolean
   submit: (submission: BrowserAnnotationSubmission) => boolean | void | Promise<boolean | void>
 }>(), { contextReady: true })
-const activePanel = defineModel<'files' | 'terminal' | 'browser'>('activePanel', { default: 'files' })
+const activePanel = defineModel<'files' | 'terminal' | 'stream' | 'browser'>('activePanel', { default: 'files' })
 const emit = defineEmits<{ attach: [file: File] }>()
 const { t } = useI18n()
 </script>
@@ -53,6 +54,21 @@ const { t } = useI18n()
         </svg>
       </button>
       <button
+        class="chat-tool-tab"
+        :class="{ active: activePanel === 'stream' }"
+        type="button"
+        role="tab"
+        :title="t('toolStream.title')"
+        :aria-label="t('toolStream.title')"
+        :aria-selected="activePanel === 'stream'"
+        @click="activePanel = 'stream'"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="m7 9 3 3-3 3M13 9h4M13 13h4M13 17h2" />
+        </svg>
+      </button>
+      <button
         v-if="browserAvailable"
         class="chat-tool-tab"
         :class="{ active: activePanel === 'browser' }"
@@ -82,6 +98,10 @@ const { t } = useI18n()
       <TerminalPanel
         v-show="activePanel === 'terminal'"
         :visible="visible && activePanel === 'terminal'"
+      />
+      <ToolStreamPanel
+        v-show="activePanel === 'stream'"
+        :visible="visible && activePanel === 'stream'"
       />
       <DesktopBrowserPanel
         v-if="browserAvailable && activePanel === 'browser'"
