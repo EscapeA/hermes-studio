@@ -1058,6 +1058,19 @@ export default {
     files: 'ワークスペース',
   },
 
+  toolStream: {
+    format: '整形',
+    highlight: 'シンタックスハイライト',
+    zoomIn: '拡大',
+    zoomOut: '縮小',
+    zoomReset: 'ズームをリセット',
+    truncatedAtSource: '…（上流で {size} 上限により切り詰め）',
+    tool: 'ツール',
+    title: 'Agent 実行ライブ',
+    empty: 'ツール実行はまだありません',
+    count: 'ツール呼び出し {count} 回',
+  },
+
   subagent: {
     title: 'バックグラウンドタスク', noGoal: '無題のバックグラウンドタスク', open: 'バックグラウンドタスクのライブ出力を開く', close: 'バックグラウンドタスクの出力を閉じる',
     waiting: 'ライブ出力を待機中…', tool: 'ツール', tools: 'ツール呼び出し {count} 回', tokens: '入力 {input} · 出力 {output}',

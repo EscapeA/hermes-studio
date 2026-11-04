@@ -1053,6 +1053,19 @@ export default {
     files: '工作区',
   },
 
+  toolStream: {
+    format: '格式化',
+    highlight: '语法高亮',
+    zoomIn: '放大',
+    zoomOut: '缩小',
+    zoomReset: '重置缩放',
+    truncatedAtSource: '…（已在上游按 {size} 上限截断）',
+    tool: '工具',
+    title: 'Agent 执行直播',
+    empty: '暂无工具执行',
+    count: '共 {count} 次工具调用',
+  },
+
   subagent: {
     title: '后台子任务', noGoal: '未命名后台子任务', open: '打开后台子任务实时输出', close: '关闭后台子任务输出',
     waiting: '正在等待实时输出…', tool: '工具', tools: '{count} 次工具调用', tokens: '输入 {input} · 输出 {output}',
