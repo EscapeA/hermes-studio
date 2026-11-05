@@ -1,4 +1,4 @@
-From 08ccbb32019759f6b92cb94fc63e305b69f46f8a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 5 Nov 2026 00:36:18 +0800
 Subject: [PATCH] feat(chat): add a read-only agent execution stream panel
@@ -134,7 +134,7 @@ index a4eb777aa..71ec9e907 100644
      left: 0;
      width: 100% !important;
 diff --git a/packages/client/src/components/hermes/chat/ChatToolsPanel.vue b/packages/client/src/components/hermes/chat/ChatToolsPanel.vue
-index 8e4da46cc..1546f8469 100644
+index 4178f0bd8..4da852f76 100644
 --- a/packages/client/src/components/hermes/chat/ChatToolsPanel.vue
 +++ b/packages/client/src/components/hermes/chat/ChatToolsPanel.vue
 @@ -5,6 +5,7 @@ import type { BrowserAnnotationSubmission } from '@/utils/browser-annotation-sub
@@ -143,18 +143,18 @@ index 8e4da46cc..1546f8469 100644
  const TerminalPanel = defineAsyncComponent(() => import('./TerminalPanel.vue'))
 +const ToolStreamPanel = defineAsyncComponent(() => import('./ToolStreamPanel.vue'))
  const DesktopBrowserPanel = defineAsyncComponent(() => import('./DesktopBrowserPanel.vue'))
- defineProps<{
-   workspaceSessionId?: string | null
-@@ -14,7 +15,7 @@ defineProps<{
+ withDefaults(defineProps<{
+   contextReady?: boolean
+@@ -15,7 +16,7 @@ withDefaults(defineProps<{
    browserAvailable: boolean
    submit: (submission: BrowserAnnotationSubmission) => boolean | void | Promise<boolean | void>
- }>()
+ }>(), { contextReady: true })
 -const activePanel = defineModel<'files' | 'terminal' | 'browser'>('activePanel', { default: 'files' })
 +const activePanel = defineModel<'files' | 'terminal' | 'stream' | 'browser'>('activePanel', { default: 'files' })
  const emit = defineEmits<{ attach: [file: File] }>()
  const { t } = useI18n()
  </script>
-@@ -51,6 +52,21 @@ const { t } = useI18n()
+@@ -52,6 +53,21 @@ const { t } = useI18n()
            <path d="m7 9 3 3-3 3M13 15h4" />
          </svg>
        </button>
@@ -176,7 +176,7 @@ index 8e4da46cc..1546f8469 100644
        <button
          v-if="browserAvailable"
          class="chat-tool-tab"
-@@ -81,6 +97,10 @@ const { t } = useI18n()
+@@ -83,6 +99,10 @@ const { t } = useI18n()
          v-show="activePanel === 'terminal'"
          :visible="visible && activePanel === 'terminal'"
        />
@@ -186,7 +186,7 @@ index 8e4da46cc..1546f8469 100644
 +      />
        <DesktopBrowserPanel
          v-if="browserAvailable && activePanel === 'browser'"
-         :visible="browserVisible"
+         :submission-context="workspaceSessionId"
 diff --git a/packages/client/src/components/hermes/chat/ToolStreamPanel.vue b/packages/client/src/components/hermes/chat/ToolStreamPanel.vue
 new file mode 100644
 index 000000000..68821510c
@@ -1497,7 +1497,7 @@ index 000000000..5cfba01f6
 +  }
 +}
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index d9310c303..8e392a5d9 100644
+index 5609b3601..aeb5fd1c1 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -1044,6 +1044,19 @@ export default {
@@ -1521,7 +1521,7 @@ index d9310c303..8e392a5d9 100644
      title: 'مهمة في الخلفية', noGoal: 'مهمة في الخلفية بدون عنوان', open: 'فتح المخرجات الحية للمهمة في الخلفية', close: 'إغلاق مخرجات المهمة في الخلفية',
      waiting: 'في انتظار المخرجات الحية...', tool: 'أداة', tools: '{count} أداة', tokens: '{input} داخل · {output} خارج',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index adaf727ad..9b605e054 100644
+index 9fed3892d..58c27fcf7 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -1056,6 +1056,19 @@ export default {
@@ -1545,7 +1545,7 @@ index adaf727ad..9b605e054 100644
      title: 'Hintergrundaufgabe', noGoal: 'Unbenannte Hintergrundaufgabe', open: 'Live-Ausgabe der Hintergrundaufgabe öffnen', close: 'Ausgabe der Hintergrundaufgabe schließen',
      waiting: 'Warte auf Live-Ausgabe…', tool: 'Werkzeug', tools: '{count} Werkzeuge', tokens: '{input} ein · {output} aus',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index a19c050e6..6b0adc7af 100644
+index 831df7a7a..aac017c6b 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -1051,6 +1051,19 @@ export default {
@@ -1569,7 +1569,7 @@ index a19c050e6..6b0adc7af 100644
      title: 'Background task', noGoal: 'Untitled background task', open: 'Open live background task output', close: 'Close background task output',
      waiting: 'Waiting for live output...', tool: 'Tool', tools: '{count} tools', tokens: '{input} in · {output} out',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 96bdfc3b3..1210db388 100644
+index de6e186c7..92ea64b25 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -1056,6 +1056,19 @@ export default {
@@ -1593,7 +1593,7 @@ index 96bdfc3b3..1210db388 100644
      title: 'Tarea en segundo plano', noGoal: 'Tarea en segundo plano sin título', open: 'Abrir salida en directo de la tarea', close: 'Cerrar salida de la tarea',
      waiting: 'Esperando salida en directo…', tool: 'Herramienta', tools: '{count} herramientas', tokens: '{input} entrada · {output} salida',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index dbe03cb6c..8730248c8 100644
+index 102323ce7..c672f258d 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -1056,6 +1056,19 @@ export default {
@@ -1617,7 +1617,7 @@ index dbe03cb6c..8730248c8 100644
      title: 'Tâche en arrière-plan', noGoal: 'Tâche en arrière-plan sans titre', open: 'Ouvrir la sortie en direct de la tâche', close: 'Fermer la sortie de la tâche',
      waiting: 'En attente de la sortie en direct…', tool: 'Outil', tools: '{count} outils', tokens: '{input} entrée · {output} sortie',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index f52a3ff69..12ecdcaa0 100644
+index 492c68423..1e03d030c 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -1057,6 +1057,19 @@ export default {
@@ -1641,7 +1641,7 @@ index f52a3ff69..12ecdcaa0 100644
      title: 'バックグラウンドタスク', noGoal: '無題のバックグラウンドタスク', open: 'バックグラウンドタスクのライブ出力を開く', close: 'バックグラウンドタスクの出力を閉じる',
      waiting: 'ライブ出力を待機中…', tool: 'ツール', tools: 'ツール呼び出し {count} 回', tokens: '入力 {input} · 出力 {output}',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 747752565..e93131b6b 100644
+index dd13436e0..457bcfd96 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -1057,6 +1057,19 @@ export default {
@@ -1665,7 +1665,7 @@ index 747752565..e93131b6b 100644
      title: '백그라운드 작업', noGoal: '제목 없는 백그라운드 작업', open: '백그라운드 작업 실시간 출력 열기', close: '백그라운드 작업 출력 닫기',
      waiting: '실시간 출력을 기다리는 중…', tool: '도구', tools: '도구 호출 {count}회', tokens: '입력 {input} · 출력 {output}',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 1a9cdadf3..cad4a33e2 100644
+index ff9aed612..e0ebd455e 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -1056,6 +1056,19 @@ export default {
@@ -1689,7 +1689,7 @@ index 1a9cdadf3..cad4a33e2 100644
      title: 'Tarefa em segundo plano', noGoal: 'Tarefa em segundo plano sem título', open: 'Abrir saída ao vivo da tarefa', close: 'Fechar saída da tarefa',
      waiting: 'Aguardando saída ao vivo…', tool: 'Ferramenta', tools: '{count} ferramentas', tokens: '{input} entrada · {output} saída',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 3d103f873..511a18833 100644
+index ad3df355c..d2fa740df 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -982,6 +982,19 @@ export default {
@@ -1713,10 +1713,10 @@ index 3d103f873..511a18833 100644
      title: 'Фоновая задача', noGoal: 'Фоновая задача без названия', open: 'Открыть поток фоновой задачи', close: 'Закрыть поток фоновой задачи',
      waiting: 'Ожидание потока данных…', tool: 'Инструмент', tools: 'Инструментов: {count}', tokens: 'Ввод {input} · вывод {output}',
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index 607b68b2e..621c00904 100644
+index 422049cf6..f2b5e8318 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -618,6 +618,18 @@ export default {
+@@ -535,6 +535,18 @@ export default {
    },
  
    language: { label: 'Dil', zh: 'Çince', en: 'İngilizce', tr: 'Türkçe' },
@@ -1736,7 +1736,7 @@ index 607b68b2e..621c00904 100644
      sessions: 'Oturumlar', newTab: 'Yeni terminal', closeSession: 'Bu oturum kapatılsın mı?', sessionExited: 'Sonlandı',
      processExited: '{code} koduyla sonlandı', noSessions: 'Terminal oturumu yok', connectionFailed: 'Terminal hizmeti bağlantısı başarısız oldu', connectionClosed: 'Terminal bağlantısı kapandı', connectionError: 'Terminal bağlantısı hatası',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index d080a0b3f..3237d4a9e 100644
+index e9a1e3379..e485dcb13 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -1045,6 +1045,19 @@ export default {
@@ -1760,7 +1760,7 @@ index d080a0b3f..3237d4a9e 100644
      title: '背景子任務', noGoal: '未命名背景子任務', open: '開啟背景子任務即時輸出', close: '關閉背景子任務輸出',
      waiting: '正在等待即時輸出…', tool: '工具', tools: '{count} 次工具呼叫', tokens: '輸入 {input} · 輸出 {output}',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index a754f9202..84937c32c 100644
+index 59d9afbd6..8da7c1cd1 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -1052,6 +1052,19 @@ export default {
