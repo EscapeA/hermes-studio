@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Ekko Studio — 离线</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f7f7f4;
+      color: #222;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      text-align: center;
+      padding: 24px;
+    }
+    .card { max-width: 380px; }
+    .logo {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+      border-radius: 25%;
+      background: #e7e7e0;
+      display: grid;
+      place-items: center;
+      font-size: 30px;
+    }
+    h1 { font-size: 19px; font-weight: 600; margin-bottom: 10px; }
+    p { font-size: 14px; line-height: 1.7; color: #6b6b66; margin-bottom: 24px; }
+    button {
+      min-width: 132px;
+      padding: 11px 26px;
+      border: none;
+      border-radius: 999px;
+      background: #222;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    button:active { opacity: 0.8; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a1a; color: #f0f0f0; }
+      .logo { background: #2c2c2c; }
+      p { color: #9a9a9a; }
+      button { background: #f0f0f0; color: #1a1a1a; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">⌁</div>
+    <h1>连接不到服务</h1>
+    <p>网络不可用，或后端暂时没有响应。<br />恢复后重试即可，本地内容没有丢失。</p>
+    <button type="button" onclick="location.reload()">重试</button>
+  </div>
+</body>
+</html>
