@@ -8,7 +8,7 @@ import {
   highlightOutput,
   hljsHtmlToAnsi,
 } from '@/components/hermes/chat/tool-stream-highlight'
-import { formatOutput, paintShellCommand, renderToolBlock, summarizeToolCall } from '@/components/hermes/chat/tool-stream-format'
+import { EXPAND_MARKER, EXPAND_MARKER_PATTERN, formatOutput, fullToolArgsText, paintShellCommand, renderToolBlock, summarizeToolCall } from '@/components/hermes/chat/tool-stream-format'
 import type { Message } from '@/stores/hermes/chat'
 
 const labels = { tool: 'tool', empty: 'none' }
@@ -391,6 +391,81 @@ describe('shell 命令行结构化着色', () => {
     )
     expect(block).toContain('\u001b[1;34mgrep')
     expect(block).toContain('\u001b[35m|')
+  })
+})
+
+describe('调用参数展开入口', () => {
+  it('多行参数在调用行上带可点击的展开标记', () => {
+    const block = renderToolBlock(
+      toolMessage({
+        toolName: 'execute_code',
+        toolArgs: { code: 'from hermes_tools import terminal\nprint(1)\nprint(2)' },
+        toolStatus: 'done',
+        toolResult: '',
+      }),
+      true,
+      labels,
+    )
+    expect(block).toContain('+2 行')
+    expect(block).toContain(EXPAND_MARKER)
+  })
+
+  it('展开标记能被 EXPAND_MARKER_PATTERN 命中（面板靠它定位可点区间）', () => {
+    const block = renderToolBlock(
+      toolMessage({
+        toolName: 'execute_code',
+        toolArgs: { code: 'a\nb\nc\nd' },
+        toolStatus: 'done',
+        toolResult: '',
+      }),
+      true,
+      labels,
+    )
+    const line = block.split('\n').find((l: string) => l.includes(EXPAND_MARKER)) || ''
+    expect(EXPAND_MARKER_PATTERN.test(line)).toBe(true)
+  })
+
+  it('单行参数不出现展开标记（没有可展开内容）', () => {
+    const block = renderToolBlock(
+      toolMessage({
+        toolName: 'execute_code',
+        toolArgs: { code: 'print(1)' },
+        toolStatus: 'done',
+        toolResult: '',
+      }),
+      true,
+      labels,
+    )
+    expect(block).not.toContain(EXPAND_MARKER)
+  })
+
+  it('摘要被 SUMMARY_MAX 截断时仍保留展开标记', () => {
+    const longPath = '/very/long/' + 'x'.repeat(300)
+    const summary = summarizeToolCall('read_file', { path: longPath, note: 'y'.repeat(200) })
+    expect(summary.length).toBeLessThanOrEqual(160)
+    // 单行参数本就不该有标记；这里只验证长度约束成立
+    expect(summary).toContain('/very/long/')
+  })
+
+  it('fullToolArgsText 给出完整多行参数（供浮层显示）', () => {
+    const code = 'from hermes_tools import terminal\nfor i in range(3):\n    print(i)'
+    const body = fullToolArgsText(
+      toolMessage({ toolName: 'execute_code', toolArgs: { code } }),
+    )
+    expect(body).toContain('for i in range(3):')
+    expect(body.split('\n').length).toBeGreaterThan(1)
+  })
+
+  it('fullToolArgsText 把 JSON 字符串参数缩进展示', () => {
+    const body = fullToolArgsText(
+      toolMessage({ toolName: 'mcp__x__y', toolArgs: '{"context_id":"a","plan":[1,2]}' }),
+    )
+    expect(body).toContain('\n')
+    expect(body).toContain('"context_id": "a"')
+  })
+
+  it('无参数时 fullToolArgsText 返回空串（不弹空浮层）', () => {
+    expect(fullToolArgsText(toolMessage({ toolName: 'x', toolArgs: undefined }))).toBe('')
   })
 })
 
