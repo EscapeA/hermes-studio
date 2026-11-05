@@ -87,6 +87,8 @@
     "@audio/decode-wav": "^1.2.0",
     "@larksuiteoapi/node-sdk": "^1.73.0",
     "@modelcontextprotocol/client": "^2.0.0",
+    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.3",
     "@trycua/cua-driver": "0.35.4",
     "@typesafe-ai/sdk": "0.6.0",
     "@vscode/markdown-it-katex": "^1.1.2",
