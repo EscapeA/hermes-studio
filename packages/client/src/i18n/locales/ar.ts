@@ -469,7 +469,7 @@ export default {
     passkeyRpMismatch: 'هذا العنوان لا يطابق نطاق مفتاح المرور. افتح النطاق المُعد.',
     // <<< passkey i18n <<<
 
-    title: 'Ekko Studio',
+    title: 'Hermes Studio',
     description: 'أدخل اسم المستخدم وكلمة المرور للمتابعة.',
     placeholder: 'رمز الوصول',
     submit: 'تسجيل الدخول',
