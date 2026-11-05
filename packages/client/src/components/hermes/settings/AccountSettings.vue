@@ -7,6 +7,7 @@ import { useI18n } from "vue-i18n";
 import { changePassword, changeUsername, fetchLockedIps, unlockSpecificIp, unlockAllIps, updateMyAvatar, resetMyAvatar } from "@/api/studio/auth";
 import type { LockedIp } from "@/api/studio/auth";
 import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";
+import PasskeySettings from "@/components/hermes/settings/PasskeySettings.vue";
 import boring from "boring-avatars-vanilla";
 
 const { t } = useI18n();
@@ -274,6 +275,9 @@ onMounted(() => { loadLockedIps(); });
         </div>
       </div>
     </div>
+
+    <!-- Passkey (WebAuthn) management. Password login stays available. -->
+    <PasskeySettings />
 
     <!-- Locked IPs management -->
     <div class="locked-ips-section">
