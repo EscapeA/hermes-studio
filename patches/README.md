@@ -17,7 +17,7 @@ custom-next = main + patches/*.patch 线性重放（当前唯一集成分支）
 > 文件段剥掉 ⇒ **25 组 / 67 条**（2026-11-05 增补 `28-exec-stream` 2 条 ⇒ 26 组 / 69 条）。`scripts/verify-patch-stack.sh` 保留（它不依赖测试树）。
 > 上游删测试后 `harness:check` 也不再要求 `tests/client|server|e2e` 目录存在。
 
-## 分组总览（26 组 / 69 条）
+## 分组总览（27 组 / 70 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -47,6 +47,8 @@ custom-next = main + patches/*.patch 线性重放（当前唯一集成分支）
 | 26-sidebar-recent-only | 1 | 会话侧栏拍平成「置顶 + 最近」两组；「最近」分页加载更多；分类标签 `max-width` 放开 |
 | 27-identity-cleanup | 1 | 去掉会话界面的身份噪音：列表副标题 profile 名与头像行、气泡作者行（`hideAuthor`），Person 视图仍保留身份行 |
 | 28-exec-stream | 2 | 「Agent 执行直播」只读面板：按会话 tool 消息流回放调用（解包 JSON 信封 / MCP `{"result"}` 嵌套 / `untrusted_tool_result` 包装，参数归一化，shell 结构化着色，Python 与白名单 highlightAuto，底部留白两行，缩放/格式化/高亮开关持久化）；调用行带 `⟨展开⟩` 入口，点开看完整参数） |
+| 29-pwa | 1 | 安装式 PWA + 离线外壳 |
+| 30-passkey | 1 | Passkey(WebAuthn) 登录：可发现凭证免密登录 + 账号内凭证管理 + 超管 RP 配置页；密码登录保留 |
 
 ## ORDER 的语义
 
