@@ -464,7 +464,7 @@ export default {
     passkeyRpMismatch: '当前地址与 Passkey 域名不一致，请改用配置的域名访问。',
     // <<< passkey i18n <<<
 
-    title: 'Ekko Studio',
+    title: 'Hermes Studio',
     description: '输入用户名和密码以继续。',
     placeholder: '访问令牌',
     submit: '登录',

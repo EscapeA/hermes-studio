@@ -1,4 +1,4 @@
-// Ekko Studio service worker.
+// Hermes Studio service worker.
 //
 // Goal: a cold start (browser tab, installed PWA, or a WebView shell) must not
 // re-download the app shell when nothing changed on the server. Strategies:
@@ -20,7 +20,7 @@
 // waiting worker activates on the next cold start, which is exactly when a
 // stale shell is harmless.
 
-const CACHE_VERSION = 'v1'
+const CACHE_VERSION = 'v2'
 const SHELL_CACHE = `ekko-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `ekko-assets-${CACHE_VERSION}`
 const MEDIA_CACHE = `ekko-media-${CACHE_VERSION}`
