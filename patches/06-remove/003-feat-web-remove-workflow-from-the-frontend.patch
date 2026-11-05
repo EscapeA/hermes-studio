@@ -55,8 +55,10 @@ Drop the whole workflow surface from the SPA (server modules untouched):
  .../client/src/utils/workflow-run-pager.ts    |   22 -
  .../client/src/utils/workflow-run-snapshot.ts |   68 -
  .../client/src/views/hermes/ModelsView.vue    |    2 +-
- .../client/src/views/hermes/WorkflowView.vue  | 5420 -----------------
- 34 files changed, 30 insertions(+), 10513 deletions(-)
+ .../client/src/views/hermes/WorkflowView.vue  | 5435 -----------------
+ tests/e2e/fixtures/workflow-nodes.ts          |   22 -
+ tests/e2e/workflow-nodes.spec.ts              |  235 -
+ 36 files changed, 30 insertions(+), 10785 deletions(-)
  delete mode 100644 packages/client/src/api/studio/workflow-socket.ts
  delete mode 100644 packages/client/src/api/studio/workflows.ts
  delete mode 100644 packages/client/src/components/hermes/workflow/WorkflowAgentNode.vue
@@ -74,6 +76,8 @@ Drop the whole workflow surface from the SPA (server modules untouched):
  delete mode 100644 packages/client/src/utils/workflow-run-pager.ts
  delete mode 100644 packages/client/src/utils/workflow-run-snapshot.ts
  delete mode 100644 packages/client/src/views/hermes/WorkflowView.vue
+ delete mode 100644 tests/e2e/fixtures/workflow-nodes.ts
+ delete mode 100644 tests/e2e/workflow-nodes.spec.ts
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
 index ed0da267c..dac76f0ca 100644
@@ -2060,7 +2064,7 @@ index d67ecae23..f148d6928 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index c56e36f64..5545e3770 100644
+index 9efd8031f..53d7b0945 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -654,7 +654,6 @@ export default {
@@ -2071,7 +2075,7 @@ index c56e36f64..5545e3770 100644
      models: 'النماذج',
      profiles: 'البروفايلات',
      skills: 'المهارات',
-@@ -1489,301 +1488,6 @@ export default {
+@@ -1490,301 +1489,6 @@ export default {
      stopSpeech: 'إيقاف',
      speechNotSupported: 'تشغيل الصوت غير مدعوم في هذا المتصفح',
    },
@@ -2374,7 +2378,7 @@ index c56e36f64..5545e3770 100644
    kanban: {
      title: 'لوحة كانبان',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 09e63a335..6d84d92fd 100644
+index 19d829e5a..dfe273508 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -715,7 +715,6 @@ export default {
@@ -2385,7 +2389,7 @@ index 09e63a335..6d84d92fd 100644
      groupTools: 'Werkzeuge',
      groupToolsShort: "Tools",
      codingAgents: "Coding Agents",
-@@ -3130,174 +3129,6 @@ jobTriggered: 'Job ausgelost',
+@@ -3131,174 +3130,6 @@ jobTriggered: 'Job ausgelost',
      loadFailed: 'Skill-Nutzung konnte nicht geladen werden',
      otherSkills: 'Andere Skills',
    },
@@ -2561,7 +2565,7 @@ index 09e63a335..6d84d92fd 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index a8259e7e2..487c228ba 100644
+index e434cee83..64ca4964d 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -654,7 +654,6 @@ export default {
@@ -2572,7 +2576,7 @@ index a8259e7e2..487c228ba 100644
      models: 'Models',
      profiles: 'Profiles',
      skills: 'Skills',
-@@ -1502,255 +1501,6 @@ export default {
+@@ -1503,255 +1502,6 @@ export default {
      stopSpeech: 'Stop',
      speechNotSupported: 'Voice playback not supported in this browser',
    },
@@ -2829,7 +2833,7 @@ index a8259e7e2..487c228ba 100644
    kanban: {
      title: 'Kanban Board',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index fcb81002c..84c1eda25 100644
+index 1f4b42b7a..3987999d0 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -715,7 +715,6 @@ export default {
@@ -2840,7 +2844,7 @@ index fcb81002c..84c1eda25 100644
      groupTools: 'Herramientas',
      groupToolsShort: "Herr.",
      codingAgents: "Agentes de código",
-@@ -3130,174 +3129,6 @@ jobTriggered: 'Job ejecutado',
+@@ -3131,174 +3130,6 @@ jobTriggered: 'Job ejecutado',
      loadFailed: 'No se pudo cargar el uso de habilidades',
      otherSkills: 'Otras habs.',
    },
@@ -3016,7 +3020,7 @@ index fcb81002c..84c1eda25 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 164117a52..e826a7027 100644
+index 991b7fa15..5464a0ec3 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -715,7 +715,6 @@ export default {
@@ -3027,7 +3031,7 @@ index 164117a52..e826a7027 100644
      groupTools: 'Outils',
      groupToolsShort: "Outils",
      codingAgents: "Agents de code",
-@@ -3130,174 +3129,6 @@ jobTriggered: 'Job declenche',
+@@ -3131,174 +3130,6 @@ jobTriggered: 'Job declenche',
      loadFailed: 'Impossible de charger l\'utilisation des compétences',
      otherSkills: 'Autres comp.',
    },
@@ -3203,7 +3207,7 @@ index 164117a52..e826a7027 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 8d2e30848..abc91b521 100644
+index 7a797d06d..dfc7d0ab1 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -716,7 +716,6 @@ export default {
@@ -3214,7 +3218,7 @@ index 8d2e30848..abc91b521 100644
      groupTools: 'ツール',
      groupToolsShort: "ツール",
      codingAgents: "コーディングエージェント",
-@@ -3130,174 +3129,6 @@ export default {
+@@ -3131,174 +3130,6 @@ export default {
      loadFailed: 'スキル使用状況の読み込みに失敗しました',
      otherSkills: 'その他',
    },
@@ -3390,7 +3394,7 @@ index 8d2e30848..abc91b521 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 40772b41c..1d2c98851 100644
+index 693b59ee2..70bdcf637 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -716,7 +716,6 @@ export default {
@@ -3401,7 +3405,7 @@ index 40772b41c..1d2c98851 100644
      groupTools: '도구',
      groupToolsShort: "도구",
      codingAgents: "코딩 에이전트",
-@@ -3130,174 +3129,6 @@ export default {
+@@ -3131,174 +3130,6 @@ export default {
      loadFailed: '스킬 사용량을 불러오지 못했습니다',
      otherSkills: '기타',
    },
@@ -3577,7 +3581,7 @@ index 40772b41c..1d2c98851 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index a0c256d16..e8746014b 100644
+index 06bd73374..5ffbf65b0 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -715,7 +715,6 @@ export default {
@@ -3588,7 +3592,7 @@ index a0c256d16..e8746014b 100644
      groupTools: 'Ferramentas',
      groupToolsShort: "Ferr.",
      codingAgents: "Agentes de código",
-@@ -3130,174 +3129,6 @@ jobTriggered: 'Job acionado',
+@@ -3131,174 +3130,6 @@ jobTriggered: 'Job acionado',
      loadFailed: 'Falha ao carregar o uso de habilidades',
      otherSkills: 'Outras habs.',
    },
@@ -3764,7 +3768,7 @@ index a0c256d16..e8746014b 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index e4fd78ed0..fdcccd319 100644
+index 60f002896..8980e4c5a 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -580,7 +580,6 @@ export default {
@@ -3775,7 +3779,7 @@ index e4fd78ed0..fdcccd319 100644
      models: 'Модели',
      profiles: 'Профили',
      plugins: 'Плагины',
-@@ -1379,269 +1378,6 @@ export default {
+@@ -1380,269 +1379,6 @@ export default {
      speechNotSupported: 'Этот браузер не поддерживает воспроизведение речи',
    },
  
@@ -4046,7 +4050,7 @@ index e4fd78ed0..fdcccd319 100644
    kanban: {
      title: 'Канбан',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 2e6c30c1f..9909538c6 100644
+index 109639f31..03cb0a821 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -655,7 +655,6 @@ export default {
@@ -4057,7 +4061,7 @@ index 2e6c30c1f..9909538c6 100644
      models: '模型',
      profiles: '設定檔',
      plugins: '插件',
-@@ -1496,296 +1495,6 @@ export default {
+@@ -1497,296 +1496,6 @@ export default {
      newCliChat: '新增 CLI',
      cliEmptyState: '開始 CLI 對話',
    },
@@ -4355,7 +4359,7 @@ index 2e6c30c1f..9909538c6 100644
    kanban: {
      title: '看板',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 1cdfcee71..6f10c267b 100644
+index 536dd4b70..5af25837a 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -655,7 +655,6 @@ export default {
@@ -4366,7 +4370,7 @@ index 1cdfcee71..6f10c267b 100644
      models: '模型',
      profiles: '配置',
      plugins: '插件',
-@@ -1503,301 +1502,6 @@ export default {
+@@ -1504,301 +1503,6 @@ export default {
      stopSpeech: '停止',
      speechNotSupported: '此浏览器不支持语音播放',
    },
@@ -5752,10 +5756,10 @@ index a849af76f..1f13d62eb 100644
            @update:value="handleProfileUpdate"
 diff --git a/packages/client/src/views/hermes/WorkflowView.vue b/packages/client/src/views/hermes/WorkflowView.vue
 deleted file mode 100644
-index e577dabc5..000000000
+index 7c5f100ca..000000000
 --- a/packages/client/src/views/hermes/WorkflowView.vue
 +++ /dev/null
-@@ -1,5420 +0,0 @@
+@@ -1,5435 +0,0 @@
 -<script setup lang="ts">
 -import { agentMetadata, isGlobalOnlyCodingAgent } from '@/utils/agent-catalog'
 -import { useCodingAgentModels } from '@/composables/useCodingAgentModels'
@@ -5908,7 +5912,7 @@ index e577dabc5..000000000
 -const profilesStore = useProfilesStore()
 -const message = useMessage()
 -const {
--  screenToFlowCoordinate, getViewport, setViewport, setNodes, setEdges, updateNodeInternals,
+-  nodes: canvasNodes, screenToFlowCoordinate, getViewport, setViewport, setNodes, setEdges, updateNodeInternals,
 -  findNode, addSelectedNodes, removeSelectedElements,
 -} = useVueFlow('hermes-workflow')
 -const defaultViewport: WorkflowViewport = { x: 80, y: 80, zoom: 0.75 }
@@ -6443,7 +6447,23 @@ index e577dabc5..000000000
 -  return []
 -}
 -
--const nodes = ref<WorkflowNode[]>(makeInitialNodes())
+-// Keep an authored-only input for Vue Flow's initial mount and workflow switches.
+-// Read live nodes from its store so edits never replay stale measurements or geometry.
+-const nodeDefinitions = ref<WorkflowNode[]>(makeInitialNodes())
+-const nodes = computed<WorkflowNode[]>({
+-  get: () => canvasNodes.value as WorkflowNode[],
+-  set: (value) => {
+-    nodeDefinitions.value = value.map(node => ({
+-      id: node.id,
+-      type: node.type,
+-      position: node.position,
+-      dragHandle: node.dragHandle,
+-      style: node.style,
+-      data: node.data,
+-    }))
+-    setNodes(nodeDefinitions.value)
+-  },
+-})
 -const edges = ref<WorkflowEdge[]>([])
 -
 -function unavailableWorkflowAgent() {
@@ -8687,13 +8707,12 @@ index e577dabc5..000000000
 -  transaction.after.edges[transaction.after.edges.length - 1] = {
 -    ...transaction.after.edges[transaction.after.edges.length - 1], animated: false, markerEnd: MarkerType.ArrowClosed,
 -  }
--  setNodes(transaction.after.nodes)
+-  nodes.value = transaction.after.nodes
 -  await nextTick()
 -  updateNodeInternals([nodeId])
 -  setEdges(transaction.after.edges)
 -  await nextTick()
--  // Selection lives in Vue Flow's internal store, not in our definition
--  // array. Apply it after the release gesture has committed Node + Edge.
+-  // Apply selection after the release gesture has committed Node + Edge.
 -  window.setTimeout(() => {
 -    removeSelectedElements()
 -    const createdNode = findNode(nodeId)
@@ -8707,7 +8726,7 @@ index e577dabc5..000000000
 -function undoLastCanvasTransaction() {
 -  const transaction = lastCanvasTransaction.value
 -  if (!transaction || selectedWorkflowRunId.value) return
--  setNodes(transaction.before.nodes)
+-  nodes.value = transaction.before.nodes
 -  setEdges(transaction.before.edges)
 -  nextNodeIndex.value = Math.max(1, nextNodeIndex.value - 1)
 -  lastCanvasTransaction.value = null
@@ -9548,7 +9567,7 @@ index e577dabc5..000000000
 -        <VueFlow
 -          :key="workflowFlowKey"
 -          id="hermes-workflow"
--          v-model:nodes="nodes"
+-          :nodes="nodeDefinitions"
 -          v-model:edges="renderedEdges"
 -          :fit-view-on-init="false"
 -          :default-viewport="defaultViewport"
@@ -11176,3 +11195,272 @@ index e577dabc5..000000000
 -  }
 -}
 -</style>
+diff --git a/tests/e2e/fixtures/workflow-nodes.ts b/tests/e2e/fixtures/workflow-nodes.ts
+deleted file mode 100644
+index 66a616d5b..000000000
+--- a/tests/e2e/fixtures/workflow-nodes.ts
++++ /dev/null
+@@ -1,22 +0,0 @@
+-import { createApp, h } from 'vue'
+-import { createPinia } from 'pinia'
+-import { createRouter, createMemoryHistory } from 'vue-router'
+-import { NConfigProvider, NMessageProvider, NDialogProvider } from 'naive-ui'
+-import WorkflowView from '../../../packages/client/src/views/hermes/WorkflowView.vue'
+-import { i18nReady } from '../../../packages/client/src/i18n'
+-import '../../../packages/client/src/styles/global.scss'
+-
+-const router = createRouter({ history: createMemoryHistory(), routes: [
+-  { name: 'hermes.workflow', path: '/workflow', component: WorkflowView },
+-] })
+-await router.push('/workflow')
+-const app = createApp({ setup: () => () => h(NConfigProvider, {}, {
+-  default: () => h(NMessageProvider, {}, { default: () => h(NDialogProvider, {}, {
+-    default: () => h('main', { style: { height: '100vh', width: '100vw' } }, [h(WorkflowView)]),
+-  }) }),
+-}) })
+-app.use(createPinia())
+-app.use(await i18nReady)
+-app.use(router)
+-await router.isReady()
+-app.mount('#app')
+diff --git a/tests/e2e/workflow-nodes.spec.ts b/tests/e2e/workflow-nodes.spec.ts
+deleted file mode 100644
+index 5b8fe8e55..000000000
+--- a/tests/e2e/workflow-nodes.spec.ts
++++ /dev/null
+@@ -1,235 +0,0 @@
+-import { test, expect, type Locator, type Page } from '@playwright/test'
+-import { resolve } from 'node:path'
+-
+-const node = (page: Page, id: number) => page.locator(`.vue-flow__node[data-id="agent-${id}"]`)
+-
+-async function openWorkflow(page: Page, { empty = false, protocolMismatch = false, switchable = false, withRun = false } = {}) {
+-  const saves: any[] = [], errors: string[] = []
+-  const workflow = {
+-    id: 'workflow-fixture', name: '节点编辑验证', profile: 'default', workspace: null,
+-    nodes: empty ? [] : [{
+-      id: 'agent-1', type: 'agent', position: { x: 340, y: 20 },
+-      data: { title: '已有节点', agent: 'ekko-agent', agentMode: 'scoped', provider: 'fixture',
+-        model: 'fixture-model', apiMode: 'chat_completions', reasoningEffort: 'low',
+-        input: 'fixture input', skills: [], images: [], approvalRequired: false, orchestration: { join: 'all' } },
+-    }],
+-    edges: [], viewport: { x: 80, y: 80, zoom: 0.75 }, created_at: 1, updated_at: 1,
+-  }
+-  const other = { ...workflow, id: 'other-workflow', name: '另一个工作流', nodes: [], updated_at: 0 }
+-  const run = { id: 'run-fixture', workflow_id: workflow.id, profile: 'default', status: 'completed',
+-    created_at: 1, started_at: 1, completed_at: 2, start_node_ids: [], node_sessions: [],
+-    snapshot_nodes: workflow.nodes.map(item => ({ ...item, data: { ...item.data, title: '执行快照标题' } })), snapshot_edges: [],
+-  }
+-  page.on('pageerror', error => errors.push(error.message))
+-  await page.setViewportSize({ width: 1600, height: 1000 })
+-  await page.addInitScript(() => {
+-    localStorage.setItem('hermes_locale', 'zh')
+-    localStorage.setItem('hermes_api_key', 'synthetic-isolation-key')
+-    ;(window as any).__APP_VERSION__ = 'test'
+-  })
+-  await page.routeWebSocket('**/socket.io/**', () => {})
+-  await page.route('**/src/api/studio/workflow-socket.ts*', route => route.fulfill({
+-    contentType: 'text/javascript', body: `
+-      export const onWorkflowStatusUpdated = () => () => {};
+-      export const onWorkflowStatusError = () => () => {};
+-      export const subscribeWorkflowStatuses = async () => [];
+-      export const listWorkflowsSocket = async () => [];
+-    `,
+-  }))
+-  await page.route(url => url.pathname.startsWith('/api/'), async route => {
+-    const { pathname } = new URL(route.request().url())
+-    let json: any = {}
+-    if (pathname === '/api/auth/me') json = { user: { id: 1, username: 'fixture', role: 'super_admin' } }
+-    else if (pathname === '/api/auth/avatar') json = { avatar: null }
+-    else if (pathname === '/api/hermes/profiles') json = { profiles: [{ name: 'default', alias: 'Default', active: true, model: 'fixture-model' }] }
+-    else if (pathname === '/api/hermes/available-models') json = {
+-      groups: [{ provider: 'fixture', label: 'Fixture', base_url: 'http://fixture.invalid', api_key: '',
+-        api_mode: 'chat_completions', models: ['fixture-model'],
+-        ...(protocolMismatch ? { api_mode_by_model: { 'fixture-model': 'codex_responses' }, model_meta: { 'fixture-model': { reasoning: false } } } : {}),
+-      }], profiles: [], allProviders: [], default: 'fixture-model', default_provider: 'fixture',
+-    }
+-    else if (pathname === '/api/agents/availability') json = { revision: 1, updatedAt: '2026-11-03',
+-      agents: ['ekko-agent', 'hermes', 'codex'].map(id => ({ id, available: true, installed: true, source: 'built-in' })),
+-    }
+-    else if (pathname === '/api/studio/workflows') json = { workflows: switchable ? [workflow, other] : [workflow] }
+-    else if (pathname === '/api/studio/workflows/workflow-fixture' && route.request().method() === 'PATCH') {
+-      const input = route.request().postDataJSON()
+-      saves.push(input)
+-      json = { ...workflow, ...input }
+-    }
+-    else if (pathname === '/api/studio/workflows/workflow-fixture/runs') json = { runs: withRun ? [run] : [] }
+-    else if (pathname.endsWith('/runs/run-fixture')) json = run
+-    else if (pathname.endsWith('/runs')) json = { runs: [] }
+-    else if (pathname.endsWith('/schedules')) json = { schedules: [] }
+-    else if (pathname.includes('/skills')) {
+-      // Exercise the asynchronous skill-options refresh as well as field updates.
+-      await new Promise(done => setTimeout(done, 50))
+-      json = { categories: [], archived: [] }
+-    }
+-    else if (pathname.startsWith('/api/studio/sessions')) json = { sessions: [] }
+-    else if (pathname.includes('/models')) json = { agents: [] }
+-    await route.fulfill({ json })
+-  })
+-  const entry = '/@fs/' + resolve('tests/e2e/fixtures/workflow-nodes.ts').replaceAll('\\', '/').replace(/^\//, '')
+-  await page.route('**/__workflow_nodes__', route => route.fulfill({ contentType: 'text/html',
+-    body: `<!doctype html><html lang="zh"><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="app"></div><script type="module" src="${entry}"></script></body></html>`,
+-  }))
+-  await page.goto('/__workflow_nodes__')
+-  await expect(page.getByRole('button', { name: '保存', exact: true })).toBeEnabled()
+-  if (!empty) await expect(node(page, 1)).toBeVisible()
+-  return { saves, errors }
+-}
+-
+-async function addNode(page: Page, id: number) {
+-  await page.getByRole('button', { name: '添加节点', exact: true }).click()
+-  await expect(node(page, id)).toBeVisible()
+-  return node(page, id)
+-}
+-
+-async function selectAgent(page: Page, target: Locator, label: string) {
+-  await target.locator('.n-select').first().click()
+-  await page.locator('.n-base-select-option').filter({ hasText: new RegExp(`^${label}$`) }).click()
+-}
+-
+-async function connectNodes(page: Page) {
+-  await node(page, 1).locator('.output-handle').dragTo(node(page, 2).locator('.input-handle'))
+-  await expect(page.locator('.vue-flow__edge')).toHaveCount(1)
+-}
+-
+-test('keeps a new node visible after selecting another Agent and saves its selection', async ({ page }) => {
+-  const { saves, errors } = await openWorkflow(page)
+-  const added = await addNode(page, 2)
+-  await selectAgent(page, added, 'Hermes')
+-  await expect(added).toBeVisible()
+-  await expect(added.locator('.n-select').first()).toContainText('Hermes')
+-  await expect(node(page, 1)).toBeVisible()
+-  await added.locator('.node-prompt-input textarea').fill('new node input')
+-  await connectNodes(page)
+-  await page.getByRole('button', { name: '保存', exact: true }).click()
+-  await expect.poll(() => saves.length).toBe(1)
+-  expect(saves[0].nodes).toHaveLength(2)
+-  expect(saves[0].nodes[1].data).toMatchObject({ agent: 'hermes', reasoningEffort: 'low' })
+-  expect(errors).toEqual([])
+-})
+-
+-test('keeps a new node visible when editing its title', async ({ page }) => {
+-  const { errors } = await openWorkflow(page)
+-  const added = await addNode(page, 2)
+-  await added.locator('.n-input input').first().fill('修改后的标题')
+-  await expect(added).toBeVisible()
+-  await expect(added.locator('.n-input input').first()).toHaveValue('修改后的标题')
+-  await expect(node(page, 1).locator('.n-input input').first()).toHaveValue('已有节点')
+-  expect(errors).toEqual([])
+-})
+-
+-test('measures the first and successive nodes after automatic reasoning normalization', async ({ page }) => {
+-  const { errors } = await openWorkflow(page, { empty: true })
+-  for (const id of [1, 2, 3]) {
+-    await addNode(page, id)
+-    for (let previous = 1; previous <= id; previous++) await expect(node(page, previous)).toBeVisible()
+-  }
+-  await expect(page.locator('.vue-flow__node')).toHaveCount(3)
+-  expect(errors).toEqual([])
+-})
+-
+-test('keeps a new node visible after automatic per-model protocol normalization', async ({ page }) => {
+-  const { saves, errors } = await openWorkflow(page, { empty: true, protocolMismatch: true })
+-  const added = await addNode(page, 1)
+-  await added.locator('.node-prompt-input textarea').fill('protocol fixture')
+-  await page.getByRole('button', { name: '保存', exact: true }).click()
+-  await expect.poll(() => saves.length).toBe(1)
+-  expect(saves[0].nodes[0].data.apiMode).toBe('codex_responses')
+-  await expect(added).toBeVisible()
+-  expect(errors).toEqual([])
+-})
+-
+-test('preserves measured size and position through Agent edits, dragging, resizing and saving', async ({ page }) => {
+-  const { saves, errors } = await openWorkflow(page)
+-  const added = await addNode(page, 2)
+-  await selectAgent(page, added, 'Codex')
+-  await expect(added).toBeVisible()
+-  const before = (await added.boundingBox())!
+-  const header = (await added.locator('.node-header').boundingBox())!
+-  await page.mouse.move(header.x + header.width / 2, header.y + header.height / 2)
+-  await page.mouse.down()
+-  await page.mouse.move(header.x + header.width / 2 + 100, header.y + header.height / 2 + 60, { steps: 12 })
+-  await page.mouse.up()
+-  const moved = (await added.boundingBox())!
+-  expect(moved.x - before.x).toBeGreaterThan(80)
+-  expect(moved.y - before.y).toBeGreaterThan(40)
+-  const handle = added.locator('.workflow-resize-handle.bottom.right')
+-  await expect(handle).toBeVisible()
+-  const corner = (await handle.boundingBox())!
+-  await page.mouse.move(corner.x + corner.width / 2, corner.y + corner.height / 2)
+-  await page.mouse.down()
+-  await page.mouse.move(corner.x + corner.width / 2 + 60, corner.y + corner.height / 2 + 40, { steps: 12 })
+-  await page.mouse.up()
+-  const resized = (await added.boundingBox())!
+-  expect(resized.width).toBeGreaterThan(moved.width + 50)
+-  expect(resized.height).toBeGreaterThan(moved.height + 30)
+-  await added.locator('.n-input input').first().fill('移动并缩放后的节点')
+-  await added.locator('.node-prompt-input textarea').fill('geometry fixture')
+-  await connectNodes(page)
+-  await expect(added).toBeVisible()
+-  const geometry = await added.evaluate(el => {
+-    const element = el as HTMLElement, matrix = new DOMMatrix(element.style.transform)
+-    return { position: { x: matrix.m41, y: matrix.m42 }, style: { width: element.style.width, height: element.style.height } }
+-  })
+-  await page.getByRole('button', { name: '保存', exact: true }).click()
+-  await expect.poll(() => saves.length).toBe(1)
+-  const saved = saves[0].nodes.find((item: any) => item.id === 'agent-2')
+-  expect(saved.position.x).toBeCloseTo(geometry.position.x, 3)
+-  expect(saved.position.y).toBeCloseTo(geometry.position.y, 3)
+-  expect(saved.style).toEqual(geometry.style)
+-  expect(saved.data).toMatchObject({ agent: 'codex', title: '移动并缩放后的节点' })
+-  expect(saved).not.toHaveProperty('dimensions')
+-  expect(errors).toEqual([])
+-})
+-
+-test('restores edited nodes when switching workflows and remounting the canvas', async ({ page }) => {
+-  const { errors } = await openWorkflow(page, { switchable: true })
+-  const added = await addNode(page, 2)
+-  await added.locator('.n-input input').first().fill('切换后保留的标题')
+-  await selectAgent(page, added, 'Hermes')
+-  await page.getByRole('button', { name: /^另一个工作流 default/ }).click()
+-  await expect(page.locator('.vue-flow__node')).toHaveCount(0)
+-  await page.getByRole('button', { name: /^节点编辑验证 default/ }).click()
+-  await expect(node(page, 1)).toBeVisible()
+-  await expect(node(page, 2)).toBeVisible()
+-  await expect(node(page, 2).locator('.n-input input').first()).toHaveValue('切换后保留的标题')
+-  await expect(node(page, 2).locator('.n-select').first()).toContainText('Hermes')
+-  expect(errors).toEqual([])
+-})
+-
+-test('renders run snapshot nodes as readonly and restores the editable definition', async ({ page }) => {
+-  const { errors } = await openWorkflow(page, { withRun: true })
+-  await page.locator('.workflow-run-item').click()
+-  await expect(node(page, 1)).toBeVisible()
+-  await expect(node(page, 1).locator('.n-input input').first()).toHaveValue('执行快照标题')
+-  await expect(node(page, 1).locator('.n-input input').first()).toBeDisabled()
+-  await page.getByRole('button', { name: '隐藏执行记录', exact: true }).click()
+-  await expect(node(page, 1)).toBeVisible()
+-  await expect(node(page, 1).locator('.n-input input').first()).toHaveValue('已有节点')
+-  await expect(node(page, 1).locator('.n-input input').first()).toBeEnabled()
+-  expect(errors).toEqual([])
+-})
+-
+-test('keeps a node created from a connection visible and undoes the canvas transaction', async ({ page }) => {
+-  const { errors } = await openWorkflow(page)
+-  const source = (await node(page, 1).locator('.output-handle').boundingBox())!
+-  const canvas = (await page.locator('.workflow-flow').boundingBox())!
+-  await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2)
+-  await page.mouse.down()
+-  await page.mouse.move(canvas.x + canvas.width * 0.67, canvas.y + canvas.height * 0.15, { steps: 12 })
+-  await page.mouse.up()
+-  await expect(node(page, 2)).toBeVisible()
+-  await expect(page.locator('.vue-flow__edge')).toHaveCount(1)
+-  await node(page, 2).locator('.n-input input').first().fill('连线创建的节点')
+-  await expect(node(page, 2)).toBeVisible()
+-  await page.locator('.vue-flow__pane').click({ position: { x: 20, y: 20 } })
+-  await page.keyboard.press('Control+z')
+-  await expect(node(page, 2)).toHaveCount(0)
+-  await expect(page.locator('.vue-flow__edge')).toHaveCount(0)
+-  await expect(node(page, 1)).toBeVisible()
+-  expect(errors).toEqual([])
+-})

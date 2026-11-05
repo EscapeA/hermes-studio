@@ -4,36 +4,29 @@ Date: Tue, 13 Oct 2026 16:36:41 +0800
 Subject: [PATCH] fix(i18n): drop Turkish keys for features the fork removed
 
 ---
- packages/client/src/i18n/locales/tr.ts | 300 +------------------------
- 1 file changed, 4 insertions(+), 296 deletions(-)
+ packages/client/src/i18n/locales/tr.ts | 294 -------------------------
+ 1 file changed, 294 deletions(-)
 
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index 5294d8a91..4227e0551 100644
+index 74e5f69cc..f552e556c 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -580,12 +580,10 @@ export default {
-   },
+@@ -359,7 +359,6 @@ export default {
+     remoteOwnerBusy: 'Standby — browser operation in progress',
+     remoteOwnerConnecting: 'Connecting',
  
-   sidebar: {
--    resize: 'Kenar çubuğunu yeniden boyutlandır',
--    chat: 'Sohbet', backToChat: 'Geri', search: 'Ara', apiRelay: 'API geçidi', history: 'Geçmiş', jobs: 'İşler', kanban: 'Kanban',
--    workflow: 'İş akışı', models: 'Modeller', profiles: 'Profiller', skills: 'Yetenekler', plugins: 'Eklentiler', mcp: 'MCP', petdex: 'Evcil hayvanlar',
-+    chat: 'Sohbet', backToChat: 'Geri', search: 'Ara', history: 'Geçmiş', jobs: 'İşler', kanban: 'Kanban',
-+    models: 'Modeller', profiles: 'Profiller', skills: 'Yetenekler', plugins: 'Eklentiler', mcp: 'MCP', petdex: 'Evcil hayvanlar',
-     memory: 'Bellek', logs: 'Günlükler', usage: 'Kullanım', performance: 'Performans', journey: 'Yolculuk', skillsUsage: 'Yetenek kullanımı',
--    channels: 'Kanallar', socialMessages: 'Mesaj gönder', gateways: 'Ağ geçitleri', terminal: 'Terminal', browser: 'Tarayıcı', singleChat: 'Sohbet',
--    globalAgent: 'Genel aracı', groupChat: 'Grup sohbeti', files: 'Dosyalar', devices: 'Cihazlar', connections: 'Cihaz bağlantıları',
-+    channels: 'Kanallar', socialMessages: 'Mesaj gönder', gateways: 'Ağ geçitleri', terminal: 'Terminal', browser: 'Tarayıcı', globalAgent: 'Genel aracı', files: 'Dosyalar', devices: 'Cihazlar', connections: 'Cihaz bağlantıları',
-     agentManager: 'Aracı yöneticisi', groupConversation: 'Konuşma', groupConversationShort: 'Kon', groupPlatform: 'Platform', groupAgent: 'Aracı',
-     groupAgentShort: 'Aracı', groupSystem: 'Sistem', groupSystemShort: 'Sis', groupMonitoring: 'İzleme', groupMonitoringShort: 'İzl',
-     groupTools: 'Araçlar', groupToolsShort: 'Araçlar', codingAgents: 'Kodlama araçları', versionPreview: 'Sürüm önizlemesi', theme: 'Tema',
-@@ -654,245 +652,7 @@ export default {
-     contextRemaining: 'kaldı', contextClickToEdit: 'Bağlam uzunluğunu düzenlemek için tıklayın', contextEditTitle: 'Bağlam uzunluğunu düzenle',
-     contextEditDesc: 'Mevcut model için bağlam uzunluğu sınırını belirleyin (jeton cinsinden)', contextEditPlaceholder: 'Bağlam uzunluğunu girin',
+-
+     title: 'Tarayıcı',
+     settings: 'Tarayıcı ayarları',
+     desktopOnly: 'Yerleşik tarayıcı yalnızca Ekko Studio Desktop sürümünde kullanılabilir.',
+@@ -583,247 +582,6 @@ export default {
      contextEditSave: 'Kaydet', contextEditCancel: 'İptal', contextEditInvalid: 'Lütfen geçerli bir bağlam uzunluğu girin', contextEditSuccess: 'Bağlam uzunluğu güncellendi', contextEditFailed: 'Güncelleme başarısız oldu',
--    runUsageOutput: 'Çıktı jetonları', runUsageInput: 'Girdi jetonları', runUsageCache: 'Önbellek isabetleri', runUsageCost: 'Tahmini maliyet', runUsageSpeed: 'Jeton hızı', runUsageAverageSpeed: 'Ortalama hız', runUsageEstimatedSpeed: 'Tahmini hız',
--  },
+     runUsageOutput: 'Çıktı jetonları', runUsageInput: 'Girdi jetonları', runUsageCache: 'Önbellek isabetleri', runUsageCost: 'Tahmini maliyet', runUsageSpeed: 'Jeton hızı', runUsageAverageSpeed: 'Ortalama hız', runUsageEstimatedSpeed: 'Tahmini hız',
+   },
 -  groupChat: {
+-    migrationNoticeTitle: "Grup sohbeti kullanımdan kaldırılıyor",
+-    migrationNoticeMessage: "Grup sohbeti özelliği yakında kullanımdan kaldırılacak. Mevcut gruplarınızdaki görevleri, Agent ayarlarını ve önemli bağlamı gözden geçirmenizi ve bu işleri sürdürmek için Bot’a taşımanızı öneririz.",
+-    migrationNoticeSaveFailed: "Onayınız kaydedilemedi. Lütfen tarayıcı depolamasını kontrol edip tekrar deneyin.",
 -    messageAlreadySummarized: "Zaten özetlendi; silinemez",
 -    messageSummaryBoundaryUnknown: "Özet sınırı bilinmiyor; silme devre dışı",
 -    messageSelectionHint: "Üye mesajlarını veya tüm ajan çalıştırmalarını seçin. Özetlenmiş mesajlar seçilemez.",
@@ -270,11 +263,11 @@ index 5294d8a91..4227e0551 100644
 -    summaryUpdated: 'Özet güncellendi',
 -    summaryNever: 'Hiçbir zaman',
 -    summaryLoadFailed: 'Oda özeti yüklenemedi',
-+    runUsageOutput: 'Çıktı jetonları', runUsageInput: 'Girdi jetonları', runUsageCache: 'Önbellek isabetleri', runUsageSpeed: 'Jeton hızı', runUsageAverageSpeed: 'Ortalama hız', runUsageEstimatedSpeed: 'Tahmini hız',
-   },
+-  },
    skillsUsage: {
      title: 'Yetenek kullanımı',
-@@ -960,58 +720,6 @@ export default {
+     subtitle: 'Hermes oturumlarındaki yetenek yüklemelerini ve düzenlemelerini izleyin',
+@@ -890,58 +648,6 @@ export default {
      message: { taskArchived: 'Görev arşivlendi' },
    },
    journey: { nodeKinds: 'Düğüm türleri' },
