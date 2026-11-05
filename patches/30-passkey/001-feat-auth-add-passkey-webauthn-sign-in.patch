@@ -1,4 +1,4 @@
-From b7f1884ccba3172a2612421eef93fc766fb20fcd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 5 Nov 2026 23:37:22 +0800
 Subject: [PATCH] feat(auth): add passkey (WebAuthn) sign-in
@@ -64,7 +64,7 @@ Password login is untouched and remains the primary path.
  create mode 100644 tests/server/webauthn-passkey.test.ts
 
 diff --git a/docs/openapi.json b/docs/openapi.json
-index 8e8936bb5..652b0fde6 100644
+index 9a9d71ff5..57e83278e 100644
 --- a/docs/openapi.json
 +++ b/docs/openapi.json
 @@ -1263,6 +1263,321 @@
@@ -390,7 +390,7 @@ index 8e8936bb5..652b0fde6 100644
        "get": {
          "tags": [
 diff --git a/package-lock.json b/package-lock.json
-index a0b9d52bf..64b9c58d8 100644
+index 295b4adf0..61d367a52 100644
 --- a/package-lock.json
 +++ b/package-lock.json
 @@ -13,6 +13,8 @@
@@ -495,7 +495,7 @@ index a0b9d52bf..64b9c58d8 100644
        "version": "3.1.2",
        "resolved": "https://registry.npmjs.org/@socket.io/component-emitter/-/component-emitter-3.1.2.tgz",
 diff --git a/package.json b/package.json
-index 005e1315c..dbeb0512a 100644
+index cc3ab82a5..4a4116f3f 100644
 --- a/package.json
 +++ b/package.json
 @@ -86,6 +86,8 @@
@@ -1082,7 +1082,7 @@ index 000000000..05ea17fac
 +}
 +</style>
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index c40447891..03263bfbf 100644
+index 8c2d8025d..669d97699 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -456,6 +456,14 @@ export default {
@@ -1141,7 +1141,7 @@ index c40447891..03263bfbf 100644
        title: 'صورة المستخدم',
        upload: 'رفع صورة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index e6e3111cb..7cbd9a16e 100644
+index 873c25f6f..f43209e37 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -468,6 +468,14 @@ export default {
@@ -1200,7 +1200,7 @@ index e6e3111cb..7cbd9a16e 100644
        title: 'Benutzeravatar',
        upload: 'Bild hochladen',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index b2f7684e0..8d728ecc2 100644
+index bead2cbeb..a5842fd64 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -456,6 +456,14 @@ export default {
@@ -1259,7 +1259,7 @@ index b2f7684e0..8d728ecc2 100644
        title: 'User Avatar',
        upload: 'Upload Image',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index c1ea5452f..b0ef151dc 100644
+index f01dceca5..11f7b44e0 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -468,6 +468,14 @@ export default {
@@ -1318,7 +1318,7 @@ index c1ea5452f..b0ef151dc 100644
        title: 'Avatar de usuario',
        upload: 'Subir imagen',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 671a479f1..4cbbf5dd6 100644
+index 3b9b44e22..000dc39a7 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -468,6 +468,14 @@ export default {
@@ -1377,7 +1377,7 @@ index 671a479f1..4cbbf5dd6 100644
        title: 'Avatar utilisateur',
        upload: 'Importer une image',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index bb900ae06..e8fcb2683 100644
+index 4d447390f..a0c95f751 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -468,6 +468,14 @@ export default {
@@ -1436,7 +1436,7 @@ index bb900ae06..e8fcb2683 100644
        title: 'ユーザーアバター',
        upload: '画像をアップロード',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index c00a1e628..0306751b6 100644
+index dedca7def..28ee890d5 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -468,6 +468,14 @@ export default {
@@ -1495,7 +1495,7 @@ index c00a1e628..0306751b6 100644
        title: '사용자 아바타',
        upload: '이미지 업로드',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 522f041ce..b12558293 100644
+index d15df08a0..ce2d7e710 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -468,6 +468,14 @@ export default {
@@ -1554,7 +1554,7 @@ index 522f041ce..b12558293 100644
        title: 'Avatar do usuário',
        upload: 'Enviar imagem',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 352a96e15..fb5e60ec7 100644
+index 7b03c7e75..7e805602b 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -456,6 +456,14 @@ export default {
@@ -1613,10 +1613,10 @@ index 352a96e15..fb5e60ec7 100644
        title: 'Аватар пользователя',
        upload: 'Загрузить изображение',
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index 8ebdd6f70..af0f98f81 100644
+index fe591a0e8..9f73ad704 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -409,6 +409,14 @@ export default {
+@@ -408,6 +408,14 @@ export default {
    },
  
    login: {
@@ -1631,7 +1631,7 @@ index 8ebdd6f70..af0f98f81 100644
      title: 'Ekko Studio',
      description: 'Devam etmek için kullanıcı adınızı ve parolanızı girin.',
      placeholder: 'Erişim belirteci',
-@@ -662,7 +670,40 @@ export default {
+@@ -661,7 +669,40 @@ export default {
      message: { taskArchived: 'Görev arşivlendi' },
    },
    journey: { nodeKinds: 'Düğüm türleri' },
@@ -1674,7 +1674,7 @@ index 8ebdd6f70..af0f98f81 100644
        policy: 'Gizlilik bildirimi',
      },
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index e0d114e23..adea4cb08 100644
+index 36e6f4cca..7328f7e68 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -456,6 +456,14 @@ export default {
@@ -1733,7 +1733,7 @@ index e0d114e23..adea4cb08 100644
        title: '使用者頭像',
        upload: '上傳圖片',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 9ec3d841a..f90dcfe16 100644
+index e27777ff3..374aa8ccf 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -456,6 +456,14 @@ export default {
@@ -3275,6 +3275,3 @@ index 000000000..d4ef3c381
 +it('requires RP configuration before starting a registration', async () => {
 +  await expect(webauthn.beginRegistration(1)).rejects.toThrow(webauthn.WebAuthnConfigError)
 +})
--- 
-2.53.0
-
