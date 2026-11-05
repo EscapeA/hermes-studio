@@ -1059,6 +1059,7 @@ export default {
   },
 
   toolStream: {
+    argsTitle: '呼び出し引数',
     format: '整形',
     highlight: 'シンタックスハイライト',
     zoomIn: '拡大',
