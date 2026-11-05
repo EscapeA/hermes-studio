@@ -1058,6 +1058,7 @@ export default {
   },
 
   toolStream: {
+    argsTitle: 'Argumentos de la llamada',
     format: 'Formatear',
     highlight: 'Resaltado de sintaxis',
     zoomIn: 'Acercar',

@@ -1058,6 +1058,7 @@ export default {
   },
 
   toolStream: {
+    argsTitle: 'Aufrufparameter',
     format: 'Formatieren',
     highlight: 'Syntaxhervorhebung',
     zoomIn: 'Vergrößern',
