@@ -459,6 +459,14 @@ export default {
   },
   // Login
   login: {
+    // >>> passkey i18n (generated) >>>
+    passkeyOr: 'or',
+    passkeySubmit: 'Sign in with a passkey',
+    passkeyCancelled: 'No passkey was found on this device, or the prompt was cancelled. Use the password instead, or bind a passkey from account settings.',
+    passkeyUnavailable: 'Passkeys are unavailable here. Open this site over HTTPS.',
+    passkeyRpMismatch: 'This address does not match the passkey domain. Open the site with the configured domain.',
+    // <<< passkey i18n <<<
+
     title: 'Ekko Studio',
     description: 'Enter your username and password to continue.',
     placeholder: 'Access token',
@@ -2766,6 +2774,39 @@ export default {
         pairing: 'Device pairing',
       },
     },
+    // >>> passkey settings i18n (generated) >>>
+    passkey: {
+      title: 'Passkeys',
+      description: 'Sign in without a password using Touch ID, Windows Hello or your phone. Password sign-in keeps working.',
+      namePlaceholder: 'Passkey name (e.g. MacBook)',
+      add: 'Add passkey',
+      added: 'Passkey added',
+      removed: 'Passkey removed',
+      unnamed: 'Unnamed passkey',
+      addedAt: 'Added {time}',
+      lastUsed: 'Last used {time}',
+      neverUsed: 'never',
+      remove: 'Remove',
+      removeConfirm: 'Remove this passkey? You will no longer be able to sign in with it.',
+      empty: 'No passkey is bound to this account yet.',
+      rpTitle: 'Server configuration',
+      rpDescription: 'WebAuthn requires the RP ID to be this site’s domain (or its parent) and the origin to match exactly. Both are read on every login, so changes apply immediately.',
+      rpId: 'RP ID',
+      rpName: 'Display name',
+      origins: 'Allowed origins (one per line or comma separated)',
+      useCurrentAddress: 'Use current address',
+      saveRp: 'Save',
+      rpSaved: 'Passkey configuration saved',
+      errors: {
+        unsupported: 'This browser does not support passkeys.',
+        insecure: 'Passkeys require HTTPS (or localhost).',
+        rpMismatch: 'The RP ID does not cover this domain. Ask an administrator to fix the passkey configuration.',
+        alreadyRegistered: 'This authenticator is already registered.',
+        cancelled: 'Passkey operation was cancelled.',
+        failed: 'Passkey operation failed.',
+      },
+    },
+    // <<< passkey settings i18n <<<
     userAvatar: {
       title: 'User Avatar',
       upload: 'Upload Image',

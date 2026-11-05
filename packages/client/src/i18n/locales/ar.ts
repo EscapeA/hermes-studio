@@ -459,6 +459,14 @@ export default {
   },
   // Login
   login: {
+    // >>> passkey i18n (generated) >>>
+    passkeyOr: 'أو',
+    passkeySubmit: 'تسجيل الدخول باستخدام مفتاح المرور',
+    passkeyCancelled: 'لم يتم العثور على مفتاح مرور على هذا الجهاز، أو تم إلغاء العملية. استخدم كلمة المرور أو أضف مفتاح مرور من إعدادات الحساب.',
+    passkeyUnavailable: 'مفاتيح المرور غير متاحة هنا. افتح الموقع عبر HTTPS.',
+    passkeyRpMismatch: 'هذا العنوان لا يطابق نطاق مفتاح المرور. افتح النطاق المُعد.',
+    // <<< passkey i18n <<<
+
     title: 'Ekko Studio',
     description: 'أدخل اسم المستخدم وكلمة المرور للمتابعة.',
     placeholder: 'رمز الوصول',
@@ -2709,6 +2717,39 @@ export default {
         pairing: 'إقران الجهاز',
       },
     },
+    // >>> passkey settings i18n (generated) >>>
+    passkey: {
+      title: 'مفاتيح المرور',
+      description: 'سجّل الدخول دون كلمة مرور باستخدام Touch ID أو Windows Hello أو هاتفك. يظل تسجيل الدخول بكلمة المرور متاحًا.',
+      namePlaceholder: 'اسم مفتاح المرور (مثل MacBook)',
+      add: 'إضافة مفتاح مرور',
+      added: 'تمت إضافة مفتاح المرور',
+      removed: 'تمت إزالة مفتاح المرور',
+      unnamed: 'مفتاح مرور بلا اسم',
+      addedAt: 'أُضيف في {time}',
+      lastUsed: 'آخر استخدام {time}',
+      neverUsed: 'أبدًا',
+      remove: 'إزالة',
+      removeConfirm: 'إزالة مفتاح المرور هذا؟ لن تتمكن من تسجيل الدخول به بعد ذلك.',
+      empty: 'لا يوجد مفتاح مرور مرتبط بهذا الحساب بعد.',
+      rpTitle: 'إعدادات الخادم',
+      rpDescription: 'يتطلب WebAuthn أن يكون RP ID هو نطاق هذا الموقع (أو نطاقه الأعلى) وأن يطابق Origin تمامًا. يُقرأ كلاهما عند كل تسجيل دخول، لذا تُطبَّق التغييرات فورًا.',
+      rpId: 'RP ID',
+      rpName: 'الاسم المعروض',
+      origins: 'الأصول المسموح بها (واحد في كل سطر أو مفصولة بفواصل)',
+      useCurrentAddress: 'استخدام العنوان الحالي',
+      saveRp: 'حفظ',
+      rpSaved: 'تم حفظ إعدادات مفاتيح المرور',
+      errors: {
+        unsupported: 'هذا المتصفح لا يدعم مفاتيح المرور.',
+        insecure: 'تتطلب مفاتيح المرور HTTPS (أو localhost).',
+        rpMismatch: 'RP ID لا يغطي هذا النطاق. اطلب من المسؤول تصحيح الإعدادات.',
+        alreadyRegistered: 'هذا المُوثِّق مسجّل بالفعل.',
+        cancelled: 'تم إلغاء العملية.',
+        failed: 'فشلت العملية.',
+      },
+    },
+    // <<< passkey settings i18n <<<
     userAvatar: {
       title: 'صورة المستخدم',
       upload: 'رفع صورة',

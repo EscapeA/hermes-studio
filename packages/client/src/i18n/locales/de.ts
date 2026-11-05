@@ -471,6 +471,14 @@ export default {
   },
   // Login
   login: {
+    // >>> passkey i18n (generated) >>>
+    passkeyOr: 'oder',
+    passkeySubmit: 'Mit Passkey anmelden',
+    passkeyCancelled: 'Auf diesem Gerät wurde kein Passkey gefunden oder der Vorgang wurde abgebrochen. Nutzen Sie das Passwort oder hinterlegen Sie einen Passkey in den Kontoeinstellungen.',
+    passkeyUnavailable: 'Passkeys sind hier nicht verfügbar. Öffnen Sie die Seite über HTTPS.',
+    passkeyRpMismatch: 'Diese Adresse passt nicht zur Passkey-Domain. Öffnen Sie die konfigurierte Domain.',
+    // <<< passkey i18n <<<
+
     title: 'Ekko Studio',
     description: 'Geben Sie Benutzername und Passwort ein, um fortzufahren.',
     placeholder: 'Zugangs-Token',
@@ -2810,6 +2818,39 @@ jobTriggered: 'Job ausgelost',
         pairing: 'Device pairing',
       },
     },
+    // >>> passkey settings i18n (generated) >>>
+    passkey: {
+      title: 'Passkeys',
+      description: 'Melden Sie sich ohne Passwort per Touch ID, Windows Hello oder Smartphone an. Die Passwortanmeldung bleibt verfügbar.',
+      namePlaceholder: 'Passkey-Name (z. B. MacBook)',
+      add: 'Passkey hinzufügen',
+      added: 'Passkey hinzugefügt',
+      removed: 'Passkey entfernt',
+      unnamed: 'Unbenannter Passkey',
+      addedAt: 'Hinzugefügt {time}',
+      lastUsed: 'Zuletzt verwendet {time}',
+      neverUsed: 'nie',
+      remove: 'Entfernen',
+      removeConfirm: 'Diesen Passkey entfernen? Eine Anmeldung damit ist danach nicht mehr möglich.',
+      empty: 'Für dieses Konto ist noch kein Passkey hinterlegt.',
+      rpTitle: 'Serverkonfiguration',
+      rpDescription: 'WebAuthn verlangt, dass die RP ID die Domain dieser Seite (oder deren übergeordnete Domain) ist und der Origin exakt übereinstimmt. Beides wird bei jeder Anmeldung neu gelesen, Änderungen gelten sofort.',
+      rpId: 'RP ID',
+      rpName: 'Anzeigename',
+      origins: 'Erlaubte Origins (eine pro Zeile oder kommagetrennt)',
+      useCurrentAddress: 'Aktuelle Adresse verwenden',
+      saveRp: 'Speichern',
+      rpSaved: 'Passkey-Konfiguration gespeichert',
+      errors: {
+        unsupported: 'Dieser Browser unterstützt keine Passkeys.',
+        insecure: 'Passkeys erfordern HTTPS (oder localhost).',
+        rpMismatch: 'Die RP ID deckt diese Domain nicht ab. Bitten Sie einen Administrator, die Passkey-Konfiguration zu korrigieren.',
+        alreadyRegistered: 'Dieser Authenticator ist bereits registriert.',
+        cancelled: 'Passkey-Vorgang abgebrochen.',
+        failed: 'Passkey-Vorgang fehlgeschlagen.',
+      },
+    },
+    // <<< passkey settings i18n <<<
     userAvatar: {
       title: 'Benutzeravatar',
       upload: 'Bild hochladen',

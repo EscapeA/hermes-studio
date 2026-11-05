@@ -471,6 +471,14 @@ export default {
   },
   // Login
   login: {
+    // >>> passkey i18n (generated) >>>
+    passkeyOr: 'ou',
+    passkeySubmit: 'Se connecter avec une clé d’accès',
+    passkeyCancelled: 'Aucune clé d’accès trouvée sur cet appareil, ou opération annulée. Utilisez le mot de passe ou ajoutez une clé dans les paramètres du compte.',
+    passkeyUnavailable: 'Les clés d’accès sont indisponibles ici. Ouvrez le site en HTTPS.',
+    passkeyRpMismatch: 'Cette adresse ne correspond pas au domaine de la clé d’accès. Ouvrez le domaine configuré.',
+    // <<< passkey i18n <<<
+
     title: 'Ekko Studio',
     description: 'Entrez votre nom d\'utilisateur et votre mot de passe pour continuer.',
     placeholder: 'Jeton d\'acces',
@@ -2810,6 +2818,39 @@ jobTriggered: 'Job declenche',
         pairing: 'Device pairing',
       },
     },
+    // >>> passkey settings i18n (generated) >>>
+    passkey: {
+      title: 'Clés d’accès',
+      description: 'Connectez-vous sans mot de passe avec Touch ID, Windows Hello ou votre téléphone. La connexion par mot de passe reste disponible.',
+      namePlaceholder: 'Nom de la clé (ex. MacBook)',
+      add: 'Ajouter une clé d’accès',
+      added: 'Clé d’accès ajoutée',
+      removed: 'Clé d’accès supprimée',
+      unnamed: 'Clé d’accès sans nom',
+      addedAt: 'Ajoutée le {time}',
+      lastUsed: 'Dernière utilisation {time}',
+      neverUsed: 'jamais',
+      remove: 'Supprimer',
+      removeConfirm: 'Supprimer cette clé d’accès ? Vous ne pourrez plus vous connecter avec.',
+      empty: 'Aucune clé d’accès n’est encore liée à ce compte.',
+      rpTitle: 'Configuration du serveur',
+      rpDescription: 'WebAuthn impose que le RP ID soit le domaine de ce site (ou son domaine parent) et que l’origine corresponde exactement. Les deux sont relus à chaque connexion : les modifications s’appliquent immédiatement.',
+      rpId: 'RP ID',
+      rpName: 'Nom affiché',
+      origins: 'Origines autorisées (une par ligne ou séparées par des virgules)',
+      useCurrentAddress: 'Utiliser l’adresse actuelle',
+      saveRp: 'Enregistrer',
+      rpSaved: 'Configuration des clés d’accès enregistrée',
+      errors: {
+        unsupported: 'Ce navigateur ne prend pas en charge les clés d’accès.',
+        insecure: 'Les clés d’accès nécessitent HTTPS (ou localhost).',
+        rpMismatch: 'Le RP ID ne couvre pas ce domaine. Demandez à un administrateur de corriger la configuration.',
+        alreadyRegistered: 'Cet authentificateur est déjà enregistré.',
+        cancelled: 'Opération annulée.',
+        failed: 'L’opération a échoué.',
+      },
+    },
+    // <<< passkey settings i18n <<<
     userAvatar: {
       title: 'Avatar utilisateur',
       upload: 'Importer une image',

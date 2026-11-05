@@ -1271,6 +1271,321 @@
         ]
       }
     },
+    "/api/auth/webauthn/config": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get config",
+        "description": "GET /api/auth/webauthn/config",
+        "operationId": "webauthnGetConfig",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Update config",
+        "description": "PUT /api/auth/webauthn/config",
+        "operationId": "webauthnUpdateConfig",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "origins": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "rpID": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "rpName": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/credentials": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get credentials",
+        "description": "GET /api/auth/webauthn/credentials",
+        "operationId": "webauthnListCredentials",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/credentials/{id}": {
+      "delete": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Delete :id",
+        "description": "DELETE /api/auth/webauthn/credentials/:id",
+        "operationId": "webauthnDeleteCredential",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/api/auth/webauthn/login/begin": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Create begin",
+        "description": "POST /api/auth/webauthn/login/begin",
+        "operationId": "webauthnLoginBegin",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/login/finish": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Create finish",
+        "description": "POST /api/auth/webauthn/login/finish",
+        "operationId": "webauthnLoginFinish",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "response": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "sessionToken": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "required": [
+                  "response",
+                  "sessionToken"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/register/begin": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Create begin",
+        "description": "POST /api/auth/webauthn/register/begin",
+        "operationId": "webauthnRegisterBegin",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/register/finish": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Create finish",
+        "description": "POST /api/auth/webauthn/register/finish",
+        "operationId": "webauthnRegisterFinish",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "response": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "sessionToken": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "required": [
+                  "response",
+                  "sessionToken"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/status": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get status",
+        "description": "GET /api/auth/webauthn/status",
+        "operationId": "webauthnStatus",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/coding-agents": {
       "get": {
         "tags": [
