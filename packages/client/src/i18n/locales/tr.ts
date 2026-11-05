@@ -416,7 +416,7 @@ export default {
     passkeyRpMismatch: 'Bu adres passkey alan adıyla eşleşmiyor. Yapılandırılmış alan adını açın.',
     // <<< passkey i18n <<<
 
-    title: 'Ekko Studio',
+    title: 'Hermes Studio',
     description: 'Devam etmek için kullanıcı adınızı ve parolanızı girin.',
     placeholder: 'Erişim belirteci',
     submit: 'Giriş yap',
