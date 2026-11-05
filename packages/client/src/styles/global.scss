@@ -86,13 +86,23 @@ html.theme-transitioning *::after {
               box-shadow 0.3s ease, fill 0.3s ease, stroke 0.3s ease !important;
 }
 
+// The document must stay in the browser's scroll context, otherwise the native
+// pull-to-refresh gesture never reaches the viewport and a standalone PWA cannot
+// be refreshed by dragging: with the root box frozen, the gesture dies inside
+// `.app-main` and nothing propagates upward (octopus works because its document
+// is never pinned). Keep a full-height shell but leave the root's own overflow
+// and overscroll to the browser:
+//   - no `position: fixed` here; it removes the document from overscroll
+//     handling. Height stability across address-bar changes comes from `--vh`
+//     (`1dvh` under `@supports`, see below) which `.app-shell` consumes.
+//   - vertical `overflow: hidden` is what suppressed the gesture; only the
+//     horizontal axis needs clamping.
+// Inner containers keep their own scrolling; `.app-shell` owns the layout height.
 html, body {
-  position: fixed;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overscroll-behavior-y: auto;
 }
 
 // Vueuc positions teleported followers with an absolute child whose horizontal
