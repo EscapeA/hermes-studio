@@ -80,6 +80,49 @@ export function paintShellCommand(command: string): string {
 }
 
 /**
+ * 调用行的截断标记。
+ *
+ * 用一个固定串做锚点：面板用 xterm LinkProvider 扫到它就能把这一行变成可点击，
+ * 点击后展开完整参数。`${n}` 是省略的剩余行数。
+ */
+export const EXPAND_MARKER = '⟨展开⟩'
+
+/** 截断标记的正则（面板侧复用，避免两边写法漂移）。 */
+export const EXPAND_MARKER_PATTERN = /… \(\+\d+ 行\) ⟨展开⟩/
+
+/**
+ * 完整参数文本，供展开浮层显示。
+ *
+ * 与调用行摘要故意不同：这里给**原始参数**（多行代码原样），
+ * 让人能真正看清这次调用带了什么。
+ */
+export function fullToolArgsText(message: Message): string {
+  const raw = message.toolArgs
+  if (raw === undefined || raw === null || raw === '') return ''
+  if (typeof raw === 'string') {
+    const text = raw.trim()
+    if (!text) return ''
+    // JSON 字符串参数：能解析就缩进展示（MCP 的 arguments 就是这种）。
+    if (/^[[{]/.test(text)) {
+      try {
+        const parsed = JSON.parse(text)
+        if (parsed && typeof parsed === 'object') {
+          return JSON.stringify(parsed, null, 2)
+        }
+      } catch {
+        /* 原样输出 */
+      }
+    }
+    return text
+  }
+  try {
+    return JSON.stringify(raw, null, 2)
+  } catch {
+    return String(raw)
+  }
+}
+
+/**
  * 把工具参数归一化成对象。
  *
  * 历史回放时 `toolArgs` 来自 `tc.function.arguments`——那是**JSON 字符串**，
@@ -140,12 +183,12 @@ function oneLine(value: string): string {
   return value.replace(/\s*\r?\n\s*/g, '\u23ce ').trim()
 }
 
-/** 长文本字段只显示首行 + 总行数，保留"这是一大段"的观感。 */
+/** 长文本字段只显示首行 + 总行数；多行时附可点击的展开入口。 */
 function firstLineSummary(value: string): string {
   const lines = value.split('\n')
   const head = lines[0].trim().slice(0, 80)
   if (lines.length <= 1) return head
-  return `${head} … (+${lines.length - 1} 行)`
+  return `${head} … (+${lines.length - 1} 行) ${EXPAND_MARKER}`
 }
 
 /**
@@ -210,7 +253,15 @@ export function summarizeToolCall(
     }
     if (picked.length >= 2) break
   }
-  if (picked.length) return picked.join(' ').slice(0, SUMMARY_MAX)
+  if (picked.length) {
+    const joined = picked.join(' ')
+    // 截断摘要时保住展开标记，否则入口会消失。
+    if (joined.length <= SUMMARY_MAX) return joined
+    const hasMarker = joined.includes(EXPAND_MARKER)
+    const budget = hasMarker ? SUMMARY_MAX - EXPAND_MARKER.length - 1 : SUMMARY_MAX
+    const trimmed = joined.slice(0, Math.max(0, budget))
+    return hasMarker ? `${trimmed} ${EXPAND_MARKER}` : trimmed
+  }
 
   // 兜底：紧凑 JSON，让「参数存在」这件事可见。
   try {

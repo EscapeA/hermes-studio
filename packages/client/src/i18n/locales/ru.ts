@@ -1014,6 +1014,7 @@ export default {
   },
 
   toolStream: {
+    argsTitle: 'Аргументы вызова',
     format: 'Форматировать',
     highlight: 'Подсветка синтаксиса',
     zoomIn: 'Увеличить',

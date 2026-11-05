@@ -1084,6 +1084,7 @@ export default {
   },
 
   toolStream: {
+    argsTitle: 'Call arguments',
     format: 'Format',
     highlight: 'Syntax highlighting',
     zoomIn: 'Zoom in',
