@@ -24,6 +24,24 @@ import {
 export type BrightnessMode = 'light' | 'dark' | 'system'
 export type ThemeStyle = 'ink' | 'comic' | 'blueprint'
 
+// Installed (standalone) PWA chrome reads <meta name="theme-color">, not the
+// manifest, once the app is running. Keep it in sync with the in-app brightness
+// so a light UI never keeps a dark status bar.
+const THEME_COLOR_LIGHT = '#f7f7f4'
+const THEME_COLOR_DARK = '#1a1a1a'
+
+function applyThemeColorMeta(dark: boolean) {
+  if (typeof document === 'undefined') return
+  let meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]:not([media])')
+  if (!meta) {
+    meta = document.createElement('meta')
+    meta.name = 'theme-color'
+    // First match wins; prepend so it outranks the static media variants.
+    document.head.prepend(meta)
+  }
+  meta.content = dark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT
+}
+
 const BRIGHTNESS_KEY = 'hermes_brightness'
 const STYLE_KEY = 'hermes_style'
 const AUTH_TOKEN_KEY = 'hermes_api_key'
@@ -191,6 +209,7 @@ function applyClasses() {
   document.documentElement.classList.toggle('comic', isComic.value)
   document.documentElement.classList.toggle('blueprint', isBlueprint.value)
   applyCustomization()
+  applyThemeColorMeta(dark)
 }
 
 function persistThemeCache(settings = serverTheme.value) {
