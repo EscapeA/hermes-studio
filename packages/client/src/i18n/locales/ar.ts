@@ -1078,6 +1078,7 @@ export default {
   },
 
   toolStream: {
+    argsTitle: 'معاملات الاستدعاء',
     format: 'تنسيق',
     highlight: 'إبراز بناء الجملة',
     zoomIn: 'تكبير',

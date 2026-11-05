@@ -1090,6 +1090,7 @@ export default {
   },
 
   toolStream: {
+    argsTitle: '호출 인수',
     format: '서식',
     highlight: '구문 강조',
     zoomIn: '확대',

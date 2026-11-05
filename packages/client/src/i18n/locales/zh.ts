@@ -1085,6 +1085,7 @@ export default {
   },
 
   toolStream: {
+    argsTitle: '调用参数',
     format: '格式化',
     highlight: '语法高亮',
     zoomIn: '放大',
