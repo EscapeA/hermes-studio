@@ -17,7 +17,10 @@ import { terminalTheme } from '@/styles/theme-integrations'
 import { useChatStore } from '@/stores/hermes/chat'
 import type { Message } from '@/stores/hermes/chat'
 import {
+  EXPAND_MARKER,
+  EXPAND_MARKER_PATTERN,
   chunkForWrite,
+  fullToolArgsText,
   isStreamToolMessage,
   messageSignature,
   renderToolBlock,
@@ -37,6 +40,31 @@ let fitAddon: FitAddon | null = null
 let resizeObserver: ResizeObserver | null = null
 /** 已渲染的 tool 消息 id → 上次渲染时的状态签名。 */
 const rendered = new Map<string, string>()
+/**
+ * 缓冲区行号 → 该行属于哪个 tool 消息。
+ *
+ * 调用行带 ⟨展开⟩ 标记时点击要能反查到消息，所以写块时登记起始行，
+ * 供 LinkProvider 使用。replay 时随 term.reset() 一起清空。
+ */
+const lineOwners = new Map<number, string>()
+
+/** 当前展开的完整参数浮层内容；null = 关闭。 */
+const expandedArgs = ref<{ title: string; body: string } | null>(null)
+
+function openArgsPreview(messageId: string) {
+  const message = (chat.messages || []).find(m => m.id === messageId)
+  if (!message) return
+  const body = fullToolArgsText(message)
+  if (!body) return
+  expandedArgs.value = {
+    title: message.toolName || t('toolStream.tool'),
+    body,
+  }
+}
+
+function closeArgsPreview() {
+  expandedArgs.value = null
+}
 
 const MAX_RENDERED_TOOLS = 200
 
@@ -165,11 +193,21 @@ function writeBlock(message: Message) {
     highlight: highlightOn.value,
   })
   if (!block) return
+  // 行号登记必须在写入**之后**做：xterm 的 write 是异步的，
+  // 写入前 cursorY 还没走到落点，按写入前算会整体错位（实测第 1 行被登记成下一条消息）。
+  const lineCount = block.split('\n').length
+  const beforeLine = term.buffer.active.baseY + term.buffer.active.cursorY
   // 分块写入：完整内容照写，只是不让单次 write 阻塞主线程。
   const chunks = chunkForWrite(toTerminalNewlines(block))
   chunks.forEach((chunk, index) => {
-    term?.write(chunk, index === chunks.length - 1
-      ? () => { if (stick) term?.scrollToBottom() }
+    const isLast = index === chunks.length - 1
+    term?.write(chunk, isLast
+      ? () => {
+        const afterLine = term!.buffer.active.baseY + term!.buffer.active.cursorY
+        const startLine = Math.max(beforeLine, afterLine - (lineCount - 1))
+        for (let i = 0; i < lineCount; i += 1) lineOwners.set(startLine + i, message.id)
+        if (stick) term?.scrollToBottom()
+      }
       : undefined)
   })
 }
@@ -178,6 +216,8 @@ function replay() {
   if (!term) return
   term.reset()
   rendered.clear()
+  lineOwners.clear()
+  expandedArgs.value = null
   const tools = streamTools()
   const slice = tools.slice(-MAX_RENDERED_TOOLS)
   statusText.value = slice.length
@@ -225,8 +265,47 @@ function ensureTerminal() {
   term.loadAddon(fitAddon)
   term.loadAddon(new WebLinksAddon())
   term.open(container)
+  registerExpandLinks()
   fit()
   replay()
+}
+
+/**
+ * 让调用行上的 ⟨展开⟩ 可点击。
+ *
+ * xterm 的 LinkProvider 会按需请求「这一行有哪些可点击区间」，
+ * 我们只在带标记的行上返回一个 range，点开后弹出完整参数浮层。
+ */
+function registerExpandLinks() {
+  if (!term) return
+  term.registerLinkProvider({
+    provideLinks(bufferLineNumber, callback) {
+      // bufferLineNumber 是 1-based 的绝对行号（含 scrollback）。
+      const owner = lineOwners.get(bufferLineNumber - 1)
+      if (!owner) {
+        callback(undefined)
+        return
+      }
+      const line = term?.buffer.active.getLine(bufferLineNumber - 1)
+      const text = line?.translateToString(true) ?? ''
+      const match = text.match(EXPAND_MARKER_PATTERN)
+      if (!match || match.index === undefined) {
+        callback(undefined)
+        return
+      }
+      callback([
+        {
+          range: {
+            start: { x: match.index + 1, y: bufferLineNumber },
+            end: { x: match.index + match[0].length, y: bufferLineNumber },
+          },
+          text: EXPAND_MARKER,
+          decorations: { underline: true, pointerCursor: true },
+          activate: () => openArgsPreview(owner),
+        },
+      ])
+    },
+  })
 }
 
 /**
@@ -393,6 +472,32 @@ onBeforeUnmount(() => {
       @touchend="handleTouchEnd"
       @touchcancel="handleTouchEnd"
     />
+
+    <!-- 完整参数浮层：点调用行上的 ⟨展开⟩ 打开，贴底弹出 -->
+    <div v-if="expandedArgs" class="ts-args-layer" @click.self="closeArgsPreview">
+      <div
+        class="ts-args-card"
+        data-theme-surface="card"
+        role="dialog"
+        :aria-label="t('toolStream.argsTitle')"
+      >
+        <div class="ts-args-head">
+          <span class="ts-args-title">{{ expandedArgs.title }}</span>
+          <button
+            class="ts-btn"
+            type="button"
+            :title="t('common.close')"
+            :aria-label="t('common.close')"
+            @click="closeArgsPreview"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+        <pre class="ts-args-body">{{ expandedArgs.body }}</pre>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -405,6 +510,8 @@ onBeforeUnmount(() => {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  /* 参数浮层用 absolute 定位，需要这里是定位容器。 */
+  position: relative;
   /* 移动端面板与输入区相邻时，底部留一点呼吸位，避免最后一行贴着边被切。 */
   padding-block-end: 2px;
 }
@@ -480,6 +587,62 @@ onBeforeUnmount(() => {
 
 .ts-zoom-value {
   min-width: 34px;
+}
+
+/* 完整参数浮层：贴底弹出，不铺全屏遮罩（避免硬编码 scrim 色） */
+.ts-args-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.ts-args-card {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 70%;
+  /* 主题契约：卡片面由 data-theme-surface="card" 拥有背景/圆角/阴影。 */
+  background: $bg-card;
+  border-top: var(--border-width, 1px) solid $border-color;
+  border-top-left-radius: var(--radius-component, 8px);
+  border-top-right-radius: var(--radius-component, 8px);
+  overflow: hidden;
+}
+
+.ts-args-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 8px 10px;
+  border-bottom: var(--border-width, 1px) solid $border-color;
+}
+
+.ts-args-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: $text-primary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ts-args-body {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  font: 12px/1.5 Menlo, Monaco, 'Courier New', monospace;
+  color: $text-secondary;
+  white-space: pre;
+  overscroll-behavior: contain;
 }
 
 .tool-stream-term {

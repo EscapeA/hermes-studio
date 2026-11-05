@@ -619,6 +619,7 @@ export default {
 
   language: { label: 'Dil', zh: 'Çince', en: 'İngilizce', tr: 'Türkçe' },
   toolStream: {
+    argsTitle: 'Çağrı bağımsız değişkenleri',
     format: 'Biçimlendir',
     highlight: 'Sözdizimi vurgulama',
     zoomIn: 'Yakınlaştır',
