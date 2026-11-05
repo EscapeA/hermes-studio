@@ -2,7 +2,8 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import type { Plugin, ProxyOptions } from 'vite'
 import { dirname, resolve } from 'path'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
+import { createHash } from 'crypto'
 import { transformSync } from 'esbuild'
 import pkg from './package.json'
 
@@ -126,14 +127,100 @@ function createLocaleMergePlugin(): Plugin {
   }
 }
 
+// --- Brand asset versioning --------------------------------------------------
+// Brand files (logo, PWA icons, favicon) have stable filenames, so a CDN in
+// front of Studio keeps serving the previous bytes for the full max-age window
+// and a browser refresh never picks up a replaced icon. Deriving a content hash
+// at build time and appending it as `?v=` gives every release a new cache key,
+// so both the CDN edge and the browser must fetch the new file.
+const PUBLIC_DIR = resolve(__dirname, 'packages/client/public')
+const BRAND_ASSET_NAMES = [
+  'logo.png',
+  'logo-original.png',
+  'favicon.ico',
+  'apple-touch-icon.png',
+  'icon-192.png',
+  'icon-512.png',
+  'icon-maskable-512.png',
+  'logo-loading.css',
+  'coding-agents/hermes.png',
+]
+
+function computeBrandVersions(): Record<string, string> {
+  const versions: Record<string, string> = {}
+  for (const name of BRAND_ASSET_NAMES) {
+    const file = resolve(PUBLIC_DIR, name)
+    if (!existsSync(file)) continue
+    versions[`/${name}`] = createHash('sha256').update(readFileSync(file)).digest('hex').slice(0, 10)
+  }
+  return versions
+}
+
+const BRAND_VERSIONS = computeBrandVersions()
+
+/** Append `?v=<hash>` to brand asset URLs so they survive CDN and browser caches. */
+function versionBrandUrls(text: string): string {
+  let out = text
+  for (const [path, hash] of Object.entries(BRAND_VERSIONS)) {
+    const rel = path.slice(1)
+    // Each pair is [exact literal, replacement keeping its own quoting intact].
+    const pairs: Array<[string, string]> = [
+      [`"${path}"`, `"${path}?v=${hash}"`],
+      [`'${path}'`, `'${path}?v=${hash}'`],
+      [`url(${path})`, `url(${path}?v=${hash})`],
+      [`url("${path}")`, `url("${path}?v=${hash}")`],
+      [`url('${path}')`, `url('${path}?v=${hash}')`],
+      [`url(./${rel})`, `url(./${rel}?v=${hash})`],
+      [`url("./${rel}")`, `url("./${rel}?v=${hash}")`],
+      [`url('./${rel}')`, `url('./${rel}?v=${hash}')`],
+      [`url(../${rel})`, `url(../${rel}?v=${hash})`],
+    ]
+    for (const [from, to] of pairs) out = out.split(from).join(to)
+  }
+  return out
+}
+
+function createBrandVersionPlugin(): Plugin {
+  let outDir = resolve(__dirname, 'dist/client')
+  return {
+    name: 'brand-asset-version',
+    apply: 'build',
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir)
+    },
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        // The entry document must reference versioned icons, otherwise the
+        // favicon/apple-touch-icon keep pointing at the cached URL.
+        return versionBrandUrls(html)
+      },
+    },
+    writeBundle() {
+      // Static files that reference brand art but are not processed by Vite.
+      // `sw.js` is deliberately excluded: its BRAND_PATHS set is matched against
+      // `url.pathname`, which never contains a query string, so a versioned entry
+      // there would never match and would silently drop brand caching.
+      for (const name of ['manifest.webmanifest', 'logo-loading.css', 'offline.html']) {
+        const file = resolve(outDir, name)
+        if (!existsSync(file)) continue
+        const before = readFileSync(file, 'utf8')
+        const after = versionBrandUrls(before)
+        if (after !== before) writeFileSync(file, after)
+      }
+    },
+  }
+}
+
 export default defineConfig({
   root: 'packages/client',
   base: process.env.STUDIO_BASE_PATH || '/',
   // Concurrent test/dev servers must not replace each other's optimized Vue runtime.
   cacheDir: resolve(__dirname, process.env.HERMES_WEB_UI_VITE_CACHE_DIR || 'node_modules/.vite/client'),
-  plugins: [vue(), createLocaleMergePlugin()],
+  plugins: [vue(), createLocaleMergePlugin(), createBrandVersionPlugin()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    __BRAND_VERSIONS__: JSON.stringify(BRAND_VERSIONS),
   },
   resolve: {
     alias: {

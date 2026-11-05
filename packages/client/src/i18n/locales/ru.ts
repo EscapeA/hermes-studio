@@ -464,7 +464,7 @@ export default {
     passkeyRpMismatch: 'Этот адрес не соответствует домену ключа доступа. Откройте настроенный домен.',
     // <<< passkey i18n <<<
 
-    title: 'Ekko Studio',
+    title: 'Hermes Studio',
     description: 'Введите имя пользователя и пароль для продолжения.',
     placeholder: 'Токен доступа',
     submit: 'Войти',
