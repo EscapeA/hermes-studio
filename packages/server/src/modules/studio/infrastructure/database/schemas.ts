@@ -618,6 +618,36 @@ export const USER_PROFILES_INDEXES = {
   idx_user_profiles_default: 'CREATE UNIQUE INDEX IF NOT EXISTS idx_user_profiles_default ON user_profiles(user_id) WHERE is_default = 1',
 }
 
+// Passkey (WebAuthn) credentials. One user may bind several authenticators.
+// credential_id_hex is SHA-256(credential id) so the unique index stays short
+// and portable; the raw credential blob (public key, counter, transports,
+// userHandle) is stored as JSON and matched in memory during verification.
+export const WEBAUTHN_CREDENTIALS_TABLE = 'webauthn_credentials'
+
+export const WEBAUTHN_CREDENTIALS_SCHEMA: Record<string, string> = {
+  id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
+  user_id: 'INTEGER NOT NULL',
+  credential_id_hex: 'TEXT NOT NULL UNIQUE',
+  credential: 'TEXT NOT NULL',
+  name: "TEXT NOT NULL DEFAULT ''",
+  created_at: 'INTEGER NOT NULL',
+  last_used_at: 'INTEGER',
+}
+
+export const WEBAUTHN_CREDENTIALS_INDEXES = {
+  idx_webauthn_credentials_user: 'CREATE INDEX IF NOT EXISTS idx_webauthn_credentials_user ON webauthn_credentials(user_id)',
+}
+
+// Key/value bag for instance-scoped settings that have no better home. RP ID and
+// allowed origins live here so administrators can change them without a restart.
+export const STUDIO_SETTINGS_TABLE = 'studio_settings'
+
+export const STUDIO_SETTINGS_SCHEMA: Record<string, string> = {
+  key: 'TEXT PRIMARY KEY',
+  value: 'TEXT NOT NULL',
+  updated_at: 'INTEGER NOT NULL',
+}
+
 export const USER_THEMES_TABLE = 'user_themes'
 export const USER_THEME_PRESETS_TABLE = 'user_theme_presets'
 
@@ -1830,6 +1860,10 @@ export function initAllHermesTables(): void {
 
     // Users and profile access
     syncTable(USERS_TABLE, USERS_SCHEMA)
+    syncTable(STUDIO_SETTINGS_TABLE, STUDIO_SETTINGS_SCHEMA)
+    syncTable(WEBAUTHN_CREDENTIALS_TABLE, WEBAUTHN_CREDENTIALS_SCHEMA, {
+      indexes: WEBAUTHN_CREDENTIALS_INDEXES,
+    })
     syncTable(MODEL_API_KEYS_TABLE, MODEL_API_KEYS_SCHEMA, {
       indexes: { idx_model_api_keys_owner: `CREATE INDEX IF NOT EXISTS idx_model_api_keys_owner ON ${MODEL_API_KEYS_TABLE}(user_id)` },
     })

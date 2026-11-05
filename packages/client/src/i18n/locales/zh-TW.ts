@@ -457,6 +457,14 @@ export default {
   },
   // 登入
   login: {
+    // >>> passkey i18n (generated) >>>
+    passkeyOr: '或',
+    passkeySubmit: '使用 Passkey 登入',
+    passkeyCancelled: '本裝置找不到該 Passkey，或已取消操作。可改用密碼登入，或在帳號設定裡為本裝置新增 Passkey。',
+    passkeyUnavailable: '目前環境不支援 Passkey，請改用 HTTPS 存取。',
+    passkeyRpMismatch: '目前位址與 Passkey 網域不一致，請改用設定的網域存取。',
+    // <<< passkey i18n <<<
+
     title: 'Ekko Studio',
     description: '輸入使用者名稱和密碼以繼續。',
     placeholder: '存取權杖',
@@ -2640,6 +2648,39 @@ export default {
         pairing: '裝置配對',
       },
     },
+    // >>> passkey settings i18n (generated) >>>
+    passkey: {
+      title: 'Passkey',
+      description: '使用指紋、Windows Hello 或手機免密碼登入，密碼登入仍可使用。',
+      namePlaceholder: 'Passkey 名稱（如 MacBook）',
+      add: '新增 Passkey',
+      added: 'Passkey 已新增',
+      removed: 'Passkey 已移除',
+      unnamed: '未命名 Passkey',
+      addedAt: '新增於 {time}',
+      lastUsed: '最近使用 {time}',
+      neverUsed: '從未使用',
+      remove: '移除',
+      removeConfirm: '確定移除此 Passkey？移除後將無法用它登入。',
+      empty: '此帳號尚未綁定 Passkey。',
+      rpTitle: '伺服器設定',
+      rpDescription: 'WebAuthn 要求 RP ID 為本站網域（或其上層網域），且 Origin 完全一致。設定每次登入即時讀取，儲存即生效。',
+      rpId: 'RP ID',
+      rpName: '顯示名稱',
+      origins: '允許的 Origin（每行一個或逗號分隔）',
+      useCurrentAddress: '使用目前位址',
+      saveRp: '儲存',
+      rpSaved: 'Passkey 設定已儲存',
+      errors: {
+        unsupported: '目前瀏覽器不支援 Passkey。',
+        insecure: 'Passkey 需要 HTTPS（或 localhost）。',
+        rpMismatch: 'RP ID 未涵蓋目前網域，請請管理員修正 Passkey 設定。',
+        alreadyRegistered: '此驗證器已註冊。',
+        cancelled: '已取消 Passkey 操作。',
+        failed: 'Passkey 操作失敗。',
+      },
+    },
+    // <<< passkey settings i18n <<<
     userAvatar: {
       title: '使用者頭像',
       upload: '上傳圖片',
