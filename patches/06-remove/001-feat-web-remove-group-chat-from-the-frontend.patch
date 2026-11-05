@@ -27,7 +27,7 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  .../src/api/studio/group-chat-agent-link.ts   |  208 -
  .../src/api/studio/group-chat-attachments.ts  |   58 -
  packages/client/src/api/studio/group-chat.ts  |  692 ---
- .../src/components/hermes/chat/FilesPanel.vue |   36 +-
+ .../src/components/hermes/chat/FilesPanel.vue |   39 +-
  .../hermes/files/FileContextMenu.vue          |    4 +-
  .../src/components/hermes/files/FileList.vue  |    2 +-
  .../components/hermes/files/FilePreview.vue   |   11 +-
@@ -38,6 +38,7 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  .../hermes/group-chat/GroupAgentRobotIcon.vue |   62 -
  .../hermes/group-chat/GroupAgentRunCard.vue   |  392 --
  .../hermes/group-chat/GroupChatInput.vue      | 1388 -----
+ .../group-chat/GroupChatMigrationNotice.vue   |   84 -
  .../hermes/group-chat/GroupChatPanel.vue      | 5326 -----------------
  .../hermes/group-chat/GroupMessageItem.vue    | 1543 -----
  .../hermes/group-chat/GroupMessageList.vue    |  762 ---
@@ -48,17 +49,17 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  .../group-chat/useGroupMessageSelection.ts    |   85 -
  .../layout/GlobalPendingActions.vue           |   56 +-
  .../src/components/layout/PageSidebarNav.vue  |   37 +-
- packages/client/src/i18n/locales/ar.ts        |  234 -
- packages/client/src/i18n/locales/de.ts        |  234 -
- packages/client/src/i18n/locales/en.ts        |  234 -
- packages/client/src/i18n/locales/es.ts        |  234 -
- packages/client/src/i18n/locales/fr.ts        |  234 -
- packages/client/src/i18n/locales/ja.ts        |  234 -
- packages/client/src/i18n/locales/ko.ts        |  234 -
- packages/client/src/i18n/locales/pt.ts        |  234 -
- packages/client/src/i18n/locales/ru.ts        |  231 -
- packages/client/src/i18n/locales/zh-TW.ts     |  234 -
- packages/client/src/i18n/locales/zh.ts        |  234 -
+ packages/client/src/i18n/locales/ar.ts        |  237 -
+ packages/client/src/i18n/locales/de.ts        |  237 -
+ packages/client/src/i18n/locales/en.ts        |  237 -
+ packages/client/src/i18n/locales/es.ts        |  237 -
+ packages/client/src/i18n/locales/fr.ts        |  237 -
+ packages/client/src/i18n/locales/ja.ts        |  237 -
+ packages/client/src/i18n/locales/ko.ts        |  237 -
+ packages/client/src/i18n/locales/pt.ts        |  237 -
+ packages/client/src/i18n/locales/ru.ts        |  234 -
+ packages/client/src/i18n/locales/zh-TW.ts     |  237 -
+ packages/client/src/i18n/locales/zh.ts        |  237 -
  packages/client/src/router/index.ts           |   36 -
  packages/client/src/stores/hermes/files.ts    |  142 +-
  .../client/src/stores/hermes/group-chat.ts    | 2424 --------
@@ -67,11 +68,15 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  .../src/utils/group-chat-remote-rooms.ts      |   69 -
  .../client/src/views/hermes/FilesView.vue     |    1 -
  .../src/views/hermes/GroupChatLinkView.vue    |  986 ---
- .../client/src/views/hermes/GroupChatView.vue |  113 -
+ .../client/src/views/hermes/GroupChatView.vue |  115 -
  .../src/views/hermes/SharedGroupChatView.vue  |  888 ---
  .../src/main/group-chat-agent-popup.ts        |   44 -
  packages/desktop/src/main/index.ts            |   10 +-
- 48 files changed, 89 insertions(+), 19075 deletions(-)
+ .../group-chat-migration-notice.test.ts       |  126 -
+ tests/e2e/fixtures/group-chat-migration.ts    |   64 -
+ tests/e2e/fixtures/group-chat-panel.ts        |    3 -
+ tests/e2e/group-chat-migration.spec.ts        |  119 -
+ 53 files changed, 90 insertions(+), 19508 deletions(-)
  delete mode 100644 packages/client/src/api/studio/group-chat-agent-link.ts
  delete mode 100644 packages/client/src/api/studio/group-chat-attachments.ts
  delete mode 100644 packages/client/src/api/studio/group-chat.ts
@@ -80,6 +85,7 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  delete mode 100644 packages/client/src/components/hermes/group-chat/GroupAgentRobotIcon.vue
  delete mode 100644 packages/client/src/components/hermes/group-chat/GroupAgentRunCard.vue
  delete mode 100644 packages/client/src/components/hermes/group-chat/GroupChatInput.vue
+ delete mode 100644 packages/client/src/components/hermes/group-chat/GroupChatMigrationNotice.vue
  delete mode 100644 packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
  delete mode 100644 packages/client/src/components/hermes/group-chat/GroupMessageItem.vue
  delete mode 100644 packages/client/src/components/hermes/group-chat/GroupMessageList.vue
@@ -96,6 +102,10 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  delete mode 100644 packages/client/src/views/hermes/GroupChatView.vue
  delete mode 100644 packages/client/src/views/hermes/SharedGroupChatView.vue
  delete mode 100644 packages/desktop/src/main/group-chat-agent-popup.ts
+ delete mode 100644 tests/client/group-chat-migration-notice.test.ts
+ delete mode 100644 tests/e2e/fixtures/group-chat-migration.ts
+ delete mode 100644 tests/e2e/fixtures/group-chat-panel.ts
+ delete mode 100644 tests/e2e/group-chat-migration.spec.ts
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
 index 915eca5db..ed0da267c 100644
@@ -1219,7 +1229,7 @@ index 1506f2a8d..000000000
 -    })
 -}
 diff --git a/packages/client/src/components/hermes/chat/FilesPanel.vue b/packages/client/src/components/hermes/chat/FilesPanel.vue
-index 30865f017..cd01bf144 100644
+index 0735ed1d8..971cd9b0e 100644
 --- a/packages/client/src/components/hermes/chat/FilesPanel.vue
 +++ b/packages/client/src/components/hermes/chat/FilesPanel.vue
 @@ -11,7 +11,6 @@ import FileUploadModal from '@/components/hermes/files/FileUploadModal.vue'
@@ -1238,18 +1248,24 @@ index 30865f017..cd01bf144 100644
    workspace?: string | null
  }>()
  
-@@ -131,9 +129,7 @@ async function handleAttach(entry: FileEntry) {
+@@ -130,14 +128,11 @@ function handleRename(entry: FileEntry) {
+ async function handleAttach(entry: FileEntry) {
+   if (entry.isDir) return
+   const sessionId = props.workspaceSessionId
+-  const roomId = props.workspaceRoomId
    try {
      const blob = props.workspaceSessionId
        ? await fetchSessionWorkspaceAttachmentBlob(props.workspaceSessionId, entry.path)
 -      : props.workspaceRoomId
 -        ? await fetchGroupWorkspaceAttachmentBlob(props.workspaceRoomId, entry.path)
 -        : null
+-    if (!blob || disposed || sessionId !== props.workspaceSessionId || roomId !== props.workspaceRoomId) return
 +      : null
-     if (!blob) return
++    if (!blob || disposed || sessionId !== props.workspaceSessionId) return
      emit('attach', new File([blob], entry.name, {
        type: blob.type || 'application/octet-stream',
-@@ -189,18 +185,18 @@ function handleDiffClose(): void {
+       lastModified: Date.parse(entry.modTime) || Date.now(),
+@@ -192,18 +187,18 @@ function handleDiffClose(): void {
  }
  
  watch(
@@ -1275,7 +1291,7 @@ index 30865f017..cd01bf144 100644
      }
    },
  )
-@@ -208,20 +204,19 @@ watch(
+@@ -211,20 +206,19 @@ watch(
  watch(() => filesStore.previewFile, previewFile => {
    if (!previewFile || !isMobileLayout.value) return
    const matchesSession = props.workspaceSessionId && previewFile.workspaceSessionId === props.workspaceSessionId
@@ -1302,7 +1318,7 @@ index 30865f017..cd01bf144 100644
    }
  })
  
-@@ -293,7 +288,6 @@ onBeforeUnmount(() => {
+@@ -297,7 +291,6 @@ onBeforeUnmount(() => {
            :entry="selectedDiffEntry"
            :workspace="workspace"
            :workspace-session-id="workspaceSessionId"
@@ -1310,7 +1326,7 @@ index 30865f017..cd01bf144 100644
            :show-tree-toggle="!isMobileLayout"
            :tree-collapsed="treeCollapsed"
            @toggle-tree="toggleTreeCollapsed"
-@@ -311,7 +305,7 @@ onBeforeUnmount(() => {
+@@ -315,7 +308,7 @@ onBeforeUnmount(() => {
      </div>
      <FileContextMenu
        ref="contextMenuRef"
@@ -3881,6 +3897,96 @@ index 859277087..000000000
 -        font-size: calc(var(--font-size-base, 14px) * 13 / 14);
 -        line-height: var(--line-height, 1.35);
 -    }
+-}
+-</style>
+diff --git a/packages/client/src/components/hermes/group-chat/GroupChatMigrationNotice.vue b/packages/client/src/components/hermes/group-chat/GroupChatMigrationNotice.vue
+deleted file mode 100644
+index 715bec039..000000000
+--- a/packages/client/src/components/hermes/group-chat/GroupChatMigrationNotice.vue
++++ /dev/null
+@@ -1,84 +0,0 @@
+-<script setup lang="ts">
+-import { computed, onMounted, onUnmounted, ref } from 'vue'
+-import { NAlert, NButton, NModal } from 'naive-ui'
+-import { useI18n } from 'vue-i18n'
+-import { usePageLoadingState } from '@/composables/usePageLoading'
+-
+-// Separate from the retired upgrade notice: its acknowledgement does not cover this message.
+-const STORAGE_KEY = 'hermes.groupChat.botMigrationNotice.v1.acknowledged'
+-const { t } = useI18n()
+-const pageLoading = usePageLoadingState()
+-const restored = ref(false)
+-const acknowledged = ref(false)
+-const saveFailed = ref(false)
+-const show = computed(() => restored.value && !pageLoading.value && !acknowledged.value)
+-
+-function restoreAcknowledgement() {
+-  try {
+-    acknowledged.value = window.localStorage.getItem(STORAGE_KEY) === '1'
+-  } catch {
+-    // A transient read failure must not undo an acknowledgement made in this page.
+-  }
+-  restored.value = true
+-}
+-
+-function acknowledge() {
+-  try {
+-    window.localStorage.setItem(STORAGE_KEY, '1')
+-    acknowledged.value = true
+-    saveFailed.value = false
+-  } catch {
+-    // Keep the notice open so a failed write never looks like a durable acknowledgement.
+-    saveFailed.value = true
+-  }
+-}
+-
+-function handleStorage(event: StorageEvent) {
+-  if (event.key === STORAGE_KEY || event.key === null) {
+-    restoreAcknowledgement()
+-  }
+-}
+-
+-onMounted(() => {
+-  restoreAcknowledgement()
+-  window.addEventListener('storage', handleStorage)
+-  window.addEventListener('focus', restoreAcknowledgement)
+-})
+-
+-onUnmounted(() => {
+-  window.removeEventListener('storage', handleStorage)
+-  window.removeEventListener('focus', restoreAcknowledgement)
+-})
+-</script>
+-
+-<template>
+-  <NModal
+-    :show="show"
+-    preset="dialog"
+-    :title="t('groupChat.migrationNoticeTitle')"
+-    :aria-label="t('groupChat.migrationNoticeTitle')"
+-    :mask-closable="false"
+-    :close-on-esc="false"
+-    :closable="false"
+-    style="width: 480px; max-width: calc(100vw - 32px)"
+-  >
+-    <p class="group-chat-migration-notice">{{ t('groupChat.migrationNoticeMessage') }}</p>
+-    <NAlert v-if="saveFailed" type="error" class="save-error" role="alert">
+-      {{ t('groupChat.migrationNoticeSaveFailed') }}
+-    </NAlert>
+-    <template #action>
+-      <NButton type="primary" @click="acknowledge">{{ t('announcements.gotIt') }}</NButton>
+-    </template>
+-  </NModal>
+-</template>
+-
+-<style scoped lang="scss">
+-.group-chat-migration-notice {
+-  margin: 0;
+-  line-height: var(--line-height, 1.7);
+-  overflow-wrap: anywhere;
+-}
+-.save-error {
+-  margin-top: calc(12px * var(--spacing-scale, 1));
 -}
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
@@ -10766,7 +10872,7 @@ index a271bdf28..000000000
 -</style>
 diff --git a/packages/client/src/components/hermes/group-chat/GroupMessageList.vue b/packages/client/src/components/hermes/group-chat/GroupMessageList.vue
 deleted file mode 100644
-index a0faf5c4e..000000000
+index 34ca44f24..000000000
 --- a/packages/client/src/components/hermes/group-chat/GroupMessageList.vue
 +++ /dev/null
 @@ -1,762 +0,0 @@
@@ -11125,7 +11231,7 @@ index a0faf5c4e..000000000
 -                            <button type="button" @click="store.acceptRoutingSuggestion(msg.id)">{{ t('groupChat.routingUseSuggestion') }}</button>
 -                        </div>
 -                        <div v-else-if="routingDecision(msg)?.status === 'queued'" class="routing-suggestion" role="status">{{ t('groupChat.routingAutoQueued', { agent: routingDecision(msg)!.targetAgentName }) }}</div>
--                        <div v-if="routingDecision(msg)?.handoffComplete === false" class="routing-suggestion routing-warning" role="status">{{ t('groupChat.routingHandoffIncomplete') }}</div>
+-                        <div v-if="routingDecision(msg)?.targetAgentId && routingDecision(msg)?.handoffComplete === false" class="routing-suggestion routing-warning" role="status">{{ t('groupChat.routingHandoffIncomplete') }}</div>
 -                        <div v-if="routingDecision(msg)?.loopDetected === true" class="routing-suggestion routing-warning" role="status">{{ t('groupChat.routingLoopDetected') }}</div>
 -                        <div
 -                            v-if="handoffChainFor(msg)"
@@ -12472,7 +12578,7 @@ index bd69a78a6..d67ecae23 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 8d093b961..c56e36f64 100644
+index 5068d1922..9efd8031f 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -674,7 +674,6 @@ export default {
@@ -12483,13 +12589,16 @@ index 8d093b961..c56e36f64 100644
      files: 'الملفات',
      devices: 'الأجهزة',
      connections: 'ترابط الأجهزة',
-@@ -3511,239 +3510,6 @@ export default {
+@@ -3512,242 +3511,6 @@ export default {
      connectionClosed: 'تم إغلاق اتصال الطرفية',
      connectionError: 'خطأ في اتصال الطرفية',
    },
 -
 -  // Group Chat
 -  groupChat: {
+-    migrationNoticeTitle: "سيتم إيقاف الدردشة الجماعية قريبًا",
+-    migrationNoticeMessage: "سيتم إيقاف ميزة الدردشة الجماعية قريبًا. نوصي بمراجعة مهام المجموعات الحالية وإعدادات Agent والسياق المهم مسبقًا، ونقل هذا العمل إلى Bot لمتابعته هناك.",
+-    migrationNoticeSaveFailed: "تعذر حفظ تأكيدك. يرجى التحقق من تخزين المتصفح والمحاولة مجددًا.",
 -    messageAlreadySummarized: "تم تلخيصها بالفعل؛ لا يمكن حذفها",
 -    messageSummaryBoundaryUnknown: "حد الملخص غير متاح؛ الحذف معطل",
 -    messageSelectionHint: "حدد رسائل الأعضاء أو عمليات تشغيل الوكيل كاملة. لا يمكن تحديد الرسائل الملخصة.",
@@ -12724,7 +12833,7 @@ index 8d093b961..c56e36f64 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 4c6a7e2b8..09e63a335 100644
+index 19664b092..19d829e5a 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -687,7 +687,6 @@ export default {
@@ -12735,13 +12844,16 @@ index 4c6a7e2b8..09e63a335 100644
      groupConversation: 'Konversation',
      groupConversationShort: 'Konv',
      groupAgent: 'Agent',
-@@ -3299,239 +3298,6 @@ jobTriggered: 'Job ausgelost',
+@@ -3300,242 +3299,6 @@ jobTriggered: 'Job ausgelost',
        idle: 'Inaktiv', queued: 'In Warteschlange', running: 'Wird ausgeführt', pending_approval: 'Wartet auf Freigabe', completed: 'Abgeschlossen', skipped: 'Übersprungen', failed: 'Fehlgeschlagen', approval_rejected: 'Freigabe abgelehnt', canceled: 'Abgebrochen',
      },
    },
 -
 -  // Anderungsprotokoll
 -  groupChat: {
+-    migrationNoticeTitle: "Gruppenchat wird eingestellt",
+-    migrationNoticeMessage: "Die Gruppenchat-Funktion wird demnächst eingestellt. Wir empfehlen, bestehende Aufgaben, Agent-Einstellungen und wichtige Kontextinformationen aus den Gruppen zu sichten und diese Arbeit zu Bot zu verlagern, um sie dort fortzusetzen.",
+-    migrationNoticeSaveFailed: "Deine Bestätigung konnte nicht gespeichert werden. Bitte prüfe den Browserspeicher und versuche es erneut.",
 -    messageAlreadySummarized: "Bereits zusammengefasst; Löschen nicht möglich",
 -    messageSummaryBoundaryUnknown: "Zusammenfassungsgrenze unbekannt; Löschen deaktiviert",
 -    messageSelectionHint: "Mitgliedernachrichten oder ganze Agentenläufe auswählen. Zusammengefasste Nachrichten können nicht ausgewählt werden.",
@@ -12976,7 +13088,7 @@ index 4c6a7e2b8..09e63a335 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index ae5068b8c..a8259e7e2 100644
+index 541e69cf7..e434cee83 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -674,7 +674,6 @@ export default {
@@ -12987,13 +13099,16 @@ index ae5068b8c..a8259e7e2 100644
      files: 'Files',
      devices: 'Devices',
      connections: 'Device connections',
-@@ -3535,239 +3534,6 @@ export default {
+@@ -3536,242 +3535,6 @@ export default {
      connectionClosed: 'Terminal connection closed',
      connectionError: 'Terminal connection error',
    },
 -
 -  // Group Chat
 -  groupChat: {
+-    migrationNoticeTitle: "Group chat is being retired",
+-    migrationNoticeMessage: "The group chat feature will be retired soon. We recommend reviewing your existing group tasks, Agent settings, and important context, and moving this work to Bot to continue there.",
+-    migrationNoticeSaveFailed: "Your acknowledgement could not be saved. Please check browser storage and try again.",
 -    messageAlreadySummarized: "Already summarized; cannot delete",
 -    messageSummaryBoundaryUnknown: "Summary boundary unavailable; deletion disabled",
 -    messageSelectionHint: "Select member messages or entire agent runs. Summarized messages cannot be selected.",
@@ -13228,7 +13343,7 @@ index ae5068b8c..a8259e7e2 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 714bbb0a6..fcb81002c 100644
+index 9bf53d18f..1f4b42b7a 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -687,7 +687,6 @@ export default {
@@ -13239,13 +13354,16 @@ index 714bbb0a6..fcb81002c 100644
      groupConversation: 'Conversación',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3299,239 +3298,6 @@ jobTriggered: 'Job ejecutado',
+@@ -3300,242 +3299,6 @@ jobTriggered: 'Job ejecutado',
        idle: 'Inactivo', queued: 'En cola', running: 'En ejecución', pending_approval: 'Pendiente de aprobación', completed: 'Completado', skipped: 'Omitido', failed: 'Fallido', approval_rejected: 'Aprobación rechazada', canceled: 'Cancelado',
      },
    },
 -
 -  // Registro de cambios
 -  groupChat: {
+-    migrationNoticeTitle: "El chat de grupo dejará de estar disponible",
+-    migrationNoticeMessage: "La función de chat de grupo se retirará próximamente. Te recomendamos revisar las tareas, la configuración de los Agents y el contexto importante de tus grupos, y trasladar este trabajo a Bot para continuarlo allí.",
+-    migrationNoticeSaveFailed: "No se pudo guardar tu confirmación. Revisa el almacenamiento del navegador e inténtalo de nuevo.",
 -    messageAlreadySummarized: "Ya resumido; no se puede eliminar",
 -    messageSummaryBoundaryUnknown: "Límite del resumen no disponible; eliminación deshabilitada",
 -    messageSelectionHint: "Selecciona mensajes de miembros o ejecuciones completas del agente. No se pueden seleccionar mensajes resumidos.",
@@ -13480,7 +13598,7 @@ index 714bbb0a6..fcb81002c 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 44df1ee02..164117a52 100644
+index c4d9f8f23..991b7fa15 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -687,7 +687,6 @@ export default {
@@ -13491,13 +13609,16 @@ index 44df1ee02..164117a52 100644
      groupConversation: 'Conversation',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agent',
-@@ -3299,239 +3298,6 @@ jobTriggered: 'Job declenche',
+@@ -3300,242 +3299,6 @@ jobTriggered: 'Job declenche',
        idle: 'Inactif', queued: 'En attente', running: 'En cours', pending_approval: 'En attente d\'approbation', completed: 'Terminé', skipped: 'Ignoré', failed: 'Échec', approval_rejected: 'Approbation refusée', canceled: 'Annulé',
      },
    },
 -
 -  // Journal des modifications
 -  groupChat: {
+-    migrationNoticeTitle: "Fin prochaine des discussions de groupe",
+-    migrationNoticeMessage: "La fonctionnalité de discussion de groupe sera bientôt retirée. Nous vous recommandons de faire le point sur vos tâches, les paramètres des Agents et le contexte important de vos groupes, puis de transférer ce travail vers Bot pour le poursuivre.",
+-    migrationNoticeSaveFailed: "Votre confirmation n’a pas pu être enregistrée. Vérifiez le stockage du navigateur et réessayez.",
 -    messageAlreadySummarized: "Déjà résumé ; suppression impossible",
 -    messageSummaryBoundaryUnknown: "Limite du résumé indisponible ; suppression désactivée",
 -    messageSelectionHint: "Sélectionnez des messages de membres ou des exécutions complètes. Les messages résumés ne peuvent pas être sélectionnés.",
@@ -13732,7 +13853,7 @@ index 44df1ee02..164117a52 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 53307d55a..8d2e30848 100644
+index 0bf11b32e..7a797d06d 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -688,7 +688,6 @@ export default {
@@ -13743,13 +13864,16 @@ index 53307d55a..8d2e30848 100644
      groupConversation: '会話',
      groupConversationShort: '会話',
      groupAgent: 'エージェント',
-@@ -3299,239 +3298,6 @@ export default {
+@@ -3300,242 +3299,6 @@ export default {
        idle: '待機中', queued: '待機列', running: '実行中', pending_approval: '承認待ち', completed: '完了', skipped: 'スキップ', failed: '失敗', approval_rejected: '承認拒否', canceled: 'キャンセル済み',
      },
    },
 -
 -  // 更新履歴
 -  groupChat: {
+-    migrationNoticeTitle: "グループチャットの提供終了について",
+-    migrationNoticeMessage: "グループチャット機能は近日中に提供を終了する予定です。既存のグループ内のタスク、Agent 設定、重要なコンテキストを整理し、Bot に移行して作業を続けることをおすすめします。",
+-    migrationNoticeSaveFailed: "確認状態を保存できませんでした。ブラウザーのストレージを確認して、もう一度お試しください。",
 -    messageAlreadySummarized: "要約済みのため削除できません",
 -    messageSummaryBoundaryUnknown: "要約の境界を確認できないため削除できません",
 -    messageSelectionHint: "メンバーのメッセージまたはエージェントの実行全体を選択できます。要約済みのメッセージは選択できません。",
@@ -13984,7 +14108,7 @@ index 53307d55a..8d2e30848 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 4bfff9d07..40772b41c 100644
+index db0e2a8c9..693b59ee2 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -688,7 +688,6 @@ export default {
@@ -13995,13 +14119,16 @@ index 4bfff9d07..40772b41c 100644
      groupConversation: '대화',
      groupConversationShort: '대화',
      groupAgent: '에이전트',
-@@ -3299,239 +3298,6 @@ export default {
+@@ -3300,242 +3299,6 @@ export default {
        idle: '대기', queued: '대기열', running: '실행 중', pending_approval: '승인 대기', completed: '완료', skipped: '건너뜀', failed: '실패', approval_rejected: '승인 거부', canceled: '취소됨',
      },
    },
 -
 -  // 변경 이력
 -  groupChat: {
+-    migrationNoticeTitle: "그룹 채팅 기능 종료 안내",
+-    migrationNoticeMessage: "그룹 채팅 기능이 곧 종료될 예정입니다. 기존 그룹의 작업, Agent 설정 및 중요한 맥락을 미리 정리하고 관련 업무를 Bot으로 옮겨 계속 진행하시기를 권장합니다.",
+-    migrationNoticeSaveFailed: "확인 상태를 저장하지 못했습니다. 브라우저 저장소를 확인한 후 다시 시도해 주세요.",
 -    messageAlreadySummarized: "이미 요약되어 삭제할 수 없습니다",
 -    messageSummaryBoundaryUnknown: "요약 경계를 확인할 수 없어 삭제할 수 없습니다",
 -    messageSelectionHint: "멤버 메시지 또는 에이전트 실행 전체를 선택하세요. 요약된 메시지는 선택할 수 없습니다.",
@@ -14236,7 +14363,7 @@ index 4bfff9d07..40772b41c 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 8bd6e397e..a0c256d16 100644
+index 38ef8c1fc..06bd73374 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -687,7 +687,6 @@ export default {
@@ -14247,13 +14374,16 @@ index 8bd6e397e..a0c256d16 100644
      groupConversation: 'Conversa',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3299,239 +3298,6 @@ jobTriggered: 'Job acionado',
+@@ -3300,242 +3299,6 @@ jobTriggered: 'Job acionado',
        idle: 'Inativo', queued: 'Na fila', running: 'Em execução', pending_approval: 'Aguardando aprovação', completed: 'Concluído', skipped: 'Ignorado', failed: 'Falhou', approval_rejected: 'Aprovação rejeitada', canceled: 'Cancelado',
      },
    },
 -
 -  // Registro de alteracoes
 -  groupChat: {
+-    migrationNoticeTitle: "O chat de grupo será descontinuado",
+-    migrationNoticeMessage: "A funcionalidade de chat de grupo será descontinuada em breve. Recomendamos rever as tarefas, as configurações dos Agents e o contexto importante dos seus grupos, e transferir esse trabalho para Bot para o continuar lá.",
+-    migrationNoticeSaveFailed: "Não foi possível guardar a sua confirmação. Verifique o armazenamento do navegador e tente novamente.",
 -    messageAlreadySummarized: "Já resumido; não é possível excluir",
 -    messageSummaryBoundaryUnknown: "Limite do resumo indisponível; exclusão desativada",
 -    messageSelectionHint: "Selecione mensagens de membros ou execuções completas do agente. Mensagens resumidas não podem ser selecionadas.",
@@ -14488,7 +14618,7 @@ index 8bd6e397e..a0c256d16 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 2990f71a7..e4fd78ed0 100644
+index a70667e41..60f002896 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -599,7 +599,6 @@ export default {
@@ -14499,11 +14629,14 @@ index 2990f71a7..e4fd78ed0 100644
      files: 'Файлы',
      devices: 'Устройства',
      connections: 'Подключение устройств',
-@@ -3147,236 +3146,6 @@ export default {
+@@ -3148,239 +3147,6 @@ export default {
      connectionError: 'Ошибка соединения с терминалом',
    },
  
 -  groupChat: {
+-    migrationNoticeTitle: "Групповые чаты скоро будут отключены",
+-    migrationNoticeMessage: "Функция группового чата скоро будет отключена. Рекомендуем заранее просмотреть задачи, настройки Agent и важный контекст в существующих группах и перенести эту работу в Bot, чтобы продолжить её там.",
+-    migrationNoticeSaveFailed: "Не удалось сохранить подтверждение. Проверьте хранилище браузера и повторите попытку.",
 -    messageAlreadySummarized: "Уже включено в сводку; удаление невозможно",
 -    messageSummaryBoundaryUnknown: "Граница сводки неизвестна; удаление отключено",
 -    messageSelectionHint: "Выберите сообщения участников или целые запуски агента. Сообщения, включённые в сводку, выбрать нельзя.",
@@ -14737,7 +14870,7 @@ index 2990f71a7..e4fd78ed0 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index ad964ece1..2e6c30c1f 100644
+index 11cabcdc9..109639f31 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -675,7 +675,6 @@ export default {
@@ -14748,13 +14881,16 @@ index ad964ece1..2e6c30c1f 100644
      files: '檔案',
      devices: '裝置',
      connections: '裝置互聯',
-@@ -3479,239 +3478,6 @@ export default {
+@@ -3480,242 +3479,6 @@ export default {
      connectionClosed: '終端機連線已關閉',
      connectionError: '終端機連線錯誤',
    },
 -
 -  // 群聊
 -  groupChat: {
+-    migrationNoticeTitle: "群聊即將下架",
+-    migrationNoticeMessage: "群聊功能即將下架。建議您提前整理現有群聊中的任務、Agent 設定和重要上下文，並將相關業務遷移至 Bot 繼續處理。",
+-    migrationNoticeSaveFailed: "暫時無法儲存確認狀態，請檢查瀏覽器儲存空間後重試。",
 -    messageAlreadySummarized: "已被總結，無法刪除",
 -    messageSummaryBoundaryUnknown: "無法確定總結邊界，暫不可刪除",
 -    messageSelectionHint: "可選擇成員訊息或整次 Agent 回覆；已總結的訊息不可選擇。",
@@ -14989,7 +15125,7 @@ index ad964ece1..2e6c30c1f 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index cdd8420db..1cdfcee71 100644
+index 2076ca9d0..536dd4b70 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -675,7 +675,6 @@ export default {
@@ -15000,13 +15136,16 @@ index cdd8420db..1cdfcee71 100644
      files: '文件',
      devices: '设备',
      connections: '设备互联',
-@@ -3584,239 +3583,6 @@ export default {
+@@ -3585,242 +3584,6 @@ export default {
      connectionClosed: '终端连接已关闭',
      connectionError: '终端连接错误',
    },
 -
 -  // 群聊
 -  groupChat: {
+-    migrationNoticeTitle: "群聊即将下架",
+-    migrationNoticeMessage: "群聊功能即将下架。建议您提前整理现有群聊中的任务、Agent 配置和重要上下文，并将相关业务迁移到 Bot 中继续处理。",
+-    migrationNoticeSaveFailed: "暂时无法保存确认状态，请检查浏览器存储后重试。",
 -    messageAlreadySummarized: "已被总结，无法删除",
 -    messageSummaryBoundaryUnknown: "无法确定总结边界，暂不可删除",
 -    messageSelectionHint: "可选择成员消息或整次 Agent 回复；已总结的消息不可选择。",
@@ -19224,15 +19363,16 @@ index bd11acb6e..000000000
 -</style>
 diff --git a/packages/client/src/views/hermes/GroupChatView.vue b/packages/client/src/views/hermes/GroupChatView.vue
 deleted file mode 100644
-index 1547e2e8b..000000000
+index 92b19f49d..000000000
 --- a/packages/client/src/views/hermes/GroupChatView.vue
 +++ /dev/null
-@@ -1,113 +0,0 @@
+@@ -1,115 +0,0 @@
 -<script setup lang="ts">
 -import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 -import PageLoading from '@/components/common/PageLoading.vue'
 -import { useRoute, useRouter } from 'vue-router'
 -import GroupChatPanel from '@/components/hermes/group-chat/GroupChatPanel.vue'
+-import GroupChatMigrationNotice from '@/components/hermes/group-chat/GroupChatMigrationNotice.vue'
 -import { useGroupChatStore } from '@/stores/hermes/group-chat'
 -import { useProfilesStore } from '@/stores/hermes/profiles'
 -import { useSettingsStore } from '@/stores/hermes/settings'
@@ -19331,6 +19471,7 @@ index 1547e2e8b..000000000
 -<template>
 -    <PageLoading :show="pageLoading" initial-only class="group-chat-view">
 -        <GroupChatPanel />
+-        <GroupChatMigrationNotice />
 -    </PageLoading>
 -</template>
 -
@@ -20320,3 +20461,339 @@ index 2b1c442ab..433078781 100644
      if (/^(https?:|mailto:)/i.test(targetUrl)) {
        shell.openExternal(targetUrl).catch(() => undefined)
      }
+diff --git a/tests/client/group-chat-migration-notice.test.ts b/tests/client/group-chat-migration-notice.test.ts
+deleted file mode 100644
+index 08960994f..000000000
+--- a/tests/client/group-chat-migration-notice.test.ts
++++ /dev/null
+@@ -1,126 +0,0 @@
+-// @vitest-environment jsdom
+-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+-import { mount, type VueWrapper } from '@vue/test-utils'
+-import { ref, type Ref } from 'vue'
+-import { createI18n } from 'vue-i18n'
+-import GroupChatMigrationNotice from '../../packages/client/src/components/hermes/group-chat/GroupChatMigrationNotice.vue'
+-import { pageLoadingKey } from '../../packages/client/src/composables/usePageLoading'
+-import { loadLocaleMessages, supportedLocales } from '../../packages/client/src/i18n/messages'
+-import zh from '../../packages/client/src/i18n/locales/zh'
+-
+-const key = 'hermes.groupChat.botMigrationNotice.v1.acknowledged'
+-const wrappers: VueWrapper[] = []
+-vi.mock('naive-ui', async () => {
+-  const { defineComponent, h } = await import('vue')
+-  return {
+-    NModal: defineComponent({
+-      props: ['show', 'title'],
+-      setup: (props, { slots }) => () => props.show ? h('section', { role: 'dialog', 'aria-label': props.title }, [slots.default?.(), slots.action?.()]) : null,
+-    }),
+-    NButton: defineComponent({ setup: (_, { slots }) => () => h('button', slots.default?.()) }),
+-    NAlert: defineComponent({ setup: (_, { slots }) => () => h('div', { role: 'alert' }, slots.default?.()) }),
+-  }
+-})
+-function render(loading: Ref<boolean> = ref(false)) {
+-  const wrapper = mount(GroupChatMigrationNotice, {
+-    global: {
+-      plugins: [createI18n({ legacy: false, locale: 'zh', messages: { zh } })],
+-      provide: { [pageLoadingKey as symbol]: loading },
+-    },
+-  })
+-  wrappers.push(wrapper)
+-  return wrapper
+-}
+-
+-beforeEach(() => localStorage.clear())
+-afterEach(() => {
+-  wrappers.forEach(wrapper => wrapper.unmount())
+-  wrappers.length = 0
+-  vi.restoreAllMocks()
+-})
+-
+-describe('group chat migration notice', () => {
+-  it('waits for page readiness and does not reuse the old upgrade acknowledgement', async () => {
+-    localStorage.setItem('hermes.groupChat.refactorNotice.v1.acknowledged', '1')
+-    const loading = ref(true)
+-    const wrapper = render(loading)
+-    await wrapper.vm.$nextTick()
+-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+-    loading.value = false
+-    await wrapper.vm.$nextTick()
+-    expect(wrapper.get('[role="dialog"]').attributes('aria-label')).toBe('群聊即将下架')
+-    expect(wrapper.text()).toContain('迁移到 Bot')
+-    expect(localStorage.getItem(key)).toBeNull()
+-  })
+-
+-  it('saves only explicit acknowledgement and remains dismissed after remount and focus', async () => {
+-    const wrapper = render()
+-    await wrapper.vm.$nextTick()
+-    await wrapper.get('button').trigger('click')
+-    expect(localStorage.getItem(key)).toBe('1')
+-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+-    const another = render()
+-    window.dispatchEvent(new Event('focus'))
+-    await another.vm.$nextTick()
+-    expect(another.find('[role="dialog"]').exists()).toBe(false)
+-  })
+-
+-  it('keeps an unacknowledged notice eligible when the page is left and revisited', async () => {
+-    const first = render()
+-    await first.vm.$nextTick()
+-    first.unmount()
+-    wrappers.splice(wrappers.indexOf(first), 1)
+-    const next = render()
+-    await next.vm.$nextTick()
+-    expect(next.find('[role="dialog"]').exists()).toBe(true)
+-    expect(localStorage.getItem(key)).toBeNull()
+-  })
+-
+-  it('keeps the notice open with a retryable error if persistent storage fails', async () => {
+-    const wrapper = render()
+-    await wrapper.vm.$nextTick()
+-    const save = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('storage blocked') })
+-    await wrapper.get('button').trigger('click')
+-    expect(wrapper.get('[role="alert"]').text()).toContain('无法保存确认状态')
+-    expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
+-    save.mockRestore()
+-    await wrapper.get('button').trigger('click')
+-    expect(localStorage.getItem(key)).toBe('1')
+-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('transient failure') })
+-    window.dispatchEvent(new Event('focus'))
+-    await wrapper.vm.$nextTick()
+-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+-  })
+-
+-  it('shows the notice if storage cannot be read and syncs acknowledgements from another tab', async () => {
+-    const read = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('storage blocked') })
+-    const wrapper = render()
+-    await wrapper.vm.$nextTick()
+-    expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
+-    read.mockRestore()
+-    localStorage.setItem(key, '1')
+-    window.dispatchEvent(new StorageEvent('storage', { key, newValue: '1' }))
+-    await wrapper.vm.$nextTick()
+-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+-  })
+-
+-  it('removes cross-tab and focus listeners on unmount', () => {
+-    const remove = vi.spyOn(window, 'removeEventListener')
+-    const wrapper = render()
+-    wrapper.unmount()
+-    wrappers.splice(wrappers.indexOf(wrapper), 1)
+-    expect(remove).toHaveBeenCalledWith('storage', expect.any(Function))
+-    expect(remove).toHaveBeenCalledWith('focus', expect.any(Function))
+-  })
+-
+-  it('provides the notice and acknowledgement action in every supported language', async () => {
+-    for (const locale of supportedLocales) {
+-      const messages = await loadLocaleMessages(locale)
+-      expect(messages.groupChat.migrationNoticeTitle).toBeTruthy()
+-      expect(messages.groupChat.migrationNoticeMessage).toContain('Bot')
+-      expect(messages.groupChat.migrationNoticeSaveFailed).toBeTruthy()
+-      expect(messages.announcements.gotIt).toBeTruthy()
+-    }
+-  })
+-})
+diff --git a/tests/e2e/fixtures/group-chat-migration.ts b/tests/e2e/fixtures/group-chat-migration.ts
+deleted file mode 100644
+index a4903ba33..000000000
+--- a/tests/e2e/fixtures/group-chat-migration.ts
++++ /dev/null
+@@ -1,64 +0,0 @@
+-import { createApp, h, nextTick } from 'vue'
+-import { createPinia } from 'pinia'
+-import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
+-import { NConfigProvider, darkTheme } from 'naive-ui'
+-import { createI18n } from 'vue-i18n'
+-import GroupChatView from '../../../packages/client/src/views/hermes/GroupChatView.vue'
+-import { useGroupChatStore } from '../../../packages/client/src/stores/hermes/group-chat'
+-import { useProfilesStore } from '../../../packages/client/src/stores/hermes/profiles'
+-import { useSettingsStore } from '../../../packages/client/src/stores/hermes/settings'
+-import type { RoomInfo } from '../../../packages/client/src/api/studio/group-chat'
+-import { useTheme } from '../../../packages/client/src/composables/useTheme'
+-import { getThemeOverrides } from '../../../packages/client/src/styles/theme'
+-import { loadLocaleMessages } from '../../../packages/client/src/i18n/messages'
+-import '../../../packages/client/src/styles/global.scss'
+-
+-const locale = new URLSearchParams(location.search).get('locale') || 'zh'
+-const messages = await loadLocaleMessages(locale as 'zh' | 'en' | 'ar')
+-document.documentElement.lang = locale
+-document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'
+-const router = createRouter({ history: createMemoryHistory(), routes: [
+-  { path: '/', component: { render: () => h('p', 'Other Studio page') } },
+-  { path: '/groups', name: 'hermes.groupChat', component: GroupChatView },
+-  { path: '/groups/:roomId', name: 'hermes.groupChatRoom', component: GroupChatView },
+-] })
+-const pinia = createPinia()
+-const group = useGroupChatStore(pinia)
+-const profiles = useProfilesStore(pinia)
+-const settings = useSettingsStore(pinia)
+-group.rooms = new URLSearchParams(location.search).has('empty') ? [] : [
+-  { id: 'room-a', name: 'Existing group A' },
+-  { id: 'room-b', name: 'Existing group B' },
+-] as RoomInfo[]
+-let ready!: () => void
+-const loading = new Promise<void>(resolve => { ready = resolve })
+-profiles.fetchProfiles = async () => { await loading }
+-group.connect = async () => {}
+-group.loadRooms = async () => {}
+-group.joinRoom = async roomId => { group.currentRoomId = roomId }
+-settings.fetchSettings = async () => true
+-await router.push('/groups')
+-const theme = useTheme()
+-await theme.setBrightness('light')
+-;(window as any).migrationFixture = {
+-  ready,
+-  navigate: (path: string) => router.push(path),
+-  async theme(dark: boolean, wallpaper = false, opacity?: number) {
+-    await theme.setBrightness(dark ? 'dark' : 'light')
+-    theme.previewThemeSettings({ brightness: dark ? 'dark' : 'light', appearance: {
+-      global: { opacity: 0.7, ...(wallpaper ? { gradientColor: '#4267a8', gradientAngle: 130 } : {}) },
+-      regions: opacity === undefined ? {} : { overlay: { opacity, radius: 20, blur: 12 } },
+-    } })
+-    await nextTick()
+-  },
+-  async resetTheme() {
+-    await theme.setBrightness('light')
+-    theme.previewThemeSettings({ brightness: 'light', appearance: { global: {}, regions: {} } })
+-    await nextTick()
+-  },
+-}
+-createApp({ setup: () => () => h(NConfigProvider, {
+-  theme: theme.isDark.value ? darkTheme : null,
+-  themeOverrides: getThemeOverrides(theme.isDark.value, theme.isComic.value, theme.customization.value, theme.hasCustomBackground.value),
+-}, () => h('main', { style: { minHeight: '100vh', background: 'var(--app-background-gradient, var(--bg-primary))' } }, [h(RouterView)])) })
+-  .use(pinia).use(router).use(createI18n({ legacy: false, locale, messages: { [locale]: messages } })).mount('#app')
+diff --git a/tests/e2e/fixtures/group-chat-panel.ts b/tests/e2e/fixtures/group-chat-panel.ts
+deleted file mode 100644
+index f0cc80e10..000000000
+--- a/tests/e2e/fixtures/group-chat-panel.ts
++++ /dev/null
+@@ -1,3 +0,0 @@
+-import { h } from 'vue'
+-
+-export default { setup: () => () => h('section', { 'data-testid': 'group-panel' }, 'Existing group chat') }
+diff --git a/tests/e2e/group-chat-migration.spec.ts b/tests/e2e/group-chat-migration.spec.ts
+deleted file mode 100644
+index 613a4565d..000000000
+--- a/tests/e2e/group-chat-migration.spec.ts
++++ /dev/null
+@@ -1,119 +0,0 @@
+-import { expect, test, type Page } from '@playwright/test'
+-import { resolve } from 'node:path'
+-import { writeFile } from 'node:fs/promises'
+-
+-const key = 'hermes.groupChat.botMigrationNotice.v1.acknowledged'
+-const fixture = '/__group_migration__'
+-
+-async function openFixture(page: Page, locale = 'zh', empty = false) {
+-  const entry = '/@fs/' + resolve('tests/e2e/fixtures/group-chat-migration.ts').replaceAll('\\', '/').replace(/^\//, '')
+-  const panel = '/@fs/' + resolve('tests/e2e/fixtures/group-chat-panel.ts').replaceAll('\\', '/').replace(/^\//, '')
+-  // Keep this test about the real route/loading/notice, without starting group agents or sockets.
+-  await page.route('**/components/hermes/group-chat/GroupChatPanel.vue*', route => route.fulfill({
+-    contentType: 'application/javascript',
+-    body: `export { default } from ${JSON.stringify(panel)}`,
+-  }))
+-  await page.route('**/__group_migration__*', route => route.fulfill({ contentType: 'text/html',
+-    body: `<!doctype html><html><head><meta charset="utf-8"></head><body><div id="app"></div><script type="module" src="${entry}"></script></body></html>`,
+-  }))
+-  await page.goto(`${fixture}?locale=${locale}${empty ? '&empty=1' : ''}`)
+-  await page.waitForFunction(() => !!(window as any).migrationFixture)
+-}
+-
+-async function ready(page: Page) {
+-  await page.evaluate(() => (window as any).migrationFixture.ready())
+-}
+-
+-test('shows after loading, requires acknowledgement, and persists across navigation and reload', async ({ page }) => {
+-  const errors: string[] = []
+-  page.on('pageerror', error => errors.push(error.message))
+-  await page.addInitScript(() => localStorage.setItem('hermes.groupChat.refactorNotice.v1.acknowledged', '1'))
+-  await openFixture(page)
+-  const dialog = page.getByRole('dialog', { name: '群聊即将下架' })
+-  await expect(dialog).toHaveCount(0)
+-  await ready(page)
+-  await expect(dialog).toBeVisible()
+-  await expect(dialog).toContainText('迁移到 Bot')
+-  await page.keyboard.press('Escape')
+-  await page.mouse.click(5, 5)
+-  await expect(dialog).toBeVisible()
+-  expect(await page.evaluate(key => localStorage.getItem(key), key)).toBeNull()
+-  await page.getByRole('button', { name: '知道了', exact: true }).click()
+-  await expect(dialog).toHaveCount(0)
+-  expect(await page.evaluate(key => localStorage.getItem(key), key)).toBe('1')
+-  await expect(page.getByTestId('group-panel')).toBeVisible()
+-  await page.evaluate(() => (window as any).migrationFixture.navigate('/groups/room-b'))
+-  await expect(dialog).toHaveCount(0)
+-  await page.evaluate(() => (window as any).migrationFixture.navigate('/'))
+-  await page.evaluate(() => (window as any).migrationFixture.navigate('/groups'))
+-  await expect(page.getByTestId('group-panel')).toBeVisible()
+-  await expect(dialog).toHaveCount(0)
+-  await page.reload()
+-  await page.waitForFunction(() => !!(window as any).migrationFixture)
+-  await ready(page)
+-  await expect(page.getByTestId('group-panel')).toBeVisible()
+-  await expect(dialog).toHaveCount(0)
+-  expect(errors).toEqual([])
+-})
+-
+-test('acknowledgement closes the same notice in another tab', async ({ page, context }) => {
+-  await openFixture(page)
+-  await ready(page)
+-  await expect(page.getByRole('button', { name: '知道了', exact: true })).toBeVisible()
+-  const other = await context.newPage()
+-  await openFixture(other)
+-  await ready(other)
+-  await expect(other.getByRole('button', { name: '知道了', exact: true })).toBeVisible()
+-  await other.getByRole('button', { name: '知道了', exact: true }).click()
+-  await expect(page.getByRole('dialog')).toHaveCount(0)
+-  await expect(other.getByRole('dialog')).toHaveCount(0)
+-})
+-
+-test('also informs users with an empty room list without showing outside group chat', async ({ page }) => {
+-  await openFixture(page, 'en', true)
+-  await ready(page)
+-  await expect(page.getByRole('dialog', { name: 'Group chat is being retired' })).toBeVisible()
+-  await page.evaluate(() => (window as any).migrationFixture.navigate('/'))
+-  await expect(page.getByRole('dialog')).toHaveCount(0)
+-  expect(await page.evaluate(key => localStorage.getItem(key), key)).toBeNull()
+-  await page.evaluate(() => (window as any).migrationFixture.navigate('/groups'))
+-  await page.getByRole('button', { name: 'Got it', exact: true }).click()
+-  await expect(page.getByRole('dialog')).toHaveCount(0)
+-})
+-
+-test('uses the existing overlay theme and remains usable on narrow and RTL layouts', async ({ page }, testInfo) => {
+-  await openFixture(page)
+-  await ready(page)
+-  const dialog = page.getByRole('dialog', { name: '群聊即将下架' })
+-  await expect(dialog).toBeVisible()
+-  await page.screenshot({ path: testInfo.outputPath('migration-light-desktop.png'), fullPage: true, animations: 'disabled' })
+-  await page.evaluate(() => (window as any).migrationFixture.theme(true, true, 0.8))
+-  await page.setViewportSize({ width: 390, height: 844 })
+-  await expect(dialog).toBeVisible()
+-  await expect(dialog).toHaveCSS('background-color', 'rgba(42, 42, 42, 0.8)')
+-  const bounds = await dialog.boundingBox()
+-  expect(bounds!.width).toBeLessThanOrEqual(390 - 32)
+-  await page.screenshot({ path: testInfo.outputPath('migration-dark-wallpaper-mobile.png'), fullPage: true, animations: 'disabled' })
+-  await page.evaluate(() => (window as any).migrationFixture.theme(false, true, 0))
+-  await expect(dialog).toBeVisible()
+-  await expect(dialog).toHaveCSS('background-color', 'rgba(255, 255, 255, 0)')
+-  await page.screenshot({ path: testInfo.outputPath('migration-zero-opacity.png'), fullPage: true, animations: 'disabled' })
+-  await page.evaluate(() => (window as any).migrationFixture.resetTheme())
+-  await expect(dialog).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+-  await writeFile(testInfo.outputPath('theme-checks.json'), JSON.stringify({
+-    darkOverlay: 'rgba(42, 42, 42, 0.8)', zeroOverlay: 'rgba(255, 255, 255, 0)', resetOverlay: 'rgb(255, 255, 255)',
+-    mobileDialogWidth: bounds!.width,
+-  }, null, 2))
+-  await page.screenshot({ path: testInfo.outputPath('migration-theme-reset.png'), fullPage: true, animations: 'disabled' })
+-  await page.getByRole('button', { name: '知道了', exact: true }).click()
+-  await expect(dialog).toHaveCount(0)
+-
+-  await page.evaluate(key => localStorage.removeItem(key), key)
+-  await openFixture(page, 'ar')
+-  await ready(page)
+-  await expect(page.getByRole('dialog')).toBeVisible()
+-  await expect(page.getByRole('dialog')).toContainText('Bot')
+-  await page.screenshot({ path: testInfo.outputPath('migration-arabic-mobile.png'), fullPage: true, animations: 'disabled' })
+-  await page.getByRole('button', { name: 'فهمت', exact: true }).click()
+-  await expect(page.getByRole('dialog')).toHaveCount(0)
+-})
