@@ -456,6 +456,14 @@ export default {
   },
   // 登录
   login: {
+    // >>> passkey i18n (generated) >>>
+    passkeyOr: '或',
+    passkeySubmit: '使用 Passkey 登录',
+    passkeyCancelled: '本设备没有找到该 Passkey，或已取消操作。可改用密码登录，或在账号设置里为本设备添加 Passkey。',
+    passkeyUnavailable: '当前环境不支持 Passkey，请通过 HTTPS 访问。',
+    passkeyRpMismatch: '当前地址与 Passkey 域名不一致，请改用配置的域名访问。',
+    // <<< passkey i18n <<<
+
     title: 'Ekko Studio',
     description: '输入用户名和密码以继续。',
     placeholder: '访问令牌',
@@ -2727,6 +2735,39 @@ export default {
         pairing: '设备配对',
       },
     },
+    // >>> passkey settings i18n (generated) >>>
+    passkey: {
+      title: 'Passkey',
+      description: '使用指纹、Windows Hello 或手机免密登录，密码登录仍然可用。',
+      namePlaceholder: 'Passkey 名称（如 MacBook）',
+      add: '添加 Passkey',
+      added: 'Passkey 已添加',
+      removed: 'Passkey 已移除',
+      unnamed: '未命名 Passkey',
+      addedAt: '添加于 {time}',
+      lastUsed: '最近使用 {time}',
+      neverUsed: '从未使用',
+      remove: '移除',
+      removeConfirm: '确定移除该 Passkey？移除后将无法用它登录。',
+      empty: '该账号尚未绑定 Passkey。',
+      rpTitle: '服务器配置',
+      rpDescription: 'WebAuthn 要求 RP ID 为本站点域名（或其上级域），且 Origin 完全一致。配置每次登录实时读取，保存即生效。',
+      rpId: 'RP ID',
+      rpName: '显示名称',
+      origins: '允许的 Origin（每行一个或用逗号分隔）',
+      useCurrentAddress: '使用当前地址',
+      saveRp: '保存',
+      rpSaved: 'Passkey 配置已保存',
+      errors: {
+        unsupported: '当前浏览器不支持 Passkey。',
+        insecure: 'Passkey 需要 HTTPS（或 localhost）。',
+        rpMismatch: 'RP ID 未覆盖当前域名，请让管理员修正 Passkey 配置。',
+        alreadyRegistered: '该认证器已注册。',
+        cancelled: '已取消 Passkey 操作。',
+        failed: 'Passkey 操作失败。',
+      },
+    },
+    // <<< passkey settings i18n <<<
     userAvatar: {
       title: '用户头像',
       upload: '上传图片',

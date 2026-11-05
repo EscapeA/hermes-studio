@@ -409,6 +409,14 @@ export default {
   },
 
   login: {
+    // >>> passkey i18n (generated) >>>
+    passkeyOr: 'veya',
+    passkeySubmit: 'Passkey ile giriş yap',
+    passkeyCancelled: 'Bu cihazda passkey bulunamadı veya işlem iptal edildi. Parolayla giriş yapın ya da hesap ayarlarından passkey ekleyin.',
+    passkeyUnavailable: 'Passkey burada kullanılamıyor. Siteyi HTTPS üzerinden açın.',
+    passkeyRpMismatch: 'Bu adres passkey alan adıyla eşleşmiyor. Yapılandırılmış alan adını açın.',
+    // <<< passkey i18n <<<
+
     title: 'Ekko Studio',
     description: 'Devam etmek için kullanıcı adınızı ve parolanızı girin.',
     placeholder: 'Erişim belirteci',
@@ -662,7 +670,40 @@ export default {
     message: { taskArchived: 'Görev arşivlendi' },
   },
   journey: { nodeKinds: 'Düğüm türleri' },
-  settings: {
+  settings: {    // >>> passkey settings i18n (generated) >>>
+    passkey: {
+      title: 'Passkey',
+      description: 'Touch ID, Windows Hello veya telefonunuzla parolasız giriş yapın. Parola ile giriş çalışmaya devam eder.',
+      namePlaceholder: 'Passkey adı (ör. MacBook)',
+      add: 'Passkey ekle',
+      added: 'Passkey eklendi',
+      removed: 'Passkey kaldırıldı',
+      unnamed: 'Adsız passkey',
+      addedAt: 'Eklendi {time}',
+      lastUsed: 'Son kullanım {time}',
+      neverUsed: 'hiç',
+      remove: 'Kaldır',
+      removeConfirm: 'Bu passkey kaldırılsın mı? Artık onunla giriş yapamazsınız.',
+      empty: 'Bu hesaba henüz passkey bağlı değil.',
+      rpTitle: 'Sunucu yapılandırması',
+      rpDescription: 'WebAuthn, RP ID’nin bu sitenin alan adı (veya üst alan adı) olmasını ve Origin’in tam olarak eşleşmesini gerektirir. Her girişte yeniden okunur, bu yüzden değişiklikler anında geçerli olur.',
+      rpId: 'RP ID',
+      rpName: 'Görünen ad',
+      origins: 'İzin verilen Origin’ler (her satıra bir tane veya virgülle ayrılmış)',
+      useCurrentAddress: 'Geçerli adresi kullan',
+      saveRp: 'Kaydet',
+      rpSaved: 'Passkey yapılandırması kaydedildi',
+      errors: {
+        unsupported: 'Bu tarayıcı passkey desteklemiyor.',
+        insecure: 'Passkey için HTTPS (veya localhost) gerekir.',
+        rpMismatch: 'RP ID bu alan adını kapsamıyor. Yöneticiden passkey yapılandırmasını düzeltmesini isteyin.',
+        alreadyRegistered: 'Bu kimlik doğrulayıcı zaten kayıtlı.',
+        cancelled: 'Passkey işlemi iptal edildi.',
+        failed: 'Passkey işlemi başarısız oldu.',
+      },
+    },
+    // <<< passkey settings i18n <<<
+
     privacy: {
       policy: 'Gizlilik bildirimi',
     },
