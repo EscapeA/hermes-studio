@@ -1,0 +1,3280 @@
+From b7f1884ccba3172a2612421eef93fc766fb20fcd Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 5 Nov 2026 23:37:22 +0800
+Subject: [PATCH] feat(auth): add passkey (WebAuthn) sign-in
+
+Add passkeys as an additional login method next to the password. Credentials
+are discoverable (resident keys), so signing in needs no username: the
+authenticator returns the userHandle embedded at registration.
+
+- Server: RP configuration lives in a new `studio_settings` key/value table and
+  is read on every ceremony, so administrators can change it without a restart.
+  Credentials go in `webauthn_credentials`, keyed by SHA-256 of the credential id
+  to keep the unique index short.
+- Challenges are single-use, in-memory and expire after five minutes. Credentials
+  persist in SQLite, so passkeys survive a restart.
+- RP config is validated on write: bare hostname only, and every origin must sit
+  within the RP ID. A mismatch here is what browsers report as an unexplained
+  "unknown error" on phones, so failing early is the whole point.
+- Client: the login view shows the passkey entry only when the instance is
+  configured and at least one passkey exists, and account settings manage the
+  signed-in user's own credentials. Super administrators also get the RP form.
+- Errors are classified by message text, not only DOMException name, because
+  @simplewebauthn/browser replaces the exception with its own wording. Without
+  this the user sees "The authenticator was unable to process the specified
+  options" instead of a hint about the domain.
+
+Password login is untouched and remains the primary path.
+---
+ docs/openapi.json                             | 315 +++++++++++++
+ package-lock.json                             |  59 ++-
+ package.json                                  |   2 +
+ packages/client/src/api/studio/webauthn.ts    | 217 +++++++++
+ .../hermes/settings/AccountSettings.vue       |   4 +
+ .../hermes/settings/PasskeySettings.vue       | 323 ++++++++++++++
+ packages/client/src/i18n/locales/ar.ts        |  41 ++
+ packages/client/src/i18n/locales/de.ts        |  41 ++
+ packages/client/src/i18n/locales/en.ts        |  41 ++
+ packages/client/src/i18n/locales/es.ts        |  41 ++
+ packages/client/src/i18n/locales/fr.ts        |  41 ++
+ packages/client/src/i18n/locales/ja.ts        |  41 ++
+ packages/client/src/i18n/locales/ko.ts        |  41 ++
+ packages/client/src/i18n/locales/pt.ts        |  41 ++
+ packages/client/src/i18n/locales/ru.ts        |  41 ++
+ packages/client/src/i18n/locales/tr.ts        |  43 +-
+ packages/client/src/i18n/locales/zh-TW.ts     |  41 ++
+ packages/client/src/i18n/locales/zh.ts        |  41 ++
+ packages/client/src/views/LoginView.vue       | 125 +++++-
+ .../modules/studio/controllers/webauthn.ts    | 245 +++++++++++
+ .../studio/infrastructure/database/schemas.ts |  34 ++
+ .../src/modules/studio/public/webauthn.ts     | 414 ++++++++++++++++++
+ .../repositories/studio-settings-store.ts     |  35 ++
+ .../studio/repositories/webauthn-store.ts     | 109 +++++
+ .../server/src/modules/studio/routes/auth.ts  |  17 +
+ tests/e2e/passkey-login.spec.ts               | 173 ++++++++
+ tests/server/webauthn-passkey.test.ts         | 209 +++++++++
+ 27 files changed, 2764 insertions(+), 11 deletions(-)
+ create mode 100644 packages/client/src/api/studio/webauthn.ts
+ create mode 100644 packages/client/src/components/hermes/settings/PasskeySettings.vue
+ create mode 100644 packages/server/src/modules/studio/controllers/webauthn.ts
+ create mode 100644 packages/server/src/modules/studio/public/webauthn.ts
+ create mode 100644 packages/server/src/modules/studio/repositories/studio-settings-store.ts
+ create mode 100644 packages/server/src/modules/studio/repositories/webauthn-store.ts
+ create mode 100644 tests/e2e/passkey-login.spec.ts
+ create mode 100644 tests/server/webauthn-passkey.test.ts
+
+diff --git a/docs/openapi.json b/docs/openapi.json
+index 8e8936bb5..652b0fde6 100644
+--- a/docs/openapi.json
++++ b/docs/openapi.json
+@@ -1263,6 +1263,321 @@
+         ]
+       }
+     },
++    "/api/auth/webauthn/config": {
++      "get": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Get config",
++        "description": "GET /api/auth/webauthn/config",
++        "operationId": "webauthnGetConfig",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          },
++          "404": {
++            "description": "Not found"
++          }
++        }
++      },
++      "put": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Update config",
++        "description": "PUT /api/auth/webauthn/config",
++        "operationId": "webauthnUpdateConfig",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "400": {
++            "$ref": "#/components/responses/BadRequest"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        },
++        "requestBody": {
++          "required": true,
++          "content": {
++            "application/json": {
++              "schema": {
++                "type": "object",
++                "properties": {
++                  "origins": {
++                    "type": "object",
++                    "additionalProperties": true
++                  },
++                  "rpID": {
++                    "type": "object",
++                    "additionalProperties": true
++                  },
++                  "rpName": {
++                    "type": "object",
++                    "additionalProperties": true
++                  }
++                }
++              }
++            }
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/credentials": {
++      "get": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Get credentials",
++        "description": "GET /api/auth/webauthn/credentials",
++        "operationId": "webauthnListCredentials",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          },
++          "404": {
++            "description": "Not found"
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/credentials/{id}": {
++      "delete": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Delete :id",
++        "description": "DELETE /api/auth/webauthn/credentials/:id",
++        "operationId": "webauthnDeleteCredential",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        },
++        "parameters": [
++          {
++            "name": "id",
++            "in": "path",
++            "required": true,
++            "schema": {
++              "type": "integer"
++            }
++          }
++        ]
++      }
++    },
++    "/api/auth/webauthn/login/begin": {
++      "post": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Create begin",
++        "description": "POST /api/auth/webauthn/login/begin",
++        "operationId": "webauthnLoginBegin",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "400": {
++            "$ref": "#/components/responses/BadRequest"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/login/finish": {
++      "post": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Create finish",
++        "description": "POST /api/auth/webauthn/login/finish",
++        "operationId": "webauthnLoginFinish",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "400": {
++            "$ref": "#/components/responses/BadRequest"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        },
++        "requestBody": {
++          "required": true,
++          "content": {
++            "application/json": {
++              "schema": {
++                "type": "object",
++                "properties": {
++                  "response": {
++                    "type": "object",
++                    "additionalProperties": true
++                  },
++                  "sessionToken": {
++                    "type": "object",
++                    "additionalProperties": true
++                  }
++                },
++                "required": [
++                  "response",
++                  "sessionToken"
++                ]
++              }
++            }
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/register/begin": {
++      "post": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Create begin",
++        "description": "POST /api/auth/webauthn/register/begin",
++        "operationId": "webauthnRegisterBegin",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "400": {
++            "$ref": "#/components/responses/BadRequest"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/register/finish": {
++      "post": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Create finish",
++        "description": "POST /api/auth/webauthn/register/finish",
++        "operationId": "webauthnRegisterFinish",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "400": {
++            "$ref": "#/components/responses/BadRequest"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        },
++        "requestBody": {
++          "required": true,
++          "content": {
++            "application/json": {
++              "schema": {
++                "type": "object",
++                "properties": {
++                  "name": {
++                    "type": "object",
++                    "additionalProperties": true
++                  },
++                  "response": {
++                    "type": "object",
++                    "additionalProperties": true
++                  },
++                  "sessionToken": {
++                    "type": "object",
++                    "additionalProperties": true
++                  }
++                },
++                "required": [
++                  "response",
++                  "sessionToken"
++                ]
++              }
++            }
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/status": {
++      "get": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Get status",
++        "description": "GET /api/auth/webauthn/status",
++        "operationId": "webauthnStatus",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          },
++          "404": {
++            "description": "Not found"
++          }
++        }
++      }
++    },
+     "/api/coding-agents": {
+       "get": {
+         "tags": [
+diff --git a/package-lock.json b/package-lock.json
+index a0b9d52bf..64b9c58d8 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -13,6 +13,8 @@
+         "@audio/decode-wav": "^1.2.0",
+         "@larksuiteoapi/node-sdk": "^1.73.0",
+         "@modelcontextprotocol/client": "^2.0.0",
++        "@simplewebauthn/browser": "^13.3.0",
++        "@simplewebauthn/server": "^13.3.3",
+         "@trycua/cua-driver": "0.35.4",
+         "@typesafe-ai/sdk": "0.6.0",
+         "@vscode/markdown-it-katex": "^1.1.2",
+@@ -1330,6 +1332,12 @@
+         "@hapi/hoek": "^11.0.2"
+       }
+     },
++    "node_modules/@hexagon/base64": {
++      "version": "1.1.28",
++      "resolved": "https://registry.npmmirror.com/@hexagon/base64/-/base64-1.1.28.tgz",
++      "integrity": "sha512-lhqDEAvWixy3bZ+UOYbPwUbBkwBq5C1LAJ/xPC8Oi+lL54oyakv/npbA0aU2hgCsx/1NUd4IBvV03+aUBWxerw==",
++      "license": "MIT"
++    },
+     "node_modules/@iconify/types": {
+       "version": "2.0.0",
+       "resolved": "https://registry.npmjs.org/@iconify/types/-/types-2.0.0.tgz",
+@@ -2134,6 +2142,12 @@
+       "integrity": "sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==",
+       "license": "MIT"
+     },
++    "node_modules/@levischuck/tiny-cbor": {
++      "version": "0.2.11",
++      "resolved": "https://registry.npmmirror.com/@levischuck/tiny-cbor/-/tiny-cbor-0.2.11.tgz",
++      "integrity": "sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow==",
++      "license": "MIT"
++    },
+     "node_modules/@mermaid-js/parser": {
+       "version": "1.2.1",
+       "resolved": "https://registry.npmjs.org/@mermaid-js/parser/-/parser-1.2.1.tgz",
+@@ -2831,6 +2845,20 @@
+         "url": "https://github.com/sponsors/jonschlinkert"
+       }
+     },
++    "node_modules/@peculiar/asn1-android": {
++      "version": "2.11.1",
++      "resolved": "https://registry.npmmirror.com/@peculiar/asn1-android/-/asn1-android-2.11.1.tgz",
++      "integrity": "sha512-AuUBRDNdWrgtnuJGXARa0Xdtq6OAD8GqezDQz6Qka7kyynMo9fzkcrtpBEHuX984uEB570BrhMZfJfkUDfpQfw==",
++      "license": "MIT",
++      "dependencies": {
++        "@peculiar/asn1-schema": "^2.11.1",
++        "asn1js": "^3.0.10",
++        "tslib": "^2.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      }
++    },
+     "node_modules/@peculiar/asn1-cms": {
+       "version": "2.10.0",
+       "resolved": "https://registry.npmjs.org/@peculiar/asn1-cms/-/asn1-cms-2.10.0.tgz",
+@@ -2944,9 +2972,9 @@
+       }
+     },
+     "node_modules/@peculiar/asn1-schema": {
+-      "version": "2.10.0",
+-      "resolved": "https://registry.npmjs.org/@peculiar/asn1-schema/-/asn1-schema-2.10.0.tgz",
+-      "integrity": "sha512-GhokD41lV4gQrrLYm3wCkHfBOnJrnhDMgt4XeMW8gzfE1UdJqIuSwsE+ggf82XBjUXRJylcm+KIGQFa4utIVLw==",
++      "version": "2.11.1",
++      "resolved": "https://registry.npmmirror.com/@peculiar/asn1-schema/-/asn1-schema-2.11.1.tgz",
++      "integrity": "sha512-jaU9OaCcbZUdyXx9hMETZB9xoNmxTGjOGFqd3cOwKFkpKnyKd9WxF3uqj4PvX4cyOMP9bSdHg5YyML2qtx/d/g==",
+       "license": "MIT",
+       "dependencies": {
+         "@peculiar/utils": "^2.0.2",
+@@ -3765,6 +3793,31 @@
+         "node": ">=6"
+       }
+     },
++    "node_modules/@simplewebauthn/browser": {
++      "version": "13.3.0",
++      "resolved": "https://registry.npmmirror.com/@simplewebauthn/browser/-/browser-13.3.0.tgz",
++      "integrity": "sha512-BE/UWv6FOToAdVk0EokzkqQQDOWtNydYlY6+OrmiZ5SCNmb41VehttboTetUM3T/fr6EAFYVXjz4My2wg230rQ==",
++      "license": "MIT"
++    },
++    "node_modules/@simplewebauthn/server": {
++      "version": "13.3.3",
++      "resolved": "https://registry.npmmirror.com/@simplewebauthn/server/-/server-13.3.3.tgz",
++      "integrity": "sha512-LelX/lcy5cjc15A86i/aNxHhB5eU7dd20QsbP0VLAf9e38+SLlsnqCCyecx3xqfGofhmX05h1J9fKRYWxw+luA==",
++      "license": "MIT",
++      "dependencies": {
++        "@hexagon/base64": "^1.1.27",
++        "@levischuck/tiny-cbor": "^0.2.2",
++        "@peculiar/asn1-android": "^2.6.0",
++        "@peculiar/asn1-ecc": "^2.6.1",
++        "@peculiar/asn1-rsa": "^2.6.1",
++        "@peculiar/asn1-schema": "^2.6.0",
++        "@peculiar/asn1-x509": "^2.6.1",
++        "@peculiar/x509": "^1.14.3"
++      },
++      "engines": {
++        "node": ">=20.0.0"
++      }
++    },
+     "node_modules/@socket.io/component-emitter": {
+       "version": "3.1.2",
+       "resolved": "https://registry.npmjs.org/@socket.io/component-emitter/-/component-emitter-3.1.2.tgz",
+diff --git a/package.json b/package.json
+index 005e1315c..dbeb0512a 100644
+--- a/package.json
++++ b/package.json
+@@ -86,6 +86,8 @@
+     "@audio/decode-wav": "^1.2.0",
+     "@larksuiteoapi/node-sdk": "^1.73.0",
+     "@modelcontextprotocol/client": "^2.0.0",
++    "@simplewebauthn/browser": "^13.3.0",
++    "@simplewebauthn/server": "^13.3.3",
+     "@trycua/cua-driver": "0.35.4",
+     "@typesafe-ai/sdk": "0.6.0",
+     "@vscode/markdown-it-katex": "^1.1.2",
+diff --git a/packages/client/src/api/studio/webauthn.ts b/packages/client/src/api/studio/webauthn.ts
+new file mode 100644
+index 000000000..1bf7cc3b7
+--- /dev/null
++++ b/packages/client/src/api/studio/webauthn.ts
+@@ -0,0 +1,217 @@
++import {
++  browserSupportsWebAuthn,
++  platformAuthenticatorIsAvailable,
++  startAuthentication,
++  startRegistration,
++} from '@simplewebauthn/browser'
++import type {
++  AuthenticationResponseJSON,
++  PublicKeyCredentialCreationOptionsJSON,
++  PublicKeyCredentialRequestOptionsJSON,
++  RegistrationResponseJSON,
++} from '@simplewebauthn/browser'
++import { deploymentUrl } from '@/utils/deployment-url'
++import { request } from '../client'
++import type { LoginResponse } from './auth'
++
++/**
++ * Passkey (WebAuthn) client.
++ *
++ * All base64url ↔ ArrayBuffer conversion is handled by @simplewebauthn/browser so
++ * this module never hand-rolls encoding. Every ceremony is gated on a secure
++ * context: over plain http:// a WebAuthn call throws SecurityError with no
++ * actionable message, so we refuse earlier with something readable.
++ */
++
++export interface WebAuthnStatus {
++  enabled: boolean
++  hasCredentials: boolean
++}
++
++export interface WebAuthnCredentialView {
++  id: number
++  name: string
++  created_at: number
++  last_used_at: number | null
++}
++
++export interface WebAuthnRpConfig {
++  configured: boolean
++  rpID: string
++  rpName: string
++  origins: string[]
++  credentialsBound: boolean
++  error?: string
++}
++
++interface BeginResponse<T> {
++  sessionToken: string
++  options: T
++}
++
++/** WebAuthn only works on https:// or http://localhost. */
++export function isSecureContextForWebAuthn(): boolean {
++  return typeof window !== 'undefined' && window.isSecureContext
++}
++
++export function isWebAuthnSupported(): boolean {
++  return typeof window !== 'undefined' && browserSupportsWebAuthn()
++}
++
++export function canAttemptWebAuthn(): boolean {
++  return isWebAuthnSupported() && isSecureContextForWebAuthn()
++}
++
++export async function hasPlatformAuthenticator(): Promise<boolean> {
++  if (!canAttemptWebAuthn()) return false
++  try {
++    return await platformAuthenticatorIsAvailable()
++  } catch {
++    return false
++  }
++}
++
++/**
++ * Translate browser WebAuthn errors into something a user can act on.
++ *
++ * The important case is `UnknownError` ("an unknown error occurred while talking
++ * to the credential manager"): on Android/mobile it almost always means the RP ID
++ * or origin does not match the address bar, and the raw message never says so.
++ */
++export function classifyCredentialError(error: unknown): Error {
++  const name = error instanceof DOMException ? error.name : ''
++  const message = String((error as Error)?.message || error || '')
++  // @simplewebauthn wraps the DOM exception, so the name is not always preserved;
++  // the message text is the reliable signal. NotAllowedError covers both a user
++  // cancellation and a timeout ("The operation either timed out or was not
++  // allowed"), which are indistinguishable by design, so they share one message.
++  if (/NotAllowedError/.test(name) || /timed out|not allowed/i.test(message)) {
++    return new Error('PASSKEY_CANCELLED')
++  }
++  if (/SecurityError/.test(name) || /insecure|secure context/i.test(message)) {
++    return new Error('PASSKEY_INSECURE_CONTEXT')
++  }
++  // The library substitutes its own wording for UnknownError — "The authenticator
++  // was unable to process the specified options, or could not create a new
++  // assertion signature" — which never mentions the credential manager. Both
++  // forms mean the same thing on a real phone: the RP ID / origin does not match
++  // the address bar, so the authenticator refuses.
++  if (
++    /UnknownError/.test(name)
++    || /unknown error|credential manager/i.test(message)
++    || /unable to process the specified options/i.test(message)
++    || /could not create a new assertion signature/i.test(message)
++  ) {
++    return new Error('PASSKEY_RP_MISMATCH')
++  }
++  if (/InvalidStateError/.test(name) || /already registered/i.test(message)) {
++    return new Error('PASSKEY_ALREADY_REGISTERED')
++  }
++  if (/NotSupportedError/.test(name)) {
++    return new Error('PASSKEY_UNSUPPORTED')
++  }
++  return new Error(message || 'PASSKEY_FAILED')
++}
++
++export async function fetchWebAuthnStatus(): Promise<WebAuthnStatus> {
++  const res = await fetch(deploymentUrl('/api/auth/webauthn/status'))
++  if (!res.ok) return { enabled: false, hasCredentials: false }
++  return res.json() as Promise<WebAuthnStatus>
++}
++
++/**
++ * Sign in with a discoverable credential. No username is sent: the authenticator
++ * returns the userHandle that the server embedded at registration time.
++ */
++export async function loginWithPasskey(): Promise<LoginResponse> {
++  if (!canAttemptWebAuthn()) throw new Error('PASSKEY_UNSUPPORTED')
++
++  let begin: BeginResponse<PublicKeyCredentialRequestOptionsJSON>
++  try {
++    begin = await request<BeginResponse<PublicKeyCredentialRequestOptionsJSON>>(
++      '/api/auth/webauthn/login/begin',
++      { method: 'POST', body: '{}' },
++    )
++  } catch (error) {
++    // The server explains its own failures (unconfigured RP, no credential yet).
++    throw new Error(String((error as Error)?.message || 'PASSKEY_FAILED'))
++  }
++
++  let assertion: AuthenticationResponseJSON
++  try {
++    assertion = await startAuthentication({ optionsJSON: begin.options })
++  } catch (error) {
++    throw classifyCredentialError(error)
++  }
++
++  return request<LoginResponse>('/api/auth/webauthn/login/finish', {
++    method: 'POST',
++    body: JSON.stringify({ sessionToken: begin.sessionToken, response: assertion }),
++  })
++}
++
++/**
++ * Bind a new authenticator to the signed-in account.
++ *
++ * `expectedRpID` lets us fail before the ceremony when the page is being served
++ * from a host the RP ID does not cover — the one misconfiguration that produces
++ * an unhelpful "unknown error" on phones.
++ */
++export async function registerPasskey(name: string, expectedRpID?: string): Promise<WebAuthnCredentialView> {
++  if (!canAttemptWebAuthn()) throw new Error('PASSKEY_UNSUPPORTED')
++  if (typeof window !== 'undefined' && expectedRpID) {
++    const hostname = window.location.hostname.toLowerCase()
++    const rpID = expectedRpID.toLowerCase()
++    if (hostname !== rpID && !hostname.endsWith(`.${rpID}`)) {
++      throw new Error('PASSKEY_RP_MISMATCH')
++    }
++  }
++
++  const begin = await request<BeginResponse<PublicKeyCredentialCreationOptionsJSON>>(
++    '/api/auth/webauthn/register/begin',
++    { method: 'POST', body: '{}' },
++  ).catch((error: unknown) => {
++    // Surface the server's own explanation (RP not configured, etc.).
++    throw new Error(String((error as Error)?.message || 'PASSKEY_FAILED'))
++  })
++
++  let registration: RegistrationResponseJSON
++  try {
++    registration = await startRegistration({ optionsJSON: begin.options })
++  } catch (error) {
++    throw classifyCredentialError(error)
++  }
++
++  const result = await request<{ credential: WebAuthnCredentialView }>(
++    '/api/auth/webauthn/register/finish',
++    {
++      method: 'POST',
++      body: JSON.stringify({ sessionToken: begin.sessionToken, response: registration, name }),
++    },
++  )
++  return result.credential
++}
++
++export async function listPasskeys(): Promise<WebAuthnCredentialView[]> {
++  const res = await request<{ credentials: WebAuthnCredentialView[] }>('/api/auth/webauthn/credentials')
++  return res.credentials
++}
++
++export async function deletePasskey(id: number): Promise<void> {
++  await request(`/api/auth/webauthn/credentials/${id}`, { method: 'DELETE' })
++}
++
++export async function fetchWebAuthnConfig(): Promise<WebAuthnRpConfig> {
++  return request<WebAuthnRpConfig>('/api/auth/webauthn/config')
++}
++
++export async function updateWebAuthnConfig(input: {
++  rpID: string
++  rpName: string
++  origins: string[]
++}): Promise<WebAuthnRpConfig> {
++  return request<WebAuthnRpConfig>('/api/auth/webauthn/config', {
++    method: 'PUT',
++    body: JSON.stringify(input),
++  })
++}
+diff --git a/packages/client/src/components/hermes/settings/AccountSettings.vue b/packages/client/src/components/hermes/settings/AccountSettings.vue
+index dd928decc..d5b12eeb8 100644
+--- a/packages/client/src/components/hermes/settings/AccountSettings.vue
++++ b/packages/client/src/components/hermes/settings/AccountSettings.vue
+@@ -7,6 +7,7 @@ import { useI18n } from "vue-i18n";
+ import { changePassword, changeUsername, fetchLockedIps, unlockSpecificIp, unlockAllIps, updateMyAvatar, resetMyAvatar } from "@/api/studio/auth";
+ import type { LockedIp } from "@/api/studio/auth";
+ import ProfileAvatar from "@/components/hermes/profiles/ProfileAvatar.vue";
++import PasskeySettings from "@/components/hermes/settings/PasskeySettings.vue";
+ import boring from "boring-avatars-vanilla";
+ 
+ const { t } = useI18n();
+@@ -275,6 +276,9 @@ onMounted(() => { loadLockedIps(); });
+       </div>
+     </div>
+ 
++    <!-- Passkey (WebAuthn) management. Password login stays available. -->
++    <PasskeySettings />
++
+     <!-- Locked IPs management -->
+     <div class="locked-ips-section">
+       <h3 class="section-title">{{ t("settings.lockedIps.title") }}</h3>
+diff --git a/packages/client/src/components/hermes/settings/PasskeySettings.vue b/packages/client/src/components/hermes/settings/PasskeySettings.vue
+new file mode 100644
+index 000000000..05ea17fac
+--- /dev/null
++++ b/packages/client/src/components/hermes/settings/PasskeySettings.vue
+@@ -0,0 +1,323 @@
++<script setup lang="ts">
++import { computed, onMounted, ref } from 'vue'
++import { useI18n } from 'vue-i18n'
++import { NButton, NInput, NPopconfirm, useMessage } from 'naive-ui'
++import {
++  canAttemptWebAuthn,
++  deletePasskey,
++  fetchWebAuthnConfig,
++  listPasskeys,
++  registerPasskey,
++  updateWebAuthnConfig,
++  type WebAuthnCredentialView,
++  type WebAuthnRpConfig,
++} from '@/api/studio/webauthn'
++import { isStoredSuperAdmin } from '@/api/client'
++
++const { t } = useI18n()
++const message = useMessage()
++
++const supported = ref(true)
++const credentials = ref<WebAuthnCredentialView[]>([])
++const loadingCredentials = ref(false)
++const registering = ref(false)
++const credentialName = ref('')
++
++const isSuperAdmin = computed(() => isStoredSuperAdmin())
++const rpConfig = ref<WebAuthnRpConfig | null>(null)
++const rpForm = ref({ rpID: '', rpName: '', origins: '' })
++const savingRp = ref(false)
++
++/**
++ * Translate the sentinel error codes raised by the API layer. Anything else is
++ * already a human-readable server message, so it passes through unchanged.
++ */
++function describeError(error: unknown): string {
++  const code = String((error as Error)?.message || error || '')
++  switch (code) {
++    case 'PASSKEY_UNSUPPORTED': return t('settings.passkey.errors.unsupported')
++    case 'PASSKEY_INSECURE_CONTEXT': return t('settings.passkey.errors.insecure')
++    case 'PASSKEY_RP_MISMATCH': return t('settings.passkey.errors.rpMismatch')
++    case 'PASSKEY_ALREADY_REGISTERED': return t('settings.passkey.errors.alreadyRegistered')
++    case 'PASSKEY_CANCELLED': return t('settings.passkey.errors.cancelled')
++    default: return code || t('settings.passkey.errors.failed')
++  }
++}
++
++function formatTime(at: number | null): string {
++  if (!at) return t('settings.passkey.neverUsed')
++  return new Date(at).toLocaleString()
++}
++
++async function loadCredentials() {
++  loadingCredentials.value = true
++  try {
++    credentials.value = await listPasskeys()
++  } catch (error) {
++    // A disabled passkey backend must not make the whole settings page fail.
++    credentials.value = []
++  } finally {
++    loadingCredentials.value = false
++  }
++}
++
++async function loadRpConfig() {
++  if (!isSuperAdmin.value) return
++  try {
++    const config = await fetchWebAuthnConfig()
++    rpConfig.value = config
++    rpForm.value = {
++      rpID: config.rpID,
++      rpName: config.rpName,
++      origins: config.origins.join(', '),
++    }
++  } catch {
++    rpConfig.value = null
++  }
++}
++
++/**
++ * Suggest the current address as the RP configuration. WebAuthn requires the RP
++ * ID to be the page's domain or a parent of it, and the origin to match exactly,
++ * so deriving both from window.location removes the most common setup mistake.
++ */
++function useCurrentAddress() {
++  if (typeof window === 'undefined') return
++  rpForm.value.rpID = window.location.hostname
++  rpForm.value.origins = window.location.origin
++}
++
++async function saveRpConfig() {
++  savingRp.value = true
++  try {
++    const origins = rpForm.value.origins
++      .split(/[\s,]+/)
++      .map(value => value.trim())
++      .filter(Boolean)
++    const config = await updateWebAuthnConfig({
++      rpID: rpForm.value.rpID.trim(),
++      rpName: rpForm.value.rpName.trim(),
++      origins,
++    })
++    rpConfig.value = { ...config, configured: true, credentialsBound: config.credentialsBound }
++    message.success(t('settings.passkey.rpSaved'))
++  } catch (error) {
++    message.error(describeError(error))
++  } finally {
++    savingRp.value = false
++  }
++}
++
++async function handleRegister() {
++  registering.value = true
++  try {
++    await registerPasskey(credentialName.value.trim(), rpConfig.value?.rpID || undefined)
++    credentialName.value = ''
++    await loadCredentials()
++    message.success(t('settings.passkey.added'))
++  } catch (error) {
++    message.error(describeError(error))
++  } finally {
++    registering.value = false
++  }
++}
++
++async function handleDelete(id: number) {
++  try {
++    await deletePasskey(id)
++    await loadCredentials()
++    message.success(t('settings.passkey.removed'))
++  } catch (error) {
++    message.error(describeError(error))
++  }
++}
++
++onMounted(async () => {
++  supported.value = canAttemptWebAuthn()
++  await Promise.all([loadCredentials(), loadRpConfig()])
++})
++</script>
++
++<template>
++  <div class="passkey-section">
++    <h3 class="section-title">{{ t('settings.passkey.title') }}</h3>
++    <p class="passkey-desc">{{ t('settings.passkey.description') }}</p>
++
++    <!-- The password form remains the primary path; this is purely additive. -->
++    <div class="passkey-add-row">
++      <NInput
++        v-model:value="credentialName"
++        :placeholder="t('settings.passkey.namePlaceholder')"
++        :disabled="registering || !supported"
++        @keyup.enter="handleRegister"
++      />
++      <NButton
++        type="primary"
++        :loading="registering"
++        :disabled="!supported"
++        @click="handleRegister"
++      >
++        {{ t('settings.passkey.add') }}
++      </NButton>
++    </div>
++    <p v-if="!supported" class="passkey-warning">{{ t('settings.passkey.errors.insecure') }}</p>
++
++    <div v-if="credentials.length > 0" class="passkey-list">
++      <div v-for="item in credentials" :key="item.id" class="passkey-item">
++        <div class="passkey-item-info">
++          <span class="passkey-item-name">{{ item.name || t('settings.passkey.unnamed') }}</span>
++          <span class="passkey-item-meta">
++            {{ t('settings.passkey.addedAt', { time: new Date(item.created_at).toLocaleString() }) }}
++            · {{ t('settings.passkey.lastUsed', { time: formatTime(item.last_used_at) }) }}
++          </span>
++        </div>
++        <NPopconfirm @positive-click="handleDelete(item.id)">
++          <template #trigger>
++            <NButton size="tiny" type="error" ghost>{{ t('settings.passkey.remove') }}</NButton>
++          </template>
++          {{ t('settings.passkey.removeConfirm') }}
++        </NPopconfirm>
++      </div>
++    </div>
++    <p v-else-if="!loadingCredentials" class="passkey-empty">{{ t('settings.passkey.empty') }}</p>
++
++    <!-- Instance-wide RP configuration. Only super administrators may see it, and
++         the server enforces the same rule on the endpoint. -->
++    <div v-if="isSuperAdmin" class="passkey-rp">
++      <h4 class="passkey-rp-title">{{ t('settings.passkey.rpTitle') }}</h4>
++      <p class="passkey-rp-desc">{{ t('settings.passkey.rpDescription') }}</p>
++      <div class="passkey-rp-field">
++        <span class="passkey-rp-label">{{ t('settings.passkey.rpId') }}</span>
++        <NInput v-model:value="rpForm.rpID" placeholder="example.com" />
++      </div>
++      <div class="passkey-rp-field">
++        <span class="passkey-rp-label">{{ t('settings.passkey.rpName') }}</span>
++        <NInput v-model:value="rpForm.rpName" placeholder="Ekko Studio" />
++      </div>
++      <div class="passkey-rp-field">
++        <span class="passkey-rp-label">{{ t('settings.passkey.origins') }}</span>
++        <NInput
++          v-model:value="rpForm.origins"
++          type="textarea"
++          :autosize="{ minRows: 2, maxRows: 4 }"
++          placeholder="https://example.com"
++        />
++      </div>
++      <div class="passkey-rp-actions">
++        <NButton size="small" @click="useCurrentAddress">{{ t('settings.passkey.useCurrentAddress') }}</NButton>
++        <NButton size="small" type="primary" :loading="savingRp" @click="saveRpConfig">
++          {{ t('settings.passkey.saveRp') }}
++        </NButton>
++      </div>
++      <p v-if="rpConfig?.error" class="passkey-warning">{{ rpConfig.error }}</p>
++    </div>
++  </div>
++</template>
++
++<style scoped lang="scss">
++@use "@/styles/variables" as *;
++
++.passkey-section {
++  margin-top: 8px;
++}
++
++.passkey-desc {
++  margin: 0 0 12px;
++  color: $text-muted;
++  font-size: calc(var(--font-size-base, 14px) * 13 / 14);
++  line-height: var(--line-height, 1.6);
++}
++
++.passkey-add-row {
++  display: flex;
++  gap: 8px;
++  align-items: center;
++}
++
++.passkey-warning {
++  margin: 8px 0 0;
++  color: $error;
++  font-size: calc(var(--font-size-base, 14px) * 12 / 14);
++}
++
++.passkey-list {
++  margin-top: 12px;
++  display: flex;
++  flex-direction: column;
++  gap: 8px;
++}
++
++.passkey-item {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  gap: 12px;
++  padding: 10px 12px;
++  border: var(--border-width, 1px) solid $border-color;
++  border-radius: $radius-sm;
++}
++
++.passkey-item-info {
++  display: flex;
++  flex-direction: column;
++  gap: 2px;
++  min-width: 0;
++}
++
++.passkey-item-name {
++  color: $text-primary;
++  font-size: calc(var(--font-size-base, 14px) * 14 / 14);
++  overflow: hidden;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++}
++
++.passkey-item-meta {
++  color: $text-muted;
++  font-size: calc(var(--font-size-base, 14px) * 12 / 14);
++}
++
++.passkey-empty {
++  margin: 12px 0 0;
++  color: $text-muted;
++  font-size: calc(var(--font-size-base, 14px) * 13 / 14);
++}
++
++.passkey-rp {
++  margin-top: 24px;
++  padding-top: 16px;
++  border-top: var(--border-width, 1px) solid $border-color;
++}
++
++.passkey-rp-title {
++  margin: 0 0 6px;
++  color: $text-primary;
++  font-size: calc(var(--font-size-base, 14px) * 14 / 14);
++  font-weight: 600;
++}
++
++.passkey-rp-desc {
++  margin: 0 0 12px;
++  color: $text-muted;
++  font-size: calc(var(--font-size-base, 14px) * 12 / 14);
++  line-height: var(--line-height, 1.6);
++}
++
++.passkey-rp-field {
++  display: flex;
++  flex-direction: column;
++  gap: 4px;
++  margin-bottom: 10px;
++}
++
++.passkey-rp-label {
++  color: $text-secondary;
++  font-size: calc(var(--font-size-base, 14px) * 12 / 14);
++}
++
++.passkey-rp-actions {
++  display: flex;
++  gap: 8px;
++  justify-content: flex-end;
++}
++</style>
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index c40447891..03263bfbf 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -456,6 +456,14 @@ export default {
+   },
+   // Login
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: 'أو',
++    passkeySubmit: 'تسجيل الدخول باستخدام مفتاح المرور',
++    passkeyCancelled: 'لم يتم العثور على مفتاح مرور على هذا الجهاز، أو تم إلغاء العملية. استخدم كلمة المرور أو أضف مفتاح مرور من إعدادات الحساب.',
++    passkeyUnavailable: 'مفاتيح المرور غير متاحة هنا. افتح الموقع عبر HTTPS.',
++    passkeyRpMismatch: 'هذا العنوان لا يطابق نطاق مفتاح المرور. افتح النطاق المُعد.',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: 'أدخل اسم المستخدم وكلمة المرور للمتابعة.',
+     placeholder: 'رمز الوصول',
+@@ -2677,6 +2685,39 @@ export default {
+         pairing: 'إقران الجهاز',
+       },
+     },
++    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: 'مفاتيح المرور',
++      description: 'سجّل الدخول دون كلمة مرور باستخدام Touch ID أو Windows Hello أو هاتفك. يظل تسجيل الدخول بكلمة المرور متاحًا.',
++      namePlaceholder: 'اسم مفتاح المرور (مثل MacBook)',
++      add: 'إضافة مفتاح مرور',
++      added: 'تمت إضافة مفتاح المرور',
++      removed: 'تمت إزالة مفتاح المرور',
++      unnamed: 'مفتاح مرور بلا اسم',
++      addedAt: 'أُضيف في {time}',
++      lastUsed: 'آخر استخدام {time}',
++      neverUsed: 'أبدًا',
++      remove: 'إزالة',
++      removeConfirm: 'إزالة مفتاح المرور هذا؟ لن تتمكن من تسجيل الدخول به بعد ذلك.',
++      empty: 'لا يوجد مفتاح مرور مرتبط بهذا الحساب بعد.',
++      rpTitle: 'إعدادات الخادم',
++      rpDescription: 'يتطلب WebAuthn أن يكون RP ID هو نطاق هذا الموقع (أو نطاقه الأعلى) وأن يطابق Origin تمامًا. يُقرأ كلاهما عند كل تسجيل دخول، لذا تُطبَّق التغييرات فورًا.',
++      rpId: 'RP ID',
++      rpName: 'الاسم المعروض',
++      origins: 'الأصول المسموح بها (واحد في كل سطر أو مفصولة بفواصل)',
++      useCurrentAddress: 'استخدام العنوان الحالي',
++      saveRp: 'حفظ',
++      rpSaved: 'تم حفظ إعدادات مفاتيح المرور',
++      errors: {
++        unsupported: 'هذا المتصفح لا يدعم مفاتيح المرور.',
++        insecure: 'تتطلب مفاتيح المرور HTTPS (أو localhost).',
++        rpMismatch: 'RP ID لا يغطي هذا النطاق. اطلب من المسؤول تصحيح الإعدادات.',
++        alreadyRegistered: 'هذا المُوثِّق مسجّل بالفعل.',
++        cancelled: 'تم إلغاء العملية.',
++        failed: 'فشلت العملية.',
++      },
++    },
++    // <<< passkey settings i18n <<<
+     userAvatar: {
+       title: 'صورة المستخدم',
+       upload: 'رفع صورة',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index e6e3111cb..7cbd9a16e 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -468,6 +468,14 @@ export default {
+   },
+   // Login
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: 'oder',
++    passkeySubmit: 'Mit Passkey anmelden',
++    passkeyCancelled: 'Auf diesem Gerät wurde kein Passkey gefunden oder der Vorgang wurde abgebrochen. Nutzen Sie das Passwort oder hinterlegen Sie einen Passkey in den Kontoeinstellungen.',
++    passkeyUnavailable: 'Passkeys sind hier nicht verfügbar. Öffnen Sie die Seite über HTTPS.',
++    passkeyRpMismatch: 'Diese Adresse passt nicht zur Passkey-Domain. Öffnen Sie die konfigurierte Domain.',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: 'Geben Sie Benutzername und Passwort ein, um fortzufahren.',
+     placeholder: 'Zugangs-Token',
+@@ -2778,6 +2786,39 @@ jobTriggered: 'Job ausgelost',
+         pairing: 'Device pairing',
+       },
+     },
++    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: 'Passkeys',
++      description: 'Melden Sie sich ohne Passwort per Touch ID, Windows Hello oder Smartphone an. Die Passwortanmeldung bleibt verfügbar.',
++      namePlaceholder: 'Passkey-Name (z. B. MacBook)',
++      add: 'Passkey hinzufügen',
++      added: 'Passkey hinzugefügt',
++      removed: 'Passkey entfernt',
++      unnamed: 'Unbenannter Passkey',
++      addedAt: 'Hinzugefügt {time}',
++      lastUsed: 'Zuletzt verwendet {time}',
++      neverUsed: 'nie',
++      remove: 'Entfernen',
++      removeConfirm: 'Diesen Passkey entfernen? Eine Anmeldung damit ist danach nicht mehr möglich.',
++      empty: 'Für dieses Konto ist noch kein Passkey hinterlegt.',
++      rpTitle: 'Serverkonfiguration',
++      rpDescription: 'WebAuthn verlangt, dass die RP ID die Domain dieser Seite (oder deren übergeordnete Domain) ist und der Origin exakt übereinstimmt. Beides wird bei jeder Anmeldung neu gelesen, Änderungen gelten sofort.',
++      rpId: 'RP ID',
++      rpName: 'Anzeigename',
++      origins: 'Erlaubte Origins (eine pro Zeile oder kommagetrennt)',
++      useCurrentAddress: 'Aktuelle Adresse verwenden',
++      saveRp: 'Speichern',
++      rpSaved: 'Passkey-Konfiguration gespeichert',
++      errors: {
++        unsupported: 'Dieser Browser unterstützt keine Passkeys.',
++        insecure: 'Passkeys erfordern HTTPS (oder localhost).',
++        rpMismatch: 'Die RP ID deckt diese Domain nicht ab. Bitten Sie einen Administrator, die Passkey-Konfiguration zu korrigieren.',
++        alreadyRegistered: 'Dieser Authenticator ist bereits registriert.',
++        cancelled: 'Passkey-Vorgang abgebrochen.',
++        failed: 'Passkey-Vorgang fehlgeschlagen.',
++      },
++    },
++    // <<< passkey settings i18n <<<
+     userAvatar: {
+       title: 'Benutzeravatar',
+       upload: 'Bild hochladen',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index b2f7684e0..8d728ecc2 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -456,6 +456,14 @@ export default {
+   },
+   // Login
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: 'or',
++    passkeySubmit: 'Sign in with a passkey',
++    passkeyCancelled: 'No passkey was found on this device, or the prompt was cancelled. Use the password instead, or bind a passkey from account settings.',
++    passkeyUnavailable: 'Passkeys are unavailable here. Open this site over HTTPS.',
++    passkeyRpMismatch: 'This address does not match the passkey domain. Open the site with the configured domain.',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: 'Enter your username and password to continue.',
+     placeholder: 'Access token',
+@@ -2734,6 +2742,39 @@ export default {
+         pairing: 'Device pairing',
+       },
+     },
++    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: 'Passkeys',
++      description: 'Sign in without a password using Touch ID, Windows Hello or your phone. Password sign-in keeps working.',
++      namePlaceholder: 'Passkey name (e.g. MacBook)',
++      add: 'Add passkey',
++      added: 'Passkey added',
++      removed: 'Passkey removed',
++      unnamed: 'Unnamed passkey',
++      addedAt: 'Added {time}',
++      lastUsed: 'Last used {time}',
++      neverUsed: 'never',
++      remove: 'Remove',
++      removeConfirm: 'Remove this passkey? You will no longer be able to sign in with it.',
++      empty: 'No passkey is bound to this account yet.',
++      rpTitle: 'Server configuration',
++      rpDescription: 'WebAuthn requires the RP ID to be this site’s domain (or its parent) and the origin to match exactly. Both are read on every login, so changes apply immediately.',
++      rpId: 'RP ID',
++      rpName: 'Display name',
++      origins: 'Allowed origins (one per line or comma separated)',
++      useCurrentAddress: 'Use current address',
++      saveRp: 'Save',
++      rpSaved: 'Passkey configuration saved',
++      errors: {
++        unsupported: 'This browser does not support passkeys.',
++        insecure: 'Passkeys require HTTPS (or localhost).',
++        rpMismatch: 'The RP ID does not cover this domain. Ask an administrator to fix the passkey configuration.',
++        alreadyRegistered: 'This authenticator is already registered.',
++        cancelled: 'Passkey operation was cancelled.',
++        failed: 'Passkey operation failed.',
++      },
++    },
++    // <<< passkey settings i18n <<<
+     userAvatar: {
+       title: 'User Avatar',
+       upload: 'Upload Image',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index c1ea5452f..b0ef151dc 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -468,6 +468,14 @@ export default {
+   },
+   // Login
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: 'o',
++    passkeySubmit: 'Iniciar sesión con passkey',
++    passkeyCancelled: 'No se encontró ningún passkey en este dispositivo o se canceló la operación. Usa la contraseña o añade un passkey en los ajustes de la cuenta.',
++    passkeyUnavailable: 'Los passkeys no están disponibles aquí. Abre el sitio por HTTPS.',
++    passkeyRpMismatch: 'Esta dirección no coincide con el dominio del passkey. Abre el dominio configurado.',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: 'Introduce tu nombre de usuario y contrasena para continuar.',
+     placeholder: 'Token de acceso',
+@@ -2778,6 +2786,39 @@ jobTriggered: 'Job ejecutado',
+         pairing: 'Device pairing',
+       },
+     },
++    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: 'Passkeys',
++      description: 'Inicia sesión sin contraseña con Touch ID, Windows Hello o tu teléfono. El inicio con contraseña sigue disponible.',
++      namePlaceholder: 'Nombre del passkey (p. ej. MacBook)',
++      add: 'Añadir passkey',
++      added: 'Passkey añadido',
++      removed: 'Passkey eliminado',
++      unnamed: 'Passkey sin nombre',
++      addedAt: 'Añadido {time}',
++      lastUsed: 'Último uso {time}',
++      neverUsed: 'nunca',
++      remove: 'Eliminar',
++      removeConfirm: '¿Eliminar este passkey? Después no podrás iniciar sesión con él.',
++      empty: 'Esta cuenta aún no tiene ningún passkey.',
++      rpTitle: 'Configuración del servidor',
++      rpDescription: 'WebAuthn exige que el RP ID sea el dominio de este sitio (o su dominio padre) y que el origen coincida exactamente. Ambos se leen en cada inicio de sesión, así que los cambios se aplican al instante.',
++      rpId: 'RP ID',
++      rpName: 'Nombre visible',
++      origins: 'Orígenes permitidos (uno por línea o separados por comas)',
++      useCurrentAddress: 'Usar la dirección actual',
++      saveRp: 'Guardar',
++      rpSaved: 'Configuración de passkeys guardada',
++      errors: {
++        unsupported: 'Este navegador no admite passkeys.',
++        insecure: 'Los passkeys requieren HTTPS (o localhost).',
++        rpMismatch: 'El RP ID no cubre este dominio. Pide a un administrador que corrija la configuración.',
++        alreadyRegistered: 'Este autenticador ya está registrado.',
++        cancelled: 'Operación con passkey cancelada.',
++        failed: 'La operación con passkey falló.',
++      },
++    },
++    // <<< passkey settings i18n <<<
+     userAvatar: {
+       title: 'Avatar de usuario',
+       upload: 'Subir imagen',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 671a479f1..4cbbf5dd6 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -468,6 +468,14 @@ export default {
+   },
+   // Login
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: 'ou',
++    passkeySubmit: 'Se connecter avec une clé d’accès',
++    passkeyCancelled: 'Aucune clé d’accès trouvée sur cet appareil, ou opération annulée. Utilisez le mot de passe ou ajoutez une clé dans les paramètres du compte.',
++    passkeyUnavailable: 'Les clés d’accès sont indisponibles ici. Ouvrez le site en HTTPS.',
++    passkeyRpMismatch: 'Cette adresse ne correspond pas au domaine de la clé d’accès. Ouvrez le domaine configuré.',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: 'Entrez votre nom d\'utilisateur et votre mot de passe pour continuer.',
+     placeholder: 'Jeton d\'acces',
+@@ -2778,6 +2786,39 @@ jobTriggered: 'Job declenche',
+         pairing: 'Device pairing',
+       },
+     },
++    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: 'Clés d’accès',
++      description: 'Connectez-vous sans mot de passe avec Touch ID, Windows Hello ou votre téléphone. La connexion par mot de passe reste disponible.',
++      namePlaceholder: 'Nom de la clé (ex. MacBook)',
++      add: 'Ajouter une clé d’accès',
++      added: 'Clé d’accès ajoutée',
++      removed: 'Clé d’accès supprimée',
++      unnamed: 'Clé d’accès sans nom',
++      addedAt: 'Ajoutée le {time}',
++      lastUsed: 'Dernière utilisation {time}',
++      neverUsed: 'jamais',
++      remove: 'Supprimer',
++      removeConfirm: 'Supprimer cette clé d’accès ? Vous ne pourrez plus vous connecter avec.',
++      empty: 'Aucune clé d’accès n’est encore liée à ce compte.',
++      rpTitle: 'Configuration du serveur',
++      rpDescription: 'WebAuthn impose que le RP ID soit le domaine de ce site (ou son domaine parent) et que l’origine corresponde exactement. Les deux sont relus à chaque connexion : les modifications s’appliquent immédiatement.',
++      rpId: 'RP ID',
++      rpName: 'Nom affiché',
++      origins: 'Origines autorisées (une par ligne ou séparées par des virgules)',
++      useCurrentAddress: 'Utiliser l’adresse actuelle',
++      saveRp: 'Enregistrer',
++      rpSaved: 'Configuration des clés d’accès enregistrée',
++      errors: {
++        unsupported: 'Ce navigateur ne prend pas en charge les clés d’accès.',
++        insecure: 'Les clés d’accès nécessitent HTTPS (ou localhost).',
++        rpMismatch: 'Le RP ID ne couvre pas ce domaine. Demandez à un administrateur de corriger la configuration.',
++        alreadyRegistered: 'Cet authentificateur est déjà enregistré.',
++        cancelled: 'Opération annulée.',
++        failed: 'L’opération a échoué.',
++      },
++    },
++    // <<< passkey settings i18n <<<
+     userAvatar: {
+       title: 'Avatar utilisateur',
+       upload: 'Importer une image',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index bb900ae06..e8fcb2683 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -468,6 +468,14 @@ export default {
+   },
+   // ログイン
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: 'または',
++    passkeySubmit: 'パスキーでサインイン',
++    passkeyCancelled: 'このデバイスにパスキーが見つからないか、操作がキャンセルされました。パスワードでサインインするか、アカウント設定でパスキーを追加してください。',
++    passkeyUnavailable: 'この環境ではパスキーを利用できません。HTTPS でアクセスしてください。',
++    passkeyRpMismatch: '現在のアドレスがパスキーのドメインと一致しません。設定されたドメインでアクセスしてください。',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: 'ユーザー名とパスワードを入力して続行してください。',
+     placeholder: 'アクセストークン',
+@@ -2779,6 +2787,39 @@ export default {
+         pairing: 'Device pairing',
+       },
+     },
++    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: 'パスキー',
++      description: '指紋認証や Windows Hello、スマートフォンでパスワードなしにサインインできます。パスワードログインも引き続き利用できます。',
++      namePlaceholder: 'パスキー名（例：MacBook）',
++      add: 'パスキーを追加',
++      added: 'パスキーを追加しました',
++      removed: 'パスキーを削除しました',
++      unnamed: '名前のないパスキー',
++      addedAt: '追加日 {time}',
++      lastUsed: '最終使用 {time}',
++      neverUsed: '未使用',
++      remove: '削除',
++      removeConfirm: 'このパスキーを削除しますか？削除すると、このパスキーでサインインできなくなります。',
++      empty: 'このアカウントにはまだパスキーが登録されていません。',
++      rpTitle: 'サーバー設定',
++      rpDescription: 'WebAuthn では RP ID を本サイトのドメイン（または親ドメイン）に、Origin を完全一致させる必要があります。設定は毎回のログイン時に読み込まれるため、保存するとすぐ反映されます。',
++      rpId: 'RP ID',
++      rpName: '表示名',
++      origins: '許可する Origin（1 行に 1 つ、またはカンマ区切り）',
++      useCurrentAddress: '現在のアドレスを使用',
++      saveRp: '保存',
++      rpSaved: 'パスキー設定を保存しました',
++      errors: {
++        unsupported: 'このブラウザはパスキーに対応していません。',
++        insecure: 'パスキーには HTTPS（または localhost）が必要です。',
++        rpMismatch: 'RP ID が現在のドメインを対象にしていません。管理者にパスキー設定の修正を依頼してください。',
++        alreadyRegistered: 'この認証器はすでに登録されています。',
++        cancelled: 'パスキー操作をキャンセルしました。',
++        failed: 'パスキー操作に失敗しました。',
++      },
++    },
++    // <<< passkey settings i18n <<<
+     userAvatar: {
+       title: 'ユーザーアバター',
+       upload: '画像をアップロード',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index c00a1e628..0306751b6 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -468,6 +468,14 @@ export default {
+   },
+   // 로그인
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: '또는',
++    passkeySubmit: '패스키로 로그인',
++    passkeyCancelled: '이 기기에서 패스키를 찾지 못했거나 작업이 취소되었습니다. 비밀번호로 로그인하거나 계정 설정에서 패스키를 추가하세요.',
++    passkeyUnavailable: '이 환경에서는 패스키를 사용할 수 없습니다. HTTPS로 접속하세요.',
++    passkeyRpMismatch: '현재 주소가 패스키 도메인과 일치하지 않습니다. 설정된 도메인으로 접속하세요.',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: '계속하려면 사용자 이름과 비밀번호를 입력하세요.',
+     placeholder: '액세스 토큰',
+@@ -2779,6 +2787,39 @@ export default {
+         pairing: 'Device pairing',
+       },
+     },
++    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: '패스키',
++      description: '지문, Windows Hello 또는 휴대폰으로 비밀번호 없이 로그인할 수 있습니다. 비밀번호 로그인도 계속 사용할 수 있습니다.',
++      namePlaceholder: '패스키 이름(예: MacBook)',
++      add: '패스키 추가',
++      added: '패스키가 추가되었습니다',
++      removed: '패스키가 삭제되었습니다',
++      unnamed: '이름 없는 패스키',
++      addedAt: '추가됨 {time}',
++      lastUsed: '마지막 사용 {time}',
++      neverUsed: '사용 안 함',
++      remove: '삭제',
++      removeConfirm: '이 패스키를 삭제할까요? 삭제하면 이 패스키로 로그인할 수 없습니다.',
++      empty: '이 계정에는 아직 패스키가 등록되지 않았습니다.',
++      rpTitle: '서버 설정',
++      rpDescription: 'WebAuthn에서는 RP ID가 이 사이트의 도메인(또는 상위 도메인)이어야 하고 Origin이 정확히 일치해야 합니다. 설정은 로그인할 때마다 읽히므로 저장하면 즉시 적용됩니다.',
++      rpId: 'RP ID',
++      rpName: '표시 이름',
++      origins: '허용할 Origin(한 줄에 하나 또는 쉼표로 구분)',
++      useCurrentAddress: '현재 주소 사용',
++      saveRp: '저장',
++      rpSaved: '패스키 설정이 저장되었습니다',
++      errors: {
++        unsupported: '이 브라우저는 패스키를 지원하지 않습니다.',
++        insecure: '패스키에는 HTTPS(또는 localhost)가 필요합니다.',
++        rpMismatch: 'RP ID가 현재 도메인을 포함하지 않습니다. 관리자에게 패스키 설정 수정을 요청하세요.',
++        alreadyRegistered: '이 인증기는 이미 등록되었습니다.',
++        cancelled: '패스키 작업이 취소되었습니다.',
++        failed: '패스키 작업에 실패했습니다.',
++      },
++    },
++    // <<< passkey settings i18n <<<
+     userAvatar: {
+       title: '사용자 아바타',
+       upload: '이미지 업로드',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 522f041ce..b12558293 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -468,6 +468,14 @@ export default {
+   },
+   // Login
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: 'ou',
++    passkeySubmit: 'Entrar com passkey',
++    passkeyCancelled: 'Nenhuma passkey encontrada neste dispositivo, ou operação cancelada. Use a senha ou adicione uma passkey nas configurações da conta.',
++    passkeyUnavailable: 'Passkeys não estão disponíveis aqui. Abra o site via HTTPS.',
++    passkeyRpMismatch: 'Este endereço não corresponde ao domínio da passkey. Abra o domínio configurado.',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: 'Insira seu nome de usuário e senha para continuar.',
+     placeholder: 'Token de acesso',
+@@ -2778,6 +2786,39 @@ jobTriggered: 'Job acionado',
+         pairing: 'Device pairing',
+       },
+     },
++    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: 'Passkeys',
++      description: 'Entre sem senha com Touch ID, Windows Hello ou seu celular. O login por senha continua disponível.',
++      namePlaceholder: 'Nome da passkey (ex. MacBook)',
++      add: 'Adicionar passkey',
++      added: 'Passkey adicionada',
++      removed: 'Passkey removida',
++      unnamed: 'Passkey sem nome',
++      addedAt: 'Adicionada em {time}',
++      lastUsed: 'Último uso {time}',
++      neverUsed: 'nunca',
++      remove: 'Remover',
++      removeConfirm: 'Remover esta passkey? Você não poderá mais entrar com ela.',
++      empty: 'Nenhuma passkey está vinculada a esta conta ainda.',
++      rpTitle: 'Configuração do servidor',
++      rpDescription: 'O WebAuthn exige que o RP ID seja o domínio deste site (ou o domínio pai) e que a origem corresponda exatamente. Ambos são lidos a cada login, então as alterações valem na hora.',
++      rpId: 'RP ID',
++      rpName: 'Nome de exibição',
++      origins: 'Origens permitidas (uma por linha ou separadas por vírgula)',
++      useCurrentAddress: 'Usar endereço atual',
++      saveRp: 'Salvar',
++      rpSaved: 'Configuração de passkeys salva',
++      errors: {
++        unsupported: 'Este navegador não suporta passkeys.',
++        insecure: 'Passkeys exigem HTTPS (ou localhost).',
++        rpMismatch: 'O RP ID não cobre este domínio. Peça a um administrador para corrigir a configuração.',
++        alreadyRegistered: 'Este autenticador já está registrado.',
++        cancelled: 'Operação com passkey cancelada.',
++        failed: 'A operação com passkey falhou.',
++      },
++    },
++    // <<< passkey settings i18n <<<
+     userAvatar: {
+       title: 'Avatar do usuário',
+       upload: 'Enviar imagem',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 352a96e15..fb5e60ec7 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -456,6 +456,14 @@ export default {
+   },
+ 
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: 'или',
++    passkeySubmit: 'Войти с помощью ключа доступа',
++    passkeyCancelled: 'На этом устройстве ключ доступа не найден, либо операция отменена. Войдите по паролю или добавьте ключ в настройках аккаунта.',
++    passkeyUnavailable: 'Ключи доступа здесь недоступны. Откройте сайт по HTTPS.',
++    passkeyRpMismatch: 'Этот адрес не соответствует домену ключа доступа. Откройте настроенный домен.',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: 'Введите имя пользователя и пароль для продолжения.',
+     placeholder: 'Токен доступа',
+@@ -2470,6 +2478,39 @@ export default {
+         pairing: 'Device pairing',
+       },
+     },
++    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: 'Ключи доступа',
++      description: 'Входите без пароля через Touch ID, Windows Hello или телефон. Вход по паролю остаётся доступным.',
++      namePlaceholder: 'Название ключа (например, MacBook)',
++      add: 'Добавить ключ доступа',
++      added: 'Ключ доступа добавлен',
++      removed: 'Ключ доступа удалён',
++      unnamed: 'Ключ без названия',
++      addedAt: 'Добавлен {time}',
++      lastUsed: 'Последнее использование {time}',
++      neverUsed: 'никогда',
++      remove: 'Удалить',
++      removeConfirm: 'Удалить этот ключ доступа? Войти с его помощью больше не получится.',
++      empty: 'К этой учётной записи пока не привязан ни один ключ доступа.',
++      rpTitle: 'Настройки сервера',
++      rpDescription: 'WebAuthn требует, чтобы RP ID был доменом этого сайта (или родительским доменом), а Origin совпадал точно. Оба значения читаются при каждом входе, поэтому изменения применяются сразу.',
++      rpId: 'RP ID',
++      rpName: 'Отображаемое имя',
++      origins: 'Разрешённые Origin (по одному в строке или через запятую)',
++      useCurrentAddress: 'Использовать текущий адрес',
++      saveRp: 'Сохранить',
++      rpSaved: 'Настройки ключей доступа сохранены',
++      errors: {
++        unsupported: 'Этот браузер не поддерживает ключи доступа.',
++        insecure: 'Для ключей доступа нужен HTTPS (или localhost).',
++        rpMismatch: 'RP ID не покрывает этот домен. Попросите администратора исправить настройки.',
++        alreadyRegistered: 'Этот аутентификатор уже зарегистрирован.',
++        cancelled: 'Операция с ключом доступа отменена.',
++        failed: 'Не удалось выполнить операцию с ключом доступа.',
++      },
++    },
++    // <<< passkey settings i18n <<<
+     userAvatar: {
+       title: 'Аватар пользователя',
+       upload: 'Загрузить изображение',
+diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
+index 8ebdd6f70..af0f98f81 100644
+--- a/packages/client/src/i18n/locales/tr.ts
++++ b/packages/client/src/i18n/locales/tr.ts
+@@ -409,6 +409,14 @@ export default {
+   },
+ 
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: 'veya',
++    passkeySubmit: 'Passkey ile giriş yap',
++    passkeyCancelled: 'Bu cihazda passkey bulunamadı veya işlem iptal edildi. Parolayla giriş yapın ya da hesap ayarlarından passkey ekleyin.',
++    passkeyUnavailable: 'Passkey burada kullanılamıyor. Siteyi HTTPS üzerinden açın.',
++    passkeyRpMismatch: 'Bu adres passkey alan adıyla eşleşmiyor. Yapılandırılmış alan adını açın.',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: 'Devam etmek için kullanıcı adınızı ve parolanızı girin.',
+     placeholder: 'Erişim belirteci',
+@@ -662,7 +670,40 @@ export default {
+     message: { taskArchived: 'Görev arşivlendi' },
+   },
+   journey: { nodeKinds: 'Düğüm türleri' },
+-  settings: {
++  settings: {    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: 'Passkey',
++      description: 'Touch ID, Windows Hello veya telefonunuzla parolasız giriş yapın. Parola ile giriş çalışmaya devam eder.',
++      namePlaceholder: 'Passkey adı (ör. MacBook)',
++      add: 'Passkey ekle',
++      added: 'Passkey eklendi',
++      removed: 'Passkey kaldırıldı',
++      unnamed: 'Adsız passkey',
++      addedAt: 'Eklendi {time}',
++      lastUsed: 'Son kullanım {time}',
++      neverUsed: 'hiç',
++      remove: 'Kaldır',
++      removeConfirm: 'Bu passkey kaldırılsın mı? Artık onunla giriş yapamazsınız.',
++      empty: 'Bu hesaba henüz passkey bağlı değil.',
++      rpTitle: 'Sunucu yapılandırması',
++      rpDescription: 'WebAuthn, RP ID’nin bu sitenin alan adı (veya üst alan adı) olmasını ve Origin’in tam olarak eşleşmesini gerektirir. Her girişte yeniden okunur, bu yüzden değişiklikler anında geçerli olur.',
++      rpId: 'RP ID',
++      rpName: 'Görünen ad',
++      origins: 'İzin verilen Origin’ler (her satıra bir tane veya virgülle ayrılmış)',
++      useCurrentAddress: 'Geçerli adresi kullan',
++      saveRp: 'Kaydet',
++      rpSaved: 'Passkey yapılandırması kaydedildi',
++      errors: {
++        unsupported: 'Bu tarayıcı passkey desteklemiyor.',
++        insecure: 'Passkey için HTTPS (veya localhost) gerekir.',
++        rpMismatch: 'RP ID bu alan adını kapsamıyor. Yöneticiden passkey yapılandırmasını düzeltmesini isteyin.',
++        alreadyRegistered: 'Bu kimlik doğrulayıcı zaten kayıtlı.',
++        cancelled: 'Passkey işlemi iptal edildi.',
++        failed: 'Passkey işlemi başarısız oldu.',
++      },
++    },
++    // <<< passkey settings i18n <<<
++
+     privacy: {
+       policy: 'Gizlilik bildirimi',
+     },
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index e0d114e23..adea4cb08 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -456,6 +456,14 @@ export default {
+   },
+   // 登入
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: '或',
++    passkeySubmit: '使用 Passkey 登入',
++    passkeyCancelled: '本裝置找不到該 Passkey，或已取消操作。可改用密碼登入，或在帳號設定裡為本裝置新增 Passkey。',
++    passkeyUnavailable: '目前環境不支援 Passkey，請改用 HTTPS 存取。',
++    passkeyRpMismatch: '目前位址與 Passkey 網域不一致，請改用設定的網域存取。',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: '輸入使用者名稱和密碼以繼續。',
+     placeholder: '存取權杖',
+@@ -2639,6 +2647,39 @@ export default {
+         pairing: '裝置配對',
+       },
+     },
++    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: 'Passkey',
++      description: '使用指紋、Windows Hello 或手機免密碼登入，密碼登入仍可使用。',
++      namePlaceholder: 'Passkey 名稱（如 MacBook）',
++      add: '新增 Passkey',
++      added: 'Passkey 已新增',
++      removed: 'Passkey 已移除',
++      unnamed: '未命名 Passkey',
++      addedAt: '新增於 {time}',
++      lastUsed: '最近使用 {time}',
++      neverUsed: '從未使用',
++      remove: '移除',
++      removeConfirm: '確定移除此 Passkey？移除後將無法用它登入。',
++      empty: '此帳號尚未綁定 Passkey。',
++      rpTitle: '伺服器設定',
++      rpDescription: 'WebAuthn 要求 RP ID 為本站網域（或其上層網域），且 Origin 完全一致。設定每次登入即時讀取，儲存即生效。',
++      rpId: 'RP ID',
++      rpName: '顯示名稱',
++      origins: '允許的 Origin（每行一個或逗號分隔）',
++      useCurrentAddress: '使用目前位址',
++      saveRp: '儲存',
++      rpSaved: 'Passkey 設定已儲存',
++      errors: {
++        unsupported: '目前瀏覽器不支援 Passkey。',
++        insecure: 'Passkey 需要 HTTPS（或 localhost）。',
++        rpMismatch: 'RP ID 未涵蓋目前網域，請請管理員修正 Passkey 設定。',
++        alreadyRegistered: '此驗證器已註冊。',
++        cancelled: '已取消 Passkey 操作。',
++        failed: 'Passkey 操作失敗。',
++      },
++    },
++    // <<< passkey settings i18n <<<
+     userAvatar: {
+       title: '使用者頭像',
+       upload: '上傳圖片',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 9ec3d841a..f90dcfe16 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -456,6 +456,14 @@ export default {
+   },
+   // 登录
+   login: {
++    // >>> passkey i18n (generated) >>>
++    passkeyOr: '或',
++    passkeySubmit: '使用 Passkey 登录',
++    passkeyCancelled: '本设备没有找到该 Passkey，或已取消操作。可改用密码登录，或在账号设置里为本设备添加 Passkey。',
++    passkeyUnavailable: '当前环境不支持 Passkey，请通过 HTTPS 访问。',
++    passkeyRpMismatch: '当前地址与 Passkey 域名不一致，请改用配置的域名访问。',
++    // <<< passkey i18n <<<
++
+     title: 'Ekko Studio',
+     description: '输入用户名和密码以继续。',
+     placeholder: '访问令牌',
+@@ -2727,6 +2735,39 @@ export default {
+         pairing: '设备配对',
+       },
+     },
++    // >>> passkey settings i18n (generated) >>>
++    passkey: {
++      title: 'Passkey',
++      description: '使用指纹、Windows Hello 或手机免密登录，密码登录仍然可用。',
++      namePlaceholder: 'Passkey 名称（如 MacBook）',
++      add: '添加 Passkey',
++      added: 'Passkey 已添加',
++      removed: 'Passkey 已移除',
++      unnamed: '未命名 Passkey',
++      addedAt: '添加于 {time}',
++      lastUsed: '最近使用 {time}',
++      neverUsed: '从未使用',
++      remove: '移除',
++      removeConfirm: '确定移除该 Passkey？移除后将无法用它登录。',
++      empty: '该账号尚未绑定 Passkey。',
++      rpTitle: '服务器配置',
++      rpDescription: 'WebAuthn 要求 RP ID 为本站点域名（或其上级域），且 Origin 完全一致。配置每次登录实时读取，保存即生效。',
++      rpId: 'RP ID',
++      rpName: '显示名称',
++      origins: '允许的 Origin（每行一个或用逗号分隔）',
++      useCurrentAddress: '使用当前地址',
++      saveRp: '保存',
++      rpSaved: 'Passkey 配置已保存',
++      errors: {
++        unsupported: '当前浏览器不支持 Passkey。',
++        insecure: 'Passkey 需要 HTTPS（或 localhost）。',
++        rpMismatch: 'RP ID 未覆盖当前域名，请让管理员修正 Passkey 配置。',
++        alreadyRegistered: '该认证器已注册。',
++        cancelled: '已取消 Passkey 操作。',
++        failed: 'Passkey 操作失败。',
++      },
++    },
++    // <<< passkey settings i18n <<<
+     userAvatar: {
+       title: '用户头像',
+       upload: '上传图片',
+diff --git a/packages/client/src/views/LoginView.vue b/packages/client/src/views/LoginView.vue
+index 15311bffc..ee7ff2826 100644
+--- a/packages/client/src/views/LoginView.vue
++++ b/packages/client/src/views/LoginView.vue
+@@ -5,6 +5,11 @@ import { useRoute, useRouter } from "vue-router";
+ import { useI18n } from "vue-i18n";
+ import { setApiKey, clearApiKey, hasApiKey } from "@/api/client";
+ import { fetchAuthStatus, loginWithPassword } from "@/api/studio/auth";
++import {
++  canAttemptWebAuthn,
++  fetchWebAuthnStatus,
++  loginWithPasskey,
++} from "@/api/studio/webauthn";
+ import { desktopBridge, isDesktopShell } from "@/utils/desktop-bridge";
+ import { resolveLoginRedirect } from "@/utils/login-redirect";
+ import { useTheme } from "@/composables/useTheme";
+@@ -20,6 +25,10 @@ const loading = ref(false);
+ const errorMsg = ref("");
+ const showLockResetHint = ref(false);
+ const desktopShell = isDesktopShell() && desktopBridge()?.remoteMode !== true;
++// Passkeys are opt-in per instance (RP configured) and per instance-wide binding
++// (someone has bound one). Hide the entry rather than showing a dead button.
++const passkeyAvailable = ref(false);
++const passkeyLoading = ref(false);
+ 
+ if (desktopShell) {
+   // Desktop login is a recovery path. Drop stale JWTs before any background
+@@ -35,8 +44,57 @@ onMounted(async () => {
+   } catch {
+     // Login remains available; the submit request will surface connection errors.
+   }
++  // A ceremony over plain http:// throws an unreadable SecurityError, so require a
++  // secure context before offering the button at all.
++  if (!canAttemptWebAuthn()) return;
++  try {
++    const status = await fetchWebAuthnStatus();
++    passkeyAvailable.value = status.enabled && status.hasCredentials;
++  } catch {
++    passkeyAvailable.value = false;
++  }
+ });
+ 
++/** Shared error mapping for both password and passkey submissions. */
++function applyLoginError(err: any) {
++  const code = String(err?.message || "");
++  if (err?.status === 429 || err?.status === 503) {
++    errorMsg.value = t("login.tooManyAttempts");
++    showLockResetHint.value = true;
++    return;
++  }
++  if (code === "PASSKEY_CANCELLED") {
++    errorMsg.value = t("login.passkeyCancelled");
++    return;
++  }
++  if (code === "PASSKEY_UNSUPPORTED" || code === "PASSKEY_INSECURE_CONTEXT") {
++    errorMsg.value = t("login.passkeyUnavailable");
++    return;
++  }
++  if (code === "PASSKEY_RP_MISMATCH") {
++    errorMsg.value = t("login.passkeyRpMismatch");
++    return;
++  }
++  errorMsg.value = err?.message || t("login.invalidCredentials");
++}
++
++async function handlePasskeyLogin() {
++  loading.value = false;
++  passkeyLoading.value = true;
++  errorMsg.value = "";
++  showLockResetHint.value = false;
++  try {
++    const session = await loginWithPasskey();
++    setApiKey(session.token);
++    activateUserTheme(session.userId, session.theme);
++    router.replace(resolveLoginRedirect(route.query.redirect));
++  } catch (err: any) {
++    applyLoginError(err);
++  } finally {
++    passkeyLoading.value = false;
++  }
++}
++
+ async function handleLogin() {
+   await handlePasswordLogin();
+ }
+@@ -57,12 +115,7 @@ async function handlePasswordLogin() {
+     activateUserTheme(session.userId, session.theme);
+     router.replace(resolveLoginRedirect(route.query.redirect));
+   } catch (err: any) {
+-    if (err.status === 429 || err.status === 503) {
+-      errorMsg.value = t("login.tooManyAttempts");
+-      showLockResetHint.value = true;
+-    } else {
+-      errorMsg.value = err.message || t("login.invalidCredentials");
+-    }
++    applyLoginError(err);
+   } finally {
+     loading.value = false;
+   }
+@@ -107,10 +160,30 @@ async function handlePasswordLogin() {
+             <code>hermes-web-ui reset-default-login</code>
+           </template>
+         </div>
+-        <button type="submit" class="login-btn" :disabled="loading">
++        <button type="submit" class="login-btn" :disabled="loading || passkeyLoading">
+           {{ loading ? "..." : t("login.submit") }}
+         </button>
+       </form>
++
++      <template v-if="passkeyAvailable">
++        <div class="login-divider"><span>{{ t("login.passkeyOr") }}</span></div>
++        <button
++          type="button"
++          class="login-btn login-btn-passkey"
++          :disabled="passkeyLoading || loading"
++          @click="handlePasskeyLogin"
++        >
++          <svg class="login-passkey-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
++            <circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6" />
++            <path d="M3.4 20c0-3.4 2.5-5.6 5.6-5.6 1.4 0 2.6.4 3.5 1.2" fill="none"
++              stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
++            <circle cx="17" cy="13" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6" />
++            <path d="M17 15.4V21M17 18.4h2.2" fill="none" stroke="currentColor" stroke-width="1.6"
++              stroke-linecap="round" />
++          </svg>
++          <span>{{ passkeyLoading ? "..." : t("login.passkeySubmit") }}</span>
++        </button>
++      </template>
+     </div>
+   </div>
+ </template>
+@@ -243,4 +316,42 @@ async function handlePasswordLogin() {
+     cursor: not-allowed;
+   }
+ }
++
++// Passkey entry sits below the password form as a secondary path: outlined
++// instead of filled so the primary action stays the password submit.
++.login-divider {
++  display: flex;
++  align-items: center;
++  gap: calc(10px * var(--spacing-scale, 1));
++  margin: calc(18px * var(--spacing-scale, 1)) 0;
++  color: $text-muted;
++  font-size: calc(var(--font-size-base, 14px) * 12 / 14);
++
++  &::before,
++  &::after {
++    content: "";
++    flex: 1;
++    height: 1px;
++    background: $border-color;
++  }
++}
++
++.login-btn-passkey {
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  gap: calc(8px * var(--spacing-scale, 1));
++  background: transparent;
++  border: var(--border-width, 1px) solid $border-color;
++  color: $text-primary;
++
++  &:hover {
++    opacity: 1;
++    border-color: $accent-primary;
++  }
++}
++
++.login-passkey-icon {
++  flex: 0 0 auto;
++}
+ </style>
+diff --git a/packages/server/src/modules/studio/controllers/webauthn.ts b/packages/server/src/modules/studio/controllers/webauthn.ts
+new file mode 100644
+index 000000000..53332ed17
+--- /dev/null
++++ b/packages/server/src/modules/studio/controllers/webauthn.ts
+@@ -0,0 +1,245 @@
++import type { Context } from 'koa'
++import {
++  beginLogin,
++  beginRegistration,
++  countUserCredentials,
++  deleteCredentialView,
++  describeRpConfig,
++  finishLogin,
++  finishRegistration,
++  hasAnyCredential,
++  listCredentialViews,
++  publicStatus,
++  WebAuthnConfigError,
++  WebAuthnConflictError,
++  WebAuthnSessionError,
++  WebAuthnVerificationError,
++  writeRpConfig,
++} from '../public/webauthn'
++import { checkPassword, extractIp } from '../services/auth/login-limiter'
++import { getUserTheme, toUserThemePayload } from '../services/theme/user-theme'
++import { issueUserJwt } from '../public/auth'
++import { listUserProfiles, touchUserLogin, type UserRecord } from '../public/users'
++import { listProfileNamesFromDisk } from '../public/profile-config'
++
++/**
++ * Map service-level failures onto HTTP statuses.
++ *
++ * 400 = the caller's configuration or session is wrong (retryable by fixing input
++ * or starting over). 409 = this authenticator is already bound. Anything else is
++ * an authentication rejection.
++ */
++function sendWebAuthnError(ctx: Context, error: unknown): void {
++  const message = String((error as Error)?.message || error || 'Passkey authentication failed')
++  if (error instanceof WebAuthnConfigError) {
++    ctx.status = 400
++    ctx.body = { error: message, code: 'webauthn_not_configured' }
++    return
++  }
++  if (error instanceof WebAuthnSessionError) {
++    ctx.status = 400
++    ctx.body = { error: message, code: 'webauthn_session_expired' }
++    return
++  }
++  if (error instanceof WebAuthnConflictError) {
++    ctx.status = 409
++    ctx.body = { error: message, code: 'webauthn_credential_exists' }
++    return
++  }
++  if (error instanceof WebAuthnVerificationError) {
++    ctx.status = 401
++    ctx.body = { error: message, code: 'webauthn_rejected' }
++    return
++  }
++  ctx.status = 500
++  ctx.body = { error: message }
++}
++
++function accessibleProfileNames(user: UserRecord): string[] {
++  if (user.role === 'super_admin') return listProfileNamesFromDisk()
++  return listUserProfiles(user.id).map(profile => profile.profile_name)
++}
++
++/**
++ * GET /api/auth/webauthn/status
++ * Public capability probe used by the login page to decide whether to offer the
++ * passkey button at all. Reveals no per-user information.
++ */
++export async function webauthnStatus(ctx: Context) {
++  ctx.body = publicStatus()
++}
++
++/**
++ * POST /api/auth/webauthn/login/begin
++ * Public. Rate limited. Returns the assertion options plus a single-use session token.
++ */
++export async function webauthnLoginBegin(ctx: Context) {
++  const ip = extractIp(ctx)
++  const limit = checkPassword(ip)
++  if (!limit.allowed) {
++    ctx.status = limit.status
++    ctx.body = { error: 'Too many login attempts, please try again later' }
++    return
++  }
++  try {
++    const result = await beginLogin()
++    ctx.body = { sessionToken: result.sessionToken, options: result.options }
++  } catch (error) {
++    sendWebAuthnError(ctx, error)
++  }
++}
++
++/**
++ * POST /api/auth/webauthn/login/finish
++ * Public. Rate limited. Returns the SAME payload shape as password login so the
++ * client can share one session-bootstrap path.
++ */
++export async function webauthnLoginFinish(ctx: Context) {
++  const body = ctx.request.body as { sessionToken?: unknown; response?: unknown } | undefined
++  const sessionToken = typeof body?.sessionToken === 'string' ? body.sessionToken : ''
++  if (!sessionToken || !body?.response || typeof body.response !== 'object') {
++    ctx.status = 400
++    ctx.body = { error: 'sessionToken and response are required' }
++    return
++  }
++  const ip = extractIp(ctx)
++  const limit = checkPassword(ip)
++  if (!limit.allowed) {
++    ctx.status = limit.status
++    ctx.body = { error: 'Too many login attempts, please try again later' }
++    return
++  }
++
++  try {
++    const user = await finishLogin({
++      sessionToken,
++      response: body.response as never,
++    })
++    touchUserLogin(user.id)
++    ctx.body = {
++      token: await issueUserJwt(user),
++      userId: user.id,
++      profiles: accessibleProfileNames(user),
++      theme: toUserThemePayload(getUserTheme(user.id)),
++    }
++  } catch (error) {
++    sendWebAuthnError(ctx, error)
++  }
++}
++
++/**
++ * POST /api/auth/webauthn/register/begin
++ * Authenticated. Starts binding a new authenticator to the current account.
++ */
++export async function webauthnRegisterBegin(ctx: Context) {
++  const userId = ctx.state.user?.id
++  if (!userId) {
++    ctx.status = 401
++    ctx.body = { error: 'Unauthorized' }
++    return
++  }
++  try {
++    const result = await beginRegistration(userId)
++    ctx.body = { sessionToken: result.sessionToken, options: result.options }
++  } catch (error) {
++    sendWebAuthnError(ctx, error)
++  }
++}
++
++/**
++ * POST /api/auth/webauthn/register/finish
++ * Authenticated. Verifies the attestation and stores the credential.
++ */
++export async function webauthnRegisterFinish(ctx: Context) {
++  const userId = ctx.state.user?.id
++  if (!userId) {
++    ctx.status = 401
++    ctx.body = { error: 'Unauthorized' }
++    return
++  }
++  const body = ctx.request.body as { sessionToken?: unknown; response?: unknown; name?: unknown } | undefined
++  const sessionToken = typeof body?.sessionToken === 'string' ? body.sessionToken : ''
++  if (!sessionToken || !body?.response || typeof body.response !== 'object') {
++    ctx.status = 400
++    ctx.body = { error: 'sessionToken and response are required' }
++    return
++  }
++  try {
++    const credential = await finishRegistration({
++      userId,
++      sessionToken,
++      response: body.response as never,
++      name: typeof body.name === 'string' ? body.name : '',
++    })
++    ctx.body = { credential }
++  } catch (error) {
++    sendWebAuthnError(ctx, error)
++  }
++}
++
++/**
++ * GET /api/auth/webauthn/credentials
++ * Authenticated. Lists only the caller's own credentials.
++ */
++export async function webauthnListCredentials(ctx: Context) {
++  const userId = ctx.state.user?.id
++  if (!userId) {
++    ctx.status = 401
++    ctx.body = { error: 'Unauthorized' }
++    return
++  }
++  ctx.body = { credentials: listCredentialViews(userId) }
++}
++
++/**
++ * DELETE /api/auth/webauthn/credentials/:id
++ * Authenticated. Scoped to the caller so one account cannot delete another's passkey.
++ */
++export async function webauthnDeleteCredential(ctx: Context) {
++  const userId = ctx.state.user?.id
++  if (!userId) {
++    ctx.status = 401
++    ctx.body = { error: 'Unauthorized' }
++    return
++  }
++  const id = Number(ctx.params.id)
++  if (!Number.isInteger(id) || id <= 0) {
++    ctx.status = 400
++    ctx.body = { error: 'Invalid credential id' }
++    return
++  }
++  if (!deleteCredentialView(userId, id)) {
++    ctx.status = 404
++    ctx.body = { error: 'Credential not found' }
++    return
++  }
++  ctx.body = { success: true }
++}
++
++/**
++ * GET /api/auth/webauthn/config
++ * Super-admin only. Reports the effective RP configuration.
++ */
++export async function webauthnGetConfig(ctx: Context) {
++  ctx.body = describeRpConfig()
++}
++
++/**
++ * PUT /api/auth/webauthn/config
++ * Super-admin only. Applies new RP settings immediately (no restart).
++ */
++export async function webauthnUpdateConfig(ctx: Context) {
++  const body = ctx.request.body as { rpID?: unknown; rpName?: unknown; origins?: unknown } | undefined
++  try {
++    const config = writeRpConfig({
++      rpID: typeof body?.rpID === 'string' ? body.rpID : '',
++      rpName: typeof body?.rpName === 'string' ? body.rpName : '',
++      origins: Array.isArray(body?.origins)
++        ? body.origins.filter((value): value is string => typeof value === 'string')
++        : typeof body?.origins === 'string' ? body.origins : '',
++    })
++    ctx.body = { ...config, credentialsBound: hasAnyCredential() }
++  } catch (error) {
++    sendWebAuthnError(ctx, error)
++  }
++}
+diff --git a/packages/server/src/modules/studio/infrastructure/database/schemas.ts b/packages/server/src/modules/studio/infrastructure/database/schemas.ts
+index 9eb5ca391..d217db17d 100644
+--- a/packages/server/src/modules/studio/infrastructure/database/schemas.ts
++++ b/packages/server/src/modules/studio/infrastructure/database/schemas.ts
+@@ -618,6 +618,36 @@ export const USER_PROFILES_INDEXES = {
+   idx_user_profiles_default: 'CREATE UNIQUE INDEX IF NOT EXISTS idx_user_profiles_default ON user_profiles(user_id) WHERE is_default = 1',
+ }
+ 
++// Passkey (WebAuthn) credentials. One user may bind several authenticators.
++// credential_id_hex is SHA-256(credential id) so the unique index stays short
++// and portable; the raw credential blob (public key, counter, transports,
++// userHandle) is stored as JSON and matched in memory during verification.
++export const WEBAUTHN_CREDENTIALS_TABLE = 'webauthn_credentials'
++
++export const WEBAUTHN_CREDENTIALS_SCHEMA: Record<string, string> = {
++  id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
++  user_id: 'INTEGER NOT NULL',
++  credential_id_hex: 'TEXT NOT NULL UNIQUE',
++  credential: 'TEXT NOT NULL',
++  name: "TEXT NOT NULL DEFAULT ''",
++  created_at: 'INTEGER NOT NULL',
++  last_used_at: 'INTEGER',
++}
++
++export const WEBAUTHN_CREDENTIALS_INDEXES = {
++  idx_webauthn_credentials_user: 'CREATE INDEX IF NOT EXISTS idx_webauthn_credentials_user ON webauthn_credentials(user_id)',
++}
++
++// Key/value bag for instance-scoped settings that have no better home. RP ID and
++// allowed origins live here so administrators can change them without a restart.
++export const STUDIO_SETTINGS_TABLE = 'studio_settings'
++
++export const STUDIO_SETTINGS_SCHEMA: Record<string, string> = {
++  key: 'TEXT PRIMARY KEY',
++  value: 'TEXT NOT NULL',
++  updated_at: 'INTEGER NOT NULL',
++}
++
+ export const USER_THEMES_TABLE = 'user_themes'
+ export const USER_THEME_PRESETS_TABLE = 'user_theme_presets'
+ 
+@@ -1828,6 +1858,10 @@ export function initAllHermesTables(): void {
+ 
+     // Users and profile access
+     syncTable(USERS_TABLE, USERS_SCHEMA)
++    syncTable(STUDIO_SETTINGS_TABLE, STUDIO_SETTINGS_SCHEMA)
++    syncTable(WEBAUTHN_CREDENTIALS_TABLE, WEBAUTHN_CREDENTIALS_SCHEMA, {
++      indexes: WEBAUTHN_CREDENTIALS_INDEXES,
++    })
+     syncTable(MODEL_API_KEYS_TABLE, MODEL_API_KEYS_SCHEMA, {
+       indexes: { idx_model_api_keys_owner: `CREATE INDEX IF NOT EXISTS idx_model_api_keys_owner ON ${MODEL_API_KEYS_TABLE}(user_id)` },
+     })
+diff --git a/packages/server/src/modules/studio/public/webauthn.ts b/packages/server/src/modules/studio/public/webauthn.ts
+new file mode 100644
+index 000000000..a395ed088
+--- /dev/null
++++ b/packages/server/src/modules/studio/public/webauthn.ts
+@@ -0,0 +1,414 @@
++import { randomBytes } from 'crypto'
++import {
++  generateAuthenticationOptions,
++  generateRegistrationOptions,
++  verifyAuthenticationResponse,
++  verifyRegistrationResponse,
++  type AuthenticationResponseJSON,
++  type RegistrationResponseJSON,
++  type WebAuthnCredential,
++} from '@simplewebauthn/server'
++import { findUserById, type UserRecord } from './users'
++import {
++  getSetting,
++  setSetting,
++} from '../repositories/studio-settings-store'
++import {
++  countUserCredentials,
++  credentialIdHex,
++  deleteCredential,
++  hasAnyCredential,
++  insertCredential,
++  listCredentialRecords,
++  listCredentialViews,
++  touchCredential,
++  type WebAuthnCredentialView,
++} from '../repositories/webauthn-store'
++
++export type { WebAuthnCredentialView }
++export { listCredentialViews, countUserCredentials, hasAnyCredential }
++
++/** Delete one of the caller's own credentials. Returns false when not found. */
++export function deleteCredentialView(userId: number, id: number): boolean {
++  return deleteCredential(userId, id)
++}
++
++/** Settings keys backing the RP configuration. */
++export const SETTING_RP_ID = 'webauthn.rpId'
++export const SETTING_RP_NAME = 'webauthn.rpName'
++export const SETTING_ORIGINS = 'webauthn.origins'
++
++const SESSION_TTL_MS = 5 * 60_000
++const MAX_CREDENTIAL_NAME = 64
++const DEFAULT_RP_NAME = 'Ekko Studio'
++
++export class WebAuthnConfigError extends Error {}
++export class WebAuthnSessionError extends Error {}
++export class WebAuthnVerificationError extends Error {}
++export class WebAuthnConflictError extends Error {}
++
++export interface RpConfig {
++  rpID: string
++  rpName: string
++  origins: string[]
++}
++
++/** A pending begin/finish pair. Kept in memory: single use, short TTL. */
++interface PendingSession {
++  challenge: string
++  kind: 'registration' | 'login'
++  /** Registration binds the user up front; login learns it from the assertion. */
++  userId?: number
++  expiresAt: number
++}
++
++const sessions = new Map<string, PendingSession>()
++
++function sweepSessions(now = Date.now()): void {
++  for (const [token, session] of sessions) {
++    if (session.expiresAt <= now) sessions.delete(token)
++  }
++}
++
++function saveSession(session: Omit<PendingSession, 'expiresAt'>): string {
++  sweepSessions()
++  const token = randomBytes(32).toString('hex')
++  sessions.set(token, { ...session, expiresAt: Date.now() + SESSION_TTL_MS })
++  return token
++}
++
++/** Take (and destroy) a pending session. Wrong kind or expired ⇒ null. */
++function takeSession(token: string, kind: PendingSession['kind']): PendingSession | null {
++  const session = sessions.get(token)
++  if (!session) return null
++  sessions.delete(token)
++  if (session.kind !== kind || session.expiresAt <= Date.now()) return null
++  return session
++}
++
++function splitOrigins(csv: string): string[] {
++  const seen = new Set<string>()
++  const origins: string[] = []
++  for (const value of csv.split(/[\s,]+/)) {
++    const trimmed = value.trim()
++    if (!trimmed) continue
++    let origin: string
++    try {
++      origin = new URL(trimmed).origin
++    } catch {
++      throw new WebAuthnConfigError(`Invalid origin: ${trimmed}`)
++    }
++    // Duplicates are meaningless to the browser and would only make the
++    // assertion check repeat itself.
++    if (seen.has(origin)) continue
++    seen.add(origin)
++    origins.push(origin)
++  }
++  return origins
++}
++
++/**
++ * Read the RP configuration. Deliberately uncached: an administrator can change
++ * it from the settings page and the next login attempt must pick it up.
++ */
++export function readRpConfig(): RpConfig {
++  const rpID = (getSetting(SETTING_RP_ID) ?? '').trim()
++  const rpName = (getSetting(SETTING_RP_NAME) ?? '').trim() || DEFAULT_RP_NAME
++  const origins = splitOrigins(getSetting(SETTING_ORIGINS) ?? '')
++  return { rpID, rpName, origins }
++}
++
++export function isConfigured(): boolean {
++  try {
++    const { rpID, origins } = readRpConfig()
++    return Boolean(rpID) && origins.length > 0
++  } catch {
++    return false
++  }
++}
++
++function requireRpConfig(): RpConfig {
++  let config: RpConfig
++  try {
++    config = readRpConfig()
++  } catch (error) {
++    throw new WebAuthnConfigError(String((error as Error).message || error))
++  }
++  if (!config.rpID) throw new WebAuthnConfigError('WebAuthn RP ID is not configured')
++  if (!config.origins.length) throw new WebAuthnConfigError('WebAuthn origins are not configured')
++  return config
++}
++
++/** Current RP configuration for the settings page, with validation errors surfaced. */
++export function describeRpConfig(): {
++  configured: boolean
++  rpID: string
++  rpName: string
++  origins: string[]
++  credentialsBound: boolean
++  error?: string
++} {
++  try {
++    const config = readRpConfig()
++    return {
++      configured: Boolean(config.rpID) && config.origins.length > 0,
++      rpID: config.rpID,
++      rpName: config.rpName,
++      origins: config.origins,
++      credentialsBound: hasAnyCredential(),
++    }
++  } catch (error) {
++    return {
++      configured: false,
++      rpID: getSetting(SETTING_RP_ID) ?? '',
++      rpName: getSetting(SETTING_RP_NAME) ?? '',
++      origins: [],
++      credentialsBound: hasAnyCredential(),
++      error: String((error as Error).message || error),
++    }
++  }
++}
++
++/**
++ * Persist new RP configuration.
++ *
++ * `rpID` must be a bare hostname (no scheme, no port, no path) because browsers
++ * compare it verbatim against the page's effective domain. Origins must be full
++ * origins so the assertion's clientData.origin check has something exact to match.
++ */
++export function writeRpConfig(input: { rpID: string; rpName?: string; origins: string | string[] }): RpConfig {
++  const rpID = String(input.rpID || '').trim().toLowerCase()
++  if (!rpID) throw new WebAuthnConfigError('RP ID is required')
++  if (/^[a-z][a-z0-9+.-]*:\/\//.test(rpID)) throw new WebAuthnConfigError('RP ID must not include a scheme')
++  if (/[/\\\s]/.test(rpID)) throw new WebAuthnConfigError('RP ID must not include a path')
++  if (rpID.includes(':')) throw new WebAuthnConfigError('RP ID must not include a port')
++  if (!/^[a-z0-9.-]+$/.test(rpID)) throw new WebAuthnConfigError('RP ID contains invalid characters')
++
++  const rawOrigins = Array.isArray(input.origins) ? input.origins.join(',') : String(input.origins || '')
++  const origins = splitOrigins(rawOrigins)
++  if (!origins.length) throw new WebAuthnConfigError('At least one origin is required')
++  for (const origin of origins) {
++    const hostname = new URL(origin).hostname.toLowerCase()
++    // Browsers reject a ceremony whose page domain is not the RP ID or a subdomain.
++    if (hostname !== rpID && !hostname.endsWith(`.${rpID}`)) {
++      throw new WebAuthnConfigError(`Origin ${origin} is not within RP ID ${rpID}`)
++    }
++  }
++
++  const rpName = String(input.rpName || '').trim() || DEFAULT_RP_NAME
++  setSetting(SETTING_RP_ID, rpID)
++  setSetting(SETTING_RP_NAME, rpName)
++  setSetting(SETTING_ORIGINS, origins.join(','))
++  return { rpID, rpName, origins }
++}
++
++// --- Credential (de)serialisation -----------------------------------------
++
++/** On-disk JSON shape. Stored as strings so it survives SQLite text round-trips. */
++interface StoredCredentialJson {
++  id: string
++  publicKey: string
++  counter: number
++  transports?: string[]
++}
++
++function toStoredJson(credential: WebAuthnCredential): StoredCredentialJson {
++  return {
++    id: credential.id,
++    publicKey: Buffer.from(credential.publicKey).toString('base64url'),
++    counter: credential.counter,
++    transports: credential.transports as string[] | undefined,
++  }
++}
++
++function fromStoredJson(raw: string): WebAuthnCredential | null {
++  try {
++    const parsed = JSON.parse(raw) as StoredCredentialJson
++    if (!parsed?.id || typeof parsed.publicKey !== 'string') return null
++    return {
++      id: parsed.id,
++      publicKey: new Uint8Array(Buffer.from(parsed.publicKey, 'base64url')),
++      counter: Number(parsed.counter) || 0,
++      transports: parsed.transports as WebAuthnCredential['transports'],
++    }
++  } catch {
++    return null
++  }
++}
++
++function userHandleFor(userId: number): Uint8Array<ArrayBuffer> {
++  // Stable and reversible: the decimal user id. Login resolves the account from
++  // the discoverable credential's userHandle without asking for a username.
++  // Bytes are copied into a fresh ArrayBuffer so the element type is
++  // Uint8Array<ArrayBuffer>, which is what @simplewebauthn's Uint8Array_ needs.
++  const bytes = Buffer.from(String(userId), 'utf8')
++  const buffer = new ArrayBuffer(bytes.length)
++  const view = new Uint8Array(buffer)
++  view.set(bytes)
++  return view
++}
++
++function userIdFromHandle(handle: Uint8Array | undefined): number | null {
++  if (!handle) return null
++  const parsed = Number(Buffer.from(handle).toString('utf8'))
++  return Number.isInteger(parsed) && parsed > 0 ? parsed : null
++}
++
++// --- Registration ----------------------------------------------------------
++
++export async function beginRegistration(userId: number): Promise<{ sessionToken: string; options: unknown }> {
++  const config = requireRpConfig()
++  const user = findUserById(userId)
++  if (!user) throw new WebAuthnVerificationError('User not found')
++
++  const existing = listCredentialRecords(userId)
++  const options = await generateRegistrationOptions({
++    rpName: config.rpName,
++    rpID: config.rpID,
++    userName: user.username,
++    userDisplayName: user.username,
++    userID: userHandleFor(userId),
++    attestationType: 'none',
++    // excludeCredentials needs the RAW credential id, not our SHA-256 column:
++    // the browser compares it against the authenticator's own credential ids.
++    excludeCredentials: existing
++      .map(record => fromStoredJson(record.credential))
++      .filter((credential): credential is WebAuthnCredential => credential !== null)
++      .map(credential => ({ id: credential.id, transports: credential.transports })),
++    authenticatorSelection: {
++      // Resident (discoverable) key is what makes this a Passkey: the authenticator
++      // stores the credential and the user signs in without typing a username.
++      residentKey: 'required',
++      userVerification: 'preferred',
++    },
++  })
++
++  const sessionToken = saveSession({ challenge: options.challenge, kind: 'registration', userId })
++  return { sessionToken, options }
++}
++
++export async function finishRegistration(input: {
++  userId: number
++  sessionToken: string
++  response: RegistrationResponseJSON
++  name?: string
++}): Promise<WebAuthnCredentialView> {
++  const session = takeSession(input.sessionToken, 'registration')
++  if (!session || session.userId !== input.userId) {
++    throw new WebAuthnSessionError('Registration session expired, please try again')
++  }
++  const config = requireRpConfig()
++
++  let verification
++  try {
++    verification = await verifyRegistrationResponse({
++      response: input.response,
++      expectedChallenge: session.challenge,
++      expectedOrigin: config.origins,
++      expectedRPID: config.rpID,
++      requireUserVerification: false,
++    })
++  } catch (error) {
++    throw new WebAuthnVerificationError(`Registration failed: ${String((error as Error).message || error)}`)
++  }
++  if (!verification.verified || !verification.registrationInfo) {
++    throw new WebAuthnVerificationError('Registration could not be verified')
++  }
++
++  const stored = toStoredJson(verification.registrationInfo.credential)
++  const hex = credentialIdHex(verification.registrationInfo.credential.id)
++  const name = String(input.name || '').trim().slice(0, MAX_CREDENTIAL_NAME)
++
++  try {
++    const record = insertCredential({
++      userId: input.userId,
++      credentialIdHex: hex,
++      credentialJson: JSON.stringify(stored),
++      name,
++    })
++    return { id: record.id, name: record.name, created_at: record.created_at, last_used_at: null }
++  } catch (error) {
++    if (/unique/i.test(String((error as Error).message || error))) {
++      throw new WebAuthnConflictError('This authenticator is already registered')
++    }
++    throw error
++  }
++}
++
++// --- Login -----------------------------------------------------------------
++
++export async function beginLogin(): Promise<{ sessionToken: string; options: unknown }> {
++  const config = requireRpConfig()
++  if (!hasAnyCredential()) throw new WebAuthnVerificationError('No passkey is registered yet')
++
++  const options = await generateAuthenticationOptions({
++    rpID: config.rpID,
++    // Discoverable credentials: no allowCredentials, the authenticator picks one
++    // from its own store and returns the userHandle we embedded at registration.
++    userVerification: 'preferred',
++  })
++
++  const sessionToken = saveSession({ challenge: options.challenge, kind: 'login' })
++  return { sessionToken, options }
++}
++
++export async function finishLogin(input: {
++  sessionToken: string
++  response: AuthenticationResponseJSON
++}): Promise<UserRecord> {
++  const session = takeSession(input.sessionToken, 'login')
++  if (!session) throw new WebAuthnSessionError('Login session expired, please try again')
++  const config = requireRpConfig()
++
++  const userId = userIdFromHandle(
++    input.response.response.userHandle
++      ? new Uint8Array(Buffer.from(input.response.response.userHandle, 'base64url'))
++      : undefined,
++  )
++  if (!userId) throw new WebAuthnVerificationError('The authenticator did not identify a user')
++
++  const user = findUserById(userId)
++  if (!user) throw new WebAuthnVerificationError('User not found')
++  if (user.status !== 'active') throw new WebAuthnVerificationError('This account is disabled')
++
++  // Match the returned credential id against this user's stored credentials.
++  const hex = credentialIdHex(input.response.id)
++  const record = listCredentialRecords(userId).find(candidate => candidate.credential_id_hex === hex)
++  if (!record) throw new WebAuthnVerificationError('This passkey is not registered for this account')
++  const credential = fromStoredJson(record.credential)
++  if (!credential) throw new WebAuthnVerificationError('Stored passkey data is unreadable')
++
++  let verification
++  try {
++    verification = await verifyAuthenticationResponse({
++      response: input.response,
++      expectedChallenge: session.challenge,
++      expectedOrigin: config.origins,
++      expectedRPID: config.rpID,
++      credential,
++      requireUserVerification: false,
++    })
++  } catch (error) {
++    throw new WebAuthnVerificationError(`Passkey verification failed: ${String((error as Error).message || error)}`)
++  }
++  if (!verification.verified) throw new WebAuthnVerificationError('Passkey verification failed')
++
++  // Persist the bumped counter so cloned authenticators become detectable.
++  const updated: WebAuthnCredential = {
++    ...credential,
++    counter: verification.authenticationInfo.newCounter,
++  }
++  touchCredential(record.credential_id_hex, JSON.stringify(toStoredJson(updated)))
++  return user
++}
++
++// --- Public status ---------------------------------------------------------
++
++export function publicStatus(): { enabled: boolean; hasCredentials: boolean } {
++  return { enabled: isConfigured(), hasCredentials: hasAnyCredential() }
++}
++
++/** Test hook: drop all pending challenges. */
++export function clearSessions(): void {
++  sessions.clear()
++}
+diff --git a/packages/server/src/modules/studio/repositories/studio-settings-store.ts b/packages/server/src/modules/studio/repositories/studio-settings-store.ts
+new file mode 100644
+index 000000000..e84f674b7
+--- /dev/null
++++ b/packages/server/src/modules/studio/repositories/studio-settings-store.ts
+@@ -0,0 +1,35 @@
++import { getDb } from '../infrastructure/database'
++import { STUDIO_SETTINGS_TABLE } from '../infrastructure/database/schemas'
++
++/**
++ * Instance-scoped key/value settings.
++ *
++ * These are administrator-editable values that must take effect without a
++ * restart (logins depend on them), so every read goes straight to SQLite
++ * instead of being cached in module state.
++ */
++export function getSetting(key: string): string | null {
++  const db = getDb()
++  if (!db) return null
++  const row = db.prepare(`SELECT value FROM ${STUDIO_SETTINGS_TABLE} WHERE key = ?`).get(key) as { value?: string } | undefined
++  return row?.value ?? null
++}
++
++export function getSettingString(key: string, fallback = ''): string {
++  return getSetting(key) ?? fallback
++}
++
++export function setSetting(key: string, value: string, at = Date.now()): void {
++  const db = getDb()
++  if (!db) return
++  db.prepare(
++    `INSERT INTO ${STUDIO_SETTINGS_TABLE} (key, value, updated_at) VALUES (?, ?, ?)
++     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
++  ).run(key, value, at)
++}
++
++export function deleteSetting(key: string): void {
++  const db = getDb()
++  if (!db) return
++  db.prepare(`DELETE FROM ${STUDIO_SETTINGS_TABLE} WHERE key = ?`).run(key)
++}
+diff --git a/packages/server/src/modules/studio/repositories/webauthn-store.ts b/packages/server/src/modules/studio/repositories/webauthn-store.ts
+new file mode 100644
+index 000000000..1a28c5aca
+--- /dev/null
++++ b/packages/server/src/modules/studio/repositories/webauthn-store.ts
+@@ -0,0 +1,109 @@
++import { createHash } from 'crypto'
++import { getDb } from '../infrastructure/database'
++import { WEBAUTHN_CREDENTIALS_TABLE } from '../infrastructure/database/schemas'
++
++/** Stored WebAuthn credential row. */
++export interface WebAuthnCredentialRecord {
++  id: number
++  user_id: number
++  credential_id_hex: string
++  credential: string
++  name: string
++  created_at: number
++  last_used_at: number | null
++}
++
++/** Credential shape exposed to clients — never includes the public key blob. */
++export interface WebAuthnCredentialView {
++  id: number
++  name: string
++  created_at: number
++  last_used_at: number | null
++}
++
++export function credentialIdHex(id: Uint8Array | Buffer | string): string {
++  const bytes = typeof id === 'string' ? Buffer.from(id, 'base64url') : Buffer.from(id)
++  return createHash('sha256').update(bytes).digest('hex')
++}
++
++export function listCredentialRecords(userId: number): WebAuthnCredentialRecord[] {
++  const db = getDb()
++  if (!db) return []
++  return db.prepare(
++    `SELECT * FROM ${WEBAUTHN_CREDENTIALS_TABLE} WHERE user_id = ? ORDER BY created_at DESC`,
++  ).all(userId) as unknown as WebAuthnCredentialRecord[]
++}
++
++export function listCredentialViews(userId: number): WebAuthnCredentialView[] {
++  return listCredentialRecords(userId).map(record => ({
++    id: record.id,
++    name: record.name,
++    created_at: record.created_at,
++    last_used_at: record.last_used_at,
++  }))
++}
++
++export function insertCredential(input: {
++  userId: number
++  credentialIdHex: string
++  credentialJson: string
++  name: string
++  at?: number
++}): WebAuthnCredentialRecord {
++  const db = getDb()
++  if (!db) throw new Error('Database is not available')
++  const at = input.at ?? Date.now()
++  const result = db.prepare(
++    `INSERT INTO ${WEBAUTHN_CREDENTIALS_TABLE}
++       (user_id, credential_id_hex, credential, name, created_at)
++     VALUES (?, ?, ?, ?, ?)`,
++  ).run(input.userId, input.credentialIdHex, input.credentialJson, input.name, at)
++  return {
++    id: Number(result.lastInsertRowid),
++    user_id: input.userId,
++    credential_id_hex: input.credentialIdHex,
++    credential: input.credentialJson,
++    name: input.name,
++    created_at: at,
++    last_used_at: null,
++  }
++}
++
++/** Persist a bumped signature counter and the last-used timestamp. */
++export function touchCredential(credentialIdHexValue: string, credentialJson: string, at = Date.now()): void {
++  const db = getDb()
++  if (!db) return
++  db.prepare(
++    `UPDATE ${WEBAUTHN_CREDENTIALS_TABLE} SET credential = ?, last_used_at = ?
++     WHERE credential_id_hex = ?`,
++  ).run(credentialJson, at, credentialIdHexValue)
++}
++
++/** Delete one credential only when it belongs to the caller (IDOR guard). */
++export function deleteCredential(userId: number, id: number): boolean {
++  const db = getDb()
++  if (!db) return false
++  const result = db.prepare(
++    `DELETE FROM ${WEBAUTHN_CREDENTIALS_TABLE} WHERE id = ? AND user_id = ?`,
++  ).run(id, userId)
++  return result.changes > 0
++}
++
++export function countUserCredentials(userId: number): number {
++  const db = getDb()
++  if (!db) return 0
++  const row = db.prepare(
++    `SELECT COUNT(*) as count FROM ${WEBAUTHN_CREDENTIALS_TABLE} WHERE user_id = ?`,
++  ).get(userId) as { count?: number } | undefined
++  return Number(row?.count || 0)
++}
++
++/** Whether anybody on this instance has bound a passkey (login-page gate). */
++export function hasAnyCredential(): boolean {
++  const db = getDb()
++  if (!db) return false
++  const row = db.prepare(
++    `SELECT COUNT(*) as count FROM ${WEBAUTHN_CREDENTIALS_TABLE}`,
++  ).get() as { count?: number } | undefined
++  return Number(row?.count || 0) > 0
++}
+diff --git a/packages/server/src/modules/studio/routes/auth.ts b/packages/server/src/modules/studio/routes/auth.ts
+index 3b41ad531..7d56f298d 100644
+--- a/packages/server/src/modules/studio/routes/auth.ts
++++ b/packages/server/src/modules/studio/routes/auth.ts
+@@ -1,5 +1,6 @@
+ import Router from '@koa/router'
+ import * as ctrl from '../controllers/auth'
++import * as webauthnCtrl from '../controllers/webauthn'
+ import { requireSuperAdmin } from '../middleware/auth'
+ 
+ // Public routes (no auth required)
+@@ -9,9 +10,25 @@ authPublicRoutes.post('/api/auth/login', ctrl.login)
+ authPublicRoutes.post('/api/auth/app-login', ctrl.appLogin)
+ authPublicRoutes.post('/api/auth/mcu-login', ctrl.microcontrollerLogin)
+ 
++// Passkey (WebAuthn) public entry points. These stay separate from the password
++// routes so disabling passkeys never touches the password login path.
++authPublicRoutes.get('/api/auth/webauthn/status', webauthnCtrl.webauthnStatus)
++authPublicRoutes.post('/api/auth/webauthn/login/begin', webauthnCtrl.webauthnLoginBegin)
++authPublicRoutes.post('/api/auth/webauthn/login/finish', webauthnCtrl.webauthnLoginFinish)
++
+ // Protected routes (auth required)
+ export const authProtectedRoutes = new Router()
+ authProtectedRoutes.post('/api/auth/setup', ctrl.setupPassword)
++
++// Passkey credential management for the signed-in account.
++authProtectedRoutes.post('/api/auth/webauthn/register/begin', webauthnCtrl.webauthnRegisterBegin)
++authProtectedRoutes.post('/api/auth/webauthn/register/finish', webauthnCtrl.webauthnRegisterFinish)
++authProtectedRoutes.get('/api/auth/webauthn/credentials', webauthnCtrl.webauthnListCredentials)
++authProtectedRoutes.delete('/api/auth/webauthn/credentials/:id', webauthnCtrl.webauthnDeleteCredential)
++
++// Passkey RP configuration — instance-wide, so super-admin only.
++authProtectedRoutes.get('/api/auth/webauthn/config', requireSuperAdmin, webauthnCtrl.webauthnGetConfig)
++authProtectedRoutes.put('/api/auth/webauthn/config', requireSuperAdmin, webauthnCtrl.webauthnUpdateConfig)
+ authProtectedRoutes.get('/api/auth/me', ctrl.currentUser)
+ authProtectedRoutes.post('/api/auth/change-password', ctrl.changePassword)
+ authProtectedRoutes.post('/api/auth/change-username', ctrl.changeUsername)
+diff --git a/tests/e2e/passkey-login.spec.ts b/tests/e2e/passkey-login.spec.ts
+new file mode 100644
+index 000000000..a6ab37aa4
+--- /dev/null
++++ b/tests/e2e/passkey-login.spec.ts
+@@ -0,0 +1,173 @@
++import { test, expect, type Page } from '@playwright/test'
++
++/**
++ * Passkey (WebAuthn) login journey.
++ *
++ * The ceremony is mocked at the `navigator.credentials` boundary instead of using
++ * a CDP virtual authenticator: these assertions are about what the login page
++ * offers and which requests it makes.
++ *
++ * Page-side state (mock mode, request log) lives on `window` because the test body
++ * runs in the Node process — a closure variable there is invisible to the page,
++ * so mutating it silently does nothing.
++ */
++const RP_ID = 'studio.test'
++
++const statusWithCredential = { enabled: true, hasCredentials: true }
++const statusWithoutCredential = { enabled: true, hasCredentials: false }
++const statusUnconfigured = { enabled: false, hasCredentials: false }
++
++const beginResponse = {
++  sessionToken: 'session-token-fixture',
++  options: { challenge: 'Y2hhbGxlbmdl', rpId: RP_ID, timeout: 60000, userVerification: 'preferred' },
++}
++
++const sessionToken =
++  'header.' + Buffer.from(JSON.stringify({ sub: 1, role: 'super_admin', username: 'fixture' })).toString('base64') + '.signature'
++
++const loginResponse = {
++  token: sessionToken,
++  userId: 1,
++  profiles: ['default'],
++  theme: { preset: 'ink', mode: 'dark' },
++}
++
++async function setup(page: Page, status: typeof statusWithCredential): Promise<void> {
++  // Routes go FIRST: the login view asks for the passkey status on mount, so the
++  // mock must be in place before the init script runs and the page navigates.
++  await page.route('**/api/auth/status', route =>
++    route.fulfill({ json: { hasPasswordLogin: true, hasUsers: true } }))
++  await page.route('**/api/auth/webauthn/status', route => route.fulfill({ json: status }))
++  await page.route('**/api/auth/webauthn/login/begin', route => route.fulfill({ json: beginResponse }))
++  await page.route('**/api/auth/webauthn/login/finish', route => route.fulfill({ json: loginResponse }))
++
++  await page.addInitScript(() => {
++    localStorage.setItem('hermes_locale', 'en')
++    ;(window as any).__passkeyMode = 'success'
++    ;(window as any).__passkeyRequests = []
++
++    const bytes = (text: string) => new TextEncoder().encode(text).buffer
++    const fakeCredential = {
++      id: 'credential-id',
++      rawId: bytes('credential-id'),
++      type: 'public-key',
++      authenticatorAttachment: 'platform',
++      getClientExtensionResults: () => ({}),
++      response: {
++        clientDataJSON: bytes('{}'),
++        attestationObject: bytes(''),
++        authenticatorData: bytes(''),
++        signature: bytes('sig'),
++        userHandle: bytes('1'),
++        getTransports: () => ['internal'],
++      },
++    }
++
++    Object.defineProperty(navigator, 'credentials', {
++      configurable: true,
++      value: {
++        get: async () => {
++          const mode = (window as any).__passkeyMode
++          if (mode === 'cancel') {
++            const error: any = new Error('The operation either timed out or was not allowed.')
++            error.name = 'NotAllowedError'
++            throw error
++          }
++          if (mode === 'unknown') {
++            const error: any = new Error('An unknown error occurred while talking to the credential manager.')
++            error.name = 'UnknownError'
++            throw error
++          }
++          return fakeCredential
++        },
++        create: async () => fakeCredential,
++      },
++    })
++
++    // Record ceremony calls from inside the page so ordering is observable.
++    const originalFetch = window.fetch.bind(window)
++    window.fetch = ((input: any, init?: any) => {
++      const url = typeof input === 'string' ? input : input?.url || ''
++      if (url.includes('/api/auth/webauthn/')) {
++        ;(window as any).__passkeyRequests.push({ url, method: init?.method || 'GET' })
++      }
++      return originalFetch(input, init)
++    }) as typeof window.fetch
++  })
++}
++
++// Serial: the suite is fullyParallel, and the login view needs ~2s to fetch the
++// passkey status. Five workers racing the same dev server starve each other and
++// produce flaky "element not found" failures that look like product bugs.
++test.describe.configure({ mode: 'serial' })
++
++test.describe('passkey login', () => {
++  test('hides the entry when no passkey is bound on the instance', async ({ page }) => {
++    await setup(page, statusWithoutCredential)
++    await page.goto('/login')
++
++    // Wait for the password form (always present), then assert the passkey entry
++    // stays absent. Asserting absence immediately would only prove "not loaded yet".
++    await expect(page.locator('.login-btn')).toBeVisible({ timeout: 15000 })
++    await page.waitForTimeout(3000)
++    await expect(page.locator('.login-btn-passkey')).toHaveCount(0)
++  })
++
++  test('hides the entry when the RP is not configured', async ({ page }) => {
++    await setup(page, statusUnconfigured)
++    await page.goto('/login')
++
++    await expect(page.locator('.login-btn')).toBeVisible({ timeout: 15000 })
++    await page.waitForTimeout(3000)
++    await expect(page.locator('.login-btn-passkey')).toHaveCount(0)
++  })
++
++  test('signs in through the ceremony and stores the session', async ({ page }) => {
++    await setup(page, statusWithCredential)
++    await page.goto('/login')
++
++    const passkeyButton = page.locator('.login-btn-passkey')
++    await expect(passkeyButton).toBeVisible()
++    await passkeyButton.click()
++
++    await expect.poll(() => page.evaluate(() => localStorage.getItem('hermes_api_key')))
++      .toBe(sessionToken)
++
++    // The status probe also hits /api/auth/webauthn/; only the ceremony halves
++    // matter here, and they must be exactly these two, in this order.
++    const calls = await page.evaluate(() => (window as any).__passkeyRequests)
++    const ceremony = calls
++      .map((call: any) => String(call.url).split('/api/')[1])
++      .filter((path: string) => path.includes('/login/'))
++    expect(ceremony).toEqual(['auth/webauthn/login/begin', 'auth/webauthn/login/finish'])
++    const ceremonyCalls = calls.filter((call: any) => String(call.url).includes('/login/'))
++    expect(ceremonyCalls.every((call: any) => call.method === 'POST')).toBe(true)
++  })
++
++  test('reports a cancelled ceremony without storing a session', async ({ page }) => {
++    await setup(page, statusWithCredential)
++    await page.goto('/login')
++    const button = page.locator('.login-btn-passkey')
++    await expect(button).toBeVisible({ timeout: 15000 })
++    // Set the mode only after the page has settled: addInitScript re-runs on every
++    // navigation and would otherwise reset this flag before the click.
++    await page.evaluate(() => { (window as any).__passkeyMode = 'cancel' })
++    await button.click()
++
++    await expect(page.locator('.login-error')).toContainText(/no passkey was found/i)
++    await expect.poll(() => page.evaluate(() => localStorage.getItem('hermes_api_key'))).toBeNull()
++    const calls = await page.evaluate(() => (window as any).__passkeyRequests)
++    expect(calls.some((call: any) => String(call.url).includes('login/finish'))).toBe(false)
++  })
++
++  test('maps an unknown credential-manager error to a configuration hint', async ({ page }) => {
++    await setup(page, statusWithCredential)
++    await page.goto('/login')
++    const button = page.locator('.login-btn-passkey')
++    await expect(button).toBeVisible({ timeout: 15000 })
++    await page.evaluate(() => { (window as any).__passkeyMode = 'unknown' })
++    await button.click()
++
++    await expect(page.locator('.login-error')).toContainText(/RP ID|domain/i)
++  })
++})
+diff --git a/tests/server/webauthn-passkey.test.ts b/tests/server/webauthn-passkey.test.ts
+new file mode 100644
+index 000000000..d4ef3c381
+--- /dev/null
++++ b/tests/server/webauthn-passkey.test.ts
+@@ -0,0 +1,209 @@
++import { afterEach, beforeEach, expect, it, vi } from 'vitest'
++import { DatabaseSync } from 'node:sqlite'
++
++/**
++ * Passkey (WebAuthn) backend tests.
++ *
++ * These cover the parts that do not need a real authenticator: RP configuration
++ * validation (the misconfiguration that produces the useless "unknown error" on
++ * phones), credential storage scoping, and the one-shot challenge lifecycle.
++ * The full ceremony is exercised separately with a Chrome virtual authenticator.
++ */
++
++let db: DatabaseSync
++let webauthn: typeof import('../../packages/server/src/modules/studio/public/webauthn')
++let store: typeof import('../../packages/server/src/modules/studio/repositories/webauthn-store')
++
++const SETTINGS_DDL = `CREATE TABLE studio_settings (
++  key TEXT PRIMARY KEY,
++  value TEXT NOT NULL,
++  updated_at INTEGER NOT NULL
++)`
++
++const CREDENTIALS_DDL = `CREATE TABLE webauthn_credentials (
++  id INTEGER PRIMARY KEY AUTOINCREMENT,
++  user_id INTEGER NOT NULL,
++  credential_id_hex TEXT NOT NULL UNIQUE,
++  credential TEXT NOT NULL,
++  name TEXT NOT NULL DEFAULT '',
++  created_at INTEGER NOT NULL,
++  last_used_at INTEGER
++)`
++
++const USERS_DDL = `CREATE TABLE users (
++  id INTEGER PRIMARY KEY AUTOINCREMENT,
++  username TEXT NOT NULL UNIQUE,
++  password_hash TEXT NOT NULL,
++  role TEXT NOT NULL DEFAULT 'admin',
++  status TEXT NOT NULL DEFAULT 'active',
++  created_at INTEGER NOT NULL,
++  updated_at INTEGER NOT NULL,
++  last_login_at INTEGER,
++  avatar TEXT NOT NULL DEFAULT ''
++)`
++
++beforeEach(async () => {
++  vi.resetModules()
++  db = new DatabaseSync(':memory:')
++  db.exec(SETTINGS_DDL)
++  db.exec(CREDENTIALS_DDL)
++  db.exec(USERS_DDL)
++  db.prepare('INSERT INTO users (id, username, password_hash, role, created_at, updated_at) VALUES (1, ?, ?, ?, 1, 1)')
++    .run('aries', 'scrypt:aa:bb', 'super_admin')
++  vi.doMock('../../packages/server/src/modules/studio/infrastructure/database/index', () => ({ getDb: () => db }))
++  vi.doMock('../../packages/server/src/modules/studio/public/profile-config', () => ({ listProfileNamesFromDisk: () => [] }))
++  webauthn = await import('../../packages/server/src/modules/studio/public/webauthn')
++  store = await import('../../packages/server/src/modules/studio/repositories/webauthn-store')
++})
++
++afterEach(() => {
++  db.close()
++  vi.restoreAllMocks()
++})
++
++function seedCredential(userId: number, hex: string, id = `id-${hex}`) {
++  return store.insertCredential({
++    userId,
++    credentialIdHex: hex,
++    credentialJson: JSON.stringify({ id, publicKey: 'AAAA', counter: 0 }),
++    name: 'test',
++  })
++}
++
++// --- RP configuration -----------------------------------------------------
++
++it('reports passkeys as unconfigured until an RP ID and origin are set', () => {
++  expect(webauthn.publicStatus()).toEqual({ enabled: false, hasCredentials: false })
++  expect(() => webauthn.readRpConfig()).not.toThrow()
++  expect(webauthn.isConfigured()).toBe(false)
++})
++
++it('accepts a bare RP ID with a matching origin and applies it immediately', () => {
++  const config = webauthn.writeRpConfig({
++    rpID: 'hermes-studio.example.com',
++    rpName: 'Ekko Studio',
++    origins: 'https://hermes-studio.example.com',
++  })
++  expect(config.rpID).toBe('hermes-studio.example.com')
++  expect(config.origins).toEqual(['https://hermes-studio.example.com'])
++  // No cache between write and read: the next login must see the new value.
++  expect(webauthn.readRpConfig().rpID).toBe('hermes-studio.example.com')
++  expect(webauthn.publicStatus().enabled).toBe(true)
++})
++
++it('normalises origins and allows several of them', () => {
++  const config = webauthn.writeRpConfig({
++    rpID: 'example.com',
++    origins: 'https://example.com/, https://app.example.com \n https://example.com',
++  })
++  expect(config.origins).toEqual(['https://example.com', 'https://app.example.com'])
++})
++
++it('rejects an RP ID carrying a scheme, port or path', () => {
++  for (const rpID of ['https://example.com', 'example.com:443', 'example.com/app', 'exa mple.com']) {
++    expect(() => webauthn.writeRpConfig({ rpID, origins: 'https://example.com' }))
++      .toThrow(webauthn.WebAuthnConfigError)
++  }
++})
++
++it('rejects an origin that the RP ID does not cover', () => {
++  // A browser would refuse this ceremony anyway; failing at config time turns a
++  // silent "unknown error" into an actionable message.
++  expect(() => webauthn.writeRpConfig({
++    rpID: 'hermes-studio.example.com',
++    origins: 'https://other.example.net',
++  })).toThrow(webauthn.WebAuthnConfigError)
++})
++
++it('rejects a non-URL origin', () => {
++  expect(() => webauthn.writeRpConfig({ rpID: 'example.com', origins: 'not-a-url' }))
++    .toThrow(webauthn.WebAuthnConfigError)
++})
++
++it('surfaces a configuration error instead of throwing when reading status', () => {
++  db.prepare('INSERT INTO studio_settings VALUES (?, ?, ?)').run('webauthn.rpId', 'example.com', 1)
++  db.prepare('INSERT INTO studio_settings VALUES (?, ?, ?)').run('webauthn.origins', 'garbage', 1)
++  const described = webauthn.describeRpConfig()
++  expect(described.configured).toBe(false)
++  expect(described.error).toBeTruthy()
++})
++
++// --- Credential storage ---------------------------------------------------
++
++it('computes the stored id digest from the raw credential id', () => {
++  // SHA-256 of the base64url-decoded credential id keeps the unique index short.
++  const a = store.credentialIdHex('AAAA')
++  const b = store.credentialIdHex('AAAB')
++  expect(a).toHaveLength(64)
++  expect(a).not.toBe(b)
++})
++
++it('scopes credential deletion to the owner', () => {
++  const record = seedCredential(1, 'a'.repeat(64))
++  expect(store.deleteCredential(2, record.id)).toBe(false)
++  expect(store.countUserCredentials(1)).toBe(1)
++  expect(store.deleteCredential(1, record.id)).toBe(true)
++  expect(store.countUserCredentials(1)).toBe(0)
++})
++
++it('lists only the requesting account credentials without leaking keys', () => {
++  seedCredential(1, 'b'.repeat(64))
++  seedCredential(2, 'c'.repeat(64))
++  const own = webauthn.listCredentialViews(1)
++  expect(own).toHaveLength(1)
++  expect(Object.keys(own[0]).sort()).toEqual(['created_at', 'id', 'last_used_at', 'name'])
++  expect(webauthn.hasAnyCredential()).toBe(true)
++})
++
++it('rejects a duplicate credential id', () => {
++  seedCredential(1, 'd'.repeat(64))
++  expect(() => seedCredential(1, 'd'.repeat(64))).toThrow()
++})
++
++// --- Challenge lifecycle --------------------------------------------------
++
++it('refuses to begin a login when no passkey exists yet', async () => {
++  webauthn.writeRpConfig({ rpID: 'example.com', origins: 'https://example.com' })
++  await expect(webauthn.beginLogin()).rejects.toThrow(/No passkey is registered/)
++})
++
++it('issues distinct one-shot challenges and rejects replays', async () => {
++  webauthn.writeRpConfig({ rpID: 'example.com', origins: 'https://example.com' })
++  seedCredential(1, 'e'.repeat(64))
++
++  const first = await webauthn.beginLogin()
++  const second = await webauthn.beginLogin()
++  expect(first.sessionToken).not.toBe(second.sessionToken)
++  expect((first.options as { challenge: string }).challenge)
++    .not.toBe((second.options as { challenge: string }).challenge)
++
++  // Consuming an unknown token must fail rather than fall through to success.
++  await expect(webauthn.finishLogin({ sessionToken: 'nope', response: {} as never }))
++    .rejects.toThrow(webauthn.WebAuthnSessionError)
++})
++
++it('rejects an expired registration session', async () => {
++  webauthn.writeRpConfig({ rpID: 'example.com', origins: 'https://example.com' })
++  const begin = await webauthn.beginRegistration(1)
++  expect(begin.sessionToken).toHaveLength(64)
++  webauthn.clearSessions()
++  await expect(webauthn.finishRegistration({
++    userId: 1,
++    sessionToken: begin.sessionToken,
++    response: {} as never,
++  })).rejects.toThrow(webauthn.WebAuthnSessionError)
++})
++
++it('rejects a registration session belonging to another user', async () => {
++  webauthn.writeRpConfig({ rpID: 'example.com', origins: 'https://example.com' })
++  const begin = await webauthn.beginRegistration(1)
++  await expect(webauthn.finishRegistration({
++    userId: 2,
++    sessionToken: begin.sessionToken,
++    response: {} as never,
++  })).rejects.toThrow(webauthn.WebAuthnSessionError)
++})
++
++it('requires RP configuration before starting a registration', async () => {
++  await expect(webauthn.beginRegistration(1)).rejects.toThrow(webauthn.WebAuthnConfigError)
++})
+-- 
+2.53.0
+
