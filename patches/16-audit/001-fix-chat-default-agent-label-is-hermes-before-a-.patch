@@ -9,10 +9,10 @@ Subject: [PATCH] fix(chat): default agent avatar is Hermes before a session
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/utils/chat-agent-avatar.ts b/packages/client/src/utils/chat-agent-avatar.ts
-index 7575ad8ed..701130bb1 100644
+index 923449b5b..2eeea1145 100644
 --- a/packages/client/src/utils/chat-agent-avatar.ts
 +++ b/packages/client/src/utils/chat-agent-avatar.ts
-@@ -67,7 +67,9 @@ export function personTaskAgentAvatar(task: { selection_json: string }): ChatAge
+@@ -68,7 +68,9 @@ export function personTaskAgentAvatar(task: { selection_json: string }): ChatAge
  }
  
  export function chatSessionAgentAvatar(session?: ChatAgentSessionIdentity | null): ChatAgentAvatar {
@@ -22,4 +22,4 @@ index 7575ad8ed..701130bb1 100644
 +  if (!session) return AGENT_AVATARS.hermes
    const botType = session.botType || session.bot_type || (session.id?.startsWith('person-main-') ? DEFAULT_PERSON_BOT_TYPE : '')
    const bot = personBot(botType)
-   if (bot) return { label: personBotLabel(bot), src: deploymentUrl(bot.avatar) }
+   if (bot) {

@@ -1,4 +1,4 @@
-From 4759e3b2b04a4ceeeb18e26517ddb85a248cb1bc Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 5 Nov 2026 22:30:27 +0800
 Subject: [PATCH] feat(pwa): restore installable PWA with an offline-capable
@@ -7448,6 +7448,3 @@ index 000000000..cfad9f110
 +    expect(getStaticCacheControl('./sw.js')).toBe(SERVICE_WORKER_CACHE_CONTROL)
 +  })
 +})
--- 
-2.53.0
-
