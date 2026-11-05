@@ -1046,6 +1046,7 @@ export default {
   },
 
   toolStream: {
+    argsTitle: '呼叫參數',
     format: '格式化',
     highlight: '語法高亮',
     zoomIn: '放大',
