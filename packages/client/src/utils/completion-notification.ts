@@ -75,13 +75,10 @@ async function showServiceWorkerNotification(payload: SystemNotificationPayload)
   if (typeof navigator === 'undefined' || !navigator.serviceWorker || typeof navigator.serviceWorker.register !== 'function') return false
 
   try {
-    const registration = await withTimeout(
-      navigator.serviceWorker.register('/notification-sw.js'),
-      3000,
-      null,
-    )
+    // Reuse the app worker (`/sw.js`). A second registration on the same scope
+    // would replace the app worker and silently drop all asset caching.
+    const registration = await withTimeout(navigator.serviceWorker.ready, 3000, null)
     if (!registration) return false
-    await withTimeout(navigator.serviceWorker.ready, 3000, registration)
     await registration.showNotification(payload.title, browserNotificationOptions(payload))
     return true
   } catch (err) {
