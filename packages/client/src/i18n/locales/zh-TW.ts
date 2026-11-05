@@ -464,7 +464,7 @@ export default {
     passkeyRpMismatch: '目前位址與 Passkey 網域不一致，請改用設定的網域存取。',
     // <<< passkey i18n <<<
 
-    title: 'Ekko Studio',
+    title: 'Hermes Studio',
     description: '輸入使用者名稱和密碼以繼續。',
     placeholder: '存取權杖',
     submit: '登入',

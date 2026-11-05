@@ -476,7 +476,7 @@ export default {
     passkeyRpMismatch: 'Cette adresse ne correspond pas au domaine de la clé d’accès. Ouvrez le domaine configuré.',
     // <<< passkey i18n <<<
 
-    title: 'Ekko Studio',
+    title: 'Hermes Studio',
     description: 'Entrez votre nom d\'utilisateur et votre mot de passe pour continuer.',
     placeholder: 'Jeton d\'acces',
     submit: 'Connexion',
