@@ -24,6 +24,7 @@ import { useI18n } from "vue-i18n";
 import { getThemeOverrides } from "@/styles/theme";
 import { useTheme } from "@/composables/useTheme";
 import { useKeyboard } from "@/composables/useKeyboard";
+import { usePwa } from "@/composables/usePwa";
 import { useSessionSearch } from "@/composables/useSessionSearch";
 import { watchServerTtsSettingsHydration } from "@/composables/useTtsSettingsHydration";
 import { useAppStore } from "@/stores/hermes/app";
@@ -323,6 +324,7 @@ onUnmounted(() => {
 });
 
 useKeyboard();
+usePwa();
 </script>
 
 <template>
