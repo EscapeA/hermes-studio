@@ -469,6 +469,14 @@ export default {
   },
   // Login
   login: {
+    // >>> passkey i18n (generated) >>>
+    passkeyOr: 'ou',
+    passkeySubmit: 'Entrar com passkey',
+    passkeyCancelled: 'Nenhuma passkey encontrada neste dispositivo, ou operação cancelada. Use a senha ou adicione uma passkey nas configurações da conta.',
+    passkeyUnavailable: 'Passkeys não estão disponíveis aqui. Abra o site via HTTPS.',
+    passkeyRpMismatch: 'Este endereço não corresponde ao domínio da passkey. Abra o domínio configurado.',
+    // <<< passkey i18n <<<
+
     title: 'Ekko Studio',
     description: 'Insira seu nome de usuário e senha para continuar.',
     placeholder: 'Token de acesso',
@@ -2779,6 +2787,39 @@ jobTriggered: 'Job acionado',
         pairing: 'Device pairing',
       },
     },
+    // >>> passkey settings i18n (generated) >>>
+    passkey: {
+      title: 'Passkeys',
+      description: 'Entre sem senha com Touch ID, Windows Hello ou seu celular. O login por senha continua disponível.',
+      namePlaceholder: 'Nome da passkey (ex. MacBook)',
+      add: 'Adicionar passkey',
+      added: 'Passkey adicionada',
+      removed: 'Passkey removida',
+      unnamed: 'Passkey sem nome',
+      addedAt: 'Adicionada em {time}',
+      lastUsed: 'Último uso {time}',
+      neverUsed: 'nunca',
+      remove: 'Remover',
+      removeConfirm: 'Remover esta passkey? Você não poderá mais entrar com ela.',
+      empty: 'Nenhuma passkey está vinculada a esta conta ainda.',
+      rpTitle: 'Configuração do servidor',
+      rpDescription: 'O WebAuthn exige que o RP ID seja o domínio deste site (ou o domínio pai) e que a origem corresponda exatamente. Ambos são lidos a cada login, então as alterações valem na hora.',
+      rpId: 'RP ID',
+      rpName: 'Nome de exibição',
+      origins: 'Origens permitidas (uma por linha ou separadas por vírgula)',
+      useCurrentAddress: 'Usar endereço atual',
+      saveRp: 'Salvar',
+      rpSaved: 'Configuração de passkeys salva',
+      errors: {
+        unsupported: 'Este navegador não suporta passkeys.',
+        insecure: 'Passkeys exigem HTTPS (ou localhost).',
+        rpMismatch: 'O RP ID não cobre este domínio. Peça a um administrador para corrigir a configuração.',
+        alreadyRegistered: 'Este autenticador já está registrado.',
+        cancelled: 'Operação com passkey cancelada.',
+        failed: 'A operação com passkey falhou.',
+      },
+    },
+    // <<< passkey settings i18n <<<
     userAvatar: {
       title: 'Avatar do usuário',
       upload: 'Enviar imagem',

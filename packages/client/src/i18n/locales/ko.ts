@@ -469,6 +469,14 @@ export default {
   },
   // 로그인
   login: {
+    // >>> passkey i18n (generated) >>>
+    passkeyOr: '또는',
+    passkeySubmit: '패스키로 로그인',
+    passkeyCancelled: '이 기기에서 패스키를 찾지 못했거나 작업이 취소되었습니다. 비밀번호로 로그인하거나 계정 설정에서 패스키를 추가하세요.',
+    passkeyUnavailable: '이 환경에서는 패스키를 사용할 수 없습니다. HTTPS로 접속하세요.',
+    passkeyRpMismatch: '현재 주소가 패스키 도메인과 일치하지 않습니다. 설정된 도메인으로 접속하세요.',
+    // <<< passkey i18n <<<
+
     title: 'Ekko Studio',
     description: '계속하려면 사용자 이름과 비밀번호를 입력하세요.',
     placeholder: '액세스 토큰',
@@ -2780,6 +2788,39 @@ export default {
         pairing: 'Device pairing',
       },
     },
+    // >>> passkey settings i18n (generated) >>>
+    passkey: {
+      title: '패스키',
+      description: '지문, Windows Hello 또는 휴대폰으로 비밀번호 없이 로그인할 수 있습니다. 비밀번호 로그인도 계속 사용할 수 있습니다.',
+      namePlaceholder: '패스키 이름(예: MacBook)',
+      add: '패스키 추가',
+      added: '패스키가 추가되었습니다',
+      removed: '패스키가 삭제되었습니다',
+      unnamed: '이름 없는 패스키',
+      addedAt: '추가됨 {time}',
+      lastUsed: '마지막 사용 {time}',
+      neverUsed: '사용 안 함',
+      remove: '삭제',
+      removeConfirm: '이 패스키를 삭제할까요? 삭제하면 이 패스키로 로그인할 수 없습니다.',
+      empty: '이 계정에는 아직 패스키가 등록되지 않았습니다.',
+      rpTitle: '서버 설정',
+      rpDescription: 'WebAuthn에서는 RP ID가 이 사이트의 도메인(또는 상위 도메인)이어야 하고 Origin이 정확히 일치해야 합니다. 설정은 로그인할 때마다 읽히므로 저장하면 즉시 적용됩니다.',
+      rpId: 'RP ID',
+      rpName: '표시 이름',
+      origins: '허용할 Origin(한 줄에 하나 또는 쉼표로 구분)',
+      useCurrentAddress: '현재 주소 사용',
+      saveRp: '저장',
+      rpSaved: '패스키 설정이 저장되었습니다',
+      errors: {
+        unsupported: '이 브라우저는 패스키를 지원하지 않습니다.',
+        insecure: '패스키에는 HTTPS(또는 localhost)가 필요합니다.',
+        rpMismatch: 'RP ID가 현재 도메인을 포함하지 않습니다. 관리자에게 패스키 설정 수정을 요청하세요.',
+        alreadyRegistered: '이 인증기는 이미 등록되었습니다.',
+        cancelled: '패스키 작업이 취소되었습니다.',
+        failed: '패스키 작업에 실패했습니다.',
+      },
+    },
+    // <<< passkey settings i18n <<<
     userAvatar: {
       title: '사용자 아바타',
       upload: '이미지 업로드',

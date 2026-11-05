@@ -469,6 +469,14 @@ export default {
   },
   // ログイン
   login: {
+    // >>> passkey i18n (generated) >>>
+    passkeyOr: 'または',
+    passkeySubmit: 'パスキーでサインイン',
+    passkeyCancelled: 'このデバイスにパスキーが見つからないか、操作がキャンセルされました。パスワードでサインインするか、アカウント設定でパスキーを追加してください。',
+    passkeyUnavailable: 'この環境ではパスキーを利用できません。HTTPS でアクセスしてください。',
+    passkeyRpMismatch: '現在のアドレスがパスキーのドメインと一致しません。設定されたドメインでアクセスしてください。',
+    // <<< passkey i18n <<<
+
     title: 'Ekko Studio',
     description: 'ユーザー名とパスワードを入力して続行してください。',
     placeholder: 'アクセストークン',
@@ -2780,6 +2788,39 @@ export default {
         pairing: 'Device pairing',
       },
     },
+    // >>> passkey settings i18n (generated) >>>
+    passkey: {
+      title: 'パスキー',
+      description: '指紋認証や Windows Hello、スマートフォンでパスワードなしにサインインできます。パスワードログインも引き続き利用できます。',
+      namePlaceholder: 'パスキー名（例：MacBook）',
+      add: 'パスキーを追加',
+      added: 'パスキーを追加しました',
+      removed: 'パスキーを削除しました',
+      unnamed: '名前のないパスキー',
+      addedAt: '追加日 {time}',
+      lastUsed: '最終使用 {time}',
+      neverUsed: '未使用',
+      remove: '削除',
+      removeConfirm: 'このパスキーを削除しますか？削除すると、このパスキーでサインインできなくなります。',
+      empty: 'このアカウントにはまだパスキーが登録されていません。',
+      rpTitle: 'サーバー設定',
+      rpDescription: 'WebAuthn では RP ID を本サイトのドメイン（または親ドメイン）に、Origin を完全一致させる必要があります。設定は毎回のログイン時に読み込まれるため、保存するとすぐ反映されます。',
+      rpId: 'RP ID',
+      rpName: '表示名',
+      origins: '許可する Origin（1 行に 1 つ、またはカンマ区切り）',
+      useCurrentAddress: '現在のアドレスを使用',
+      saveRp: '保存',
+      rpSaved: 'パスキー設定を保存しました',
+      errors: {
+        unsupported: 'このブラウザはパスキーに対応していません。',
+        insecure: 'パスキーには HTTPS（または localhost）が必要です。',
+        rpMismatch: 'RP ID が現在のドメインを対象にしていません。管理者にパスキー設定の修正を依頼してください。',
+        alreadyRegistered: 'この認証器はすでに登録されています。',
+        cancelled: 'パスキー操作をキャンセルしました。',
+        failed: 'パスキー操作に失敗しました。',
+      },
+    },
+    // <<< passkey settings i18n <<<
     userAvatar: {
       title: 'ユーザーアバター',
       upload: '画像をアップロード',
