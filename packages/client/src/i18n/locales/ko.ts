@@ -477,7 +477,7 @@ export default {
     passkeyRpMismatch: '현재 주소가 패스키 도메인과 일치하지 않습니다. 설정된 도메인으로 접속하세요.',
     // <<< passkey i18n <<<
 
-    title: 'Ekko Studio',
+    title: 'Hermes Studio',
     description: '계속하려면 사용자 이름과 비밀번호를 입력하세요.',
     placeholder: '액세스 토큰',
     submit: '로그인',

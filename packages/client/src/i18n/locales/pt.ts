@@ -477,7 +477,7 @@ export default {
     passkeyRpMismatch: 'Este endereço não corresponde ao domínio da passkey. Abra o domínio configurado.',
     // <<< passkey i18n <<<
 
-    title: 'Ekko Studio',
+    title: 'Hermes Studio',
     description: 'Insira seu nome de usuário e senha para continuar.',
     placeholder: 'Token de acesso',
     submit: 'Entrar',
