@@ -2,6 +2,7 @@ import { readFile, writeFile, mkdir } from 'fs/promises'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
 import { config } from '../../public/config'
+import { resolveClientIp } from '../../public/client-ip'
 
 const APP_HOME = config.appHome
 const LOCK_FILE = join(APP_HOME, '.login-lock.json')
@@ -50,7 +51,13 @@ function now(): number {
 }
 
 function extractIp(ctx: any): string {
-  return ctx?.ip || ctx?.request?.ip || 'unknown'
+  // Never key the limiter on ctx.ip alone: without `app.proxy` it is the
+  // reverse proxy socket (always 127.0.0.1), which collapses every external
+  // visitor into one bucket and lets any anonymous client lock the
+  // installation out. resolveClientIp only honours forwarded headers when the
+  // socket peer is a configured trusted proxy.
+  const resolution = resolveClientIp(ctx)
+  return resolution.ip
 }
 
 function pruneIpMap(map: Record<string, IpEntry>): void {
@@ -119,10 +126,24 @@ export type CheckResult =
   | { allowed: true }
   | { allowed: false; status: 429 | 503 }
 
-function checkGlobalLimits(): CheckResult | null {
+function isLoopbackKey(ip: string): boolean {
+  const normalized = String(ip || '').trim().toLowerCase()
+  if (normalized.startsWith('::ffff:')) {
+    return isLoopbackKey(normalized.slice('::ffff:'.length))
+  }
+  return normalized === '127.0.0.1' || normalized === '::1' || normalized.startsWith('127.')
+}
+
+function checkGlobalLimits(ip?: string): CheckResult | null {
   const t = now()
+  // A locked bootstrap path is worse than the throttle it protects: the global
+  // ceiling can be driven by anonymous Internet traffic, and the only way to
+  // clear it is an authenticated request. Keep loopback (the operator on the
+  // host, or a socket-only fallback) able to authenticate so the lock can be
+  // released without restarting the process.
+  const exempt = Boolean(ip) && isLoopbackKey(ip as string)
   if (state.globalLockedUntil > 0 && t < state.globalLockedUntil) {
-    return { allowed: false, status: 503 }
+    if (!exempt) return { allowed: false, status: 503 }
   }
   if (state.globalLockedUntil > 0 && t >= state.globalLockedUntil) {
     state.globalLockedUntil = 0
@@ -134,7 +155,7 @@ function checkGlobalLimits(): CheckResult | null {
     state.globalMinuteCount = 0
   }
   if (state.globalMinuteCount >= GLOBAL_MAX_REQUESTS_PER_WINDOW) {
-    return { allowed: false, status: 429 }
+    if (!exempt) return { allowed: false, status: 429 }
   }
   return null
 }
@@ -216,7 +237,7 @@ function recordIpFailure(map: Record<string, IpEntry>, ip: string): IpEntry {
 
 export function checkPassword(ip: string): CheckResult {
   cleanupIpMapsAndSchedulePersist()
-  const global = checkGlobalLimits()
+  const global = checkGlobalLimits(ip)
   if (global) return global
 
   // Password login remains available when stale browser/API tokens are locked.
@@ -231,7 +252,7 @@ export function checkPassword(ip: string): CheckResult {
 
 export function checkToken(ip: string): CheckResult {
   cleanupIpMapsAndSchedulePersist()
-  const global = checkGlobalLimits()
+  const global = checkGlobalLimits(ip)
   if (global) return global
 
   // Check all lock maps so an IP blocked for abuse cannot pivot to another public endpoint.
