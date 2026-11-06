@@ -4,9 +4,16 @@ import * as ctrl from '../controllers/tts'
 export const ttsRoutes = new Router()
 export const ttsProtectedRoutes = new Router()
 
-ttsRoutes.post('/api/studio/tts', ctrl.generate)
-ttsRoutes.post('/api/tts/proxy/audio/speech', ctrl.openaiProxy)
+// Public: MCU firmware fetches its prompt tones before it holds a credential.
 ttsRoutes.get('/api/studio/mcu/audio/:file', ctrl.mcuAudio)
+
+// Speech synthesis is an expensive outbound operation (Edge TTS / configured
+// providers) and has no anonymous caller: the bundled client uses
+// /api/studio/tts/synthesize, and the legacy App alias maps onto these paths
+// while still carrying its own token. Leaving them public let any stranger use
+// the deployment as a free text-to-speech service.
+ttsProtectedRoutes.post('/api/studio/tts', ctrl.generate)
+ttsProtectedRoutes.post('/api/tts/proxy/audio/speech', ctrl.openaiProxy)
 
 ttsProtectedRoutes.get('/api/studio/tts/settings', ctrl.listSettings)
 ttsProtectedRoutes.post('/api/studio/voice/proxy/:profile/v1/tts', ctrl.synthesizeVoiceProxy)
