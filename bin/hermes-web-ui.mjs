@@ -206,7 +206,14 @@ function getRestartArgs(port, argv = process.argv) {
 
 function enableClientMode() {
   process.env.HERMES_WEB_UI_DISABLE_GATEWAY_AUTOSTART = '1'
-  process.env.CORS_ORIGINS = '*'
+  // Respect an operator-provided allowlist. Forcing '*' reflected every Origin
+  // back to the caller, which discarded the same-host default the server
+  // applies when CORS_ORIGINS is unset and made the deployment look like it
+  // trusted arbitrary sites. Only fall back to '*' for a bare client start with
+  // no configured policy, which keeps split-origin dev setups working.
+  if (!process.env.CORS_ORIGINS?.trim()) {
+    process.env.CORS_ORIGINS = '*'
+  }
 }
 
 function commandExists(command) {
