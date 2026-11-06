@@ -12,9 +12,15 @@ import { createMcuDevice, deleteMcuDevice, getMcuDevice, listMcuDevices, updateM
 
 export async function mcuBackendInfoController(ctx: Context) {
   ctx.set('Access-Control-Allow-Origin', '*')
+  // This route is unauthenticated so MCU firmware and LAN pairing clients can
+  // discover the backend before they hold a credential. Only expose what that
+  // flow actually needs: the device identity the client verifies against, plus
+  // the relay wiring. Hostname, kernel release, port and version numbers are
+  // host reconnaissance and stay local.
+  const info = await getPublicSystemInfo()
   ctx.body = {
-    ...await getPublicSystemInfo(),
-    http_port: config.port,
+    device_id: info.device_id,
+    device_public_key: info.device_public_key,
     endpoint_kind: getLanEndpointKind(config.port),
     relay_url: config.remoteRelay.url,
     app_relay: { protocol: 'socket.io', namespace: '/app-relay', direct: true },
