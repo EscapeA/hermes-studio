@@ -14,10 +14,10 @@ custom-next = main + patches/*.patch 线性重放（当前唯一集成分支）
 > `README.md` 与 `e2e/README.md`）并简化 CI（`vitest.config.ts` 加 `passWithNoTests`,
 > `test:e2e` 改 `--pass-with-no-tests`, 删 `harness:memory` / `test:pi-rpc-real` / `test:workflow-live`）。
 > 因此补丁串做了「去测试化」：**退役 13 条 test-only 补丁**，并把其余补丁里的 `tests/**`
-> 文件段剥掉 ⇒ **25 组 / 67 条**（2026-11-05 增补 `28-exec-stream` 2 条 ⇒ 26 组 / 69 条）。`scripts/verify-patch-stack.sh` 保留（它不依赖测试树）。
+> 文件段剥掉 ⇒ **25 组 / 67 条**（2026-11-05 增补 `28-exec-stream` 2 条 ⇒ 26 组 / 69 条；`29-pwa`、`30-passkey`、`31-brand` 各 1 条 ⇒ 28 组 / 72 条）。`scripts/verify-patch-stack.sh` 保留（它不依赖测试树）。
 > 上游删测试后 `harness:check` 也不再要求 `tests/client|server|e2e` 目录存在。
 
-## 分组总览（27 组 / 70 条）
+## 分组总览（28 组 / 72 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -49,6 +49,7 @@ custom-next = main + patches/*.patch 线性重放（当前唯一集成分支）
 | 28-exec-stream | 2 | 「Agent 执行直播」只读面板：按会话 tool 消息流回放调用（解包 JSON 信封 / MCP `{"result"}` 嵌套 / `untrusted_tool_result` 包装，参数归一化，shell 结构化着色，Python 与白名单 highlightAuto，底部留白两行，缩放/格式化/高亮开关持久化）；调用行带 `⟨展开⟩` 入口，点开看完整参数） |
 | 29-pwa | 1 | 安装式 PWA + 离线外壳 |
 | 30-passkey | 1 | Passkey(WebAuthn) 登录：可发现凭证免密登录 + 账号内凭证管理 + 超管 RP 配置页；密码登录保留 |
+| 31-brand | 1 | 品牌资产换成 Hermes Studio 女孩图（图标/启动图/logo/群聊头像）+ 构建期 `?v=<hash>` 版本串绕过 CDN 边缘缓存 |
 
 ## ORDER 的语义
 
