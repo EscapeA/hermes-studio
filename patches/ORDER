@@ -70,3 +70,4 @@
 091 29-pwa/001-feat-pwa-restore-an-installable-pwa-with-an-offline-shell.patch
 092 30-passkey/001-feat-auth-add-passkey-webauthn-sign-in.patch
 093 31-brand/001-feat-brand-adopt-the-hermes-studio-girl-icon.patch
+094 32-login-throttle/001-fix-security-key-login-throttling-on-the-real-clie.patch
