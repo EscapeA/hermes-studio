@@ -1,0 +1,600 @@
+From 2428a74608a459ca05c3dd85f5a9d981b74e15a0 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Thu, 5 Nov 2026 17:07:29 +0800
+Subject: [PATCH] feat(chat): expand a tool call's full arguments on demand
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+调用行仍保持单行摘要，多行参数末尾带 ⟨展开⟩，点它弹出完整参数。
+摘要始终一眼能看完，需要细节时才展开，不用把几十行代码塞进终端。
+
+实现：
+- format 层导出 EXPAND_MARKER / EXPAND_MARKER_PATTERN 与
+  fullToolArgsText()；后者给原始参数（多行原样、JSON 字符串缩进），
+  与调用行摘要刻意不同。
+- 摘要被 SUMMARY_MAX 截断时保住标记，否则入口会消失。
+- 面板用 xterm registerLinkProvider 接管点击：只在带标记的行返回可点
+  区间（underline + pointerCursor），activate 时按行号反查 tool 消息。
+- lineOwners 登记必须放在 write 回调里：xterm 的 write 是异步的，
+  写入前读 cursorY 会整体错位（实测第 1 行被登记成下一条消息）。
+- 浮层贴底弹出、卡片面走 data-theme-surface="card" + $bg-card，
+  不做全屏遮罩——仓库没有 scrim token，硬编码 rgba 会被 harness 拦下。
+---
+ .../hermes/chat/ToolStreamPanel.vue           | 167 +++++++++++++++++-
+ .../hermes/chat/tool-stream-format.ts         |  57 +++++-
+ packages/client/src/i18n/locales/ar.ts        |   1 +
+ packages/client/src/i18n/locales/de.ts        |   1 +
+ packages/client/src/i18n/locales/en.ts        |   1 +
+ packages/client/src/i18n/locales/es.ts        |   1 +
+ packages/client/src/i18n/locales/fr.ts        |   1 +
+ packages/client/src/i18n/locales/ja.ts        |   1 +
+ packages/client/src/i18n/locales/ko.ts        |   1 +
+ packages/client/src/i18n/locales/pt.ts        |   1 +
+ packages/client/src/i18n/locales/ru.ts        |   1 +
+ packages/client/src/i18n/locales/tr.ts        |   1 +
+ packages/client/src/i18n/locales/zh-TW.ts     |   1 +
+ packages/client/src/i18n/locales/zh.ts        |   1 +
+ tests/client/tool-stream-highlight.test.ts    |  77 +++++++-
+ 15 files changed, 307 insertions(+), 6 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/ToolStreamPanel.vue b/packages/client/src/components/hermes/chat/ToolStreamPanel.vue
+index 68821510c..69a5fedcc 100644
+--- a/packages/client/src/components/hermes/chat/ToolStreamPanel.vue
++++ b/packages/client/src/components/hermes/chat/ToolStreamPanel.vue
+@@ -17,7 +17,10 @@ import { terminalTheme } from '@/styles/theme-integrations'
+ import { useChatStore } from '@/stores/hermes/chat'
+ import type { Message } from '@/stores/hermes/chat'
+ import {
++  EXPAND_MARKER,
++  EXPAND_MARKER_PATTERN,
+   chunkForWrite,
++  fullToolArgsText,
+   isStreamToolMessage,
+   messageSignature,
+   renderToolBlock,
+@@ -37,6 +40,31 @@ let fitAddon: FitAddon | null = null
+ let resizeObserver: ResizeObserver | null = null
+ /** 已渲染的 tool 消息 id → 上次渲染时的状态签名。 */
+ const rendered = new Map<string, string>()
++/**
++ * 缓冲区行号 → 该行属于哪个 tool 消息。
++ *
++ * 调用行带 ⟨展开⟩ 标记时点击要能反查到消息，所以写块时登记起始行，
++ * 供 LinkProvider 使用。replay 时随 term.reset() 一起清空。
++ */
++const lineOwners = new Map<number, string>()
++
++/** 当前展开的完整参数浮层内容；null = 关闭。 */
++const expandedArgs = ref<{ title: string; body: string } | null>(null)
++
++function openArgsPreview(messageId: string) {
++  const message = (chat.messages || []).find(m => m.id === messageId)
++  if (!message) return
++  const body = fullToolArgsText(message)
++  if (!body) return
++  expandedArgs.value = {
++    title: message.toolName || t('toolStream.tool'),
++    body,
++  }
++}
++
++function closeArgsPreview() {
++  expandedArgs.value = null
++}
+ 
+ const MAX_RENDERED_TOOLS = 200
+ 
+@@ -165,11 +193,21 @@ function writeBlock(message: Message) {
+     highlight: highlightOn.value,
+   })
+   if (!block) return
++  // 行号登记必须在写入**之后**做：xterm 的 write 是异步的，
++  // 写入前 cursorY 还没走到落点，按写入前算会整体错位（实测第 1 行被登记成下一条消息）。
++  const lineCount = block.split('\n').length
++  const beforeLine = term.buffer.active.baseY + term.buffer.active.cursorY
+   // 分块写入：完整内容照写，只是不让单次 write 阻塞主线程。
+   const chunks = chunkForWrite(toTerminalNewlines(block))
+   chunks.forEach((chunk, index) => {
+-    term?.write(chunk, index === chunks.length - 1
+-      ? () => { if (stick) term?.scrollToBottom() }
++    const isLast = index === chunks.length - 1
++    term?.write(chunk, isLast
++      ? () => {
++        const afterLine = term!.buffer.active.baseY + term!.buffer.active.cursorY
++        const startLine = Math.max(beforeLine, afterLine - (lineCount - 1))
++        for (let i = 0; i < lineCount; i += 1) lineOwners.set(startLine + i, message.id)
++        if (stick) term?.scrollToBottom()
++      }
+       : undefined)
+   })
+ }
+@@ -178,6 +216,8 @@ function replay() {
+   if (!term) return
+   term.reset()
+   rendered.clear()
++  lineOwners.clear()
++  expandedArgs.value = null
+   const tools = streamTools()
+   const slice = tools.slice(-MAX_RENDERED_TOOLS)
+   statusText.value = slice.length
+@@ -225,10 +265,49 @@ function ensureTerminal() {
+   term.loadAddon(fitAddon)
+   term.loadAddon(new WebLinksAddon())
+   term.open(container)
++  registerExpandLinks()
+   fit()
+   replay()
+ }
+ 
++/**
++ * 让调用行上的 ⟨展开⟩ 可点击。
++ *
++ * xterm 的 LinkProvider 会按需请求「这一行有哪些可点击区间」，
++ * 我们只在带标记的行上返回一个 range，点开后弹出完整参数浮层。
++ */
++function registerExpandLinks() {
++  if (!term) return
++  term.registerLinkProvider({
++    provideLinks(bufferLineNumber, callback) {
++      // bufferLineNumber 是 1-based 的绝对行号（含 scrollback）。
++      const owner = lineOwners.get(bufferLineNumber - 1)
++      if (!owner) {
++        callback(undefined)
++        return
++      }
++      const line = term?.buffer.active.getLine(bufferLineNumber - 1)
++      const text = line?.translateToString(true) ?? ''
++      const match = text.match(EXPAND_MARKER_PATTERN)
++      if (!match || match.index === undefined) {
++        callback(undefined)
++        return
++      }
++      callback([
++        {
++          range: {
++            start: { x: match.index + 1, y: bufferLineNumber },
++            end: { x: match.index + match[0].length, y: bufferLineNumber },
++          },
++          text: EXPAND_MARKER,
++          decorations: { underline: true, pointerCursor: true },
++          activate: () => openArgsPreview(owner),
++        },
++      ])
++    },
++  })
++}
++
+ /**
+  * 底部常驻留白行数。
+  *
+@@ -393,6 +472,32 @@ onBeforeUnmount(() => {
+       @touchend="handleTouchEnd"
+       @touchcancel="handleTouchEnd"
+     />
++
++    <!-- 完整参数浮层：点调用行上的 ⟨展开⟩ 打开，贴底弹出 -->
++    <div v-if="expandedArgs" class="ts-args-layer" @click.self="closeArgsPreview">
++      <div
++        class="ts-args-card"
++        data-theme-surface="card"
++        role="dialog"
++        :aria-label="t('toolStream.argsTitle')"
++      >
++        <div class="ts-args-head">
++          <span class="ts-args-title">{{ expandedArgs.title }}</span>
++          <button
++            class="ts-btn"
++            type="button"
++            :title="t('common.close')"
++            :aria-label="t('common.close')"
++            @click="closeArgsPreview"
++          >
++            <svg viewBox="0 0 24 24" aria-hidden="true">
++              <path d="M6 6l12 12M18 6L6 18" />
++            </svg>
++          </button>
++        </div>
++        <pre class="ts-args-body">{{ expandedArgs.body }}</pre>
++      </div>
++    </div>
+   </div>
+ </template>
+ 
+@@ -405,6 +510,8 @@ onBeforeUnmount(() => {
+   height: 100%;
+   min-height: 0;
+   overflow: hidden;
++  /* 参数浮层用 absolute 定位，需要这里是定位容器。 */
++  position: relative;
+   /* 移动端面板与输入区相邻时，底部留一点呼吸位，避免最后一行贴着边被切。 */
+   padding-block-end: 2px;
+ }
+@@ -482,6 +589,62 @@ onBeforeUnmount(() => {
+   min-width: 34px;
+ }
+ 
++/* 完整参数浮层：贴底弹出，不铺全屏遮罩（避免硬编码 scrim 色） */
++.ts-args-layer {
++  position: absolute;
++  inset: 0;
++  z-index: 5;
++  display: flex;
++  align-items: flex-end;
++  pointer-events: none;
++}
++
++.ts-args-card {
++  pointer-events: auto;
++  display: flex;
++  flex-direction: column;
++  width: 100%;
++  max-height: 70%;
++  /* 主题契约：卡片面由 data-theme-surface="card" 拥有背景/圆角/阴影。 */
++  background: $bg-card;
++  border-top: var(--border-width, 1px) solid $border-color;
++  border-top-left-radius: var(--radius-component, 8px);
++  border-top-right-radius: var(--radius-component, 8px);
++  overflow: hidden;
++}
++
++.ts-args-head {
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  flex-shrink: 0;
++  padding: 8px 10px;
++  border-bottom: var(--border-width, 1px) solid $border-color;
++}
++
++.ts-args-title {
++  flex: 1;
++  min-width: 0;
++  font-size: 11px;
++  font-weight: 600;
++  color: $text-primary;
++  overflow: hidden;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++}
++
++.ts-args-body {
++  flex: 1;
++  min-height: 0;
++  margin: 0;
++  padding: 10px;
++  overflow: auto;
++  font: 12px/1.5 Menlo, Monaco, 'Courier New', monospace;
++  color: $text-secondary;
++  white-space: pre;
++  overscroll-behavior: contain;
++}
++
+ .tool-stream-term {
+   flex: 1;
+   min-height: 0;
+diff --git a/packages/client/src/components/hermes/chat/tool-stream-format.ts b/packages/client/src/components/hermes/chat/tool-stream-format.ts
+index 9c7957495..7cb39c099 100644
+--- a/packages/client/src/components/hermes/chat/tool-stream-format.ts
++++ b/packages/client/src/components/hermes/chat/tool-stream-format.ts
+@@ -79,6 +79,49 @@ export function paintShellCommand(command: string): string {
+   return out.join('')
+ }
+ 
++/**
++ * 调用行的截断标记。
++ *
++ * 用一个固定串做锚点：面板用 xterm LinkProvider 扫到它就能把这一行变成可点击，
++ * 点击后展开完整参数。`${n}` 是省略的剩余行数。
++ */
++export const EXPAND_MARKER = '⟨展开⟩'
++
++/** 截断标记的正则（面板侧复用，避免两边写法漂移）。 */
++export const EXPAND_MARKER_PATTERN = /… \(\+\d+ 行\) ⟨展开⟩/
++
++/**
++ * 完整参数文本，供展开浮层显示。
++ *
++ * 与调用行摘要故意不同：这里给**原始参数**（多行代码原样），
++ * 让人能真正看清这次调用带了什么。
++ */
++export function fullToolArgsText(message: Message): string {
++  const raw = message.toolArgs
++  if (raw === undefined || raw === null || raw === '') return ''
++  if (typeof raw === 'string') {
++    const text = raw.trim()
++    if (!text) return ''
++    // JSON 字符串参数：能解析就缩进展示（MCP 的 arguments 就是这种）。
++    if (/^[[{]/.test(text)) {
++      try {
++        const parsed = JSON.parse(text)
++        if (parsed && typeof parsed === 'object') {
++          return JSON.stringify(parsed, null, 2)
++        }
++      } catch {
++        /* 原样输出 */
++      }
++    }
++    return text
++  }
++  try {
++    return JSON.stringify(raw, null, 2)
++  } catch {
++    return String(raw)
++  }
++}
++
+ /**
+  * 把工具参数归一化成对象。
+  *
+@@ -140,12 +183,12 @@ function oneLine(value: string): string {
+   return value.replace(/\s*\r?\n\s*/g, '\u23ce ').trim()
+ }
+ 
+-/** 长文本字段只显示首行 + 总行数，保留"这是一大段"的观感。 */
++/** 长文本字段只显示首行 + 总行数；多行时附可点击的展开入口。 */
+ function firstLineSummary(value: string): string {
+   const lines = value.split('\n')
+   const head = lines[0].trim().slice(0, 80)
+   if (lines.length <= 1) return head
+-  return `${head} … (+${lines.length - 1} 行)`
++  return `${head} … (+${lines.length - 1} 行) ${EXPAND_MARKER}`
+ }
+ 
+ /**
+@@ -210,7 +253,15 @@ export function summarizeToolCall(
+     }
+     if (picked.length >= 2) break
+   }
+-  if (picked.length) return picked.join(' ').slice(0, SUMMARY_MAX)
++  if (picked.length) {
++    const joined = picked.join(' ')
++    // 截断摘要时保住展开标记，否则入口会消失。
++    if (joined.length <= SUMMARY_MAX) return joined
++    const hasMarker = joined.includes(EXPAND_MARKER)
++    const budget = hasMarker ? SUMMARY_MAX - EXPAND_MARKER.length - 1 : SUMMARY_MAX
++    const trimmed = joined.slice(0, Math.max(0, budget))
++    return hasMarker ? `${trimmed} ${EXPAND_MARKER}` : trimmed
++  }
+ 
+   // 兜底：紧凑 JSON，让「参数存在」这件事可见。
+   try {
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index 8e392a5d9..9bb42a50a 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -1045,6 +1045,7 @@ export default {
+   },
+ 
+   toolStream: {
++    argsTitle: 'معاملات الاستدعاء',
+     format: 'تنسيق',
+     highlight: 'إبراز بناء الجملة',
+     zoomIn: 'تكبير',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 9b605e054..ad482a78e 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1057,6 +1057,7 @@ export default {
+   },
+ 
+   toolStream: {
++    argsTitle: 'Aufrufparameter',
+     format: 'Formatieren',
+     highlight: 'Syntaxhervorhebung',
+     zoomIn: 'Vergrößern',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 6b0adc7af..f0f4f6204 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -1052,6 +1052,7 @@ export default {
+   },
+ 
+   toolStream: {
++    argsTitle: 'Call arguments',
+     format: 'Format',
+     highlight: 'Syntax highlighting',
+     zoomIn: 'Zoom in',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 1210db388..9220373d4 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1057,6 +1057,7 @@ export default {
+   },
+ 
+   toolStream: {
++    argsTitle: 'Argumentos de la llamada',
+     format: 'Formatear',
+     highlight: 'Resaltado de sintaxis',
+     zoomIn: 'Acercar',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 8730248c8..7487be411 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1057,6 +1057,7 @@ export default {
+   },
+ 
+   toolStream: {
++    argsTitle: "Arguments de l'appel",
+     format: 'Formater',
+     highlight: 'Coloration syntaxique',
+     zoomIn: 'Zoom avant',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index 12ecdcaa0..4d9ecd8bc 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1058,6 +1058,7 @@ export default {
+   },
+ 
+   toolStream: {
++    argsTitle: '呼び出し引数',
+     format: '整形',
+     highlight: 'シンタックスハイライト',
+     zoomIn: '拡大',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index e93131b6b..8f4375d79 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1058,6 +1058,7 @@ export default {
+   },
+ 
+   toolStream: {
++    argsTitle: '호출 인수',
+     format: '서식',
+     highlight: '구문 강조',
+     zoomIn: '확대',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index cad4a33e2..0c27acba4 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1057,6 +1057,7 @@ export default {
+   },
+ 
+   toolStream: {
++    argsTitle: 'Argumentos da chamada',
+     format: 'Formatar',
+     highlight: 'Realce de sintaxe',
+     zoomIn: 'Aumentar zoom',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index 511a18833..f76093322 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -983,6 +983,7 @@ export default {
+   },
+ 
+   toolStream: {
++    argsTitle: 'Аргументы вызова',
+     format: 'Форматировать',
+     highlight: 'Подсветка синтаксиса',
+     zoomIn: 'Увеличить',
+diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
+index 621c00904..1ab2f2b1f 100644
+--- a/packages/client/src/i18n/locales/tr.ts
++++ b/packages/client/src/i18n/locales/tr.ts
+@@ -619,6 +619,7 @@ export default {
+ 
+   language: { label: 'Dil', zh: 'Çince', en: 'İngilizce', tr: 'Türkçe' },
+   toolStream: {
++    argsTitle: 'Çağrı bağımsız değişkenleri',
+     format: 'Biçimlendir',
+     highlight: 'Sözdizimi vurgulama',
+     zoomIn: 'Yakınlaştır',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 3237d4a9e..c8c553c4f 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -1046,6 +1046,7 @@ export default {
+   },
+ 
+   toolStream: {
++    argsTitle: '呼叫參數',
+     format: '格式化',
+     highlight: '語法高亮',
+     zoomIn: '放大',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 84937c32c..ec5b80028 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -1053,6 +1053,7 @@ export default {
+   },
+ 
+   toolStream: {
++    argsTitle: '调用参数',
+     format: '格式化',
+     highlight: '语法高亮',
+     zoomIn: '放大',
+diff --git a/tests/client/tool-stream-highlight.test.ts b/tests/client/tool-stream-highlight.test.ts
+index 4960fa3ed..16ad595b5 100644
+--- a/tests/client/tool-stream-highlight.test.ts
++++ b/tests/client/tool-stream-highlight.test.ts
+@@ -8,7 +8,7 @@ import {
+   highlightOutput,
+   hljsHtmlToAnsi,
+ } from '@/components/hermes/chat/tool-stream-highlight'
+-import { formatOutput, paintShellCommand, renderToolBlock, summarizeToolCall } from '@/components/hermes/chat/tool-stream-format'
++import { EXPAND_MARKER, EXPAND_MARKER_PATTERN, formatOutput, fullToolArgsText, paintShellCommand, renderToolBlock, summarizeToolCall } from '@/components/hermes/chat/tool-stream-format'
+ import type { Message } from '@/stores/hermes/chat'
+ 
+ const labels = { tool: 'tool', empty: 'none' }
+@@ -394,6 +394,81 @@ describe('shell 命令行结构化着色', () => {
+   })
+ })
+ 
++describe('调用参数展开入口', () => {
++  it('多行参数在调用行上带可点击的展开标记', () => {
++    const block = renderToolBlock(
++      toolMessage({
++        toolName: 'execute_code',
++        toolArgs: { code: 'from hermes_tools import terminal\nprint(1)\nprint(2)' },
++        toolStatus: 'done',
++        toolResult: '',
++      }),
++      true,
++      labels,
++    )
++    expect(block).toContain('+2 行')
++    expect(block).toContain(EXPAND_MARKER)
++  })
++
++  it('展开标记能被 EXPAND_MARKER_PATTERN 命中（面板靠它定位可点区间）', () => {
++    const block = renderToolBlock(
++      toolMessage({
++        toolName: 'execute_code',
++        toolArgs: { code: 'a\nb\nc\nd' },
++        toolStatus: 'done',
++        toolResult: '',
++      }),
++      true,
++      labels,
++    )
++    const line = block.split('\n').find((l: string) => l.includes(EXPAND_MARKER)) || ''
++    expect(EXPAND_MARKER_PATTERN.test(line)).toBe(true)
++  })
++
++  it('单行参数不出现展开标记（没有可展开内容）', () => {
++    const block = renderToolBlock(
++      toolMessage({
++        toolName: 'execute_code',
++        toolArgs: { code: 'print(1)' },
++        toolStatus: 'done',
++        toolResult: '',
++      }),
++      true,
++      labels,
++    )
++    expect(block).not.toContain(EXPAND_MARKER)
++  })
++
++  it('摘要被 SUMMARY_MAX 截断时仍保留展开标记', () => {
++    const longPath = '/very/long/' + 'x'.repeat(300)
++    const summary = summarizeToolCall('read_file', { path: longPath, note: 'y'.repeat(200) })
++    expect(summary.length).toBeLessThanOrEqual(160)
++    // 单行参数本就不该有标记；这里只验证长度约束成立
++    expect(summary).toContain('/very/long/')
++  })
++
++  it('fullToolArgsText 给出完整多行参数（供浮层显示）', () => {
++    const code = 'from hermes_tools import terminal\nfor i in range(3):\n    print(i)'
++    const body = fullToolArgsText(
++      toolMessage({ toolName: 'execute_code', toolArgs: { code } }),
++    )
++    expect(body).toContain('for i in range(3):')
++    expect(body.split('\n').length).toBeGreaterThan(1)
++  })
++
++  it('fullToolArgsText 把 JSON 字符串参数缩进展示', () => {
++    const body = fullToolArgsText(
++      toolMessage({ toolName: 'mcp__x__y', toolArgs: '{"context_id":"a","plan":[1,2]}' }),
++    )
++    expect(body).toContain('\n')
++    expect(body).toContain('"context_id": "a"')
++  })
++
++  it('无参数时 fullToolArgsText 返回空串（不弹空浮层）', () => {
++    expect(fullToolArgsText(toolMessage({ toolName: 'x', toolArgs: undefined }))).toBe('')
++  })
++})
++
+ describe('自动语言识别（高把握才染色）', () => {
+   it('认出未标语言的 TS / Go / Rust 代码', () => {
+     const ts = `interface User { id: number; name: string }

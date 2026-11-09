@@ -1,0 +1,154 @@
+From 910c9f4f5ac51d9f910bacd661feb8cea0657f9e Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 00:37:07 +0800
+Subject: [PATCH] fix(dsh): adapt the ACP adapter to the 0.2.2 session shape
+
+Studio drives DeepSeek Harness through seven verbatim source anchors that it
+splices into @deepseek-ai/dsh-acp. DSH 0.2.2 refactored the session factory and
+six of the seven anchors stopped matching, so every DSH run failed before a
+session could be created ("expected 1 integration point(s), found 0").
+
+Upstream tracks this as an open bug with no fix (the suggested remedy is to
+pin 0.2.1-rc.5), so teach the adapter both shapes instead:
+
+- `composeAgent` folded both session factories onto one module-level function
+  that no longer receives `ctx`; mount the preset from the `setup` closure,
+  which still captures both the Agent scope and the factory's `ctx`.
+- `fallbackSelection` left the factory signature, so the preset rides the
+  remaining `signal,` sibling in both the create and resume paths.
+- The resume guard dropped its `parentSession` predicate; match the shorter
+  guard and let subagent detection stay upstream's.
+- Model control is now built in the constructor, so the default preset is
+  resolved at each factory entry and the sandbox/approval policy is applied
+  next to the constructor's assignment.
+
+Each capability keeps the 0.2.1 variant as well, so both series stay usable,
+and the revision marker moves to 5. Verified against the real dsh-acp sources:
+every anchor matches exactly once (or twice where the shape has two call
+sites) on 0.2.2-rc.1 and still matches on 0.2.1-rc.5.
+---
+ .../coding-agents/services/dsh/acp-adapter.ts | 90 +++++++++++++++----
+ 1 file changed, 75 insertions(+), 15 deletions(-)
+
+diff --git a/packages/server/src/modules/coding-agents/services/dsh/acp-adapter.ts b/packages/server/src/modules/coding-agents/services/dsh/acp-adapter.ts
+index c18b37184..8c465644b 100644
+--- a/packages/server/src/modules/coding-agents/services/dsh/acp-adapter.ts
++++ b/packages/server/src/modules/coding-agents/services/dsh/acp-adapter.ts
+@@ -8,7 +8,19 @@ import { DshPluginError } from './errors'
+ 
+ // New releases can use the adapter when the required integration seams remain
+ // compatible. Record the source hash for diagnostics, never as an allowlist.
+-export const DSH_ACP_ADAPTER_REVISION = 4
++//
++// Revision 5 adds the 0.2.2 series. Upstream removed `fallbackSelection` from
++// the ACP session factory, folded both session factories onto one
++// `composeAgent` seam, dropped the `parentSession` resume predicate, and moved
++// model control construction into the AcpSession constructor. The two shapes are
++// detected up front and patched independently, so 0.2.1-series installs keep
++// using the rev 4 seams.
++export const DSH_ACP_ADAPTER_REVISION = 5
++
++/** True when the source exposes the 0.2.2+ session shape. */
++function hasComposeAgentSeam(source: string) {
++  return source.includes('async function composeAgent(agentCtx, options) {')
++}
+ 
+ export async function writeDshAcpAdapter(installation: string, destination: string, acpAppDirectory: string) {
+   // ACP belongs to the selected bundle and may be nested beneath it. Resolve
+@@ -25,17 +37,8 @@ export async function writeDshAcpAdapter(installation: string, destination: stri
+     for (const [before, after] of variants) source = source.split(before).join(after)
+   }
+   const replace = (capability: string, before: string, after: string, count = 1) => replaceVariants(capability, [[before, after]], count)
+-  replace('new-session preset selection', 'agentOptions: agentOptions(config),\n\t\t\t\t\tfallbackSelection:', 'agentOptions: agentOptions(config),\n\t\t\t\t\tagentPreset: params._meta?.agentPreset,\n\t\t\t\t\tfallbackSelection:')
+-  replace('preset persistence', 'meta: { cwd: options.cwd },', 'meta: { cwd: options.cwd, agentPreset: options.agentPreset },')
+-  replace('preset mounting', 'await mountAcpMcpServers(agentCtx, options.mcpServers, options.cwd);',
+-    'await mountAcpMcpServers(agentCtx, options.mcpServers, options.cwd);\n\t\t\t\tawait ctx.agentPresets.mount(agentCtx, options.agentPreset);', 2)
+-  replace('default preset selection', 'const modelControl = new AcpModelControl(ctx.llm, options.fallbackSelection);',
+-    'options.agentPreset ??= ctx.agentPresets.defaultId;\n\t\tconst modelControl = new AcpModelControl(ctx.llm, options.fallbackSelection);')
+-  // Restoring uses the saved preset, including when the Web default changed.
+-  // Legacy ACP histories have no preset; they adopt the current Web default.
+-  replace('preset restoration', 'if (persisted === void 0 || persisted.origin === "subagent" || persisted.parentSession !== void 0) throw invalidParams(`session is not resumable: ${sessionId}`);',
+-    'if (persisted === void 0 || persisted.origin === "subagent" || persisted.parentSession !== void 0) throw invalidParams(`session is not resumable: ${sessionId}`);\n\t\t\t\tconst agentPreset = persisted.agentPreset ?? ctx.agentPresets.defaultId;')
+-  replace('resume-session preset selection', 'agentOptions: agentOptions(config),\n\t\t\t\t\t\tfallbackSelection:', 'agentOptions: agentOptions(config),\n\t\t\t\t\t\tagentPreset,\n\t\t\t\t\t\tfallbackSelection:')
++  if (hasComposeAgentSeam(source)) applySessionShape022(replace, replaceVariants)
++  else applySessionShape021(replace, replaceVariants)
+   // Newer ACP waits for descendants and cancellation as well as root/output
+   // quiescence. Flush after that whole drain, before releasing the prompt slot.
+   const turnPersistencePoints = [
+@@ -43,9 +46,6 @@ export async function writeDshAcpAdapter(installation: string, destination: stri
+     'if (isCancelled() || idleAt(idleSeq)) break;\n\t\t\t\t}\n\t\t\t\tif (isCancelled()) await cancelled;',
+   ]
+   replaceVariants('turn persistence', turnPersistencePoints.map(before => [before, before + '\n\t\t\t\tawait this.ctx.sessions.flush(this.agent.session);']))
+-  // Apply after native restoration/preset initialization, before any prompt.
+-  // This also replaces persisted workspace-write/ask values on old sessions.
+-  replace('session permission policy', 'this.modelControl = modelControl;', 'this.modelControl = modelControl;\n\t\tsetSandboxMode(this.agent.session, "danger-full-access");\n\t\tsetApprovalPolicy(this.agent.session, "never");')
+   source = 'import { setSandboxMode } from "@deepseek-ai/dsh-sandbox-policy";\nimport { setApprovalPolicy } from "@deepseek-ai/dsh-user-approval";\n' + source
+   const require = createRequire(filename)
+   // Absolute module URLs retain the installed release's dependency identity;
+@@ -55,3 +55,63 @@ export async function writeDshAcpAdapter(installation: string, destination: stri
+   await writeFile(destination + '.LICENSE', license)
+   await writeFile(destination, `// Studio DSH ACP adapter revision ${DSH_ACP_ADAPTER_REVISION}; upstream ${manifest.version} (MIT); source sha256 ${sourceHash}.\n` + source, { mode: 0o600 })
+ }
++
++/**
++ * 0.2.1 series: each session factory builds its own model control and mounts
++ * MCP servers inline, and the session factory carries a `fallbackSelection`.
++ */
++function applySessionShape021(
++  replace: (capability: string, before: string, after: string, count?: number) => void,
++  replaceVariants: (capability: string, variants: [string, string][], count?: number) => void,
++) {
++  replace('new-session preset selection', 'agentOptions: agentOptions(config),\n\t\t\t\t\tfallbackSelection:', 'agentOptions: agentOptions(config),\n\t\t\t\t\tagentPreset: params._meta?.agentPreset,\n\t\t\t\t\tfallbackSelection:')
++  replace('preset persistence', 'meta: { cwd: options.cwd },', 'meta: { cwd: options.cwd, agentPreset: options.agentPreset },')
++  replace('preset mounting', 'await mountAcpMcpServers(agentCtx, options.mcpServers, options.cwd);',
++    'await mountAcpMcpServers(agentCtx, options.mcpServers, options.cwd);\n\t\t\t\tawait ctx.agentPresets.mount(agentCtx, options.agentPreset);', 2)
++  replace('default preset selection', 'const modelControl = new AcpModelControl(ctx.llm, options.fallbackSelection);',
++    'options.agentPreset ??= ctx.agentPresets.defaultId;\n\t\tconst modelControl = new AcpModelControl(ctx.llm, options.fallbackSelection);')
++  // Restoring uses the saved preset, including when the Web default changed.
++  // Legacy ACP histories have no preset; they adopt the current Web default.
++  replace('preset restoration', 'if (persisted === void 0 || persisted.origin === "subagent" || persisted.parentSession !== void 0) throw invalidParams(`session is not resumable: ${sessionId}`);',
++    'if (persisted === void 0 || persisted.origin === "subagent" || persisted.parentSession !== void 0) throw invalidParams(`session is not resumable: ${sessionId}`);\n\t\t\t\tconst agentPreset = persisted.agentPreset ?? ctx.agentPresets.defaultId;')
++  replace('resume-session preset selection', 'agentOptions: agentOptions(config),\n\t\t\t\t\t\tfallbackSelection:', 'agentOptions: agentOptions(config),\n\t\t\t\t\t\tagentPreset,\n\t\t\t\t\t\tfallbackSelection:')
++  // Apply after native restoration/preset initialization, before any prompt.
++  // This also replaces persisted workspace-write/ask values on old sessions.
++  replace('session permission policy', 'this.modelControl = modelControl;', 'this.modelControl = modelControl;\n\t\tsetSandboxMode(this.agent.session, "danger-full-access");\n\t\tsetApprovalPolicy(this.agent.session, "never");')
++}
++
++/**
++ * 0.2.2 series: `fallbackSelection` and the inline per-factory composition are
++ * gone. The model control is built in the constructor, and both session
++ * factories delegate to the module-level `composeAgent`, whose `setup` closure
++ * receives the unpublished Agent scope — the one place a preset can mount.
++ */
++function applySessionShape022(
++  replace: (capability: string, before: string, after: string, count?: number) => void,
++  replaceVariants: (capability: string, variants: [string, string][], count?: number) => void,
++) {
++  // The Agent scope is only available inside the setup closure, so the preset
++  // rides a hidden option and composeAgent calls back into the factory scope.
++  // The two seams are counted separately: the closure appears in both session
++  // factories, while the composeAgent body appears once.
++  replaceVariants('preset mounting', [
++    ['setup: (agentCtx) => composeAgent(agentCtx, options)',
++      'setup: (agentCtx) => composeAgent(agentCtx, { ...options, beforeCompose: (scope) => ctx.agentPresets.mount(scope, options.agentPreset) })'],
++  ], 2)
++  replaceVariants('preset mounting', [
++    ['async function composeAgent(agentCtx, options) {\n\tinstallModelSelection(agentCtx);',
++      'async function composeAgent(agentCtx, options) {\n\tinstallModelSelection(agentCtx);\n\tawait options.beforeCompose?.(agentCtx);'],
++  ])
++  // The default is resolved before the Agent is created, because the setup
++  // closure needs the final preset id rather than an undefined request value.
++  replaceVariants('default preset selection', [
++    ['\tstatic async create(ctx, options) {\n\t\treturn new AcpSession(ctx, await ctx.agents.create({',
++      '\tstatic async create(ctx, options) {\n\t\toptions.agentPreset ??= ctx.agentPresets.defaultId;\n\t\treturn new AcpSession(ctx, await ctx.agents.create({'],
++    ['\tstatic async resume(ctx, options) {\n\t\treturn new AcpSession(ctx, await ctx.agents.resume({',
++      '\tstatic async resume(ctx, options) {\n\t\toptions.agentPreset ??= ctx.agentPresets.defaultId;\n\t\treturn new AcpSession(ctx, await ctx.agents.resume({'],
++  ], 2)
++  replaceVariants('session permission policy', [
++    ['this.modelControl = new AcpModelControl(ctx.llm, handle.agent.model);',
++      'this.modelControl = new AcpModelControl(ctx.llm, handle.agent.model);\n\t\tsetSandboxMode(this.agent.session, "danger-full-access");\n\t\tsetApprovalPolicy(this.agent.session, "never");'],
++  ])
++}
+-- 
+2.53.0
+
