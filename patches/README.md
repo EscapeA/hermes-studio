@@ -17,7 +17,7 @@ custom-next = main + patches/*.patch 线性重放（当前唯一集成分支）
 > 文件段剥掉 ⇒ **25 组 / 67 条**（2026-11-05 增补 `28-exec-stream` 2 条 ⇒ 26 组 / 69 条；`29-pwa`、`30-passkey`、`31-brand` 各 1 条 ⇒ 28 组 / 72 条）。`scripts/verify-patch-stack.sh` 保留（它不依赖测试树）。
 > 上游删测试后 `harness:check` 也不再要求 `tests/client|server|e2e` 目录存在。
 
-## 分组总览（30 组 / 74 条）
+## 分组总览（29 组 / 73 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -51,7 +51,6 @@ custom-next = main + patches/*.patch 线性重放（当前唯一集成分支）
 | 30-passkey | 1 | Passkey(WebAuthn) 登录：可发现凭证免密登录 + 账号内凭证管理 + 超管 RP 配置页；密码登录保留 |
 | 31-brand | 1 | 品牌资产换成 Hermes Studio 女孩图（图标/启动图/logo/群聊头像）+ 构建期 `?v=<hash>` 版本串绕过 CDN 边缘缓存 |
 | 32-login-throttle | 1 | 登录限流按真实客户端地址计数（`client-ip.ts` 解析可信代理链），health/MCU/TTS 同步取真实 IP |
-| 33-dsh-022-adapt | 1 | DSH ACP 适配器兼容 0.2.2 会话形态（预设改挂 `setup` 闭包、`fallbackSelection` 消失后改骑 `signal,`、恢复守卫去 `parentSession`、模型控制移到构造函数），并保留 0.2.1 变体 ⇒ rev 5 |
 
 ## ORDER 的语义
 
@@ -140,8 +139,9 @@ while read n p; do git am --3way "patches/$p"; done < patches/ORDER
   产物 `vm.Script` 语法通过；0.2.1-rc.5 上同样全过（零回归）；`tsc --noEmit` 零错误。
 - 部署实测：纯 dist 热替 + 重启后，`POST /api/coding-agents/dsh/runs` 由 422 转 200，scoped/global
   两种模式均起得来，真实指令在工作区生成文件并回读成功。
-- 补丁串：新增 `33-dsh-022-adapt/001` 并登进 ORDER ⇒ **30 组 / 74 条**；
-  `scripts/verify-patch-stack.sh` 74 补丁从 `main` 重放**逐字节一致**。
+- 补丁串：0.8.20 上游 #3730 自行实现了同一套 0.2.2 双形态适配（rev 5，含 `agentFactory` 判定、preflight
+  预检与单测）⇒ 本组**整组摘除**（`git am --skip` + 从 ORDER 删除），补丁串回落为 **29 组 / 73 条**；
+  适配能力由上游承载，无需再维护自定义补丁。
 
 ## 修改补丁串的约定
 
