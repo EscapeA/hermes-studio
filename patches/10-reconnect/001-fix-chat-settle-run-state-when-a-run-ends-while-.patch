@@ -22,14 +22,14 @@ transcript. The UI stayed in run state forever.
   mid-stream run keeps its locally accumulated deltas.
 ---
  packages/client/src/api/studio/chat.ts    |  27 ++++
- packages/client/src/stores/hermes/chat.ts | 153 ++++++++++++++++------
- 2 files changed, 140 insertions(+), 40 deletions(-)
+ packages/client/src/stores/hermes/chat.ts | 155 ++++++++++++++++------
+ 2 files changed, 141 insertions(+), 41 deletions(-)
 
 diff --git a/packages/client/src/api/studio/chat.ts b/packages/client/src/api/studio/chat.ts
-index 62c8901b7..04ebbde94 100644
+index 948a5c77f..0e7c3ea7c 100644
 --- a/packages/client/src/api/studio/chat.ts
 +++ b/packages/client/src/api/studio/chat.ts
-@@ -267,6 +267,7 @@ const sessionTitleUpdatedHandlers = new Set<(event: RunEvent) => void>()
+@@ -269,6 +269,7 @@ const sessionTitleUpdatedHandlers = new Set<(event: RunEvent) => void>()
  const sessionWorkspaceUpdatedHandlers = new Set<(event: RunEvent) => void>()
  const sessionSettingsUpdatedHandlers = new Set<(event: RunEvent) => void>()
  const runUsageUpdatedHandlers = new Set<(event: RunEvent) => void>()
@@ -37,7 +37,7 @@ index 62c8901b7..04ebbde94 100644
  
  export function onUnobservedRunStarted(handler: (event: RunEvent) => void): () => void {
    unobservedRunStartedHandlers.add(handler)
-@@ -278,6 +279,28 @@ export function onRunUsageUpdated(handler: (event: RunEvent) => void): () => voi
+@@ -280,6 +281,28 @@ export function onRunUsageUpdated(handler: (event: RunEvent) => void): () => voi
    return () => { runUsageUpdatedHandlers.delete(handler) }
  }
  
@@ -66,7 +66,7 @@ index 62c8901b7..04ebbde94 100644
  function globalRunUsageUpdatedHandler(event: RunEvent): void {
    if (!event.session_id) return
    for (const handler of runUsageUpdatedHandlers) handler(event)
-@@ -917,6 +940,10 @@ export function connectChatRun(requestedProfile?: string | null, transport: Chat
+@@ -919,6 +942,10 @@ export function connectChatRun(requestedProfile?: string | null, transport: Chat
      on('session.workspace.updated', globalSessionWorkspaceUpdatedHandler)
      on('session.settings.updated', globalSessionSettingsUpdatedHandler)
  
@@ -78,19 +78,19 @@ index 62c8901b7..04ebbde94 100644
    }
  
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 1aaddbe1e..12c4c3765 100644
+index e3bb8d83a..d85611868 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -6,7 +6,7 @@ import { historySessionSource, isBuiltinEkkoSession } from '@/utils/hermes/sessi
- import { isKnownEkkoSessionCommand } from '@/utils/hermes/bridge-session-commands'
+@@ -7,7 +7,7 @@ import { isKnownEkkoSessionCommand } from '@/utils/hermes/bridge-session-command
  import { normalizeRunUsage, type RunUsageSummary } from '@/utils/run-usage'
  import { mergeTaskPlanMessages, type TaskPlanSnapshot } from '@/utils/task-plan'
--import { startRunViaSocket, onUnobservedRunStarted, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, onRunUsageUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
-+import { startRunViaSocket, onChatRunConnected, onUnobservedRunStarted, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, onRunUsageUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
+ import { applyPersonTimelinePage, applyPersonFlowUpdate, preservePersonTimelineWindow } from '@/utils/person-timeline'
+-import { startRunViaSocket, onUnobservedRunStarted, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onPersonUpdated, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, onRunUsageUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
++import { startRunViaSocket, onChatRunConnected, onUnobservedRunStarted, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onPersonUpdated, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, onSessionSettingsUpdated, onRunUsageUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/studio/chat'
  import { archiveSession as archiveSessionApi, deleteSession as deleteSessionApi, fetchSessionMessagesPage, fetchSessions, fetchWorkspaceRunChangeFile, setSessionModel, setSessionPushEnabled as persistSessionPushEnabled, setSessionReasoningEffort as persistSessionReasoningEffort, type HermesMessage, type SessionSummary, type WorkspaceRunChangeFileDetail, type WorkspaceRunChangeSummary } from '@/api/studio/sessions'
  import { getActiveProfileName } from '@/api/client'
  import { onAuthInvalidated } from '@/api/auth-invalidation'
-@@ -5468,6 +5468,70 @@ function createChatState(scopedSessionId?: string) {
+@@ -5485,6 +5485,70 @@ function createChatState(scopedSessionId?: string) {
      if (!passive) ensureAbortHandle()
    }
  
@@ -161,7 +161,7 @@ index 1aaddbe1e..12c4c3765 100644
    function handlePeerUserMessage(evt: RunEvent) {
      const sid = evt.session_id
      if (scopedSessionId ? sid !== scopedSessionId : sid?.startsWith('person-task-')) return
-@@ -5616,50 +5680,59 @@ function createChatState(scopedSessionId?: string) {
+@@ -5638,51 +5702,60 @@ function createChatState(scopedSessionId?: string) {
    // Tab visibility: re-sync when returning to foreground
    if (typeof document !== 'undefined') {
      const onVisibilityChange = () => {
@@ -193,7 +193,7 @@ index 1aaddbe1e..12c4c3765 100644
 -            if (!data.isWorking) setCompressionState(sid, null)
 -            applyResumedSessionSettings(data)
 -            if (activeSession.value) applySessionTokenUsage(activeSession.value, data)
--            if (Array.isArray(data.messages) && activeSession.value) {
+-            if (Array.isArray(data.messages) && activeSession.value && !preservePersonTimelineWindow(activeSession.value,data.personFlows)) {
 -              if (typeof data.workspace === 'string') {
 -                activeSession.value.workspace = data.workspace.trim() || null
 -                activeSession.value.isLocalOnly = false
@@ -206,6 +206,7 @@ index 1aaddbe1e..12c4c3765 100644
 -              activeSession.value.messageTotal = data.messageTotal ?? activeSession.value.messageCount ?? activeSession.value.loadedMessageCount
 -              activeSession.value.messageCount = activeSession.value.messageTotal
 -              activeSession.value.hasMoreBefore = data.hasMoreBefore ?? activeSession.value.loadedMessageCount < activeSession.value.messageTotal
+-              if (!applyPersonTimelinePage(activeSession.value,data.personFlows,activeSession.value.messages) && data.personFlows) activeSession.value.personFlows=data.personFlows
 -            }
 -            resumeServerWorkingRun(sid, (data.backgroundPending || 0) > 0, !data.isWorking)
 -          }, activeSession.value?.profile, runtimeTransport())
@@ -241,7 +242,7 @@ index 1aaddbe1e..12c4c3765 100644
 +        if (!data.isWorking) setCompressionState(sid, null)
 +        applyResumedSessionSettings(data)
 +        if (activeSession.value) applySessionTokenUsage(activeSession.value, data)
-+        if (Array.isArray(data.messages) && activeSession.value) {
++        if (Array.isArray(data.messages) && activeSession.value && !preservePersonTimelineWindow(activeSession.value,data.personFlows)) {
 +          if (typeof data.workspace === 'string') {
 +            activeSession.value.workspace = data.workspace.trim() || null
 +            activeSession.value.isLocalOnly = false
@@ -254,6 +255,7 @@ index 1aaddbe1e..12c4c3765 100644
 +          activeSession.value.messageTotal = data.messageTotal ?? activeSession.value.messageCount ?? activeSession.value.loadedMessageCount
 +          activeSession.value.messageCount = activeSession.value.messageTotal
 +          activeSession.value.hasMoreBefore = data.hasMoreBefore ?? activeSession.value.loadedMessageCount < activeSession.value.messageTotal
++          if (!applyPersonTimelinePage(activeSession.value,data.personFlows,activeSession.value.messages) && data.personFlows) activeSession.value.personFlows=data.personFlows
 +        }
 +        resumeServerWorkingRun(sid, (data.backgroundPending || 0) > 0, !data.isWorking)
 +      }, activeSession.value?.profile, runtimeTransport())

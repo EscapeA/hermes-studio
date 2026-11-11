@@ -1,4 +1,4 @@
-From 98bfef95c8a69627922279545fbbaab9b9854e82 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 6 Nov 2026 09:03:58 +0800
 Subject: [PATCH] fix(security): key login throttling on the real client
@@ -469,6 +469,3 @@ index 000000000..edfc3dfaa
 +    expect(isTrustedProxy('203.0.113.7', policy)).toBe(false)
 +  })
 +})
--- 
-2.53.0
-

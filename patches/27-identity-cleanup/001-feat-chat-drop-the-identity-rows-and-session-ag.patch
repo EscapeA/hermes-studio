@@ -88,7 +88,7 @@ index 8bf6142fc..8b416320a 100644
            :highlight="chatStore.focusMessageId === msg.id"
          />
 diff --git a/packages/client/src/components/hermes/chat/MessageItem.vue b/packages/client/src/components/hermes/chat/MessageItem.vue
-index c12b79789..6acc5e5d4 100644
+index 5fe9a7198..bdf50922f 100644
 --- a/packages/client/src/components/hermes/chat/MessageItem.vue
 +++ b/packages/client/src/components/hermes/chat/MessageItem.vue
 @@ -54,6 +54,8 @@ const props = withDefaults(defineProps<{
@@ -100,7 +100,7 @@ index c12b79789..6acc5e5d4 100644
    assistantAgent?: ChatAgentAvatar
    userProfileName?: string
    userProfileAvatar?: ProfileAvatarData | null
-@@ -1026,7 +1028,7 @@ onBeforeUnmount(() => {
+@@ -996,7 +998,7 @@ onBeforeUnmount(() => {
      <template v-else>
        <div class="msg-body">
          <div class="msg-content" :class="message.role">
@@ -109,7 +109,7 @@ index c12b79789..6acc5e5d4 100644
              <span class="message-author-name" dir="auto">{{ userProfileName }}</span>
              <ProfileAvatar
                class="user-profile-avatar"
-@@ -1035,7 +1037,7 @@ onBeforeUnmount(() => {
+@@ -1005,7 +1007,7 @@ onBeforeUnmount(() => {
                :size="22"
              />
            </div>
@@ -119,10 +119,10 @@ index c12b79789..6acc5e5d4 100644
                class="msg-avatar"
                :class="{ 'msg-avatar--person': !!personAvatarAnimation(assistantAgent, 'idle') }"
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 2c7ef2557..b78171f9c 100644
+index a968debe6..b4259b2bd 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -37,6 +37,7 @@ import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-spee
+@@ -41,6 +41,7 @@ import { formatTokensPerSecond, runSpeedTokensPerSecond } from "@/utils/run-spee
  
  const props = withDefaults(defineProps<{
    userLabel?: string
@@ -130,7 +130,7 @@ index 2c7ef2557..b78171f9c 100644
    hideToolCalls?: boolean
    hideRunUsage?: boolean
    hideReasoning?: boolean
-@@ -1018,6 +1019,7 @@ defineExpose({
+@@ -1035,6 +1036,7 @@ defineExpose({
                  :message="msg"
                  :hide-run-usage="hideRunUsage"
                  :hide-reasoning="hideReasoning"
@@ -286,10 +286,10 @@ index a1f6ec452..0541d7ce8 100644
    flex: 0 1 auto;
    min-width: 0;
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 2e4d5c209..a90ac9e3d 100644
+index 0cfe8013d..c9211696d 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -1377,6 +1377,7 @@ export default {
+@@ -1379,6 +1379,7 @@ export default {
      interactionCountdownElapsed: '00:00 · في انتظار تأكيد الخادم',
      newCliChat: 'CLI جديد',
      deleteSession: 'حذف هذه الجلسة؟',
@@ -298,10 +298,10 @@ index 2e4d5c209..a90ac9e3d 100644
      sessionListActions: 'إجراءات قائمة الجلسات',
      filterByProfile: 'التصفية حسب الملف الشخصي',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index a835b5eec..6dac9e0c9 100644
+index 358f420f2..ef3b1e7bc 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1337,6 +1337,7 @@ export default {
+@@ -1338,6 +1338,7 @@ export default {
      importSessionSuccess: 'Sitzung in Web UI importiert',
      importSessionAlreadyExists: 'Sitzung existiert bereits in Web UI',
      importSessionFailed: 'Sitzung konnte nicht importiert werden',
@@ -310,10 +310,10 @@ index a835b5eec..6dac9e0c9 100644
      rename: 'Umbenennen',
      archiveSession: 'Archivieren',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index fd9f15c3e..789c50b1e 100644
+index d67b47b0a..78ab88aca 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1386,6 +1386,7 @@ export default {
+@@ -1388,6 +1388,7 @@ export default {
      interactionCountdownElapsed: '00:00 · Awaiting server confirmation',
      newCliChat: 'New CLI',
      deleteSession: 'Delete this session?',
@@ -322,10 +322,10 @@ index fd9f15c3e..789c50b1e 100644
      sessionListActions: 'Session list actions',
      filterByProfile: 'Filter by Profile',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 011af4fed..33a0401c1 100644
+index 072445afd..235bca646 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1337,6 +1337,7 @@ export default {
+@@ -1338,6 +1338,7 @@ export default {
      importSessionSuccess: 'Sesion importada a Web UI',
      importSessionAlreadyExists: 'La sesion ya existe en Web UI',
      importSessionFailed: 'Error al importar la sesion',
@@ -334,10 +334,10 @@ index 011af4fed..33a0401c1 100644
      rename: 'Renombrar',
      archiveSession: 'Archivar',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index e73224024..238ce1057 100644
+index 8c55644bc..5728f13dd 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1337,6 +1337,7 @@ export default {
+@@ -1338,6 +1338,7 @@ export default {
      importSessionSuccess: 'Session importée dans Web UI',
      importSessionAlreadyExists: 'La session existe déjà dans Web UI',
      importSessionFailed: 'Échec de l’import de la session',
@@ -346,10 +346,10 @@ index e73224024..238ce1057 100644
      rename: 'Renommer',
      archiveSession: 'Archiver',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index ac62cdad4..a5bc4bf4f 100644
+index 134d2ee93..d4a474ec7 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1338,6 +1338,7 @@ export default {
+@@ -1339,6 +1339,7 @@ export default {
      importSessionSuccess: 'セッションを Web UI にインポートしました',
      importSessionAlreadyExists: 'セッションは既に Web UI に存在します',
      importSessionFailed: 'セッションのインポートに失敗しました',
@@ -358,10 +358,10 @@ index ac62cdad4..a5bc4bf4f 100644
      rename: '名前変更',
      archiveSession: 'アーカイブ',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 6fdb472f7..3d9bb3a4d 100644
+index c9a1d2f3b..158982916 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1338,6 +1338,7 @@ export default {
+@@ -1339,6 +1339,7 @@ export default {
      importSessionSuccess: '세션을 Web UI로 가져왔습니다',
      importSessionAlreadyExists: '세션이 이미 Web UI에 있습니다',
      importSessionFailed: '세션 가져오기 실패',
@@ -370,10 +370,10 @@ index 6fdb472f7..3d9bb3a4d 100644
      rename: '이름 변경',
      archiveSession: '보관',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 52b25b788..fbb3deea3 100644
+index 40a9187f7..e51d8b985 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1337,6 +1337,7 @@ export default {
+@@ -1338,6 +1338,7 @@ export default {
      importSessionSuccess: 'Sessão importada para Web UI',
      importSessionAlreadyExists: 'A sessão já existe no Web UI',
      importSessionFailed: 'Falha ao importar sessão',
@@ -382,10 +382,10 @@ index 52b25b788..fbb3deea3 100644
      rename: 'Renomear',
      archiveSession: 'Arquivar',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 7017609d6..494517fd7 100644
+index 69c9c3a02..fbda80aa6 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1271,6 +1271,7 @@ export default {
+@@ -1273,6 +1273,7 @@ export default {
      clarifyExpand: 'Развернуть',
      newCliChat: 'Новый CLI',
      deleteSession: 'Удалить этот сеанс?',
@@ -394,10 +394,10 @@ index 7017609d6..494517fd7 100644
      sessionListActions: 'Действия со списком сеансов',
      filterByProfile: 'Фильтр по профилю',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index dc600eefd..d18a52a60 100644
+index 81177e157..6ece3a4e7 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1377,6 +1377,7 @@ export default {
+@@ -1379,6 +1379,7 @@ export default {
      interactionCountdown: '剩餘 {time}',
      interactionCountdownElapsed: '00:00 · 等待伺服器確認',
      deleteSession: '確定刪除此工作階段？',
@@ -406,10 +406,10 @@ index dc600eefd..d18a52a60 100644
      sessionListActions: '會話列表操作',
      filterByProfile: '依 Profile 篩選',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index fa58046b8..e43f89f8a 100644
+index 88c431e23..5aed7bdbb 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1387,6 +1387,7 @@ export default {
+@@ -1389,6 +1389,7 @@ export default {
      interactionCountdownElapsed: '00:00 · 等待服务端确认',
      newCliChat: '新建 CLI',
      deleteSession: '确定删除此会话？',
@@ -446,12 +446,12 @@ index a02a28d26..367d9a3b0 100644
              :load-older="loadOlderHistoryMessages"
              scroll-scope="history"
 diff --git a/packages/client/src/views/hermes/PersonView.vue b/packages/client/src/views/hermes/PersonView.vue
-index 617a270d0..7c5c3601b 100644
+index d424cf80b..4646e6213 100644
 --- a/packages/client/src/views/hermes/PersonView.vue
 +++ b/packages/client/src/views/hermes/PersonView.vue
-@@ -623,7 +623,7 @@ onBeforeUnmount(() => { stopPersonUpdates(); disposed = true; personDeployment?.
+@@ -710,7 +710,7 @@ onBeforeUnmount(() => { stopPersonUpdates(); disposed = true; personDeployment?.
        <template #default>
-             <SessionListItem v-for="session in sidebarSessions" :key="session.id" :session="session" :active="session.id === selectedSessionId" :pinned="false" :can-delete="!isMobile" :delete-disabled="pending"
+             <SessionListItem v-for="session in sidebarSessions" :key="session.id" :session="session" :active="session.id === selectedSessionId" :pinned="Boolean(session.isPinned)" :can-delete="!isMobile" :delete-disabled="pending"
                :selectable="batchMode" :selected="selectedConversationIds.has(session.id)" @toggle-select="toggleConversationSelection(session.id)"
 -              single-line :show-profile="false" :show-time="false" :streaming="sessionStates.isWorking(session.id, chatStore.isSessionWorking(session.id))"
 +              single-line show-agent-avatar :show-time="false" :streaming="sessionStates.isWorking(session.id, chatStore.isSessionWorking(session.id))"
