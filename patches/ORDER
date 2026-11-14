@@ -20,7 +20,6 @@
 022 02-server/001-fix-server-support-archived-1-on-get-sessions-re.patch
 023 02-server/002-utf-8-q-fix-server-20archived-3d1-20-e6-95-b0.patch
 024 14-cleanup/001-chore-cleanup-remove-apikey-fun-affiliate-promo-.patch
-025 14-cleanup/002-chore-cleanup-remove-devices-connections-entry-f.patch
 026 11-perf/001-perf-chat-use-highlight-js-core-register-19-lang.patch
 027 11-perf/002-perf-i18n-merge-en-fallback-at-build-time-one-lo.patch
 028 11-perf/003-perf-web-drop-logo-png-css-mask-request-from-boo.patch
