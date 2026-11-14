@@ -279,14 +279,11 @@ diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles
 index 27044ac8d..3c5657173 100644
 --- a/packages/client/src/styles/global.scss
 +++ b/packages/client/src/styles/global.scss
-@@ -1,6 +1,7 @@
- @use 'variables' as *;
+@@ -4,3 +4,4 @@
  @use 'code-block';
  @use 'theme-surfaces';
+ @use 'scrollbars';
 +@use 'style-layers';
- 
- @font-face {
-   font-family: 'Comic Neue';
 diff --git a/packages/client/src/styles/style-layers.scss b/packages/client/src/styles/style-layers.scss
 index 6eb391b37..f48d8905a 100644
 --- a/packages/client/src/styles/style-layers.scss
