@@ -1,0 +1,29 @@
+From 5fa02bc4e7e5ca0eef8c04172437946ad0347f66 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 06:00:48 +0800
+Subject: [PATCH] test(nav): pick a surviving builtin in the startup-order spec
+
+---
+ tests/client/navigation-startup.test.ts | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/tests/client/navigation-startup.test.ts b/tests/client/navigation-startup.test.ts
+index e1c544688..9165f87b1 100644
+--- a/tests/client/navigation-startup.test.ts
++++ b/tests/client/navigation-startup.test.ts
+@@ -13,8 +13,10 @@ beforeEach(() => {
+ })
+ 
+ it('waits for the saved order and opens its first builtin without waiting for plugins', async () => {
+-  mocks.navigation.load.mockImplementation(async () => { mocks.navigation.items = ['workflow', 'person', 'plugin:notes/home'] })
+-  expect(await resolveNavigationStartup()).toEqual({ name: 'hermes.workflow' })
++  // `usage` rather than the upstream example `workflow`: the fork removes workflow (06-remove),
++  // so it is no longer a builtin id and would fall through to the fallback entry.
++  mocks.navigation.load.mockImplementation(async () => { mocks.navigation.items = ['usage', 'person', 'plugin:notes/home'] })
++  expect(await resolveNavigationStartup()).toEqual({ name: 'hermes.usage' })
+   expect(mocks.plugins).not.toHaveBeenCalled()
+ })
+ 
+-- 
+2.53.0
+
