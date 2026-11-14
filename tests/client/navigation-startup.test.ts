@@ -13,8 +13,10 @@ beforeEach(() => {
 })
 
 it('waits for the saved order and opens its first builtin without waiting for plugins', async () => {
-  mocks.navigation.load.mockImplementation(async () => { mocks.navigation.items = ['workflow', 'person', 'plugin:notes/home'] })
-  expect(await resolveNavigationStartup()).toEqual({ name: 'hermes.workflow' })
+  // `usage` rather than the upstream example `workflow`: the fork removes workflow (06-remove),
+  // so it is no longer a builtin id and would fall through to the fallback entry.
+  mocks.navigation.load.mockImplementation(async () => { mocks.navigation.items = ['usage', 'person', 'plugin:notes/home'] })
+  expect(await resolveNavigationStartup()).toEqual({ name: 'hermes.usage' })
   expect(mocks.plugins).not.toHaveBeenCalled()
 })
 
