@@ -1,0 +1,64 @@
+From 69cf4eed779fe61df9d41d8188a64b1a46243302 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 05:35:47 +0800
+Subject: [PATCH] test(nav): use surviving navigation ids in the settings specs
+
+---
+ tests/client/navigation-settings.test.ts |  4 ++--
+ tests/server/navigation-settings.test.ts | 14 +++++++-------
+ 2 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/tests/client/navigation-settings.test.ts b/tests/client/navigation-settings.test.ts
+index 7322301c4..cbcb46e77 100644
+--- a/tests/client/navigation-settings.test.ts
++++ b/tests/client/navigation-settings.test.ts
+@@ -70,10 +70,10 @@ describe('navigation saves', () => {
+     const save = store.save(['plugin:notes/home'])
+     expect(await store.save([])).toBe(false)
+     mocks.user = 2; invalidateAuth()
+-    mocks.get.mockResolvedValueOnce({ items: ['workflow'] })
++    mocks.get.mockResolvedValueOnce({ items: ['usage'] })
+     await store.load()
+     resolve({ items: ['plugin:notes/home'] })
+     expect(await save).toBe(false)
+-    expect(store.items).toEqual(['workflow'])
++    expect(store.items).toEqual(['usage'])
+   })
+ })
+diff --git a/tests/server/navigation-settings.test.ts b/tests/server/navigation-settings.test.ts
+index 1061e3e2d..1ffd61bc5 100644
+--- a/tests/server/navigation-settings.test.ts
++++ b/tests/server/navigation-settings.test.ts
+@@ -18,13 +18,13 @@ beforeEach(() => {
+ afterEach(() => mocks.db.close())
+ 
+ it('repairs legacy saved lists with the default plugin center while preserving selection and order', () => {
+-  const legacy = ['plugin:notes/home', 'chat', 'apiRelay']
++  const legacy = ['plugin:notes/home', 'chat', 'usage']
+   mocks.db.prepare('INSERT INTO user_navigation (user_id, items_json, updated_at) VALUES (?, ?, ?)').run(1, JSON.stringify(legacy), 1)
+-  expect(getUserNavigation(1).items).toEqual(['plugin:notes/home', 'chat', 'studioPlugins', 'apiRelay'])
+-  expect(getUserNavigation(1).items).toEqual(['plugin:notes/home', 'chat', 'studioPlugins', 'apiRelay'])
++  expect(getUserNavigation(1).items).toEqual(['plugin:notes/home', 'chat', 'usage', 'studioPlugins'])
++  expect(getUserNavigation(1).items).toEqual(['plugin:notes/home', 'chat', 'usage', 'studioPlugins'])
+   const stored = mocks.db.prepare('SELECT schema_version, items_json FROM user_navigation WHERE user_id = 1').get()!
+   expect(stored.schema_version).toBe(1)
+-  expect(JSON.parse(stored.items_json as string)).toEqual(['plugin:notes/home', 'chat', 'studioPlugins', 'apiRelay'])
++  expect(JSON.parse(stored.items_json as string)).toEqual(['plugin:notes/home', 'chat', 'usage', 'studioPlugins'])
+   expect(getUserNavigation(2).items).not.toContain('plugin:notes/home')
+ })
+ 
+@@ -74,8 +74,8 @@ it('uses the authenticated account and denies unauthenticated or shared-session
+   const ctx = { state: { user: { id: 2 } }, request: { body: { items: ['chat'], userId: 1 } } } as unknown as Context
+   updateNavigation(ctx)
+   expect(ctx.status).toBe(400)
+-  ctx.request.body = { items: ['workflow'] }
++  ctx.request.body = { items: ['usage'] }
+   updateNavigation(ctx)
+-  expect(getUserNavigation(2).items).toEqual(['workflow'])
+-  expect(getUserNavigation(1).items).not.toEqual(['workflow'])
++  expect(getUserNavigation(2).items).toEqual(['usage'])
++  expect(getUserNavigation(1).items).not.toEqual(['usage'])
+ })
+-- 
+2.53.0
+
