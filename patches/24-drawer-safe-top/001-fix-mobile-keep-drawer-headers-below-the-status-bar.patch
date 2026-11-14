@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 4392843d43695f5e61dba40eb7668f1418f70082 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 24 Oct 2026 15:51:09 +0800
 Subject: [PATCH] fix(mobile): keep drawer headers below the status bar
@@ -45,3 +45,6 @@ index 3c5657173..e39355926 100644
  .hermes-desktop-pet-window,
  .hermes-desktop-pet-window body,
  .hermes-desktop-pet-window #app {
+-- 
+2.53.0
+

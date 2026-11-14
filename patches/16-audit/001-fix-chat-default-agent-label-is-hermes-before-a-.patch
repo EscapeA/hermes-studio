@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 6abf83bd4574d1425937d736d0014266dbd83a52 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 31 Oct 2026 11:52:52 +0800
 Subject: [PATCH] fix(chat): default agent avatar is Hermes before a session
@@ -9,10 +9,10 @@ Subject: [PATCH] fix(chat): default agent avatar is Hermes before a session
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/utils/chat-agent-avatar.ts b/packages/client/src/utils/chat-agent-avatar.ts
-index 923449b5b..2eeea1145 100644
+index 93037564a..ca77d95cc 100644
 --- a/packages/client/src/utils/chat-agent-avatar.ts
 +++ b/packages/client/src/utils/chat-agent-avatar.ts
-@@ -68,7 +68,9 @@ export function personTaskAgentAvatar(task: { selection_json: string }): ChatAge
+@@ -78,7 +78,9 @@ export function personTaskAgentAvatar(task: { selection_json: string }): ChatAge
  }
  
  export function chatSessionAgentAvatar(session?: ChatAgentSessionIdentity | null): ChatAgentAvatar {
@@ -23,3 +23,6 @@ index 923449b5b..2eeea1145 100644
    const botType = session.botType || session.bot_type || (session.id?.startsWith('person-main-') ? DEFAULT_PERSON_BOT_TYPE : '')
    const bot = personBot(botType)
    if (bot) {
+-- 
+2.53.0
+

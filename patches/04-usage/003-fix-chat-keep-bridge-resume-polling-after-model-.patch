@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 76abe28a238947157b4c337b782f3fd27c18f8d7 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:32:59 +0800
 Subject: [PATCH] fix(chat): keep bridge resume polling after model.usage apply
@@ -38,3 +38,6 @@ index b6d787e44..315d6b1f0 100644
        }
      }
      const output = typeof snapshot.output === 'string' ? snapshot.output : deltas.join('')
+-- 
+2.53.0
+

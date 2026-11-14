@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 5dea441e35e5bb82398ac302ed4eca7059a2f636 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:26:54 +0800
 Subject: [PATCH] refactor(chat): rename cacheHitRatePercent to
@@ -9,10 +9,10 @@ Subject: [PATCH] refactor(chat): rename cacheHitRatePercent to
  1 file changed, 2 insertions(+), 4 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index e542bbee1..854a32455 100644
+index 82b027e38..280e79408 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
-@@ -883,8 +883,6 @@ const totalTokens = computed(() => {
+@@ -898,8 +898,6 @@ const totalTokens = computed(() => {
  const showContextUsage = computed(() => !!composerSession.value)
  const showContextLimit = computed(() => !showSessionUsage.value)
  
@@ -21,7 +21,7 @@ index e542bbee1..854a32455 100644
  const usagePercent = computed(() =>
    Math.min(((totalTokens.value ?? 0) / contextLength.value) * 100, 100),
  )
-@@ -936,7 +934,7 @@ const showSessionTokensUsed = computed(() => {
+@@ -951,7 +949,7 @@ const showSessionTokensUsed = computed(() => {
    const u = sessionUsageTotal.value
    return !!chatStore.activeSession && !!u && sessionTotalTokens.value > 0
  })
@@ -30,7 +30,7 @@ index e542bbee1..854a32455 100644
    const u = sessionUsageTotal.value
    if (!u || sessionTotalTokens.value <= 0) return '0.00'
    return ((u.cacheRead / sessionTotalTokens.value) * 100).toFixed(2)
-@@ -1310,7 +1308,7 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1325,7 +1323,7 @@ function openAttachmentPreview(attachment: Attachment) {
            placement="bottom-start"
          >
            <template #trigger>
@@ -39,3 +39,6 @@ index e542bbee1..854a32455 100644
            </template>
            <span class="session-usage-detail-text">{{ sessionUsageDetailText }}</span>
          </NPopover>
+-- 
+2.53.0
+

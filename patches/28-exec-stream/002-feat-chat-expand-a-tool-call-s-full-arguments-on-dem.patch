@@ -1,4 +1,4 @@
-From 2428a74608a459ca05c3dd85f5a9d981b74e15a0 Mon Sep 17 00:00:00 2001
+From b447ac5d4fa12a904a6c4fadb214cafe0db2c144 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 5 Nov 2026 17:07:29 +0800
 Subject: [PATCH] feat(chat): expand a tool call's full arguments on demand
@@ -360,10 +360,10 @@ index 9c7957495..7cb39c099 100644
    // 兜底：紧凑 JSON，让「参数存在」这件事可见。
    try {
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 8e392a5d9..9bb42a50a 100644
+index 6ec3ac6b5..e37ea5a47 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -1045,6 +1045,7 @@ export default {
+@@ -1077,6 +1077,7 @@ export default {
    },
  
    toolStream: {
@@ -372,10 +372,10 @@ index 8e392a5d9..9bb42a50a 100644
      highlight: 'إبراز بناء الجملة',
      zoomIn: 'تكبير',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 9b605e054..ad482a78e 100644
+index 4eff55ca3..2f29be56e 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1057,6 +1057,7 @@ export default {
+@@ -1089,6 +1089,7 @@ export default {
    },
  
    toolStream: {
@@ -384,10 +384,10 @@ index 9b605e054..ad482a78e 100644
      highlight: 'Syntaxhervorhebung',
      zoomIn: 'Vergrößern',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 6b0adc7af..f0f4f6204 100644
+index 401be575c..07895a9cb 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1052,6 +1052,7 @@ export default {
+@@ -1084,6 +1084,7 @@ export default {
    },
  
    toolStream: {
@@ -396,10 +396,10 @@ index 6b0adc7af..f0f4f6204 100644
      highlight: 'Syntax highlighting',
      zoomIn: 'Zoom in',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 1210db388..9220373d4 100644
+index ad3e002f6..feb5ae069 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1057,6 +1057,7 @@ export default {
+@@ -1089,6 +1089,7 @@ export default {
    },
  
    toolStream: {
@@ -408,10 +408,10 @@ index 1210db388..9220373d4 100644
      highlight: 'Resaltado de sintaxis',
      zoomIn: 'Acercar',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 8730248c8..7487be411 100644
+index cb166b5c5..8439ac2e6 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1057,6 +1057,7 @@ export default {
+@@ -1089,6 +1089,7 @@ export default {
    },
  
    toolStream: {
@@ -420,10 +420,10 @@ index 8730248c8..7487be411 100644
      highlight: 'Coloration syntaxique',
      zoomIn: 'Zoom avant',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 12ecdcaa0..4d9ecd8bc 100644
+index 0ad73ddc6..9a30a8ccd 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1058,6 +1058,7 @@ export default {
+@@ -1089,6 +1089,7 @@ export default {
    },
  
    toolStream: {
@@ -432,10 +432,10 @@ index 12ecdcaa0..4d9ecd8bc 100644
      highlight: 'シンタックスハイライト',
      zoomIn: '拡大',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index e93131b6b..8f4375d79 100644
+index 779214ddd..5a4ad9b84 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1058,6 +1058,7 @@ export default {
+@@ -1089,6 +1089,7 @@ export default {
    },
  
    toolStream: {
@@ -444,10 +444,10 @@ index e93131b6b..8f4375d79 100644
      highlight: '구문 강조',
      zoomIn: '확대',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index cad4a33e2..0c27acba4 100644
+index 8cd89e753..4abdfe6e2 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1057,6 +1057,7 @@ export default {
+@@ -1089,6 +1089,7 @@ export default {
    },
  
    toolStream: {
@@ -456,10 +456,10 @@ index cad4a33e2..0c27acba4 100644
      highlight: 'Realce de sintaxe',
      zoomIn: 'Aumentar zoom',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 511a18833..f76093322 100644
+index 1b2cc2dbc..d3c216bdb 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -983,6 +983,7 @@ export default {
+@@ -1014,6 +1014,7 @@ export default {
    },
  
    toolStream: {
@@ -468,10 +468,10 @@ index 511a18833..f76093322 100644
      highlight: 'Подсветка синтаксиса',
      zoomIn: 'Увеличить',
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index 621c00904..1ab2f2b1f 100644
+index 55d7a9370..f4f951028 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -619,6 +619,7 @@ export default {
+@@ -555,6 +555,7 @@ export default {
  
    language: { label: 'Dil', zh: 'Çince', en: 'İngilizce', tr: 'Türkçe' },
    toolStream: {
@@ -480,10 +480,10 @@ index 621c00904..1ab2f2b1f 100644
      highlight: 'Sözdizimi vurgulama',
      zoomIn: 'Yakınlaştır',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 3237d4a9e..c8c553c4f 100644
+index 069c8a0bf..990a8f1c7 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1046,6 +1046,7 @@ export default {
+@@ -1077,6 +1077,7 @@ export default {
    },
  
    toolStream: {
@@ -492,10 +492,10 @@ index 3237d4a9e..c8c553c4f 100644
      highlight: '語法高亮',
      zoomIn: '放大',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 84937c32c..ec5b80028 100644
+index 24717f345..a9e7b70b8 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1053,6 +1053,7 @@ export default {
+@@ -1084,6 +1084,7 @@ export default {
    },
  
    toolStream: {
@@ -598,3 +598,6 @@ index 4960fa3ed..16ad595b5 100644
  describe('自动语言识别（高把握才染色）', () => {
    it('认出未标语言的 TS / Go / Rust 代码', () => {
      const ts = `interface User { id: number; name: string }
+-- 
+2.53.0
+

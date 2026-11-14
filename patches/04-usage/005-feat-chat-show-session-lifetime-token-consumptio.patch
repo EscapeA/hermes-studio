@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From a54b40c379aa81e8b2f17af800600ad3ec1fa385 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Fri, 14 Aug 2026 18:54:27 +0800
 Subject: [PATCH] feat(chat): show session-lifetime token consumption in input
@@ -36,10 +36,10 @@ cache read/cache write/reasoning).
  14 files changed, 194 insertions(+), 2 deletions(-)
 
 diff --git a/packages/client/src/api/studio/sessions.ts b/packages/client/src/api/studio/sessions.ts
-index d33777179..bb8539c0d 100644
+index aa026e1bc..dfd0f2291 100644
 --- a/packages/client/src/api/studio/sessions.ts
 +++ b/packages/client/src/api/studio/sessions.ts
-@@ -738,6 +738,23 @@ export async function fetchSessionUsage(ids: string[]): Promise<Record<string, {
+@@ -745,6 +745,23 @@ export async function fetchSessionUsage(ids: string[]): Promise<Record<string, {
    return request(`/api/studio/sessions/usage?${params}`)
  }
  
@@ -64,7 +64,7 @@ index d33777179..bb8539c0d 100644
    try {
      return await request<{ input_tokens: number; output_tokens: number }>(`/api/studio/sessions/${id}/usage`)
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 3729d8f8a..36374a5c0 100644
+index 0bfd73824..90d1bde20 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -8,7 +8,7 @@ import { useChatStore } from '@/stores/hermes/chat'
@@ -76,7 +76,7 @@ index 3729d8f8a..36374a5c0 100644
  import { setModelContext } from '@/api/hermes/model-context'
  import { fetchSkills, type SkillCategory, type SkillInfo } from '@/api/hermes/skills'
  import { deleteSkillBundleApi, fetchSkillBundles, type SkillBundleInfo } from '@/api/hermes/skill-bundles'
-@@ -919,6 +919,76 @@ function formatTokens(n: number | null): string {
+@@ -934,6 +934,76 @@ function formatTokens(n: number | null): string {
    return String(n)
  }
  
@@ -153,7 +153,7 @@ index 3729d8f8a..36374a5c0 100644
  // --- File attachment helpers ---
  
  function addFile(file: File) {
-@@ -1255,6 +1325,16 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1270,6 +1340,16 @@ function openAttachmentPreview(attachment: Attachment) {
  
      <slot name="before-context-usage" />
      <div v-if="showContextUsage" class="context-usage-row">
@@ -170,7 +170,7 @@ index 3729d8f8a..36374a5c0 100644
        <span class="context-info" :class="{ 'context-warning': showContextLimit && usagePercent > 80 }">
          <template v-if="showSessionUsage">{{ t('chat.sessionUsage') }} </template>
          {{ formatTokens(totalTokens) }}
-@@ -2021,6 +2101,38 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2036,6 +2116,38 @@ function openAttachmentPreview(attachment: Attachment) {
    }
  }
  
@@ -210,7 +210,7 @@ index 3729d8f8a..36374a5c0 100644
    cursor: pointer;
    border-bottom: var(--border-width, 1px) dashed transparent;
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 909244a60..2c6840c89 100644
+index 6611de18c..c17863c77 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -1181,6 +1181,8 @@ export default {
@@ -223,7 +223,7 @@ index 909244a60..2c6840c89 100644
      contextEditTitle: 'Kontextlänge bearbeiten',
      contextEditDesc: 'Kontextlängenlimit für aktuelles Modell festlegen (in Tokens)',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 18fa7cc90..f179dc095 100644
+index 40cb009b2..6291e3304 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -1202,6 +1202,8 @@ export default {
@@ -236,7 +236,7 @@ index 18fa7cc90..f179dc095 100644
      contextEditTitle: 'Edit Context Length',
      contextEditDesc: 'Set context length limit for current model (in tokens)',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index feca0d8f7..cda251b08 100644
+index 424dd3269..49c98875f 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -1181,6 +1181,8 @@ export default {
@@ -249,7 +249,7 @@ index feca0d8f7..cda251b08 100644
      contextEditTitle: 'Editar longitud del contexto',
      contextEditDesc: 'Establecer el límite de longitud del contexto para el modelo actual (en tokens)',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 527b2339c..1ca71798b 100644
+index e1c248522..d9f6e7e97 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -1181,6 +1181,8 @@ export default {
@@ -262,7 +262,7 @@ index 527b2339c..1ca71798b 100644
      contextEditTitle: 'Modifier la longueur du contexte',
      contextEditDesc: 'Définir la limite de longueur du contexte pour le modèle actuel (en tokens)',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index bc9dc03c1..4fb9b5292 100644
+index 436c14e77..12bd0bd9d 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -1181,6 +1181,8 @@ export default {
@@ -275,7 +275,7 @@ index bc9dc03c1..4fb9b5292 100644
      contextEditTitle: 'コンテキスト長を編集',
      contextEditDesc: '現在のモデルのコンテキスト長制限を設定（トークン数）',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 3ff47e83e..addecf495 100644
+index 33e497056..3fc9d84f2 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -1181,6 +1181,8 @@ export default {
@@ -288,7 +288,7 @@ index 3ff47e83e..addecf495 100644
      contextEditTitle: '컨텍스트 길이 편집',
      contextEditDesc: '현재 모델의 컨텍스트 길이 제한 설정 (토큰 수)',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 1603bea81..c5e058f83 100644
+index 455404166..04d2b489a 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -1181,6 +1181,8 @@ export default {
@@ -301,7 +301,7 @@ index 1603bea81..c5e058f83 100644
      contextEditTitle: 'Editar tamanho do contexto',
      contextEditDesc: 'Definir o limite de tamanho do contexto para o modelo atual (em tokens)',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index abd8c250b..8b97bac8f 100644
+index ed42e56ca..dd9e4bbc2 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -1108,6 +1108,8 @@ export default {
@@ -314,7 +314,7 @@ index abd8c250b..8b97bac8f 100644
      contextEditTitle: 'Изменить размер контекста',
      contextEditDesc: 'Установите лимит размера контекста для текущей модели (в токенах)',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 89d479203..bc83d903c 100644
+index dff4c4f2b..5040c2c30 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -1195,6 +1195,8 @@ export default {
@@ -327,7 +327,7 @@ index 89d479203..bc83d903c 100644
      contextEditTitle: '編輯上下文長度',
      contextEditDesc: '設定目前模型的上下文長度限制（token 數量）',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 96360ab13..85088d5a7 100644
+index 65ced4417..f131a64a5 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -1202,6 +1202,8 @@ export default {
@@ -340,10 +340,10 @@ index 96360ab13..85088d5a7 100644
      contextEditTitle: '编辑上下文长度',
      contextEditDesc: '设置当前模型的上下文长度限制（token 数量）',
 diff --git a/packages/server/src/modules/studio/controllers/sessions.ts b/packages/server/src/modules/studio/controllers/sessions.ts
-index b70021f02..ad9189297 100644
+index f2092d581..3e3d21849 100644
 --- a/packages/server/src/modules/studio/controllers/sessions.ts
 +++ b/packages/server/src/modules/studio/controllers/sessions.ts
-@@ -46,7 +46,7 @@ import {
+@@ -47,7 +47,7 @@ import {
    updateSessionStats as localUpdateSessionStats,
  } from '../public/sessions'
  import { buildDbExportHistory, ExportCompressor } from '../services/context-compressor/export-compressor'
@@ -352,7 +352,7 @@ index b70021f02..ad9189297 100644
  import {
    SESSION_CATEGORY_NAME_MAX_LENGTH,
    createSessionCategory,
-@@ -1598,6 +1598,10 @@ export async function usageBatch(ctx: any) {
+@@ -1599,6 +1599,10 @@ export async function usageBatch(ctx: any) {
  export async function usageSingle(ctx: any) {
    const session = localGetSession(ctx.params.id)
    if (denySessionAccess(ctx, session)) return
@@ -413,3 +413,6 @@ index 72d046c0a..ce9b30284 100644
  export function getUsageBatch(sessionIds: string[]): Record<string, UsageRecord> {
    if (sessionIds.length === 0) return {}
    if (isSqliteAvailable()) {
+-- 
+2.53.0
+

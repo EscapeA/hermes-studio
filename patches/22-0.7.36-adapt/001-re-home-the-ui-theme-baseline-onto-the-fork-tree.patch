@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From e0f6d075c43ebbca055e2d3f059893a228be4f5e Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 16 Oct 2026 01:30:19 +0800
 Subject: [PATCH] test(harness): re-home the ui-theme baseline onto the fork
@@ -19,7 +19,7 @@ measurement of the pre-upgrade fork tree, so this patch introduces no new debt.
  1 file changed, 63 insertions(+), 218 deletions(-)
 
 diff --git a/scripts/ui-theme-baseline.json b/scripts/ui-theme-baseline.json
-index 97a9f07a8..a1232554d 100644
+index a7da9ab06..b5f95d247 100644
 --- a/scripts/ui-theme-baseline.json
 +++ b/scripts/ui-theme-baseline.json
 @@ -1,6 +1,5 @@
@@ -269,9 +269,9 @@ index 97a9f07a8..a1232554d 100644
      "packages/client/src/components/layout/DesktopTitleBar.vue": {
        "literal-color | .desktop-titlebar | box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1)": 1,
        "literal-color | .desktop-window-btn.close:hover | color: #ffffff": 1,
-@@ -1108,13 +946,6 @@
-       "unowned-background | .agent-logo | background: rgba(255, 255, 255, 0.92)": 1,
-       "literal-color | .agent-update-error | color: #c44": 1
+@@ -1104,13 +942,6 @@
+       "literal-color | :global(.agent-ai-help-error) | background: rgba(127, 127, 127, 0.1)": 1,
+       "unowned-background | :global(.agent-ai-help-error) | background: rgba(127, 127, 127, 0.1)": 1
      },
 -    "packages/client/src/views/hermes/GroupChatLinkView.vue": {
 -      "unowned-background | .group-chat-link-view | background: $bg-primary": 1,
@@ -283,7 +283,7 @@ index 97a9f07a8..a1232554d 100644
      "packages/client/src/views/hermes/HistoryView.vue": {
        "literal-color | .session-backdrop | background: rgba(0, 0, 0, 0.4)": 1,
        "unowned-background | .session-backdrop | background: rgba(0, 0, 0, 0.4)": 1,
-@@ -1172,13 +1003,6 @@
+@@ -1168,13 +999,6 @@
        "literal-color | .pet-preview | background: linear-gradient(45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%)": 1,
        "unowned-background | .pet-preview | background: linear-gradient(45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(127, 127, 127, 0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(127, 127, 127, 0.08) 75%)": 1
      },
@@ -297,7 +297,7 @@ index 97a9f07a8..a1232554d 100644
      "packages/client/src/views/hermes/SkillsUsageView.vue": {
        "unowned-background | .floating-tooltip | background: $bg-secondary": 1,
        "literal-color | .floating-tooltip | box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35)": 1
-@@ -1226,36 +1050,57 @@
+@@ -1222,36 +1046,57 @@
        "literal-color | .background-name | background: rgba(0, 0, 0, 0.62)": 1,
        "unowned-background | .background-name | background: rgba(0, 0, 0, 0.62)": 1
      },
@@ -382,3 +382,6 @@ index 97a9f07a8..a1232554d 100644
      }
    }
  }
+-- 
+2.53.0
+

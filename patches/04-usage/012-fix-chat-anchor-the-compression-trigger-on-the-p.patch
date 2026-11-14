@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From e2a6a3214fd97b1e2f155cac666c316fb4b686eb Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 15 Oct 2026 17:51:44 +0800
 Subject: [PATCH] fix(chat): anchor the compression trigger on the provider
@@ -60,3 +60,6 @@ index d4c9c204c..0729f884b 100644
      }
      const emitContextUsage = (contextTokens: number) => {
        cState.contextTokens = contextTokens
+-- 
+2.53.0
+

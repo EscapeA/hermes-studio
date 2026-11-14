@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From f652d58d79e7d34c35521fbb0213594a461df285 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
 Subject: [PATCH] perf(i18n): merge en fallback at build time, one locale chunk
@@ -204,3 +204,6 @@ index bf7806e05..aa6eb43fa 100644
    define: {
      __APP_VERSION__: JSON.stringify(pkg.version),
    },
+-- 
+2.53.0
+

@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 9a42cf1b16c77f21e21e288551fbeaa055c4ec77 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 5 Nov 2026 23:37:22 +0800
 Subject: [PATCH] feat(auth): add passkey (WebAuthn) sign-in
@@ -64,10 +64,10 @@ Password login is untouched and remains the primary path.
  create mode 100644 tests/server/webauthn-passkey.test.ts
 
 diff --git a/docs/openapi.json b/docs/openapi.json
-index 9a9d71ff5..57e83278e 100644
+index 4e1ad63ff..134ab1492 100644
 --- a/docs/openapi.json
 +++ b/docs/openapi.json
-@@ -1263,6 +1263,321 @@
+@@ -1271,6 +1271,321 @@
          ]
        }
      },
@@ -390,7 +390,7 @@ index 9a9d71ff5..57e83278e 100644
        "get": {
          "tags": [
 diff --git a/package-lock.json b/package-lock.json
-index 295b4adf0..61d367a52 100644
+index eca52c81d..2f13c595b 100644
 --- a/package-lock.json
 +++ b/package-lock.json
 @@ -13,6 +13,8 @@
@@ -402,7 +402,7 @@ index 295b4adf0..61d367a52 100644
          "@trycua/cua-driver": "0.35.4",
          "@typesafe-ai/sdk": "0.6.0",
          "@vscode/markdown-it-katex": "^1.1.2",
-@@ -1330,6 +1332,12 @@
+@@ -1342,6 +1344,12 @@
          "@hapi/hoek": "^11.0.2"
        }
      },
@@ -415,7 +415,7 @@ index 295b4adf0..61d367a52 100644
      "node_modules/@iconify/types": {
        "version": "2.0.0",
        "resolved": "https://registry.npmjs.org/@iconify/types/-/types-2.0.0.tgz",
-@@ -2134,6 +2142,12 @@
+@@ -2146,6 +2154,12 @@
        "integrity": "sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==",
        "license": "MIT"
      },
@@ -428,7 +428,7 @@ index 295b4adf0..61d367a52 100644
      "node_modules/@mermaid-js/parser": {
        "version": "1.2.1",
        "resolved": "https://registry.npmjs.org/@mermaid-js/parser/-/parser-1.2.1.tgz",
-@@ -2831,6 +2845,20 @@
+@@ -2843,6 +2857,20 @@
          "url": "https://github.com/sponsors/jonschlinkert"
        }
      },
@@ -449,7 +449,7 @@ index 295b4adf0..61d367a52 100644
      "node_modules/@peculiar/asn1-cms": {
        "version": "2.10.0",
        "resolved": "https://registry.npmjs.org/@peculiar/asn1-cms/-/asn1-cms-2.10.0.tgz",
-@@ -2944,9 +2972,9 @@
+@@ -2956,9 +2984,9 @@
        }
      },
      "node_modules/@peculiar/asn1-schema": {
@@ -462,7 +462,7 @@ index 295b4adf0..61d367a52 100644
        "license": "MIT",
        "dependencies": {
          "@peculiar/utils": "^2.0.2",
-@@ -3765,6 +3793,31 @@
+@@ -3777,6 +3805,31 @@
          "node": ">=6"
        }
      },
@@ -495,10 +495,10 @@ index 295b4adf0..61d367a52 100644
        "version": "3.1.2",
        "resolved": "https://registry.npmjs.org/@socket.io/component-emitter/-/component-emitter-3.1.2.tgz",
 diff --git a/package.json b/package.json
-index cc3ab82a5..4a4116f3f 100644
+index 1f71d7819..a71c7d24c 100644
 --- a/package.json
 +++ b/package.json
-@@ -86,6 +86,8 @@
+@@ -87,6 +87,8 @@
      "@audio/decode-wav": "^1.2.0",
      "@larksuiteoapi/node-sdk": "^1.73.0",
      "@modelcontextprotocol/client": "^2.0.0",
@@ -1082,10 +1082,10 @@ index 000000000..05ea17fac
 +}
 +</style>
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 8c2d8025d..669d97699 100644
+index e37ea5a47..40be3c3a7 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -456,6 +456,14 @@ export default {
+@@ -459,6 +459,14 @@ export default {
    },
    // Login
    login: {
@@ -1100,7 +1100,7 @@ index 8c2d8025d..669d97699 100644
      title: 'Ekko Studio',
      description: 'أدخل اسم المستخدم وكلمة المرور للمتابعة.',
      placeholder: 'رمز الوصول',
-@@ -2677,6 +2685,39 @@ export default {
+@@ -2709,6 +2717,39 @@ export default {
          pairing: 'إقران الجهاز',
        },
      },
@@ -1141,10 +1141,10 @@ index 8c2d8025d..669d97699 100644
        title: 'صورة المستخدم',
        upload: 'رفع صورة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 873c25f6f..f43209e37 100644
+index 2f29be56e..6e5ec8955 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -468,6 +468,14 @@ export default {
+@@ -471,6 +471,14 @@ export default {
    },
    // Login
    login: {
@@ -1159,7 +1159,7 @@ index 873c25f6f..f43209e37 100644
      title: 'Ekko Studio',
      description: 'Geben Sie Benutzername und Passwort ein, um fortzufahren.',
      placeholder: 'Zugangs-Token',
-@@ -2778,6 +2786,39 @@ jobTriggered: 'Job ausgelost',
+@@ -2810,6 +2818,39 @@ jobTriggered: 'Job ausgelost',
          pairing: 'Device pairing',
        },
      },
@@ -1200,10 +1200,10 @@ index 873c25f6f..f43209e37 100644
        title: 'Benutzeravatar',
        upload: 'Bild hochladen',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index bead2cbeb..a5842fd64 100644
+index 07895a9cb..cc79765a4 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -456,6 +456,14 @@ export default {
+@@ -459,6 +459,14 @@ export default {
    },
    // Login
    login: {
@@ -1218,7 +1218,7 @@ index bead2cbeb..a5842fd64 100644
      title: 'Ekko Studio',
      description: 'Enter your username and password to continue.',
      placeholder: 'Access token',
-@@ -2734,6 +2742,39 @@ export default {
+@@ -2766,6 +2774,39 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -1259,10 +1259,10 @@ index bead2cbeb..a5842fd64 100644
        title: 'User Avatar',
        upload: 'Upload Image',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index f01dceca5..11f7b44e0 100644
+index feb5ae069..789b36990 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -468,6 +468,14 @@ export default {
+@@ -471,6 +471,14 @@ export default {
    },
    // Login
    login: {
@@ -1277,7 +1277,7 @@ index f01dceca5..11f7b44e0 100644
      title: 'Ekko Studio',
      description: 'Introduce tu nombre de usuario y contrasena para continuar.',
      placeholder: 'Token de acceso',
-@@ -2778,6 +2786,39 @@ jobTriggered: 'Job ejecutado',
+@@ -2810,6 +2818,39 @@ jobTriggered: 'Job ejecutado',
          pairing: 'Device pairing',
        },
      },
@@ -1318,10 +1318,10 @@ index f01dceca5..11f7b44e0 100644
        title: 'Avatar de usuario',
        upload: 'Subir imagen',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 3b9b44e22..000dc39a7 100644
+index 8439ac2e6..843fcba7a 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -468,6 +468,14 @@ export default {
+@@ -471,6 +471,14 @@ export default {
    },
    // Login
    login: {
@@ -1336,7 +1336,7 @@ index 3b9b44e22..000dc39a7 100644
      title: 'Ekko Studio',
      description: 'Entrez votre nom d\'utilisateur et votre mot de passe pour continuer.',
      placeholder: 'Jeton d\'acces',
-@@ -2778,6 +2786,39 @@ jobTriggered: 'Job declenche',
+@@ -2810,6 +2818,39 @@ jobTriggered: 'Job declenche',
          pairing: 'Device pairing',
        },
      },
@@ -1377,10 +1377,10 @@ index 3b9b44e22..000dc39a7 100644
        title: 'Avatar utilisateur',
        upload: 'Importer une image',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 4d447390f..a0c95f751 100644
+index 9a30a8ccd..7fc9acaa3 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -468,6 +468,14 @@ export default {
+@@ -471,6 +471,14 @@ export default {
    },
    // ログイン
    login: {
@@ -1395,7 +1395,7 @@ index 4d447390f..a0c95f751 100644
      title: 'Ekko Studio',
      description: 'ユーザー名とパスワードを入力して続行してください。',
      placeholder: 'アクセストークン',
-@@ -2779,6 +2787,39 @@ export default {
+@@ -2810,6 +2818,39 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -1436,10 +1436,10 @@ index 4d447390f..a0c95f751 100644
        title: 'ユーザーアバター',
        upload: '画像をアップロード',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index dedca7def..28ee890d5 100644
+index 5a4ad9b84..16c751caa 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -468,6 +468,14 @@ export default {
+@@ -471,6 +471,14 @@ export default {
    },
    // 로그인
    login: {
@@ -1454,7 +1454,7 @@ index dedca7def..28ee890d5 100644
      title: 'Ekko Studio',
      description: '계속하려면 사용자 이름과 비밀번호를 입력하세요.',
      placeholder: '액세스 토큰',
-@@ -2779,6 +2787,39 @@ export default {
+@@ -2810,6 +2818,39 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -1495,10 +1495,10 @@ index dedca7def..28ee890d5 100644
        title: '사용자 아바타',
        upload: '이미지 업로드',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index d15df08a0..ce2d7e710 100644
+index 4abdfe6e2..e84ad7235 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -468,6 +468,14 @@ export default {
+@@ -471,6 +471,14 @@ export default {
    },
    // Login
    login: {
@@ -1513,7 +1513,7 @@ index d15df08a0..ce2d7e710 100644
      title: 'Ekko Studio',
      description: 'Insira seu nome de usuário e senha para continuar.',
      placeholder: 'Token de acesso',
-@@ -2778,6 +2786,39 @@ jobTriggered: 'Job acionado',
+@@ -2810,6 +2818,39 @@ jobTriggered: 'Job acionado',
          pairing: 'Device pairing',
        },
      },
@@ -1554,10 +1554,10 @@ index d15df08a0..ce2d7e710 100644
        title: 'Avatar do usuário',
        upload: 'Enviar imagem',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 7b03c7e75..7e805602b 100644
+index d3c216bdb..d4c028d8e 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -456,6 +456,14 @@ export default {
+@@ -459,6 +459,14 @@ export default {
    },
  
    login: {
@@ -1572,7 +1572,7 @@ index 7b03c7e75..7e805602b 100644
      title: 'Ekko Studio',
      description: 'Введите имя пользователя и пароль для продолжения.',
      placeholder: 'Токен доступа',
-@@ -2470,6 +2478,39 @@ export default {
+@@ -2501,6 +2509,39 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -1613,10 +1613,10 @@ index 7b03c7e75..7e805602b 100644
        title: 'Аватар пользователя',
        upload: 'Загрузить изображение',
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index fe591a0e8..9f73ad704 100644
+index f4f951028..5621be223 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -408,6 +408,14 @@ export default {
+@@ -428,6 +428,14 @@ export default {
    },
  
    login: {
@@ -1631,7 +1631,7 @@ index fe591a0e8..9f73ad704 100644
      title: 'Ekko Studio',
      description: 'Devam etmek için kullanıcı adınızı ve parolanızı girin.',
      placeholder: 'Erişim belirteci',
-@@ -661,7 +669,40 @@ export default {
+@@ -681,7 +689,40 @@ export default {
      message: { taskArchived: 'Görev arşivlendi' },
    },
    journey: { nodeKinds: 'Düğüm türleri' },
@@ -1674,10 +1674,10 @@ index fe591a0e8..9f73ad704 100644
        policy: 'Gizlilik bildirimi',
      },
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 36e6f4cca..7328f7e68 100644
+index 990a8f1c7..4975e337f 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -456,6 +456,14 @@ export default {
+@@ -459,6 +459,14 @@ export default {
    },
    // 登入
    login: {
@@ -1692,7 +1692,7 @@ index 36e6f4cca..7328f7e68 100644
      title: 'Ekko Studio',
      description: '輸入使用者名稱和密碼以繼續。',
      placeholder: '存取權杖',
-@@ -2639,6 +2647,39 @@ export default {
+@@ -2670,6 +2678,39 @@ export default {
          pairing: '裝置配對',
        },
      },
@@ -1733,10 +1733,10 @@ index 36e6f4cca..7328f7e68 100644
        title: '使用者頭像',
        upload: '上傳圖片',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index e27777ff3..374aa8ccf 100644
+index a9e7b70b8..dbaedd7a8 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -456,6 +456,14 @@ export default {
+@@ -459,6 +459,14 @@ export default {
    },
    // 登录
    login: {
@@ -1751,7 +1751,7 @@ index e27777ff3..374aa8ccf 100644
      title: 'Ekko Studio',
      description: '输入用户名和密码以继续。',
      placeholder: '访问令牌',
-@@ -2727,6 +2735,39 @@ export default {
+@@ -2758,6 +2766,39 @@ export default {
          pairing: '设备配对',
        },
      },
@@ -2217,7 +2217,7 @@ index 000000000..53332ed17
 +  }
 +}
 diff --git a/packages/server/src/modules/studio/infrastructure/database/schemas.ts b/packages/server/src/modules/studio/infrastructure/database/schemas.ts
-index 9eb5ca391..d217db17d 100644
+index 549216031..922eff8ad 100644
 --- a/packages/server/src/modules/studio/infrastructure/database/schemas.ts
 +++ b/packages/server/src/modules/studio/infrastructure/database/schemas.ts
 @@ -618,6 +618,36 @@ export const USER_PROFILES_INDEXES = {
@@ -2257,7 +2257,7 @@ index 9eb5ca391..d217db17d 100644
  export const USER_THEMES_TABLE = 'user_themes'
  export const USER_THEME_PRESETS_TABLE = 'user_theme_presets'
  
-@@ -1828,6 +1858,10 @@ export function initAllHermesTables(): void {
+@@ -1830,6 +1860,10 @@ export function initAllHermesTables(): void {
  
      // Users and profile access
      syncTable(USERS_TABLE, USERS_SCHEMA)
@@ -3275,3 +3275,6 @@ index 000000000..d4ef3c381
 +it('requires RP configuration before starting a registration', async () => {
 +  await expect(webauthn.beginRegistration(1)).rejects.toThrow(webauthn.WebAuthnConfigError)
 +})
+-- 
+2.53.0
+

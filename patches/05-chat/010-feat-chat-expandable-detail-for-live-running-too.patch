@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From c103b4fcdb291c996ab645d56fecf8c51029da54 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 20:14:05 +0800
 Subject: [PATCH] feat(chat): expandable detail for live running tool items
@@ -23,10 +23,10 @@ transcript).
  1 file changed, 137 insertions(+), 6 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 4aaaf71fe..107899c05 100644
+index 043987c74..7f83859e2 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -92,9 +92,50 @@ function isSubagentToolCall(message: Message): boolean {
+@@ -98,9 +98,50 @@ function isSubagentToolCall(message: Message): boolean {
    return subagentIdFromToolCall(message.toolCallId) !== null
  }
  
@@ -79,7 +79,7 @@ index 4aaaf71fe..107899c05 100644
  }
  
  function formatElapsed(ms: number): string {
-@@ -1081,15 +1122,33 @@ defineExpose({
+@@ -1099,15 +1140,33 @@ defineExpose({
                v-for="tc in visibleToolCalls"
                :key="tc.id"
                class="tool-call-item"
@@ -116,7 +116,7 @@ index 4aaaf71fe..107899c05 100644
                  width="12"
                  height="12"
                  viewBox="0 0 24 24"
-@@ -1104,7 +1163,7 @@ defineExpose({
+@@ -1122,7 +1181,7 @@ defineExpose({
                </svg>
                <span class="tool-call-name">{{ tc.toolName }}</span>
                <span
@@ -125,7 +125,7 @@ index 4aaaf71fe..107899c05 100644
                  class="tool-call-preview"
                  :title="tc.toolPreview"
                >{{ toolPreviewText(tc.toolPreview) }}</span>
-@@ -1154,6 +1213,15 @@ defineExpose({
+@@ -1172,6 +1231,15 @@ defineExpose({
                    fill="none"
                  />
                </svg>
@@ -141,7 +141,7 @@ index 4aaaf71fe..107899c05 100644
              </div>
              <div
                v-if="visibleToolCalls.length === 0"
-@@ -2245,6 +2313,16 @@ defineExpose({
+@@ -2263,6 +2331,16 @@ defineExpose({
    background: rgba(0, 0, 0, 0.03);
    border-radius: $radius-sm;
  
@@ -158,7 +158,7 @@ index 4aaaf71fe..107899c05 100644
    &.subagent-entry {
      cursor: pointer;
  
-@@ -2259,6 +2337,20 @@ defineExpose({
+@@ -2277,6 +2355,20 @@ defineExpose({
      background: rgba(255, 255, 255, 0.06);
    }
  
@@ -179,7 +179,7 @@ index 4aaaf71fe..107899c05 100644
    &.compression-item {
      color: $text-muted;
      font-size: calc(var(--font-size-base, 14px) * 10 / 14);
-@@ -2272,6 +2364,16 @@ defineExpose({
+@@ -2290,6 +2382,16 @@ defineExpose({
      }
    }
  
@@ -196,7 +196,7 @@ index 4aaaf71fe..107899c05 100644
    .tool-call-icon {
      flex-shrink: 0;
      color: $text-muted;
-@@ -2297,6 +2399,35 @@ defineExpose({
+@@ -2315,6 +2417,35 @@ defineExpose({
      max-width: none;
      color: $text-muted;
    }
@@ -232,3 +232,6 @@ index 4aaaf71fe..107899c05 100644
  }
  
  .tool-call-spinner {
+-- 
+2.53.0
+

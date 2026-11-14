@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 6f6a974e08990fb1708e39c01f64fb8a93cb6ea5 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 28 Aug 2026 07:50:09 +0800
 Subject: [PATCH] fix(chat): anchor tool-run card at run end and unclip
@@ -18,10 +18,10 @@ Subject: [PATCH] fix(chat): anchor tool-run card at run end and unclip
  2 files changed, 16 insertions(+), 10 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 81e993b0a..9f6ca5a9a 100644
+index f69f9c064..ecdea85fe 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -1968,17 +1968,12 @@ defineExpose({
+@@ -1986,17 +1986,12 @@ defineExpose({
    display: flex;
    flex-direction: column;
    align-items: flex-start;
@@ -91,3 +91,6 @@ index 8d2fbd95a..eeaa39fcd 100644
 -}
 +}
 \ No newline at end of file
+-- 
+2.53.0
+

@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From e6cb636f3368b598dd6e007977def8867aead892 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 20:36:41 +0800
 Subject: [PATCH] fix(chat): unclip expanded tool detail inside tool strip body
@@ -19,10 +19,10 @@ item was compressed back to ~26px, and .tool-strip-body's max-height:
  1 file changed, 7 insertions(+)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index f3247f7b4..668a5ea4d 100644
+index 0e76778ed..1080bc586 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -2289,6 +2289,12 @@ defineExpose({
+@@ -2307,6 +2307,12 @@ defineExpose({
    &::-webkit-scrollbar {
      display: none;
    }
@@ -35,7 +35,7 @@ index f3247f7b4..668a5ea4d 100644
  }
  
  .tool-strip-pending {
-@@ -2339,6 +2345,7 @@ defineExpose({
+@@ -2357,6 +2363,7 @@ defineExpose({
    }
  
    &.expanded {
@@ -43,3 +43,6 @@ index f3247f7b4..668a5ea4d 100644
      align-items: flex-start;
      height: auto;
      min-height: 26px;
+-- 
+2.53.0
+

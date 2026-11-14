@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 349cb3d3bf7aeb306a39f6a040966f49187a1ef5 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 11:22:27 +0800
 Subject: [PATCH] fix(chat): settle run state when a run ends while the socket
@@ -78,7 +78,7 @@ index 948a5c77f..0e7c3ea7c 100644
    }
  
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index e3bb8d83a..d85611868 100644
+index d5dd6ad53..22b191753 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
 @@ -7,7 +7,7 @@ import { isKnownEkkoSessionCommand } from '@/utils/hermes/bridge-session-command
@@ -90,7 +90,7 @@ index e3bb8d83a..d85611868 100644
  import { archiveSession as archiveSessionApi, deleteSession as deleteSessionApi, fetchSessionMessagesPage, fetchSessions, fetchWorkspaceRunChangeFile, setSessionModel, setSessionPushEnabled as persistSessionPushEnabled, setSessionReasoningEffort as persistSessionReasoningEffort, type HermesMessage, type SessionSummary, type WorkspaceRunChangeFileDetail, type WorkspaceRunChangeSummary } from '@/api/studio/sessions'
  import { getActiveProfileName } from '@/api/client'
  import { onAuthInvalidated } from '@/api/auth-invalidation'
-@@ -5485,6 +5485,70 @@ function createChatState(scopedSessionId?: string) {
+@@ -5482,6 +5482,70 @@ function createChatState(scopedSessionId?: string) {
      if (!passive) ensureAbortHandle()
    }
  
@@ -161,7 +161,7 @@ index e3bb8d83a..d85611868 100644
    function handlePeerUserMessage(evt: RunEvent) {
      const sid = evt.session_id
      if (scopedSessionId ? sid !== scopedSessionId : sid?.startsWith('person-task-')) return
-@@ -5638,51 +5702,60 @@ function createChatState(scopedSessionId?: string) {
+@@ -5654,51 +5718,60 @@ function createChatState(scopedSessionId?: string) {
    // Tab visibility: re-sync when returning to foreground
    if (typeof document !== 'undefined') {
      const onVisibilityChange = () => {
@@ -262,3 +262,6 @@ index e3bb8d83a..d85611868 100644
      }
      document.addEventListener('visibilitychange', onVisibilityChange)
      onScopeDispose(() => document.removeEventListener('visibilitychange', onVisibilityChange))
+-- 
+2.53.0
+

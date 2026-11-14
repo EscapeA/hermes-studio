@@ -1,29 +1,18 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 3e9fc9127a9209662a57734db19837fa5bb9e16d Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:31:13 +0800
 Subject: [PATCH] ci: verify patch stack freshness before build (full-history
  checkout)
 
 ---
- .github/workflows/build.yml | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ .github/workflows/build.yml | 4 ++++
+ 1 file changed, 4 insertions(+)
 
 diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
-index e0eb8089f..07e784b4b 100644
+index 1209661c7..72a9f01f9 100644
 --- a/.github/workflows/build.yml
 +++ b/.github/workflows/build.yml
-@@ -24,6 +24,10 @@ jobs:
-     steps:
-       - name: Checkout repository
-         uses: actions/checkout@v4
-+        with:
-+          # Full history so the patch-stack verifier can resolve the `main`
-+          # baseline (it is only present as origin/main after a shallow checkout).
-+          fetch-depth: 0
- 
-       - name: Setup Node.js
-         uses: actions/setup-node@v4
-@@ -40,6 +44,10 @@ jobs:
+@@ -44,6 +44,10 @@ jobs:
        - name: Check repository harness
          run: npm run harness:check
  
@@ -34,3 +23,6 @@ index e0eb8089f..07e784b4b 100644
        - name: Build
          run: npm run build
  
+-- 
+2.53.0
+

@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 8470e55f5666684c6408d61f807a0e380cc1e1b2 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Wed, 19 Aug 2026 23:13:59 +0800
 Subject: [PATCH] feat(chat): anti-flicker collapsible tool strip
@@ -20,10 +20,10 @@ unmount so session switches never leak stale tools into the new panel.
  4 files changed, 175 insertions(+), 5 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index fea2bb9e3..4aaaf71fe 100644
+index 22fe92895..043987c74 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -150,10 +150,66 @@ const currentToolCalls = computed(() => {
+@@ -156,10 +156,66 @@ const currentToolCalls = computed(() => {
    return [...tools].reverse();
  });
  
@@ -91,7 +91,7 @@ index fea2bb9e3..4aaaf71fe 100644
  const liveReasoningDetail = computed<{
    messageId: Message["id"]
    reasoning: string
-@@ -785,6 +841,8 @@ onBeforeUnmount(() => {
+@@ -801,6 +857,8 @@ onBeforeUnmount(() => {
    closeSelectionMenu();
    stopThinkingTimer();
    saveSessionScrollPosition(activeSessionScrollKey.value);
@@ -100,7 +100,7 @@ index fea2bb9e3..4aaaf71fe 100644
  });
  
  onMounted(() => {
-@@ -996,7 +1054,29 @@ defineExpose({
+@@ -1014,7 +1072,29 @@ defineExpose({
                  class="tool-call-spinner"
                ></span>
              </div>
@@ -131,7 +131,7 @@ index fea2bb9e3..4aaaf71fe 100644
              <div
                v-for="tc in visibleToolCalls"
                :key="tc.id"
-@@ -1075,6 +1155,14 @@ defineExpose({
+@@ -1093,6 +1173,14 @@ defineExpose({
                  />
                </svg>
              </div>
@@ -146,7 +146,7 @@ index fea2bb9e3..4aaaf71fe 100644
            </div>
          </div>
          </Transition>
-@@ -2057,10 +2145,76 @@ defineExpose({
+@@ -2075,10 +2163,76 @@ defineExpose({
    width: 520px;
    min-width: 0;
    max-width: 100%;
@@ -226,7 +226,7 @@ index fea2bb9e3..4aaaf71fe 100644
    scrollbar-width: none;
    -ms-overflow-style: none;
    &::-webkit-scrollbar {
-@@ -2068,6 +2222,10 @@ defineExpose({
+@@ -2086,6 +2240,10 @@ defineExpose({
    }
  }
  
@@ -238,10 +238,10 @@ index fea2bb9e3..4aaaf71fe 100644
    display: flex;
    flex: 1 1 0;
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 6cea07bc2..a9407edb7 100644
+index b1af52cbb..add3153af 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1488,6 +1488,10 @@ export default {
+@@ -1521,6 +1521,10 @@ export default {
      thinkingHide: 'Hide thinking',
      thinkingDuration: 'Observed {duration}',
      thinkingChars: '{count} chars',
@@ -253,10 +253,10 @@ index 6cea07bc2..a9407edb7 100644
      copiedBubble: 'Message copied',
      copyFailed: 'Copy failed',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index cd8c9ef47..5fd9d6596 100644
+index cc4f2cf83..a28f0fb4e 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1471,6 +1471,10 @@ export default {
+@@ -1503,6 +1503,10 @@ export default {
      thinkingHide: '收起思考過程',
      thinkingDuration: '已觀察 {duration}',
      thinkingChars: '{count} 字',
@@ -268,10 +268,10 @@ index cd8c9ef47..5fd9d6596 100644
      copiedBubble: '已複製',
      copyFailed: '複製失敗',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index cfbe4ebc3..cfa1c2aac 100644
+index ddd57f291..21abaf553 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1489,6 +1489,10 @@ export default {
+@@ -1521,6 +1521,10 @@ export default {
      thinkingHide: '收起思考过程',
      thinkingDuration: '已观察 {duration}',
      thinkingChars: '{count} 字',
@@ -282,3 +282,6 @@ index cfbe4ebc3..cfa1c2aac 100644
      copyBubble: '复制消息',
      copiedBubble: '已复制',
      copyFailed: '复制失败',
+-- 
+2.53.0
+

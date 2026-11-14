@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 6d48aa22121cd4dfb3f81c94877aeb2191aca05c Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 28 Aug 2026 07:24:56 +0800
 Subject: [PATCH] feat(chat): restore multi-line live reasoning block with
@@ -244,3 +244,6 @@ index 09c37f5b5..62018da41 100644
 -</style>
 +</style>
 \ No newline at end of file
+-- 
+2.53.0
+

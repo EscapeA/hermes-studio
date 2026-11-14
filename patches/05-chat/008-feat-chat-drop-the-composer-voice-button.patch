@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 745291d41e2b6d5edda9cdb9bb10561464f33604 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 12:52:40 +0800
 Subject: [PATCH] feat(chat): drop the composer voice button
@@ -15,7 +15,7 @@ Subject: [PATCH] feat(chat): drop the composer voice button
  1 file changed, 44 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index de6dd73fb..6cff91014 100644
+index 8e1e6f85c..7dfd09b9a 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -17,11 +17,9 @@ import { computed, ref, nextTick, onMounted, onUnmounted, watch, h } from 'vue'
@@ -76,7 +76,7 @@ index de6dd73fb..6cff91014 100644
  const CODING_AGENT_SLASH_COMMANDS = ['context', 'compact', 'usage', 'status']
  
  const bridgeCommands = computed<SlashCommandOption[]>(() =>
-@@ -1549,15 +1515,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -1564,15 +1530,6 @@ function openAttachmentPreview(attachment: Attachment) {
  
          </div>
          <div class="input-actions">
@@ -92,7 +92,7 @@ index de6dd73fb..6cff91014 100644
            <NButton
              size="medium"
              type="primary"
-@@ -2160,7 +2117,6 @@ function openAttachmentPreview(attachment: Attachment) {
+@@ -2175,7 +2132,6 @@ function openAttachmentPreview(attachment: Attachment) {
  
  @media (max-width: 768px) {
    .chat-input-area {
@@ -100,3 +100,6 @@ index de6dd73fb..6cff91014 100644
      padding: 6px 8px calc(12px + env(safe-area-inset-bottom, 0px));
    }
  
+-- 
+2.53.0
+

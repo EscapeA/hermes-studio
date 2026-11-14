@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From e06c86437562c9f35a9eafdfe8d269a0d60e51a8 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 08:54:55 +0800
 Subject: [PATCH] feat(chat): hide uncategorized group when no categories are
@@ -41,3 +41,6 @@ index 08bd05a8f..be6c043b4 100644
    }
    return groups;
  }
+-- 
+2.53.0
+

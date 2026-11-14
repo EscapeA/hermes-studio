@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 1facecf70f23a0536f2e2c5113d4bfd2a0ded049 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 2 Oct 2026 12:40:05 +0800
 Subject: [PATCH] feat(mobile-nav): frosted drawer surface
@@ -16,7 +16,7 @@ subtree, so that part lives in an unscoped block scoped back to this drawer with
  1 file changed, 37 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
-index 023bc3a83..970984cea 100644
+index 15e220e67..445814ab8 100644
 --- a/packages/client/src/components/layout/MobileNavigationDrawer.vue
 +++ b/packages/client/src/components/layout/MobileNavigationDrawer.vue
 @@ -65,10 +65,20 @@ const drawerWidth = computed(() =>
@@ -51,8 +51,8 @@ index 023bc3a83..970984cea 100644
      transform: none;
      transition: none;
      opacity: 1;
-@@ -121,3 +134,26 @@ const drawerWidth = computed(() =>
-   :deep(.coding-agent-config-collapse) { display: none; }
+@@ -122,3 +135,26 @@ const drawerWidth = computed(() =>
+   :deep(.plugin-config-collapse) { display: none; }
  }
  </style>
 +
@@ -78,3 +78,6 @@ index 023bc3a83..970984cea 100644
 +  }
 +}
 +</style>
+-- 
+2.53.0
+

@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From b2107747d6a94cb3027d231f5b6da8a73822c75f Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 6 Nov 2026 07:55:25 +0800
 Subject: [PATCH] feat(brand): adopt the Hermes Studio girl icon and unblock
@@ -140256,10 +140256,10 @@ index 0c94e0afd..dfa3bb14f 100644
  declare module '*.vue' {
    import type { DefineComponent } from 'vue'
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 669d97699..ca9886113 100644
+index 40be3c3a7..87e3dd597 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -464,7 +464,7 @@ export default {
+@@ -467,7 +467,7 @@ export default {
      passkeyRpMismatch: 'هذا العنوان لا يطابق نطاق مفتاح المرور. افتح النطاق المُعد.',
      // <<< passkey i18n <<<
  
@@ -140269,10 +140269,10 @@ index 669d97699..ca9886113 100644
      placeholder: 'رمز الوصول',
      submit: 'تسجيل الدخول',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index f43209e37..99f10f8b4 100644
+index 6e5ec8955..4752af108 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -476,7 +476,7 @@ export default {
+@@ -479,7 +479,7 @@ export default {
      passkeyRpMismatch: 'Diese Adresse passt nicht zur Passkey-Domain. Öffnen Sie die konfigurierte Domain.',
      // <<< passkey i18n <<<
  
@@ -140282,10 +140282,10 @@ index f43209e37..99f10f8b4 100644
      placeholder: 'Zugangs-Token',
      submit: 'Anmelden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index a5842fd64..97c542964 100644
+index cc79765a4..4a6c39ca4 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -464,7 +464,7 @@ export default {
+@@ -467,7 +467,7 @@ export default {
      passkeyRpMismatch: 'This address does not match the passkey domain. Open the site with the configured domain.',
      // <<< passkey i18n <<<
  
@@ -140295,10 +140295,10 @@ index a5842fd64..97c542964 100644
      placeholder: 'Access token',
      submit: 'Login',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 11f7b44e0..fb1cb6abd 100644
+index 789b36990..7642e780c 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -476,7 +476,7 @@ export default {
+@@ -479,7 +479,7 @@ export default {
      passkeyRpMismatch: 'Esta dirección no coincide con el dominio del passkey. Abre el dominio configurado.',
      // <<< passkey i18n <<<
  
@@ -140308,10 +140308,10 @@ index 11f7b44e0..fb1cb6abd 100644
      placeholder: 'Token de acceso',
      submit: 'Iniciar sesion',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 000dc39a7..89f30d728 100644
+index 843fcba7a..b43169181 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -476,7 +476,7 @@ export default {
+@@ -479,7 +479,7 @@ export default {
      passkeyRpMismatch: 'Cette adresse ne correspond pas au domaine de la clé d’accès. Ouvrez le domaine configuré.',
      // <<< passkey i18n <<<
  
@@ -140321,10 +140321,10 @@ index 000dc39a7..89f30d728 100644
      placeholder: 'Jeton d\'acces',
      submit: 'Connexion',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index a0c95f751..d206dc6be 100644
+index 7fc9acaa3..ac3473c49 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -476,7 +476,7 @@ export default {
+@@ -479,7 +479,7 @@ export default {
      passkeyRpMismatch: '現在のアドレスがパスキーのドメインと一致しません。設定されたドメインでアクセスしてください。',
      // <<< passkey i18n <<<
  
@@ -140334,10 +140334,10 @@ index a0c95f751..d206dc6be 100644
      placeholder: 'アクセストークン',
      submit: 'ログイン',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 28ee890d5..87a5e6afe 100644
+index 16c751caa..c1c9bd3b9 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -476,7 +476,7 @@ export default {
+@@ -479,7 +479,7 @@ export default {
      passkeyRpMismatch: '현재 주소가 패스키 도메인과 일치하지 않습니다. 설정된 도메인으로 접속하세요.',
      // <<< passkey i18n <<<
  
@@ -140347,10 +140347,10 @@ index 28ee890d5..87a5e6afe 100644
      placeholder: '액세스 토큰',
      submit: '로그인',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index ce2d7e710..6299a2851 100644
+index e84ad7235..17fa07bea 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -476,7 +476,7 @@ export default {
+@@ -479,7 +479,7 @@ export default {
      passkeyRpMismatch: 'Este endereço não corresponde ao domínio da passkey. Abra o domínio configurado.',
      // <<< passkey i18n <<<
  
@@ -140360,10 +140360,10 @@ index ce2d7e710..6299a2851 100644
      placeholder: 'Token de acesso',
      submit: 'Entrar',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 7e805602b..13b6ffc9e 100644
+index d4c028d8e..a003d4b7c 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -464,7 +464,7 @@ export default {
+@@ -467,7 +467,7 @@ export default {
      passkeyRpMismatch: 'Этот адрес не соответствует домену ключа доступа. Откройте настроенный домен.',
      // <<< passkey i18n <<<
  
@@ -140373,10 +140373,10 @@ index 7e805602b..13b6ffc9e 100644
      placeholder: 'Токен доступа',
      submit: 'Войти',
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index 9f73ad704..2003452ea 100644
+index 5621be223..be51b1b41 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -416,7 +416,7 @@ export default {
+@@ -436,7 +436,7 @@ export default {
      passkeyRpMismatch: 'Bu adres passkey alan adıyla eşleşmiyor. Yapılandırılmış alan adını açın.',
      // <<< passkey i18n <<<
  
@@ -140386,10 +140386,10 @@ index 9f73ad704..2003452ea 100644
      placeholder: 'Erişim belirteci',
      submit: 'Giriş yap',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 7328f7e68..fb2226f15 100644
+index 4975e337f..5108851b0 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -464,7 +464,7 @@ export default {
+@@ -467,7 +467,7 @@ export default {
      passkeyRpMismatch: '目前位址與 Passkey 網域不一致，請改用設定的網域存取。',
      // <<< passkey i18n <<<
  
@@ -140399,10 +140399,10 @@ index 7328f7e68..fb2226f15 100644
      placeholder: '存取權杖',
      submit: '登入',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 374aa8ccf..7ce4ef1da 100644
+index dbaedd7a8..a80100244 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -464,7 +464,7 @@ export default {
+@@ -467,7 +467,7 @@ export default {
      passkeyRpMismatch: '当前地址与 Passkey 域名不一致，请改用配置的域名访问。',
      // <<< passkey i18n <<<
  
@@ -140626,3 +140626,6 @@ index cc61b9cee..62fb7b66b 100644
    },
    resolve: {
      alias: {
+-- 
+2.53.0
+

@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From dc2cc1198da894294fd2bc9295d4ce2b1cafedbf Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Tue, 13 Oct 2026 16:36:41 +0800
 Subject: [PATCH] fix(i18n): drop Turkish keys for features the fork removed
@@ -8,10 +8,10 @@ Subject: [PATCH] fix(i18n): drop Turkish keys for features the fork removed
  1 file changed, 294 deletions(-)
 
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index 74e5f69cc..f552e556c 100644
+index af7a0649c..52daf72ec 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -359,7 +359,6 @@ export default {
+@@ -378,7 +378,6 @@ export default {
      remoteOwnerBusy: 'Standby — browser operation in progress',
      remoteOwnerConnecting: 'Connecting',
  
@@ -19,7 +19,7 @@ index 74e5f69cc..f552e556c 100644
      title: 'Tarayıcı',
      settings: 'Tarayıcı ayarları',
      desktopOnly: 'Yerleşik tarayıcı yalnızca Ekko Studio Desktop sürümünde kullanılabilir.',
-@@ -583,247 +582,6 @@ export default {
+@@ -602,247 +601,6 @@ export default {
      contextEditSave: 'Kaydet', contextEditCancel: 'İptal', contextEditInvalid: 'Lütfen geçerli bir bağlam uzunluğu girin', contextEditSuccess: 'Bağlam uzunluğu güncellendi', contextEditFailed: 'Güncelleme başarısız oldu',
      runUsageOutput: 'Çıktı jetonları', runUsageInput: 'Girdi jetonları', runUsageCache: 'Önbellek isabetleri', runUsageCost: 'Tahmini maliyet', runUsageSpeed: 'Jeton hızı', runUsageAverageSpeed: 'Ortalama hız', runUsageEstimatedSpeed: 'Tahmini hız',
    },
@@ -267,7 +267,7 @@ index 74e5f69cc..f552e556c 100644
    skillsUsage: {
      title: 'Yetenek kullanımı',
      subtitle: 'Hermes oturumlarındaki yetenek yüklemelerini ve düzenlemelerini izleyin',
-@@ -890,58 +648,6 @@ export default {
+@@ -909,58 +667,6 @@ export default {
      message: { taskArchived: 'Görev arşivlendi' },
    },
    journey: { nodeKinds: 'Düğüm türleri' },
@@ -326,3 +326,6 @@ index 74e5f69cc..f552e556c 100644
    settings: {
      privacy: {
        policy: 'Gizlilik bildirimi',
+-- 
+2.53.0
+

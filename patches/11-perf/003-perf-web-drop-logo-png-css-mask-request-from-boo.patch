@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From c2c4b5aaa3f6af9f13412f9f56143eb3c1d44348 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 17 Aug 2026 08:34:42 +0800
 Subject: [PATCH] perf(web): drop logo.png CSS-mask request from boot shimmer
@@ -29,3 +29,6 @@ index 6c9ea8f0d..ad8a7d627 100644
    </style>
  
    <!-- Prevent FOUC by applying theme classes immediately -->
+-- 
+2.53.0
+

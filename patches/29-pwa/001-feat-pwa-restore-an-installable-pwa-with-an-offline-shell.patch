@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From a57c6a36e8130e7b1d7a1030695f50c35e176fa6 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 5 Nov 2026 22:30:27 +0800
 Subject: [PATCH] feat(pwa): restore installable PWA with an offline-capable
@@ -7164,10 +7164,10 @@ index 000000000..db026a021
 +  })())
 +})
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index 3ed56cda5..3d454194d 100644
+index fec3e4ebe..f5c134c18 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -24,6 +24,7 @@ import { useI18n } from "vue-i18n";
+@@ -27,6 +27,7 @@ import { useI18n } from "vue-i18n";
  import { getThemeOverrides } from "@/styles/theme";
  import { useTheme } from "@/composables/useTheme";
  import { useKeyboard } from "@/composables/useKeyboard";
@@ -7175,7 +7175,7 @@ index 3ed56cda5..3d454194d 100644
  import { useSessionSearch } from "@/composables/useSessionSearch";
  import { watchServerTtsSettingsHydration } from "@/composables/useTtsSettingsHydration";
  import { useAppStore } from "@/stores/hermes/app";
-@@ -323,6 +324,7 @@ onUnmounted(() => {
+@@ -339,6 +340,7 @@ onUnmounted(() => {
  });
  
  useKeyboard();
@@ -7448,3 +7448,6 @@ index 000000000..cfad9f110
 +    expect(getStaticCacheControl('./sw.js')).toBe(SERVICE_WORKER_CACHE_CONTROL)
 +  })
 +})
+-- 
+2.53.0
+

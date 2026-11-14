@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 4f31203c9099a3ae76d4d9b072d5cf8d3af451ec Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:22:13 +0800
 Subject: [PATCH] fix(chat): use full prompt_tokens (in=) not uncached input
@@ -111,3 +111,6 @@ index 52242b361..adfe53fa8 100644
        {
          inputTokens: live.state.inputTokens ?? 0,
          outputTokens: live.state.outputTokens ?? 0,
+-- 
+2.53.0
+

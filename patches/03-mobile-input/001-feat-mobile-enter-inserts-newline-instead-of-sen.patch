@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 610c6b38f8d156ac239c14eb08dd96c9d5e0cae7 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 17 Jun 2026 12:33:44 +0800
 Subject: [PATCH] feat: mobile Enter inserts newline instead of sending
@@ -12,7 +12,7 @@ Subject: [PATCH] feat: mobile Enter inserts newline instead of sending
  1 file changed, 12 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/components/hermes/chat/ChatInput.vue b/packages/client/src/components/hermes/chat/ChatInput.vue
-index 6cff91014..e542bbee1 100644
+index 7dfd09b9a..82b027e38 100644
 --- a/packages/client/src/components/hermes/chat/ChatInput.vue
 +++ b/packages/client/src/components/hermes/chat/ChatInput.vue
 @@ -203,6 +203,17 @@ const messageReferencePreview = computed(() =>
@@ -33,7 +33,7 @@ index 6cff91014..e542bbee1 100644
  const configuredTextareaHeight = computed(() =>
    isMobileViewport.value ? null : clampChatInputHeight(settingsStore.display.chat_input_height),
  )
-@@ -1167,7 +1178,7 @@ function handleKeydown(e: KeyboardEvent) {
+@@ -1182,7 +1193,7 @@ function handleKeydown(e: KeyboardEvent) {
      }
    }
  
@@ -42,3 +42,6 @@ index 6cff91014..e542bbee1 100644
    if (isImeEnter(e)) return
  
    e.preventDefault()
+-- 
+2.53.0
+

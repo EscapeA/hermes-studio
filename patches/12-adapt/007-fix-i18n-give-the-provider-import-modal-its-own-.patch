@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 67d153636ae4daa8ed7fd3314566c09c4e6f2611 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Tue, 20 Oct 2026 21:23:32 +0800
 Subject: [PATCH] fix(i18n): give the provider import modal its own profile
@@ -38,10 +38,10 @@ index 76dab857b..0b45c0917 100644
            :options="profiles.map(p => ({ label: p.name, value: p.name }))" />
        </NFormItem>
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 04f4f03aa..cc5d05a43 100644
+index 4b65537ae..5299b9067 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -1928,6 +1928,7 @@ export default {
+@@ -1961,6 +1961,7 @@ export default {
  
    // Models
    models: {
@@ -50,10 +50,10 @@ index 04f4f03aa..cc5d05a43 100644
      importNotice: "تحقق من العنوان والنموذج والملف المستهدف. عند التأكيد يحفظ Studio مفتاح API ويعيّن النموذج افتراضيًا لهذا الملف. لا يتم الاستيراد قبل التأكيد.",
      importConfirm: "تأكيد الاستيراد",
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 0da09a6bc..20f75f504 100644
+index 570bd2eee..d6970e625 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1777,6 +1777,7 @@ jobTriggered: 'Job ausgelost',
+@@ -1810,6 +1810,7 @@ jobTriggered: 'Job ausgelost',
  
    // Models
    models: {
@@ -62,10 +62,10 @@ index 0da09a6bc..20f75f504 100644
      importNotice: "Prüfen Sie Adresse, Modell und Zielprofil. Nach der Bestätigung speichert Studio den API-Schlüssel und setzt das Modell als Profilstandard. Vorher wird nichts importiert.",
      importConfirm: "Import bestätigen",
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index e65ead98b..3b2268a63 100644
+index a6c0329f2..96826c07f 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1941,6 +1941,7 @@ export default {
+@@ -1974,6 +1974,7 @@ export default {
  
    // Models
    models: {
@@ -74,10 +74,10 @@ index e65ead98b..3b2268a63 100644
      importNotice: "Review the address, model and target Profile. Confirming saves the API key to Studio and selects this model as the Profile default. Nothing is imported before confirmation.",
      importConfirm: "Confirm import",
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index e38a28846..2c633f25f 100644
+index d3a1fd496..186b8aac0 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1777,6 +1777,7 @@ jobTriggered: 'Job ejecutado',
+@@ -1810,6 +1810,7 @@ jobTriggered: 'Job ejecutado',
  
    // Models
    models: {
@@ -86,10 +86,10 @@ index e38a28846..2c633f25f 100644
      importNotice: "Comprueba la dirección, el modelo y el perfil de destino. Al confirmar, Studio guarda la clave API y establece el modelo como predeterminado del perfil. No se importa nada antes de confirmar.",
      importConfirm: "Confirmar importación",
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 13b6efe09..a9f70c778 100644
+index 3bb0c6cb4..33f8cae06 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1777,6 +1777,7 @@ jobTriggered: 'Job declenche',
+@@ -1810,6 +1810,7 @@ jobTriggered: 'Job declenche',
  
    // Models
    models: {
@@ -98,10 +98,10 @@ index 13b6efe09..a9f70c778 100644
      importNotice: "Vérifiez l’adresse, le modèle et le profil cible. La confirmation enregistre la clé API dans Studio et définit ce modèle par défaut pour le profil. Rien n’est importé avant confirmation.",
      importConfirm: "Confirmer l’importation",
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 37560ab13..b3301a0ed 100644
+index df1da151e..59d4941d2 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1778,6 +1778,7 @@ export default {
+@@ -1810,6 +1810,7 @@ export default {
  
    // モデル
    models: {
@@ -110,10 +110,10 @@ index 37560ab13..b3301a0ed 100644
      importNotice: "アドレス、モデル、対象の Profile を確認してください。確認すると API キーが Studio に保存され、このモデルが Profile の既定になります。確認前にはインポートされません。",
      importConfirm: "インポートを確認",
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index e7db8867b..a8ee0a7c9 100644
+index 915c17bc1..40e1b8571 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1778,6 +1778,7 @@ export default {
+@@ -1810,6 +1810,7 @@ export default {
  
    // 모델
    models: {
@@ -122,10 +122,10 @@ index e7db8867b..a8ee0a7c9 100644
      importNotice: "주소, 모델 및 대상 Profile을 확인하세요. 확인하면 API 키가 Studio에 저장되고 이 모델이 Profile의 기본 모델로 설정됩니다. 확인 전에는 가져오지 않습니다.",
      importConfirm: "가져오기 확인",
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 69bc26c31..564094541 100644
+index 0a0de6365..5747c08ce 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1777,6 +1777,7 @@ jobTriggered: 'Job acionado',
+@@ -1810,6 +1810,7 @@ jobTriggered: 'Job acionado',
  
    // Models
    models: {
@@ -134,10 +134,10 @@ index 69bc26c31..564094541 100644
      importNotice: "Verifique o endereço, o modelo e o perfil de destino. A confirmação salva a chave API no Studio e define o modelo como padrão do perfil. Nada é importado antes da confirmação.",
      importConfirm: "Confirmar importação",
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index b6ad7ff1c..a1966aade 100644
+index f7ed69b20..7dfc6693d 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1772,6 +1772,7 @@ export default {
+@@ -1804,6 +1804,7 @@ export default {
    },
  
    models: {
@@ -146,10 +146,10 @@ index b6ad7ff1c..a1966aade 100644
      importNotice: "Проверьте адрес, модель и целевой профиль. После подтверждения Studio сохранит ключ API и назначит модель по умолчанию для профиля. До подтверждения ничего не импортируется.",
      importConfirm: "Подтвердить импорт",
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index 282134138..956c7f08f 100644
+index a11a998a1..a502a8efc 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -681,6 +681,7 @@ export default {
+@@ -628,6 +628,7 @@ export default {
      writeApprovalUnsupported: 'Bu Hermes Aracısı sürümü yazma onaylarını desteklemiyor. Bu özelliği kullanmak için Hermes Aracısını yükseltin.',
    },
    models: {
@@ -158,10 +158,10 @@ index 282134138..956c7f08f 100644
      importTitle: "Sağlayıcıyı içe aktar",
      importNotice: "Adresi, modeli ve hedef profili kontrol edin. Onaylandığında API anahtarı Studio’ya kaydedilir ve model profilin varsayılanı olur. Onaydan önce hiçbir şey içe aktarılmaz.",
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 8451ec717..c5a12e1b8 100644
+index 65694f294..5627cd7a9 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1935,6 +1935,7 @@ export default {
+@@ -1967,6 +1967,7 @@ export default {
  
    // 模型
    models: {
@@ -170,10 +170,10 @@ index 8451ec717..c5a12e1b8 100644
      importNotice: "請核對位址、模型與目標 Profile。確認後將 API Key 儲存至 Studio，並將此模型設為該 Profile 的預設模型。確認前不會匯入。",
      importConfirm: "確認匯入",
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index ee3ad1753..30e1ee9ed 100644
+index 125640294..d9c1783fd 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1942,6 +1942,7 @@ export default {
+@@ -1974,6 +1974,7 @@ export default {
  
    // 模型
    models: {
@@ -181,3 +181,6 @@ index ee3ad1753..30e1ee9ed 100644
      importTitle: "导入供应商",
      importNotice: "请核对地址、模型和目标 Profile。确认后将 API Key 保存到 Studio，并将此模型设为该 Profile 的默认模型。确认前不会导入。",
      importConfirm: "确认导入",
+-- 
+2.53.0
+

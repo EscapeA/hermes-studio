@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From e387d3a9fa7f989370beaf5a1c791a2219d2826a Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 6 Nov 2026 09:03:58 +0800
 Subject: [PATCH] fix(security): key login throttling on the real client
@@ -31,7 +31,7 @@ already-authenticated request.
  create mode 100644 tests/server/client-ip.test.ts
 
 diff --git a/bin/hermes-web-ui.mjs b/bin/hermes-web-ui.mjs
-index add4efe36..d48f4dbfd 100755
+index 0d9f78306..9b354fc44 100755
 --- a/bin/hermes-web-ui.mjs
 +++ b/bin/hermes-web-ui.mjs
 @@ -206,7 +206,14 @@ function getRestartArgs(port, argv = process.argv) {
@@ -469,3 +469,6 @@ index 000000000..edfc3dfaa
 +    expect(isTrustedProxy('203.0.113.7', policy)).toBe(false)
 +  })
 +})
+-- 
+2.53.0
+

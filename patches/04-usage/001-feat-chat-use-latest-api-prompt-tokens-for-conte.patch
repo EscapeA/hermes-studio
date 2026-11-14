@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From b1b6067a46ae2c8f7fdb20a1286587a7ef276262 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 17:05:12 +0800
 Subject: [PATCH] feat(chat): use latest API prompt_tokens for context usage UI
@@ -17,10 +17,10 @@ the next real API usage event.
  4 files changed, 73 insertions(+), 5 deletions(-)
 
 diff --git a/packages/server/src/modules/studio/contracts/runs/session.ts b/packages/server/src/modules/studio/contracts/runs/session.ts
-index 955dd5106..fe1aefc0e 100644
+index 90bb2fc72..77da4223e 100644
 --- a/packages/server/src/modules/studio/contracts/runs/session.ts
 +++ b/packages/server/src/modules/studio/contracts/runs/session.ts
-@@ -174,6 +174,8 @@ export interface SessionState {
+@@ -176,6 +176,8 @@ export interface SessionState {
    ekkoContext?: { fixedContextTokens: number }
    /** Bound to the actual agent for this turn, including account agents such as Person. */
    ekkoBoundaryInterrupt?: (expectedRunId: string) => { status: string; phase?: string; reason?: string }
@@ -201,3 +201,6 @@ index 3851458dd..52242b361 100644
 +  }
 +  return undefined
  }
+-- 
+2.53.0
+
