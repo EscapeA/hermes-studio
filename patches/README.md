@@ -17,7 +17,7 @@ custom-next = main + patches/*.patch 线性重放（当前唯一集成分支）
 > 文件段剥掉 ⇒ **25 组 / 67 条**（2026-11-05 增补 `28-exec-stream` 2 条 ⇒ 26 组 / 69 条；`29-pwa`、`30-passkey`、`31-brand` 各 1 条 ⇒ 28 组 / 72 条）。`scripts/verify-patch-stack.sh` 保留（它不依赖测试树）。
 > 上游删测试后 `harness:check` 也不再要求 `tests/client|server|e2e` 目录存在。
 
-## 分组总览（29 组 / 73 条）
+## 分组总览（32 组 / 77 条）
 
 | 组 | 条数 | 内容 |
 |---|---|---|
@@ -51,6 +51,8 @@ custom-next = main + patches/*.patch 线性重放（当前唯一集成分支）
 | 30-passkey | 1 | Passkey(WebAuthn) 登录：可发现凭证免密登录 + 账号内凭证管理 + 超管 RP 配置页；密码登录保留 |
 | 31-brand | 1 | 品牌资产换成 Hermes Studio 女孩图（图标/启动图/logo/群聊头像）+ 构建期 `?v=<hash>` 版本串绕过 CDN 边缘缓存 |
 | 32-login-throttle | 1 | 登录限流按真实客户端地址计数（`client-ip.ts` 解析可信代理链），health/MCU/TTS 同步取真实 IP |
+| 33-0.8.22-adapt | 1 | 0.8.22 适配：插件导航并入 fork rail、去掉 apiRelay locale key |
+| 34-0.8.23-adapt | 4 | 0.8.23 适配：rail 重植到上游 catalog+store 模型（保留 labeled 抽屉与 app 级入口）、catalog 与内置 id 白名单摘除 fork 已删功能、样式材质层导入 |
 
 ## ORDER 的语义
 
@@ -116,7 +118,7 @@ while read n p; do git am --3way "patches/$p"; done < patches/ORDER
   **dependencies/devDependencies 零增删** ⇒ 不需 `npm ci`。
 - 补丁串处置：`git rebase main` **79/79 零冲突**（0.8.17 已把冲突面收敛，本轮上游改动不碰 fork 定制点）。
 - 回写：`32-login-throttle` 组原先只有提交、没有对应 `.patch` 文件 ⇒ **补导出 1 条并登记进 ORDER**
-  （`scripts/verify-patch-stack.sh` 报「有源码改动未回写补丁」即为该缺口）⇒ 现有 **29 组 / 73 条**。
+  （`scripts/verify-patch-stack.sh` 报「有源码改动未回写补丁」即为该缺口）⇒ 现有 **32 组 / 77 条**。
 - 验证：`scripts/verify-patch-stack.sh` 73 补丁从 `main` 重放**逐字节一致**、`harness:check`
   （含 `api:docs:check`）、`npm run build` 全通过；安装包内 12 项补丁特征字符串全命中。
 - 部署：**纯 dist 热替**（client + server bundle + openapi + ekko-skills + agent-bridge/python），
