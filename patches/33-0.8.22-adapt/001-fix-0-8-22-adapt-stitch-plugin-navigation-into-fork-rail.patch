@@ -1,0 +1,815 @@
+From b7b8a37fce886a761814d5375d2922e6dd99e8cd Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 14 Nov 2026 12:22:11 +0800
+Subject: [PATCH] fix(0.8.22-adapt): stitch plugin navigation into fork rail,
+ drop apiRelay locale keys
+
+- App.vue: merge hasMobileContextSidebar into a single expression
+  (usesPluginSidebar || !APP_SIDEBAR_ROUTES), removing the duplicated
+  condition line the union merge produced.
+- StudioNavigationRail.vue: keep upstream 0.8.22 plugin entries
+  (pluginEntries/pluginActive/pluginPageLocation) while restoring the
+  fork labeled / withAppEntries / toggle-labels props.
+- PageSidebarNav.vue: take the custom-next target (connections entry
+  stays removed, history toggle preserved).
+- locales: drop the apiRelay top-level key the union merge resurrected
+  in 11 locale files (view/controller/router already removed).
+---
+ packages/client/src/App.vue                   |   4 +-
+ .../src/components/layout/PageSidebarNav.vue  |  41 ++--
+ .../layout/StudioNavigationRail.vue           | 195 +++++-------------
+ packages/client/src/i18n/locales/ar.ts        |  27 ---
+ packages/client/src/i18n/locales/de.ts        |  27 ---
+ packages/client/src/i18n/locales/en.ts        |  27 ---
+ packages/client/src/i18n/locales/es.ts        |  27 ---
+ packages/client/src/i18n/locales/fr.ts        |  27 ---
+ packages/client/src/i18n/locales/ja.ts        |  27 ---
+ packages/client/src/i18n/locales/ko.ts        |  27 ---
+ packages/client/src/i18n/locales/pt.ts        |  27 ---
+ packages/client/src/i18n/locales/ru.ts        |  27 ---
+ packages/client/src/i18n/locales/zh-TW.ts     |  27 ---
+ packages/client/src/i18n/locales/zh.ts        |  27 ---
+ 14 files changed, 69 insertions(+), 468 deletions(-)
+
+diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
+index f5c134c18..3bbba45e8 100644
+--- a/packages/client/src/App.vue
++++ b/packages/client/src/App.vue
+@@ -185,8 +185,8 @@ const APP_SIDEBAR_ROUTES = [
+   'hermes.settings',
+ ];
+ const hasMobileContextSidebar = computed(() =>
+-  usesPluginSidebar.value || !['studio.plugins', 'studio.pluginPage', 'studio.pluginAgentSettings', 'hermes.connections', 'hermes.agentManager', 'hermes.models', 'hermes.usage', 'hermes.apiRelay'].includes(String(route.name)),
+-  !['hermes.connections', 'hermes.agentManager', 'hermes.models', ...APP_SIDEBAR_ROUTES].includes(String(route.name)),
++  usesPluginSidebar.value ||
++  !['studio.plugins', 'studio.pluginPage', 'studio.pluginAgentSettings', 'hermes.connections', 'hermes.agentManager', 'hermes.models', ...APP_SIDEBAR_ROUTES].includes(String(route.name)),
+ );
+ watch([hasNavigationRail, isWideViewport], () => { mobileNavigationOpen.value = false; });
+ watch(sessionSearchOpen, (open) => { if (open) mobileNavigationOpen.value = false; });
+diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
+index eae1b5d3f..434541d6f 100644
+--- a/packages/client/src/components/layout/PageSidebarNav.vue
++++ b/packages/client/src/components/layout/PageSidebarNav.vue
+@@ -38,11 +38,6 @@ function openHistory() {
+   void router.push({ name: 'hermes.history' })
+ }
+ 
+-function openConnections() {
+-  if (props.active === 'connections') return
+-  void router.push({ name: 'hermes.connections' })
+-}
+-
+ function openAgentManager() {
+   if (props.active === 'agents') return
+   void router.push(
+@@ -105,14 +100,12 @@ function openUsage() {
+         </div>
+       </div>
+       <button
+-        v-if="!hasNavigationRail"
+         class="page-sidebar-tab"
+-        :class="{ active: active === 'connections' }"
+         type="button"
+-        :aria-current="active === 'connections' ? 'page' : undefined"
+-        @click="openConnections"
++        @click="openHistory"
+       >
+         <svg
++          v-if="active === 'history'"
+           width="15"
+           height="15"
+           viewBox="0 0 24 24"
+@@ -123,18 +116,26 @@ function openUsage() {
+           stroke-linejoin="round"
+           aria-hidden="true"
+         >
+-          <path d="M3 4h14a1 1 0 0 1 1 1v4M3 4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h9M7 16v4M5 20h7M15 9h6a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V10a1 1 0 0 1 1-1M17 18h2" />
+-        </svg>
+-        <span>{{ t('sidebar.connections') }}</span>
+-      </button>
+-      <button
+-        @click="openHistory"
+-          v-if="active === 'history'"
+           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
++        </svg>
++        <svg
+           v-else
++          width="15"
++          height="15"
++          viewBox="0 0 24 24"
++          fill="none"
++          stroke="currentColor"
++          stroke-width="1.8"
++          stroke-linecap="round"
++          stroke-linejoin="round"
++          aria-hidden="true"
++        >
+           <circle cx="12" cy="12" r="9" />
+           <path d="M12 7v5l3 2" />
++        </svg>
+         <span>{{ historyButtonLabel }}</span>
++      </button>
++      <button
+         v-if="canManageAgents && !hasNavigationRail"
+         class="page-sidebar-tab"
+         :class="{ active: active === 'agents' }"
+@@ -191,12 +192,6 @@ function openUsage() {
+         </svg>
+         <span>{{ t('sidebar.usage') }}</span>
+       </button>
+-      <button v-if="!hasNavigationRail" class="page-sidebar-tab" :class="{ active: active === 'apiRelay' }" type="button" :aria-label="t('sidebar.apiRelay')" :aria-current="active === 'apiRelay' ? 'page' : undefined" @click="openApiRelay">
+-        <img class="api-relay-logo" :src="deploymentUrl('/relay-logo.png')" width="18" height="18" alt="" aria-hidden="true" />
+-        <span>{{ t('sidebar.apiRelay') }}</span>
+-      </button>
+-.api-relay-logo { border-radius: var(--radius-component, 4px); }
+-
+     </div>
+   </div>
+ </template>
+@@ -265,7 +260,7 @@ function openUsage() {
+     flex-shrink: 0;
+   }
+ 
+-  span {
++  span:not(.page-sidebar-relay-badge) {
+     min-width: 0;
+     overflow: hidden;
+     text-overflow: ellipsis;
+diff --git a/packages/client/src/components/layout/StudioNavigationRail.vue b/packages/client/src/components/layout/StudioNavigationRail.vue
+index 6ab92f9d6..160be8287 100644
+--- a/packages/client/src/components/layout/StudioNavigationRail.vue
++++ b/packages/client/src/components/layout/StudioNavigationRail.vue
+@@ -12,25 +12,6 @@ import { pluginPages, pluginNavigation, pluginPageLocation, usePluginCatalog } f
+ import PluginNavigationIcon from '@/components/plugins/PluginNavigationIcon.vue'
+ import PluginSymbol from '@/components/common/PluginIcon.vue'
+ 
+-/** One shape of an icon; entries declare their parts so a multi-part glyph needs
+- *  no v-html and stays lint-clean. */
+-interface RailIconPart {
+-  d?: string
+-  pts?: string
+-  l?: [string, string, string, string]
+-  c?: [string, string, string]
+-  r?: [string, string, string, string, string]
+-}
+-interface RailEntry {
+-  key: string
+-  route: string
+-  label: string
+-  admin?: boolean
+-  icon?: RailIconPart[]
+-  /** Person BOTs render their idle animation instead of an icon. */
+-  avatar?: string
+-}
+-
+ const props = withDefaults(
+   defineProps<{
+     /** Mobile drawer: render icon + label rows instead of the icon-only rail. */
+@@ -55,54 +36,16 @@ function pluginActive(id: string, view: { id: string; slot: string }) {
+ }
+ const canManageAgents = computed(() => isStoredSuperAdmin())
+ 
+-const personEntry: RailEntry = {
+-  key: 'person',
+-  route: 'hermes.person',
+-  label: 'person.subtitle',
+-  avatar: deploymentUrl('/person/idle.gif'),
+-}
+-const chatEntry: RailEntry = {
+-  key: 'chat',
+-  route: 'hermes.chat',
+-  label: 'sidebar.chat',
+-  icon: [{ d: 'M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' }],
+-}
+-const historyEntry: RailEntry = {
+-  key: 'history',
+-  route: 'hermes.history',
+-  label: 'sidebar.history',
+-  icon: [{ d: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 7v5l3 2' }],
+-}
+-const agentsEntry: RailEntry = {
+-  key: 'agents',
+-  route: 'hermes.agentManager',
+-  label: 'sidebar.agentManager',
+-  admin: true,
+-  icon: [{ d: 'M12 8V4H8M7 8h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3M2 14h2M20 14h2M9 13v2M15 13v2' }],
+-}
+-const modelsEntry: RailEntry = {
+-  key: 'models',
+-  route: 'hermes.models',
+-  label: 'sidebar.models',
+-  icon: [{ d: 'M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1' }],
++interface RailEntry {
++  key: string
++  route: string
++  label: string
++  admin?: boolean
++  avatar?: string
++  path?: string
+ }
+ 
+-/** The app-level destinations, same routes/icons/labels as AppSidebar's nav list.
+- *  Only rendered in the mobile drawer (`withAppEntries`), because the desktop rail
+- *  is an icon-only column whose siblings are reachable from AppSidebar. */
+-const appEntries: RailEntry[] = [
+-  { key: 'logs', route: 'hermes.logs', label: 'sidebar.logs', icon: [{ d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' }, { pts: '14 2 14 8 20 8' }, { l: ['16', '13', '8', '13'] }, { l: ['16', '17', '8', '17'] }, { pts: '10 9 9 9 8 9' }] },
+-  { key: 'usage', route: 'hermes.usage', label: 'sidebar.usage', icon: [{ r: ['3', '12', '4', '9', '1'] }, { r: ['10', '7', '4', '14', '1'] }, { r: ['17', '3', '4', '18', '1'] }] },
+-  { key: 'performance', route: 'hermes.performance', label: 'sidebar.performance', admin: true, icon: [{ pts: '22 12 18 12 15 21 9 3 6 12 2 12' }] },
+-  { key: 'skillsUsage', route: 'hermes.skillsUsage', label: 'sidebar.skillsUsage', icon: [{ d: 'M21.21 15.89A10 10 0 1 1 8.11 2.79' }, { d: 'M22 12A10 10 0 0 0 12 2v10z' }] },
+-  { key: 'versionPreview', route: 'hermes.versionPreview', label: 'sidebar.versionPreview', admin: true, icon: [{ d: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z' }, { pts: '7.5 4.21 12 6.81 16.5 4.21' }, { pts: '7.5 19.79 7.5 14.6 3 12' }, { pts: '21 12 16.5 14.6 16.5 19.79' }, { pts: '3.27 6.96 12 12.01 20.73 6.96' }, { l: ['12', '22.08', '12', '12'] }] },
+-  { key: 'theme', route: 'hermes.theme', label: 'sidebar.theme', icon: [{ c: ['13.5', '6.5', '2.5'] }, { c: ['17.5', '10.5', '2.5'] }, { c: ['8.5', '7.5', '2.5'] }, { d: 'M12 3a9 9 0 1 0 9 9c0-1.1-.9-2-2-2h-1.2a2.8 2.8 0 0 1-2.8-2.8V5c0-1.1-.9-2-2-2h-1z' }] },
+-  { key: 'petdex', route: 'hermes.petdex', label: 'sidebar.petdex', icon: [{ d: 'M12 3l7 4v6c0 4-3 7-7 8-4-1-7-4-7-8V7l7-4z' }, { d: 'M9 11h.01' }, { d: 'M15 11h.01' }, { d: 'M9.5 15c1.6 1.1 3.4 1.1 5 0' }] },
+-  { key: 'profiles', route: 'hermes.profiles', label: 'sidebar.profiles', admin: true, icon: [{ d: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2' }, { c: ['12', '7', '4'] }] },
+-  { key: 'settings', route: 'hermes.settings', label: 'sidebar.settings', icon: [{ c: ['12', '12', '3'] }, { d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z' }] },
+-]
+-
+-const entries = computed(() => [
++const mainEntries = computed<RailEntry[]>(() => [
+   { key: 'person', route: 'hermes.person', label: 'person.subtitle', avatar: deploymentUrl('/person/idle.gif') },
+   { key: 'chat', route: 'hermes.chat', label: 'sidebar.singleChat', path: 'M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
+   { key: 'history', route: 'hermes.history', label: 'sidebar.history', path: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 7v5l3 2' },
+@@ -110,64 +53,23 @@ const entries = computed(() => [
+   { key: 'models', route: 'hermes.models', label: 'sidebar.models', path: 'M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1' },
+   { key: 'usage', route: 'hermes.usage', label: 'sidebar.usage', path: 'M3 12h4v9H3zM10 7h4v14h-4zM17 3h4v18h-4z' },
+   { key: 'studioPlugins', route: 'studio.plugins', label: 'studioPlugins.title' },
+-  personEntry,
+-  chatEntry,
+-  historyEntry,
+-  ...(canManageAgents.value ? [agentsEntry] : []),
+-  modelsEntry,
+-  ...(props.withAppEntries ? appEntries.filter(entry => !entry.admin || canManageAgents.value) : []),
+-          <RouteLinkItem class="studio-navigation-rail__item" :to="{ name: entry.route }" :active="activeKey === entry.key" :aria-label="t(entry.label)" @click="handleNavigate(entry.key)">
+-            <PluginSymbol v-if="entry.key === 'studioPlugins'" :size="22" />
+-            <img v-else-if="entry.avatar" class="studio-navigation-rail__avatar" :src="entry.avatar" width="32" height="32" alt="" aria-hidden="true" />
+-            <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="entry.path" /></svg>
+ ])
+ 
+-const activeKey = computed(() => {
+-  const name = String(route.name || '')
+-  if (route.meta.hermesConfig || route.meta.ekkoConfig || route.meta.codingAgentConfig) return 'agents'
+-  if (['hermes.chat', 'hermes.session', 'hermes.globalAgent', 'hermes.globalAgentSession'].includes(name)) return 'chat'
+-  if (name.startsWith('hermes.history')) return 'history'
+-  return entries.value.find(entry => entry.route === name)?.key || 'settings'
+-})
+-const mobileNavigation = useMobileNavigation()
+-function handleNavigate(key: string) {
+-  if (mobileNavigation && ['connections', 'agents', 'models', 'usage'].includes(key)) {
+-    mobileNavigation.open.value = false
+-  }
+-</script>
+-<template>
+-  <aside class="studio-navigation-rail" :class="{ 'studio-navigation-rail--labeled': labeled }">
+-    <PageSidebarFooter rail collapsed />
+-    <nav class="studio-navigation-rail__nav">
+-      <NTooltip v-for="entry in entries" :key="entry.key" placement="right" trigger="hover">
+-        <template #trigger>
+-          <RouteLinkItem
+-            class="studio-navigation-rail__item"
+-            :to="{ name: entry.route }"
+-            :active="activeKey === entry.key"
+-            :aria-label="t(entry.label)"
+-            @click="handleNavigate(entry.key)"
+-          >
+-            <img
+-              v-if="entry.avatar"
+-              class="studio-navigation-rail__avatar"
+-              :src="entry.avatar"
+-              width="32"
+-              height="32"
+-              alt=""
+-              aria-hidden="true"
+-            />
+-            <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+-              <template v-for="(part, index) in entry.icon" :key="index">
+-                <path v-if="part.d" :d="part.d" />
+-                <polyline v-else-if="part.pts" :points="part.pts" />
+-                <line v-else-if="part.l" :x1="part.l[0]" :y1="part.l[1]" :x2="part.l[2]" :y2="part.l[3]" />
+-                <circle v-else-if="part.c" :cx="part.c[0]" :cy="part.c[1]" :r="part.c[2]" />
+-                <rect v-else-if="part.r" :x="part.r[0]" :y="part.r[1]" :width="part.r[2]" :height="part.r[3]" :rx="part.r[4]" />
+-              </template>
+-            </svg>
+-            <span v-if="labeled" class="studio-navigation-rail__label">{{ t(entry.label) }}</span>
+-])
++/** App-level destinations, only rendered in the mobile drawer (`withAppEntries`). */
++const appEntries: RailEntry[] = [
++  { key: 'logs', route: 'hermes.logs', label: 'sidebar.logs', path: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8' },
++  { key: 'performance', route: 'hermes.performance', label: 'sidebar.performance', admin: true, path: 'M22 12h-4l-3 9L9 3l-3 9H2' },
++  { key: 'skillsUsage', route: 'hermes.skillsUsage', label: 'sidebar.skillsUsage', path: 'M21.21 15.89A10 10 0 1 1 8.11 2.79M22 12A10 10 0 0 0 12 2v10z' },
++  { key: 'versionPreview', route: 'hermes.versionPreview', label: 'sidebar.versionPreview', admin: true, path: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM7.5 4.21 12 6.81l4.5-2.6M7.5 19.79V14.6L3 12M21 12l-4.5 2.6v5.19M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12' },
++  { key: 'theme', route: 'hermes.theme', label: 'sidebar.theme', path: 'M12 3a9 9 0 1 0 9 9c0-1.1-.9-2-2-2h-1.2a2.8 2.8 0 0 1-2.8-2.8V5c0-1.1-.9-2-2-2h-1z' },
++  { key: 'petdex', route: 'hermes.petdex', label: 'sidebar.petdex', path: 'M12 3l7 4v6c0 4-3 7-7 8-4-1-7-4-7-8V7l7-4zM9 11h.01M15 11h.01M9.5 15c1.6 1.1 3.4 1.1 5 0' },
++  { key: 'profiles', route: 'hermes.profiles', label: 'sidebar.profiles', admin: true, path: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
++  { key: 'settings', route: 'hermes.settings', label: 'sidebar.settings', path: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z' },
++]
++
++const entries = computed<RailEntry[]>(() => [
++  ...mainEntries.value,
++  ...(props.withAppEntries ? appEntries.filter(entry => !entry.admin || canManageAgents.value) : []),
+ ])
+ 
+ const activeKey = computed(() => {
+@@ -175,30 +77,12 @@ const activeKey = computed(() => {
+   if (route.meta.hermesConfig || route.meta.ekkoConfig || route.meta.codingAgentConfig || route.name === 'studio.pluginAgentSettings') return 'agents'
+   if (['hermes.chat', 'hermes.session', 'hermes.globalAgent', 'hermes.globalAgentSession'].includes(name)) return 'chat'
+   if (name.startsWith('hermes.history')) return 'history'
+-  if (name === 'hermes.apiRelay') return 'apiRelay'
+   if (name === 'studio.pluginPage') return 'plugin:' + String(route.params.pluginId)
+-  if (mobileNavigation && (key.startsWith('plugin:') || ['studioPlugins', 'connections', 'agents', 'models', 'usage', 'apiRelay'].includes(key))) {
+-      <div v-if="entry.key === 'studioPlugins' && pluginEntries.length" class="studio-navigation-rail__plugins" role="group" :aria-label="t('studioPlugins.workspace')">
+-        <NTooltip v-for="{ plugin, view } in pluginEntries" :key="plugin.manifest.id + ':' + view.id" placement="right" trigger="hover">
+-          <template #trigger><RouteLinkItem class="studio-navigation-rail__item" :to="pluginPageLocation(plugin, view.id)" :active="pluginActive(plugin.manifest.id, view)" :aria-label="view.title" @click="handleNavigate('plugin:' + plugin.manifest.id)"><PluginNavigationIcon :icon="view.icon" :size="22" /></RouteLinkItem></template>
+-          {{ view.title }}
+-        </NTooltip>
+-      </div>
+-      </template>
+-      <NTooltip placement="right" trigger="hover">
+-        <template #trigger>
+-          <RouteLinkItem class="studio-navigation-rail__item" :to="{ name: 'hermes.apiRelay' }" :active="activeKey === 'apiRelay'" :aria-label="t('sidebar.apiRelay')" @click="handleNavigate('apiRelay')">
+-            <img class="api-relay-logo" :src="deploymentUrl('/relay-logo.png')" width="24" height="24" alt="" aria-hidden="true" />
+-          </RouteLinkItem>
+-        </template>
+-        {{ t('sidebar.apiRelay') }}
+-      </NTooltip>
+-.studio-navigation-rail__plugins { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid $border-color; }
+-.api-relay-logo { border-radius: var(--radius-component, 4px); }
+   return entries.value.find(entry => entry.route === name)?.key || 'settings'
+ })
+ const mobileNavigation = useMobileNavigation()
+ function handleNavigate(key: string) {
++  if (mobileNavigation && (key.startsWith('plugin:') || ['studioPlugins', 'connections', 'agents', 'models', 'usage'].includes(key))) {
+     mobileNavigation.open.value = false
+   }
+ }
+@@ -209,12 +93,29 @@ function handleNavigate(key: string) {
+     <PageSidebarFooter rail collapsed />
+     <nav class="studio-navigation-rail__nav">
+       <template v-for="entry in entries" :key="entry.key">
+-      <NTooltip placement="right" trigger="hover">
+-        <template #trigger>
+-          </RouteLinkItem>
+-        </template>
+-        {{ t(entry.label) }}
+-      </NTooltip>
++        <NTooltip placement="right" trigger="hover">
++          <template #trigger>
++            <RouteLinkItem class="studio-navigation-rail__item" :to="{ name: entry.route }" :active="activeKey === entry.key" :aria-label="t(entry.label)" @click="handleNavigate(entry.key)">
++              <PluginSymbol v-if="entry.key === 'studioPlugins'" :size="22" />
++              <img v-else-if="entry.avatar" class="studio-navigation-rail__avatar" :src="entry.avatar" width="32" height="32" alt="" aria-hidden="true" />
++              <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="entry.path" /></svg>
++              <span v-if="labeled" class="studio-navigation-rail__label">{{ t(entry.label) }}</span>
++            </RouteLinkItem>
++          </template>
++          {{ t(entry.label) }}
++        </NTooltip>
++        <div v-if="entry.key === 'studioPlugins' && pluginEntries.length" class="studio-navigation-rail__plugins" role="group" :aria-label="t('studioPlugins.workspace')">
++          <NTooltip v-for="{ plugin, view } in pluginEntries" :key="plugin.manifest.id + ':' + view.id" placement="right" trigger="hover">
++            <template #trigger>
++              <RouteLinkItem class="studio-navigation-rail__item" :to="pluginPageLocation(plugin, view.id)" :active="pluginActive(plugin.manifest.id, view)" :aria-label="view.title" @click="handleNavigate('plugin:' + plugin.manifest.id)">
++                <PluginNavigationIcon :icon="view.icon" :size="22" />
++                <span v-if="labeled" class="studio-navigation-rail__label">{{ view.title }}</span>
++              </RouteLinkItem>
++            </template>
++            {{ view.title }}
++          </NTooltip>
++        </div>
++      </template>
+     </nav>
+     <div class="studio-navigation-rail__bottom">
+       <!-- The mobile drawer lists Settings as a row, so the bottom icon becomes the
+@@ -276,6 +177,7 @@ $rail-labeled-width: 140px;
+   scrollbar-width: none;
+ }
+ .studio-navigation-rail__bottom { display: flex; flex-direction: column; gap: calc(8px * var(--spacing-scale, 1)); padding-top: 12px; }
++.studio-navigation-rail__plugins { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid $border-color; }
+ .studio-navigation-rail__avatar { aspect-ratio: 1; flex-shrink: 0; border-radius: 4px; object-fit: contain; }
+ .studio-navigation-rail__item {
+   display: grid;
+@@ -325,6 +227,7 @@ $rail-labeled-width: 140px;
+ 
+   .studio-navigation-rail__nav { align-items: stretch; gap: 2px; }
+   .studio-navigation-rail__bottom { align-items: stretch; }
++  .studio-navigation-rail__plugins { align-items: stretch; }
+   .studio-navigation-rail__item {
+     display: flex;
+     align-items: center;
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index 87e3dd597..bab156827 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -647,33 +647,6 @@ export default {
+   },
+ 
+   // Sidebar
+-  apiRelay: {
+-    title: "بوابة API",
+-    headline: "نماذج الذكاء الاصطناعي الرائدة عبر بوابة واحدة",
+-    description: "APIKEY.FAN هي بوابة API الشريكة لـ Ekko Studio. توفر وصولًا موحدًا إلى Claude وChatGPT وGrok وGemini وZhipu وKimi وDeepSeek وMiniMax، وهي متوافقة مع واجهات API وحزم SDK الرسمية.",
+-    zhipu: "Zhipu",
+-    viewNow: "عرض الآن",
+-    apiCompatible: "متوافقة مع واجهات API الرسمية",
+-    usageTitle: "استخدام المفاتيح",
+-    usageScope: "يشمل الملفات الشخصية المتاحة لك. تُدمج الخدمة والمفتاح نفسهما في بطاقة واحدة، وتُعرض المفاتيح المختلفة بشكل منفصل.",
+-    loadFailed: "تعذر تحميل الاستخدام. حدّث لإعادة المحاولة.",
+-    remaining: "الحصة المتبقية",
+-    sources: "مصادر الإعداد",
+-    keyActive: "المفتاح نشط",
+-    keyInactive: "المفتاح غير نشط",
+-    requests: "الطلبات",
+-    spend: "التكلفة",
+-    today: "اليوم",
+-    total: "الإجمالي",
+-    modelUsage: "الاستخدام حسب النموذج",
+-    model: "النموذج",
+-    errors: {
+-      unauthorized: "فشلت مصادقة المفتاح. تحقق من المفتاح المُعدّ.",
+-      timeout: "انتهت مهلة طلب الاستخدام. حدّث لإعادة المحاولة.",
+-      unavailable: "خدمة الاستخدام غير متاحة. حدّث لإعادة المحاولة.",
+-      invalid_response: "أعادت الخدمة استجابة استخدام بتنسيق غير معروف.",
+-    },
+-  },
+ 
+   sidebar: {
+     resize: 'تغيير عرض الشريط الجانبي',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index 4752af108..a06a6af68 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -659,33 +659,6 @@ export default {
+   },
+ 
+   // Sidebar
+-  apiRelay: {
+-    title: "API-Relay",
+-    headline: "Führende KI-Modelle über ein Gateway",
+-    description: "APIKEY.FAN ist das API-Gateway von Ekko Studios Partner. Es bietet einheitlichen Zugriff auf Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek und MiniMax und ist mit offiziellen APIs und SDKs kompatibel.",
+-    zhipu: "Zhipu",
+-    viewNow: "Jetzt ansehen",
+-    apiCompatible: "Mit offiziellen APIs kompatibel",
+-    usageTitle: "Schlüsselnutzung",
+-    usageScope: "Umfasst zugängliche Profile. Derselbe Dienst und Schlüssel werden zusammengefasst; unterschiedliche Schlüssel werden separat angezeigt.",
+-    loadFailed: "Nutzung konnte nicht geladen werden. Aktualisieren Sie zum erneuten Versuch.",
+-    remaining: "Verbleibendes Kontingent",
+-    sources: "Konfiguriert in",
+-    keyActive: "Schlüssel aktiv",
+-    keyInactive: "Schlüssel inaktiv",
+-    requests: "Anfragen",
+-    spend: "Kosten",
+-    today: "Heute",
+-    total: "Gesamt",
+-    modelUsage: "Nutzung nach Modell",
+-    model: "Modell",
+-    errors: {
+-      unauthorized: "Schlüsselauthentifizierung fehlgeschlagen. Prüfen Sie den konfigurierten Schlüssel.",
+-      timeout: "Zeitüberschreitung bei der Nutzungsabfrage. Bitte aktualisieren.",
+-      unavailable: "Nutzungsdienst nicht verfügbar. Bitte aktualisieren.",
+-      invalid_response: "Der Dienst lieferte ein unbekanntes Antwortformat.",
+-    },
+-  },
+ 
+   sidebar: {
+     resize: 'Seitenleistenbreite ändern',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 4a6c39ca4..6f090dfc1 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -647,33 +647,6 @@ export default {
+   },
+ 
+   // Sidebar
+-  apiRelay: {
+-    title: "API Relay",
+-    headline: "Leading AI models, one gateway",
+-    description: "APIKEY.FAN is Ekko Studio’s partner API gateway, offering unified access to Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek, and MiniMax. It is compatible with official APIs and SDKs.",
+-    zhipu: "Zhipu",
+-    viewNow: "View now",
+-    apiCompatible: "Official API compatibility",
+-    usageTitle: "Key usage",
+-    usageScope: "Includes your accessible profiles. The same service and key share one card; different keys are shown separately.",
+-    loadFailed: "Unable to load usage. Refresh to try again.",
+-    remaining: "Remaining quota",
+-    sources: "Configured in",
+-    keyActive: "Key active",
+-    keyInactive: "Key inactive",
+-    requests: "Requests",
+-    spend: "Spend",
+-    today: "Today",
+-    total: "Total",
+-    modelUsage: "Usage by model",
+-    model: "Model",
+-    errors: {
+-      unauthorized: "Key authentication failed. Check the configured key.",
+-      timeout: "The usage request timed out. Refresh to try again.",
+-      unavailable: "The usage service is unavailable. Refresh to try again.",
+-      invalid_response: "The service returned an unrecognized usage response.",
+-    },
+-  },
+ 
+   sidebar: {
+     resize: 'Resize sidebar',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 7642e780c..f30306268 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -659,33 +659,6 @@ export default {
+   },
+ 
+   // Sidebar
+-  apiRelay: {
+-    title: "Relay de API",
+-    headline: "Los principales modelos de IA en una sola puerta de enlace",
+-    description: "APIKEY.FAN es la puerta de enlace de API asociada de Ekko Studio. Ofrece acceso unificado a Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek y MiniMax, y es compatible con las API y los SDK oficiales.",
+-    zhipu: "Zhipu",
+-    viewNow: "Ver ahora",
+-    apiCompatible: "Compatible con las API oficiales",
+-    usageTitle: "Uso por clave",
+-    usageScope: "Incluye los perfiles accesibles. El mismo servicio y clave comparten una tarjeta; las claves distintas se muestran por separado.",
+-    loadFailed: "No se pudo cargar el uso. Actualiza para volver a intentarlo.",
+-    remaining: "Cuota restante",
+-    sources: "Configurada en",
+-    keyActive: "Clave activa",
+-    keyInactive: "Clave inactiva",
+-    requests: "Solicitudes",
+-    spend: "Gasto",
+-    today: "Hoy",
+-    total: "Total",
+-    modelUsage: "Uso por modelo",
+-    model: "Modelo",
+-    errors: {
+-      unauthorized: "Falló la autenticación. Comprueba la clave configurada.",
+-      timeout: "La consulta de uso agotó el tiempo de espera. Actualiza para reintentar.",
+-      unavailable: "El servicio de uso no está disponible. Actualiza para reintentar.",
+-      invalid_response: "El servicio devolvió un formato de uso desconocido.",
+-    },
+-  },
+ 
+   sidebar: {
+     resize: 'Cambiar el ancho de la barra lateral',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index b43169181..20303c191 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -659,33 +659,6 @@ export default {
+   },
+ 
+   // Sidebar
+-  apiRelay: {
+-    title: "Relais API",
+-    headline: "Les principaux modèles IA, une seule passerelle",
+-    description: "APIKEY.FAN est la passerelle API partenaire d’Ekko Studio. Elle offre un accès unifié à Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek et MiniMax, et est compatible avec les API et SDK officiels.",
+-    zhipu: "Zhipu",
+-    viewNow: "Voir maintenant",
+-    apiCompatible: "Compatible avec les API officielles",
+-    usageTitle: "Utilisation par clé",
+-    usageScope: "Inclut les profils accessibles. Un même service et une même clé partagent une carte ; les clés différentes sont affichées séparément.",
+-    loadFailed: "Impossible de charger l’utilisation. Actualisez pour réessayer.",
+-    remaining: "Quota restant",
+-    sources: "Configurée dans",
+-    keyActive: "Clé active",
+-    keyInactive: "Clé inactive",
+-    requests: "Requêtes",
+-    spend: "Coût",
+-    today: "Aujourd’hui",
+-    total: "Total",
+-    modelUsage: "Utilisation par modèle",
+-    model: "Modèle",
+-    errors: {
+-      unauthorized: "Échec de l’authentification. Vérifiez la clé configurée.",
+-      timeout: "La requête a expiré. Actualisez pour réessayer.",
+-      unavailable: "Le service est indisponible. Actualisez pour réessayer.",
+-      invalid_response: "Le format de la réponse du service n’est pas reconnu.",
+-    },
+-  },
+ 
+   sidebar: {
+     resize: 'Redimensionner la barre latérale',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index ac3473c49..88fcbb4ac 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -659,33 +659,6 @@ export default {
+     toolsClearExcluded: '除外をクリア',
+   },
+ 
+-  apiRelay: {
+-    title: "APIリレー",
+-    headline: "主要なAIモデルを一つの窓口で",
+-    description: "APIKEY.FANはEkko Studioの提携APIゲートウェイです。Claude、ChatGPT、Grok、Gemini、Zhipu、Kimi、DeepSeek、MiniMaxに統一APIで接続でき、公式APIとSDKに対応しています。",
+-    zhipu: "Zhipu",
+-    viewNow: "今すぐ見る",
+-    apiCompatible: "公式API互換",
+-    usageTitle: "キーの使用量",
+-    usageScope: "アクセス可能なプロファイルが対象です。同じサービスとキーは1枚のカードにまとめ、異なるキーは個別に表示します。",
+-    loadFailed: "使用量を読み込めません。更新して再試行してください。",
+-    remaining: "残りの割り当て",
+-    sources: "設定元",
+-    keyActive: "キーは有効",
+-    keyInactive: "キーは無効",
+-    requests: "リクエスト数",
+-    spend: "費用",
+-    today: "今日",
+-    total: "累計",
+-    modelUsage: "モデル別の使用量",
+-    model: "モデル",
+-    errors: {
+-      unauthorized: "キー認証に失敗しました。設定したキーを確認してください。",
+-      timeout: "使用量の取得がタイムアウトしました。更新して再試行してください。",
+-      unavailable: "使用量サービスに接続できません。更新して再試行してください。",
+-      invalid_response: "使用量の応答形式を認識できません。",
+-    },
+-  },
+ 
+   sidebar: {
+     resize: 'サイドバーの幅を変更',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index c1c9bd3b9..1f40bd5db 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -659,33 +659,6 @@ export default {
+     toolsClearExcluded: '제외 항목 지우기',
+   },
+ 
+-  apiRelay: {
+-    title: "API 릴레이",
+-    headline: "주요 AI 모델을 하나의 게이트웨이로",
+-    description: "APIKEY.FAN은 Ekko Studio의 제휴 API 게이트웨이입니다. Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek, MiniMax에 통합 API로 접근할 수 있으며, 공식 API 및 SDK와 호환됩니다.",
+-    zhipu: "Zhipu",
+-    viewNow: "지금 보기",
+-    apiCompatible: "공식 API 호환",
+-    usageTitle: "키 사용량",
+-    usageScope: "접근 가능한 프로필을 포함합니다. 같은 서비스와 키는 한 카드로 합치고 다른 키는 별도로 표시합니다.",
+-    loadFailed: "사용량을 불러오지 못했습니다. 새로고침하여 다시 시도하세요.",
+-    remaining: "남은 할당량",
+-    sources: "설정 출처",
+-    keyActive: "유효한 키",
+-    keyInactive: "비활성 키",
+-    requests: "요청 수",
+-    spend: "비용",
+-    today: "오늘",
+-    total: "누적",
+-    modelUsage: "모델별 사용량",
+-    model: "모델",
+-    errors: {
+-      unauthorized: "키 인증에 실패했습니다. 설정한 키를 확인하세요.",
+-      timeout: "사용량 요청 시간이 초과되었습니다. 새로고침하여 다시 시도하세요.",
+-      unavailable: "사용량 서비스에 연결할 수 없습니다. 새로고침하여 다시 시도하세요.",
+-      invalid_response: "사용량 응답 형식을 인식할 수 없습니다.",
+-    },
+-  },
+ 
+   sidebar: {
+     resize: '사이드바 너비 조절',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 17fa07bea..34a6539bc 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -659,33 +659,6 @@ export default {
+   },
+ 
+   // Sidebar
+-  apiRelay: {
+-    title: "Relay de API",
+-    headline: "Os principais modelos de IA em um só gateway",
+-    description: "APIKEY.FAN é o gateway de API parceiro do Ekko Studio. Oferece acesso unificado a Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek e MiniMax e é compatível com as APIs e os SDKs oficiais.",
+-    zhipu: "Zhipu",
+-    viewNow: "Ver agora",
+-    apiCompatible: "Compatível com as APIs oficiais",
+-    usageTitle: "Uso por chave",
+-    usageScope: "Inclui os perfis acessíveis. O mesmo serviço e chave compartilham um cartão; chaves diferentes são exibidas separadamente.",
+-    loadFailed: "Não foi possível carregar o uso. Atualize para tentar novamente.",
+-    remaining: "Cota restante",
+-    sources: "Configurada em",
+-    keyActive: "Chave ativa",
+-    keyInactive: "Chave inativa",
+-    requests: "Solicitações",
+-    spend: "Custo",
+-    today: "Hoje",
+-    total: "Total",
+-    modelUsage: "Uso por modelo",
+-    model: "Modelo",
+-    errors: {
+-      unauthorized: "Falha na autenticação. Verifique a chave configurada.",
+-      timeout: "A consulta de uso excedeu o tempo limite. Atualize para tentar novamente.",
+-      unavailable: "O serviço de uso está indisponível. Atualize para tentar novamente.",
+-      invalid_response: "O serviço retornou um formato de uso desconhecido.",
+-    },
+-  },
+ 
+   sidebar: {
+     resize: 'Redimensionar barra lateral',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index a003d4b7c..0bf1fd03d 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -572,33 +572,6 @@ export default {
+   },
+ 
+ 
+-  apiRelay: {
+-    title: "API-реле",
+-    headline: "Ведущие модели ИИ через единый шлюз",
+-    description: "APIKEY.FAN — партнёрский API-шлюз Ekko Studio. Он предоставляет единый доступ к Claude, ChatGPT, Grok, Gemini, Zhipu, Kimi, DeepSeek и MiniMax и совместим с официальными API и SDK.",
+-    zhipu: "Zhipu",
+-    viewNow: "Посмотреть",
+-    apiCompatible: "Совместимость с официальными API",
+-    usageTitle: "Использование ключей",
+-    usageScope: "Включает доступные профили. Одинаковый сервис и ключ объединяются в одну карточку; разные ключи показаны отдельно.",
+-    loadFailed: "Не удалось загрузить статистику. Обновите страницу и повторите попытку.",
+-    remaining: "Оставшаяся квота",
+-    sources: "Настроен в",
+-    keyActive: "Ключ активен",
+-    keyInactive: "Ключ неактивен",
+-    requests: "Запросы",
+-    spend: "Расходы",
+-    today: "Сегодня",
+-    total: "Всего",
+-    modelUsage: "Использование по моделям",
+-    model: "Модель",
+-    errors: {
+-      unauthorized: "Ошибка аутентификации. Проверьте настроенный ключ.",
+-      timeout: "Время запроса истекло. Обновите и повторите попытку.",
+-      unavailable: "Сервис статистики недоступен. Обновите и повторите попытку.",
+-      invalid_response: "Сервис вернул неизвестный формат статистики.",
+-    },
+-  },
+ 
+   sidebar: {
+     resize: 'Изменить ширину боковой панели',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 5108851b0..1e594e526 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -647,33 +647,6 @@ export default {
+     toolsClearExcluded: '清空排除',
+   },
+ 
+-  apiRelay: {
+-    title: "API 中轉",
+-    headline: "一站接入主流 AI 模型",
+-    description: "APIKEY.FAN 是 Ekko Studio 的合作中轉服務，統一接入 Claude、ChatGPT、Grok、Gemini、智譜、Kimi、DeepSeek 和 MiniMax，相容官方 API 與 SDK。",
+-    zhipu: "智譜",
+-    viewNow: "立即查看",
+-    apiCompatible: "相容官方 API",
+-    usageTitle: "金鑰用量",
+-    usageScope: "涵蓋有權限存取的 Profile。同一服務和金鑰合併顯示，不同金鑰分別統計。",
+-    loadFailed: "用量載入失敗，請點擊重新整理重試。",
+-    remaining: "剩餘額度",
+-    sources: "設定來源",
+-    keyActive: "金鑰有效",
+-    keyInactive: "金鑰已失效",
+-    requests: "請求數",
+-    spend: "費用",
+-    today: "今日",
+-    total: "累計",
+-    modelUsage: "按模型查看用量",
+-    model: "模型",
+-    errors: {
+-      unauthorized: "金鑰驗證失敗，請檢查設定的金鑰。",
+-      timeout: "用量查詢逾時，請點擊重新整理重試。",
+-      unavailable: "暫時無法連線用量服務，請點擊重新整理重試。",
+-      invalid_response: "無法辨識用量介面傳回的資料格式。",
+-    },
+-  },
+ 
+   sidebar: {
+     resize: '調整側邊欄寬度',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index a80100244..e15537063 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -647,33 +647,6 @@ export default {
+     toolsClearExcluded: '清空排除',
+   },
+ 
+-  apiRelay: {
+-    title: "API 中转",
+-    headline: "一站接入主流 AI 模型",
+-    description: "APIKEY.FAN 是 Ekko Studio 的合作中转服务，统一接入 Claude、ChatGPT、Grok、Gemini、智谱、Kimi、DeepSeek 和 MiniMax，兼容官方 API 与 SDK。",
+-    zhipu: "智谱",
+-    viewNow: "立即查看",
+-    apiCompatible: "官方 API 兼容",
+-    usageTitle: "密钥用量",
+-    usageScope: "涵盖有权限访问的 Profile。同一服务和密钥合并展示，不同密钥分别统计。",
+-    loadFailed: "用量加载失败，请点击刷新重试。",
+-    remaining: "剩余额度",
+-    sources: "配置来源",
+-    keyActive: "密钥有效",
+-    keyInactive: "密钥已失效",
+-    requests: "请求数",
+-    spend: "费用",
+-    today: "今日",
+-    total: "累计",
+-    modelUsage: "按模型查看用量",
+-    model: "模型",
+-    errors: {
+-      unauthorized: "密钥认证失败，请检查配置的密钥。",
+-      timeout: "用量查询超时，请点击刷新重试。",
+-      unavailable: "暂时无法连接用量服务，请点击刷新重试。",
+-      invalid_response: "用量接口返回的数据格式无法识别。",
+-    },
+-  },
+ 
+   sidebar: {
+     resize: '调整侧边栏宽度',
+-- 
+2.53.0
+
