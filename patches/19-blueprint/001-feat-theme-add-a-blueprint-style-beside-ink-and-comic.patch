@@ -275,14 +275,6 @@ index f9103fd95..634896390 100644
      fontSize: '文字大小',
      fontSizeHint: '界面和对话内容的基础字号',
      textColor: '文字颜色',
-diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
-index 27044ac8d..3c5657173 100644
---- a/packages/client/src/styles/global.scss
-+++ b/packages/client/src/styles/global.scss
-@@ -2,2 +2,3 @@
- @use 'variables' as *;
- @use 'code-block';
-+@use 'style-layers';
 diff --git a/packages/client/src/styles/style-layers.scss b/packages/client/src/styles/style-layers.scss
 index 6eb391b37..f48d8905a 100644
 --- a/packages/client/src/styles/style-layers.scss

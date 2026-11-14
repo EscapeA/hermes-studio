@@ -74,3 +74,4 @@
 096 34-0.8.23-adapt/001-fix-nav-re-plant-fork-rail-onto-the-0-8-23-catalog-model.patch
 097 34-0.8.23-adapt/002-fix-nav-drop-removed-features-from-the-navigation-catalog-an.patch
 098 34-0.8.23-adapt/003-test-nav-use-surviving-navigation-ids-in-the-settings-specs.patch
+099 34-0.8.23-adapt/004-feat-theme-import-the-style-material-layers.patch
