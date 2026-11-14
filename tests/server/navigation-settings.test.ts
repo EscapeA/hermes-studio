@@ -18,13 +18,13 @@ beforeEach(() => {
 afterEach(() => mocks.db.close())
 
 it('repairs legacy saved lists with the default plugin center while preserving selection and order', () => {
-  const legacy = ['plugin:notes/home', 'chat', 'apiRelay']
+  const legacy = ['plugin:notes/home', 'chat', 'usage']
   mocks.db.prepare('INSERT INTO user_navigation (user_id, items_json, updated_at) VALUES (?, ?, ?)').run(1, JSON.stringify(legacy), 1)
-  expect(getUserNavigation(1).items).toEqual(['plugin:notes/home', 'chat', 'studioPlugins', 'apiRelay'])
-  expect(getUserNavigation(1).items).toEqual(['plugin:notes/home', 'chat', 'studioPlugins', 'apiRelay'])
+  expect(getUserNavigation(1).items).toEqual(['plugin:notes/home', 'chat', 'usage', 'studioPlugins'])
+  expect(getUserNavigation(1).items).toEqual(['plugin:notes/home', 'chat', 'usage', 'studioPlugins'])
   const stored = mocks.db.prepare('SELECT schema_version, items_json FROM user_navigation WHERE user_id = 1').get()!
   expect(stored.schema_version).toBe(1)
-  expect(JSON.parse(stored.items_json as string)).toEqual(['plugin:notes/home', 'chat', 'studioPlugins', 'apiRelay'])
+  expect(JSON.parse(stored.items_json as string)).toEqual(['plugin:notes/home', 'chat', 'usage', 'studioPlugins'])
   expect(getUserNavigation(2).items).not.toContain('plugin:notes/home')
 })
 
@@ -74,8 +74,8 @@ it('uses the authenticated account and denies unauthenticated or shared-session 
   const ctx = { state: { user: { id: 2 } }, request: { body: { items: ['chat'], userId: 1 } } } as unknown as Context
   updateNavigation(ctx)
   expect(ctx.status).toBe(400)
-  ctx.request.body = { items: ['workflow'] }
+  ctx.request.body = { items: ['usage'] }
   updateNavigation(ctx)
-  expect(getUserNavigation(2).items).toEqual(['workflow'])
-  expect(getUserNavigation(1).items).not.toEqual(['workflow'])
+  expect(getUserNavigation(2).items).toEqual(['usage'])
+  expect(getUserNavigation(1).items).not.toEqual(['usage'])
 })
