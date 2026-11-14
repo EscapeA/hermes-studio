@@ -38,11 +38,6 @@ function openHistory() {
   void router.push({ name: 'hermes.history' })
 }
 
-function openConnections() {
-  if (props.active === 'connections') return
-  void router.push({ name: 'hermes.connections' })
-}
-
 function openAgentManager() {
   if (props.active === 'agents') return
   void router.push(
@@ -116,14 +111,12 @@ function openWorkflow() {
         </div>
       </div>
       <button
-        v-if="!hasNavigationRail"
         class="page-sidebar-tab"
-        :class="{ active: active === 'connections' }"
         type="button"
-        :aria-current="active === 'connections' ? 'page' : undefined"
-        @click="openConnections"
+        @click="openHistory"
       >
         <svg
+          v-if="active === 'history'"
           width="15"
           height="15"
           viewBox="0 0 24 24"
@@ -134,9 +127,24 @@ function openWorkflow() {
           stroke-linejoin="round"
           aria-hidden="true"
         >
-          <path d="M3 4h14a1 1 0 0 1 1 1v4M3 4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h9M7 16v4M5 20h7M15 9h6a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V10a1 1 0 0 1 1-1M17 18h2" />
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
-        <span>{{ t('sidebar.connections') }}</span>
+        <svg
+          v-else
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+        <span>{{ historyButtonLabel }}</span>
       </button>
       <button
         v-if="canManageAgents && !hasNavigationRail"
@@ -195,12 +203,6 @@ function openWorkflow() {
         </svg>
         <span>{{ t('sidebar.usage') }}</span>
       </button>
-      <button v-if="!hasNavigationRail" class="page-sidebar-tab" :class="{ active: active === 'apiRelay' }" type="button" :aria-label="t('sidebar.apiRelay')" :aria-current="active === 'apiRelay' ? 'page' : undefined" @click="openApiRelay">
-        <img class="api-relay-logo" :src="deploymentUrl('/relay-logo.png')" width="18" height="18" alt="" aria-hidden="true" />
-        <span>{{ t('sidebar.apiRelay') }}</span>
-      </button>
-.api-relay-logo { border-radius: var(--radius-component, 4px); }
-
     </div>
     <div v-if="!hasNavigationRail" class="conversation-switch conversation-switch--four" role="tablist" aria-label="Conversation type">
       <NTooltip trigger="hover" placement="top">
@@ -351,7 +353,7 @@ function openWorkflow() {
     flex-shrink: 0;
   }
 
-  span {
+  span:not(.page-sidebar-relay-badge) {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
