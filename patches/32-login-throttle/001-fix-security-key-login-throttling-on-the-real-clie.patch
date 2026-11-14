@@ -1,0 +1,471 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Fri, 6 Nov 2026 09:03:58 +0800
+Subject: [PATCH] fix(security): key login throttling on the real client
+ address
+
+Behind a reverse proxy (Cloudflare Tunnel, nginx) ctx.ip is always the proxy
+socket, so every visitor shared one throttle bucket: ten anonymous failed
+logins locked the whole installation for an hour, and clearing it required an
+already-authenticated request.
+
+- add resolveClientIp: honours cf-connecting-ip / x-real-ip / last x-forwarded-for
+  hop only when the TCP peer is a trusted proxy (default: loopback), so a LAN or
+  Tailnet client cannot spoof its own address
+- exempt loopback from the global ceiling so an operator can always reach the
+  unlock endpoint
+- stop publishing build details, the agent-bridge pid and host facts from
+  /health and /api/devices/link-info to unauthenticated callers
+- require auth for speech synthesis; keep the MCU prompt-tone route public
+- stop hermes-web-ui client mode from forcing CORS_ORIGINS=*
+---
+ bin/hermes-web-ui.mjs                         |   9 +-
+ .../src/modules/studio/controllers/health.ts  |  20 ++-
+ .../modules/studio/controllers/mcu-devices.ts |  10 +-
+ .../src/modules/studio/public/client-ip.ts    | 154 ++++++++++++++++++
+ .../server/src/modules/studio/routes/tts.ts   |  11 +-
+ .../studio/services/auth/login-limiter.ts     |  33 +++-
+ tests/server/client-ip.test.ts                |  89 ++++++++++
+ 7 files changed, 314 insertions(+), 12 deletions(-)
+ create mode 100644 packages/server/src/modules/studio/public/client-ip.ts
+ create mode 100644 tests/server/client-ip.test.ts
+
+diff --git a/bin/hermes-web-ui.mjs b/bin/hermes-web-ui.mjs
+index add4efe36..d48f4dbfd 100755
+--- a/bin/hermes-web-ui.mjs
++++ b/bin/hermes-web-ui.mjs
+@@ -206,7 +206,14 @@ function getRestartArgs(port, argv = process.argv) {
+ 
+ function enableClientMode() {
+   process.env.HERMES_WEB_UI_DISABLE_GATEWAY_AUTOSTART = '1'
+-  process.env.CORS_ORIGINS = '*'
++  // Respect an operator-provided allowlist. Forcing '*' reflected every Origin
++  // back to the caller, which discarded the same-host default the server
++  // applies when CORS_ORIGINS is unset and made the deployment look like it
++  // trusted arbitrary sites. Only fall back to '*' for a bare client start with
++  // no configured policy, which keeps split-origin dev setups working.
++  if (!process.env.CORS_ORIGINS?.trim()) {
++    process.env.CORS_ORIGINS = '*'
++  }
+ }
+ 
+ function commandExists(command) {
+diff --git a/packages/server/src/modules/studio/controllers/health.ts b/packages/server/src/modules/studio/controllers/health.ts
+index 2800d35e8..c241c161a 100644
+--- a/packages/server/src/modules/studio/controllers/health.ts
++++ b/packages/server/src/modules/studio/controllers/health.ts
+@@ -1,4 +1,5 @@
+ import type { StudioHealthService } from '../services/health'
++import { resolveClientIp } from '../public/client-ip'
+ 
+ let service: StudioHealthService | null = null
+ 
+@@ -15,8 +16,25 @@ export function livenessCheck(ctx: any) {
+   ctx.body = { status: 'ok' }
+ }
+ 
++/**
++ * Full diagnostics are only meaningful to an operator. Publishing them to the
++ * Internet hands an attacker the exact build to target plus the internal
++ * agent-bridge PID, so unauthenticated callers get a minimal liveness document
++ * while authenticated or loopback callers keep the complete snapshot.
++ */
++function isPrivilegedCaller(ctx: any): boolean {
++  if (ctx.state?.user) return true
++  const ip = String(resolveClientIp(ctx).ip || '')
++  return ip === '127.0.0.1' || ip === '::1' || ip.startsWith('127.') || ip.startsWith('::ffff:127.')
++}
++
+ export async function healthCheck(ctx: any) {
+-  ctx.body = await requireService().snapshot()
++  const snapshot = await requireService().snapshot()
++  if (isPrivilegedCaller(ctx)) {
++    ctx.body = snapshot
++    return
++  }
++  ctx.body = { status: snapshot.status === 'ok' ? 'ok' : snapshot.status }
+ }
+ 
+ export async function checkLatestVersion(): Promise<void> {
+diff --git a/packages/server/src/modules/studio/controllers/mcu-devices.ts b/packages/server/src/modules/studio/controllers/mcu-devices.ts
+index 61937fa14..1f064b6b0 100644
+--- a/packages/server/src/modules/studio/controllers/mcu-devices.ts
++++ b/packages/server/src/modules/studio/controllers/mcu-devices.ts
+@@ -12,9 +12,15 @@ import { createMcuDevice, deleteMcuDevice, getMcuDevice, listMcuDevices, updateM
+ 
+ export async function mcuBackendInfoController(ctx: Context) {
+   ctx.set('Access-Control-Allow-Origin', '*')
++  // This route is unauthenticated so MCU firmware and LAN pairing clients can
++  // discover the backend before they hold a credential. Only expose what that
++  // flow actually needs: the device identity the client verifies against, plus
++  // the relay wiring. Hostname, kernel release, port and version numbers are
++  // host reconnaissance and stay local.
++  const info = await getPublicSystemInfo()
+   ctx.body = {
+-    ...await getPublicSystemInfo(),
+-    http_port: config.port,
++    device_id: info.device_id,
++    device_public_key: info.device_public_key,
+     endpoint_kind: getLanEndpointKind(config.port),
+     relay_url: config.remoteRelay.url,
+     app_relay: { protocol: 'socket.io', namespace: '/app-relay', direct: true },
+diff --git a/packages/server/src/modules/studio/public/client-ip.ts b/packages/server/src/modules/studio/public/client-ip.ts
+new file mode 100644
+index 000000000..1a7e76f84
+--- /dev/null
++++ b/packages/server/src/modules/studio/public/client-ip.ts
+@@ -0,0 +1,154 @@
++import type { Context } from 'koa'
++
++/**
++ * Resolve the address that should be used for per-client policy decisions
++ * (login throttling, audit, lockout).
++ *
++ * The Web UI is commonly fronted by an edge reverse proxy (Cloudflare Tunnel,
++ * nginx, Caddy). Without `app.proxy` the Koa `ctx.ip` is always the proxy
++ * socket address, which collapses every external visitor into one bucket: a
++ * single anonymous client that fails 10 logins locks the whole installation.
++ *
++ * We cannot simply trust every forwarded header, though, because a client can
++ * forge them whenever it reaches the process directly (LAN or Tailnet binds).
++ * The rule is therefore: only honour the proxy-supplied address when the TCP
++ * peer is a proxy we are configured to trust.
++ *
++ * - `HERMES_WEB_UI_TRUSTED_PROXIES`: comma/space separated addresses or
++ *   `loopback`. Defaults to `loopback`, which is correct for Cloudflare Tunnel
++ *   (cloudflared dials 127.0.0.1) and for a co-located nginx/Caddy.
++ * - `HERMES_WEB_UI_CLIENT_IP_HEADER`: header carrying the real client address.
++ *   Defaults to `cf-connecting-ip`, then falls back to the last
++ *   `x-forwarded-for` hop, then `x-real-ip`.
++ *
++ * `cf-connecting-ip` is used first because Cloudflare overwrites it at the
++ * edge, so a client cannot spoof it through the tunnel.
++ */
++
++const DEFAULT_PROXY_HEADERS = ['cf-connecting-ip', 'x-real-ip'] as const
++
++function normalizeAddress(value: string): string {
++  const trimmed = value.trim()
++  if (!trimmed) return ''
++  const withoutV4Mapped = trimmed.toLowerCase().startsWith('::ffff:')
++    ? trimmed.slice('::ffff:'.length)
++    : trimmed
++  return withoutV4Mapped.toLowerCase()
++}
++
++function stripPort(value: string): string {
++  const trimmed = value.trim()
++  if (!trimmed) return ''
++  // [::1]:443
++  if (trimmed.startsWith('[')) {
++    const closing = trimmed.indexOf(']')
++    return closing > 0 ? trimmed.slice(1, closing) : trimmed
++  }
++  // 1.2.3.4:5678 — only strip when there is exactly one colon (IPv6 has many)
++  const colonCount = (trimmed.match(/:/g) || []).length
++  if (colonCount === 1) return trimmed.slice(0, trimmed.indexOf(':'))
++  return trimmed
++}
++
++function isLoopback(address: string): boolean {
++  const normalized = normalizeAddress(address)
++  return normalized === '127.0.0.1'
++    || normalized === '::1'
++    || normalized.startsWith('127.')
++}
++
++export interface TrustedProxyPolicy {
++  loopback: boolean
++  addresses: Set<string>
++}
++
++export function parseTrustedProxies(raw: string | undefined): TrustedProxyPolicy {
++  const policy: TrustedProxyPolicy = { loopback: true, addresses: new Set() }
++  const value = String(raw ?? '').trim()
++  // An explicit empty string means "trust loopback only", which is the safe
++  // default. Only an explicit opt-out disables that.
++  const tokens = (value || 'loopback')
++    .split(/[\s,]+/)
++    .map(token => token.trim().toLowerCase())
++    .filter(Boolean)
++
++  if (tokens.includes('none')) {
++    policy.loopback = false
++    return policy
++  }
++
++  policy.loopback = tokens.includes('loopback') || tokens.includes('*')
++  for (const token of tokens) {
++    if (token === 'loopback' || token === '*') continue
++    const normalized = normalizeAddress(stripPort(token))
++    if (normalized) policy.addresses.add(normalized)
++  }
++  return policy
++}
++
++export function isTrustedProxy(address: string, policy: TrustedProxyPolicy): boolean {
++  const normalized = normalizeAddress(stripPort(address))
++  if (!normalized) return false
++  if (policy.loopback && isLoopback(normalized)) return true
++  return policy.addresses.has(normalized)
++}
++
++function firstHeaderValue(value: string | string[] | undefined): string {
++  if (!value) return ''
++  const raw = Array.isArray(value) ? value[0] : value
++  return stripPort(String(raw || '').split(',')[0] || '')
++}
++
++function lastForwardedHop(value: string | string[] | undefined): string {
++  if (!value) return ''
++  const raw = Array.isArray(value) ? value.join(',') : String(value)
++  const hops = raw.split(',').map(hop => stripPort(hop)).filter(Boolean)
++  // The right-most hop is the one appended by the trusted proxy we just spoke
++  // to; anything to its left is client-controlled.
++  return hops.length ? hops[hops.length - 1] : ''
++}
++
++export interface ClientIpResolution {
++  /** Address to use for per-client policy. Never empty. */
++  ip: string
++  /** True when `ip` came from a trusted proxy header rather than the socket. */
++  viaProxy: boolean
++  /** Raw socket peer address. */
++  peer: string
++}
++
++export function resolveClientIp(
++  ctx: Pick<Context, 'ip' | 'req' | 'get'>,
++  options: {
++    trustedProxies?: TrustedProxyPolicy
++    headerName?: string
++  } = {},
++): ClientIpResolution {
++  const policy = options.trustedProxies ?? parseTrustedProxies(process.env.HERMES_WEB_UI_TRUSTED_PROXIES)
++  const peerRaw = ctx.req?.socket?.remoteAddress || ''
++  const peer = normalizeAddress(stripPort(peerRaw)) || 'unknown'
++
++  if (!isTrustedProxy(peer, policy)) {
++    return { ip: peer, viaProxy: false, peer }
++  }
++
++  const configuredHeader = String(options.headerName ?? process.env.HERMES_WEB_UI_CLIENT_IP_HEADER ?? '')
++    .trim()
++    .toLowerCase()
++
++  const candidates = configuredHeader
++    ? [configuredHeader, ...DEFAULT_PROXY_HEADERS]
++    : [...DEFAULT_PROXY_HEADERS]
++
++  for (const header of candidates) {
++    const value = firstHeaderValue(ctx.req?.headers?.[header] as string | string[] | undefined)
++    if (value) return { ip: normalizeAddress(value), viaProxy: true, peer }
++  }
++
++  const forwarded = lastForwardedHop(ctx.req?.headers?.['x-forwarded-for'] as string | string[] | undefined)
++  if (forwarded) return { ip: normalizeAddress(forwarded), viaProxy: true, peer }
++
++  // Trusted proxy but no usable header: fall back to the socket address so the
++  // limiter still has a stable key instead of collapsing to 'unknown'.
++  return { ip: peer, viaProxy: false, peer }
++}
+diff --git a/packages/server/src/modules/studio/routes/tts.ts b/packages/server/src/modules/studio/routes/tts.ts
+index a15832dee..b0aac27a4 100644
+--- a/packages/server/src/modules/studio/routes/tts.ts
++++ b/packages/server/src/modules/studio/routes/tts.ts
+@@ -4,10 +4,17 @@ import * as ctrl from '../controllers/tts'
+ export const ttsRoutes = new Router()
+ export const ttsProtectedRoutes = new Router()
+ 
+-ttsRoutes.post('/api/studio/tts', ctrl.generate)
+-ttsRoutes.post('/api/tts/proxy/audio/speech', ctrl.openaiProxy)
++// Public: MCU firmware fetches its prompt tones before it holds a credential.
+ ttsRoutes.get('/api/studio/mcu/audio/:file', ctrl.mcuAudio)
+ 
++// Speech synthesis is an expensive outbound operation (Edge TTS / configured
++// providers) and has no anonymous caller: the bundled client uses
++// /api/studio/tts/synthesize, and the legacy App alias maps onto these paths
++// while still carrying its own token. Leaving them public let any stranger use
++// the deployment as a free text-to-speech service.
++ttsProtectedRoutes.post('/api/studio/tts', ctrl.generate)
++ttsProtectedRoutes.post('/api/tts/proxy/audio/speech', ctrl.openaiProxy)
++
+ ttsProtectedRoutes.get('/api/studio/tts/settings', ctrl.listSettings)
+ ttsProtectedRoutes.post('/api/studio/voice/proxy/:profile/v1/tts', ctrl.synthesizeVoiceProxy)
+ ttsProtectedRoutes.post('/api/studio/voice/proxy/:profile/v1/audio/speech', ctrl.synthesizeVoiceProxyOpenAi)
+diff --git a/packages/server/src/modules/studio/services/auth/login-limiter.ts b/packages/server/src/modules/studio/services/auth/login-limiter.ts
+index cd4847f88..bbf660ec1 100644
+--- a/packages/server/src/modules/studio/services/auth/login-limiter.ts
++++ b/packages/server/src/modules/studio/services/auth/login-limiter.ts
+@@ -2,6 +2,7 @@ import { readFile, writeFile, mkdir } from 'fs/promises'
+ import { writeFileSync } from 'fs'
+ import { join } from 'path'
+ import { config } from '../../public/config'
++import { resolveClientIp } from '../../public/client-ip'
+ 
+ const APP_HOME = config.appHome
+ const LOCK_FILE = join(APP_HOME, '.login-lock.json')
+@@ -50,7 +51,13 @@ function now(): number {
+ }
+ 
+ function extractIp(ctx: any): string {
+-  return ctx?.ip || ctx?.request?.ip || 'unknown'
++  // Never key the limiter on ctx.ip alone: without `app.proxy` it is the
++  // reverse proxy socket (always 127.0.0.1), which collapses every external
++  // visitor into one bucket and lets any anonymous client lock the
++  // installation out. resolveClientIp only honours forwarded headers when the
++  // socket peer is a configured trusted proxy.
++  const resolution = resolveClientIp(ctx)
++  return resolution.ip
+ }
+ 
+ function pruneIpMap(map: Record<string, IpEntry>): void {
+@@ -119,10 +126,24 @@ export type CheckResult =
+   | { allowed: true }
+   | { allowed: false; status: 429 | 503 }
+ 
+-function checkGlobalLimits(): CheckResult | null {
++function isLoopbackKey(ip: string): boolean {
++  const normalized = String(ip || '').trim().toLowerCase()
++  if (normalized.startsWith('::ffff:')) {
++    return isLoopbackKey(normalized.slice('::ffff:'.length))
++  }
++  return normalized === '127.0.0.1' || normalized === '::1' || normalized.startsWith('127.')
++}
++
++function checkGlobalLimits(ip?: string): CheckResult | null {
+   const t = now()
++  // A locked bootstrap path is worse than the throttle it protects: the global
++  // ceiling can be driven by anonymous Internet traffic, and the only way to
++  // clear it is an authenticated request. Keep loopback (the operator on the
++  // host, or a socket-only fallback) able to authenticate so the lock can be
++  // released without restarting the process.
++  const exempt = Boolean(ip) && isLoopbackKey(ip as string)
+   if (state.globalLockedUntil > 0 && t < state.globalLockedUntil) {
+-    return { allowed: false, status: 503 }
++    if (!exempt) return { allowed: false, status: 503 }
+   }
+   if (state.globalLockedUntil > 0 && t >= state.globalLockedUntil) {
+     state.globalLockedUntil = 0
+@@ -134,7 +155,7 @@ function checkGlobalLimits(): CheckResult | null {
+     state.globalMinuteCount = 0
+   }
+   if (state.globalMinuteCount >= GLOBAL_MAX_REQUESTS_PER_WINDOW) {
+-    return { allowed: false, status: 429 }
++    if (!exempt) return { allowed: false, status: 429 }
+   }
+   return null
+ }
+@@ -216,7 +237,7 @@ function recordIpFailure(map: Record<string, IpEntry>, ip: string): IpEntry {
+ 
+ export function checkPassword(ip: string): CheckResult {
+   cleanupIpMapsAndSchedulePersist()
+-  const global = checkGlobalLimits()
++  const global = checkGlobalLimits(ip)
+   if (global) return global
+ 
+   // Password login remains available when stale browser/API tokens are locked.
+@@ -231,7 +252,7 @@ export function checkPassword(ip: string): CheckResult {
+ 
+ export function checkToken(ip: string): CheckResult {
+   cleanupIpMapsAndSchedulePersist()
+-  const global = checkGlobalLimits()
++  const global = checkGlobalLimits(ip)
+   if (global) return global
+ 
+   // Check all lock maps so an IP blocked for abuse cannot pivot to another public endpoint.
+diff --git a/tests/server/client-ip.test.ts b/tests/server/client-ip.test.ts
+new file mode 100644
+index 000000000..edfc3dfaa
+--- /dev/null
++++ b/tests/server/client-ip.test.ts
+@@ -0,0 +1,89 @@
++import { describe, expect, it } from 'vitest'
++import {
++  isTrustedProxy,
++  parseTrustedProxies,
++  resolveClientIp,
++} from '../../packages/server/src/modules/studio/public/client-ip'
++
++function ctxWith(peer: string, headers: Record<string, string> = {}) {
++  return {
++    ip: peer,
++    req: { socket: { remoteAddress: peer }, headers },
++    get: (name: string) => headers[name.toLowerCase()] || '',
++  } as any
++}
++
++describe('parseTrustedProxies', () => {
++  it('trusts loopback by default so a local tunnel is honoured', () => {
++    const policy = parseTrustedProxies(undefined)
++    expect(policy.loopback).toBe(true)
++    expect(policy.addresses.size).toBe(0)
++  })
++
++  it('accepts an explicit allowlist of proxy addresses', () => {
++    const policy = parseTrustedProxies('10.0.0.5, 192.168.1.10')
++    expect(policy.addresses.has('10.0.0.5')).toBe(true)
++    expect(policy.addresses.has('192.168.1.10')).toBe(true)
++    // An explicit list must not silently keep trusting loopback.
++    expect(policy.loopback).toBe(false)
++  })
++
++  it('can disable trust entirely', () => {
++    const policy = parseTrustedProxies('none')
++    expect(policy.loopback).toBe(false)
++    expect(policy.addresses.size).toBe(0)
++  })
++})
++
++describe('resolveClientIp', () => {
++  it('uses the forwarded client address when the peer is a trusted proxy', () => {
++    const result = resolveClientIp(ctxWith('127.0.0.1', { 'cf-connecting-ip': '203.0.113.7' }))
++    expect(result.ip).toBe('203.0.113.7')
++    expect(result.viaProxy).toBe(true)
++  })
++
++  it('ignores forwarded headers when the peer is not trusted', () => {
++    // A LAN or Tailnet client speaks to the process directly and can forge any
++    // header it likes, so its socket address must win.
++    const result = resolveClientIp(ctxWith('100.107.130.128', { 'cf-connecting-ip': '203.0.113.7' }))
++    expect(result.ip).toBe('100.107.130.128')
++    expect(result.viaProxy).toBe(false)
++  })
++
++  it('takes the last x-forwarded-for hop appended by the trusted proxy', () => {
++    const result = resolveClientIp(ctxWith('127.0.0.1', {
++      'x-forwarded-for': '1.1.1.1, 8.8.8.8, 198.51.100.4',
++    }))
++    expect(result.ip).toBe('198.51.100.4')
++  })
++
++  it('strips a port from the forwarded value', () => {
++    const result = resolveClientIp(ctxWith('127.0.0.1', { 'x-real-ip': '198.51.100.9:44321' }))
++    expect(result.ip).toBe('198.51.100.9')
++  })
++
++  it('falls back to the peer when a trusted proxy sends no address header', () => {
++    const result = resolveClientIp(ctxWith('127.0.0.1'))
++    expect(result.ip).toBe('127.0.0.1')
++    expect(result.viaProxy).toBe(false)
++  })
++
++  it('gives distinct buckets to distinct external clients behind one tunnel', () => {
++    const a = resolveClientIp(ctxWith('127.0.0.1', { 'cf-connecting-ip': '203.0.113.1' }))
++    const b = resolveClientIp(ctxWith('127.0.0.1', { 'cf-connecting-ip': '203.0.113.2' }))
++    expect(a.ip).not.toBe(b.ip)
++  })
++})
++
++describe('isTrustedProxy', () => {
++  it('treats v4-mapped loopback as loopback', () => {
++    const policy = parseTrustedProxies(undefined)
++    expect(isTrustedProxy('::ffff:127.0.0.1', policy)).toBe(true)
++    expect(isTrustedProxy('::1', policy)).toBe(true)
++  })
++
++  it('rejects a public address when only loopback is trusted', () => {
++    const policy = parseTrustedProxies(undefined)
++    expect(isTrustedProxy('203.0.113.7', policy)).toBe(false)
++  })
++})
