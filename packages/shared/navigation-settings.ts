@@ -1,4 +1,4 @@
-export const BUILTIN_NAVIGATION_IDS = ['person', 'chat', 'group', 'workflow', 'history', 'connections', 'agents', 'models', 'usage', 'studioPlugins', 'apiRelay'] as const
+export const BUILTIN_NAVIGATION_IDS = ['person', 'chat', 'history', 'connections', 'agents', 'models', 'usage', 'studioPlugins'] as const
 export type BuiltinNavigationId = typeof BUILTIN_NAVIGATION_IDS[number]
 export interface NavigationSettings { items: string[] }
 
