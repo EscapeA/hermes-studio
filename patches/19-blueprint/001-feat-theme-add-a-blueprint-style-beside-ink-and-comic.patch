@@ -279,10 +279,9 @@ diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles
 index 27044ac8d..3c5657173 100644
 --- a/packages/client/src/styles/global.scss
 +++ b/packages/client/src/styles/global.scss
-@@ -4,3 +4,4 @@
+@@ -2,2 +2,3 @@
+ @use 'variables' as *;
  @use 'code-block';
- @use 'theme-surfaces';
- @use 'scrollbars';
 +@use 'style-layers';
 diff --git a/packages/client/src/styles/style-layers.scss b/packages/client/src/styles/style-layers.scss
 index 6eb391b37..f48d8905a 100644
