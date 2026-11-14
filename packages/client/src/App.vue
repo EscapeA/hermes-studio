@@ -185,8 +185,8 @@ const APP_SIDEBAR_ROUTES = [
   'hermes.settings',
 ];
 const hasMobileContextSidebar = computed(() =>
-  usesPluginSidebar.value || !['studio.plugins', 'studio.pluginPage', 'studio.pluginAgentSettings', 'hermes.connections', 'hermes.agentManager', 'hermes.models', 'hermes.usage', 'hermes.apiRelay'].includes(String(route.name)),
-  !['hermes.connections', 'hermes.agentManager', 'hermes.models', ...APP_SIDEBAR_ROUTES].includes(String(route.name)),
+  usesPluginSidebar.value ||
+  !['studio.plugins', 'studio.pluginPage', 'studio.pluginAgentSettings', 'hermes.connections', 'hermes.agentManager', 'hermes.models', ...APP_SIDEBAR_ROUTES].includes(String(route.name)),
 );
 watch([hasNavigationRail, isWideViewport], () => { mobileNavigationOpen.value = false; });
 watch(sessionSearchOpen, (open) => { if (open) mobileNavigationOpen.value = false; });
