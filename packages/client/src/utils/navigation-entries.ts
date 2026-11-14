@@ -26,7 +26,6 @@ export const builtinNavigationEntries = (canManageAgents: boolean): NavigationEn
   { key: 'models', route: 'hermes.models', label: 'sidebar.models', path: 'M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1' },
   { key: 'usage', route: 'hermes.usage', label: 'sidebar.usage', path: 'M3 12h4v9H3zM10 7h4v14h-4zM17 3h4v18h-4z' },
   { key: 'studioPlugins', route: 'studio.plugins', label: 'studioPlugins.title' },
-  { key: 'apiRelay', route: 'hermes.apiRelay', label: 'sidebar.apiRelay', avatar: '/relay-logo.png' },
 ]).map(entry => ({ id: entry.key, label: entry.label, path: 'path' in entry ? entry.path : undefined,
   avatar: 'avatar' in entry ? entry.avatar : undefined, to: { name: entry.route } }))
 
