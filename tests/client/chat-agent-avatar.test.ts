@@ -59,7 +59,10 @@ it('keeps runtime names for ordinary chat and execution sessions instead of thei
 })
 
 it('retains missing-session and unknown-appearance fallbacks', () => {
-  expect(chatSessionAgentAvatar(null).label).toBe('Ekko')
+  // The fork's default agent is Hermes, not upstream's Ekko (see chatSessionAgentAvatar's
+  // no-session branch), so an unloaded session must not flash the legacy Ekko label.
+  expect(chatSessionAgentAvatar(null).label).toBe('Hermes')
+  // An explicitly requested runtime still resolves to its own appearance.
   expect(chatSessionAgentAvatar({ id: 'person-main-future', bot_type: 'unknown', agent: 'ekko-agent', title: '未来助手' }).label).toBe('Ekko')
 })
 
