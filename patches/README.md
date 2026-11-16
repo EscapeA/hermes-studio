@@ -125,6 +125,27 @@ while read n p; do git am --3way "patches/$p"; done < patches/ORDER
   `ActiveEnterTimestamp`/`MainPID` 未变 ⇒ 未重启服务。
 - ⚠️ 上游 0.8.18 重新往 `tests/` 加了 9 个用例文件；补丁串沿用「剥测试段」策略，不受影响。
 
+## 增量：0.8.24 升级（2026-11-16）
+
+- 上游 0.8.23 → 0.8.24：**9 提交 / 181 文件 / +7470 −2003**，`main` 是上游直系祖先。主体是
+  **Provider 按账户管理 + 统一 Agent 模型网关**（新 `/api/ekko-studio/models/*` 一组路由）、
+  插件页统一 Studio 页面容器与主题、插件入站 HTTP 拦截、OMP 改为独立分发。
+- 依赖：运行时只增 `@simplewebauthn/browser|server`（fork 的 passkey 补丁自带，且已被打进
+  server bundle，安装包 `node_modules` 无需它）；dev 删 `@ekko-studio/plugin-omp`。
+- 补丁串处置：`git rebase main` **89/89 全过**，4 处冲突就地解（MessageList clarify 面板 2 处、
+  GlobalPendingActions 群聊残留、static-cache 的 `sw.js`/`plugin-frame.html` 缓存策略并集）。
+- 回写踩到 3 个历史脏点，已一并清掉：
+  1. `34-0.8.23-adapt/001` 里混进了 driver 的 `.patch-stack-progress`（该文件从不入库 ⇒ `git am` 永久冲突）；
+  2. 同一补丁对 `MobileNavigationDrawer.vue` 的 hunk 与 `09-nav` 组重复、重放后已无实际改动 ⇒ 剥掉该段；
+  3. `34-0.8.23-adapt/002` 在 writeback 重生成时丢了 `apiRelay` catalog 行的删除 hunk（14-cleanup 折进来的那段）⇒ 补回。
+- 验证：`scripts/verify-patch-stack.sh` 79 补丁从 `main` 重放**逐字节一致**；定向单测
+  （navigation ×3、static-cache、avatar、identity、passkey）7 文件 / 50 例全通过。
+- 部署：**`npm i -g hermes-web-ui@0.8.24` + dist 热替**（本次必须装包：`dist/plugins/builtin/packages.json`
+  由 `{"omp":…}` 变成 `{}`，纯热替会留下 OMP 内置快照与上游「不再捆绑」语义冲突）。
+- ⚠️ 用户要求本轮**不重启**；热替后 18:01:48 出现一次重启，经 journal 核实是 Aries 本人从 K80
+  SSH 执行 `sudo systemctl restart hermes-web-ui-client.service`，非 agent 触发。该重启晚于产物落地，
+  故后端实际已加载 0.8.24（`POST /api/ekko-studio/models/v1/messages` 有业务级响应为证）。
+
 ## 增量：DSH 0.2.2 适配（2026-11-09）
 
 - 背景：Studio 用 7 处逐字源码锚点接管 `@deepseek-ai/dsh-acp` 的预设/权限。上游 0.2.2 重构会话工厂后
