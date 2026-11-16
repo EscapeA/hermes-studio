@@ -4,20 +4,10 @@ Date: Sun, 15 Nov 2026 05:16:26 +0800
 Subject: [PATCH] fix(nav): re-plant fork rail onto the 0.8.23 catalog model
 
 ---
- .patch-stack-progress                         |   2 +-
  .../layout/MobileNavigationDrawer.vue         |  26 +---
  .../layout/StudioNavigationRail.vue           | 129 ++++++++++++++++--
- 3 files changed, 121 insertions(+), 36 deletions(-)
+ 2 files changed, 120 insertions(+), 36 deletions(-)
 
-diff --git a/.patch-stack-progress b/.patch-stack-progress
-index b5045cc40..dce6588ca 100644
---- a/.patch-stack-progress
-+++ b/.patch-stack-progress
-@@ -1 +1 @@
--21
-\ No newline at end of file
-+36
-\ No newline at end of file
 diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
 index e98ffafe1..55a49ce1d 100644
 --- a/packages/client/src/components/layout/MobileNavigationDrawer.vue
