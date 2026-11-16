@@ -1,4 +1,4 @@
-From 349cb3d3bf7aeb306a39f6a040966f49187a1ef5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 11:22:27 +0800
 Subject: [PATCH] fix(chat): settle run state when a run ends while the socket
@@ -26,7 +26,7 @@ transcript. The UI stayed in run state forever.
  2 files changed, 141 insertions(+), 41 deletions(-)
 
 diff --git a/packages/client/src/api/studio/chat.ts b/packages/client/src/api/studio/chat.ts
-index 948a5c77f..0e7c3ea7c 100644
+index 77363a276..76d15f1a3 100644
 --- a/packages/client/src/api/studio/chat.ts
 +++ b/packages/client/src/api/studio/chat.ts
 @@ -269,6 +269,7 @@ const sessionTitleUpdatedHandlers = new Set<(event: RunEvent) => void>()
@@ -66,7 +66,7 @@ index 948a5c77f..0e7c3ea7c 100644
  function globalRunUsageUpdatedHandler(event: RunEvent): void {
    if (!event.session_id) return
    for (const handler of runUsageUpdatedHandlers) handler(event)
-@@ -919,6 +942,10 @@ export function connectChatRun(requestedProfile?: string | null, transport: Chat
+@@ -952,6 +975,10 @@ export function connectChatRun(requestedProfile?: string | null, transport: Chat
      on('session.workspace.updated', globalSessionWorkspaceUpdatedHandler)
      on('session.settings.updated', globalSessionSettingsUpdatedHandler)
  
@@ -78,7 +78,7 @@ index 948a5c77f..0e7c3ea7c 100644
    }
  
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index d5dd6ad53..22b191753 100644
+index b64b7a1bb..bbe23ade1 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
 @@ -7,7 +7,7 @@ import { isKnownEkkoSessionCommand } from '@/utils/hermes/bridge-session-command
@@ -90,7 +90,7 @@ index d5dd6ad53..22b191753 100644
  import { archiveSession as archiveSessionApi, deleteSession as deleteSessionApi, fetchSessionMessagesPage, fetchSessions, fetchWorkspaceRunChangeFile, setSessionModel, setSessionPushEnabled as persistSessionPushEnabled, setSessionReasoningEffort as persistSessionReasoningEffort, type HermesMessage, type SessionSummary, type WorkspaceRunChangeFileDetail, type WorkspaceRunChangeSummary } from '@/api/studio/sessions'
  import { getActiveProfileName } from '@/api/client'
  import { onAuthInvalidated } from '@/api/auth-invalidation'
-@@ -5482,6 +5482,70 @@ function createChatState(scopedSessionId?: string) {
+@@ -5513,6 +5513,70 @@ function createChatState(scopedSessionId?: string) {
      if (!passive) ensureAbortHandle()
    }
  
@@ -161,7 +161,7 @@ index d5dd6ad53..22b191753 100644
    function handlePeerUserMessage(evt: RunEvent) {
      const sid = evt.session_id
      if (scopedSessionId ? sid !== scopedSessionId : sid?.startsWith('person-task-')) return
-@@ -5654,51 +5718,60 @@ function createChatState(scopedSessionId?: string) {
+@@ -5685,51 +5749,60 @@ function createChatState(scopedSessionId?: string) {
    // Tab visibility: re-sync when returning to foreground
    if (typeof document !== 'undefined') {
      const onVisibilityChange = () => {
@@ -262,6 +262,3 @@ index d5dd6ad53..22b191753 100644
      }
      document.addEventListener('visibilitychange', onVisibilityChange)
      onScopeDispose(() => document.removeEventListener('visibilitychange', onVisibilityChange))
--- 
-2.53.0
-

@@ -1,4 +1,4 @@
-From 7afe2be7657f024c5f3aa627d53e1c290228a509 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 5 Sep 2026 00:21:44 +0800
 Subject: [PATCH] feat(chat): collapsible clarify float panel
@@ -10,7 +10,7 @@ chat messages; the message list bottom padding shrinks accordingly.
 New clarify resets to expanded. Adds clarifyCollapse/clarifyExpand
 i18n keys in all 11 locales.
 ---
- .../components/hermes/chat/MessageList.vue    | 66 ++++++++++++++++++-
+ .../components/hermes/chat/MessageList.vue    | 68 ++++++++++++++++++-
  .../hermes/group-chat/GroupChatPanel.vue      | 42 +++++++++++-
  packages/client/src/i18n/locales/ar.ts        |  3 +
  packages/client/src/i18n/locales/de.ts        |  3 +
@@ -23,13 +23,13 @@ i18n keys in all 11 locales.
  packages/client/src/i18n/locales/ru.ts        |  2 +
  packages/client/src/i18n/locales/zh-TW.ts     |  3 +
  packages/client/src/i18n/locales/zh.ts        |  3 +
- 13 files changed, 137 insertions(+), 3 deletions(-)
+ 13 files changed, 138 insertions(+), 4 deletions(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index ecdea85fe..217d7bbfe 100644
+index 7634330a3..526963640 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -449,14 +449,20 @@ const canInsertQueuedMessages = computed(() => {
+@@ -449,15 +449,21 @@ const canInsertQueuedMessages = computed(() => {
  const visibleApproval = computed(() => chatStore.activePendingApproval);
  const visibleClarify = computed(() => chatStore.activePendingClarify);
  const clarifyResponse = ref("");
@@ -37,10 +37,12 @@ index ecdea85fe..217d7bbfe 100644
  watch(
    () => visibleClarify.value?.clarifyId,
 -  () => { clarifyResponse.value = visibleClarify.value?.initialResponse || ""; },
+-  { immediate: true },
 +  () => {
 +    clarifyResponse.value = visibleClarify.value?.initialResponse || "";
 +    clarifyCollapsed.value = false;
 +  },
++  { immediate: true }
  );
  const hasFloatingPrompt = computed(() => !!visibleApproval.value || !!visibleClarify.value);
 +const clarifyCompact = computed(() => !!visibleClarify.value && clarifyCollapsed.value);
@@ -52,7 +54,7 @@ index ecdea85fe..217d7bbfe 100644
    return "20px";
  });
  
-@@ -1232,7 +1238,42 @@ defineExpose({
+@@ -1237,7 +1243,42 @@ defineExpose({
              </span>
              <span>{{ t("chat.clarifyKicker") }}</span>
              <PendingInteractionCountdown :deadline="visibleClarify.countdownDeadline" />
@@ -94,8 +96,8 @@ index ecdea85fe..217d7bbfe 100644
 +          <template v-if="!clarifyCollapsed">
            <div class="approval-float-title">{{ t("chat.clarifyTitle") }}</div>
            <div class="approval-float-desc">{{ visibleClarify.question }}</div>
-           <div
-@@ -1263,6 +1304,7 @@ defineExpose({
+           <div v-if="visibleClarify.submissionFailed" role="alert">{{ t('chat.clarifySendFailed') }}</div>
+@@ -1271,6 +1312,7 @@ defineExpose({
                {{ t("chat.clarifySubmit") }}
              </NButton>
            </div>
@@ -103,7 +105,7 @@ index ecdea85fe..217d7bbfe 100644
          </div>
        </Transition>
        <Transition name="queue-float">
-@@ -1457,6 +1499,26 @@ defineExpose({
+@@ -1465,6 +1507,26 @@ defineExpose({
    text-transform: uppercase;
  }
  
@@ -213,12 +215,12 @@ index 57d5633da..d7fc4cc6a 100644
      width: 18px;
      height: 18px;
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 7ea47b828..accff3ac3 100644
+index abe391ff8..b645fb438 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -1405,6 +1405,9 @@ export default {
-     clarifyPlaceholder: 'اكتب إجابتك...',
+@@ -1408,6 +1408,9 @@ export default {
      clarifySubmit: 'رد',
+     clarifySendFailed: 'لم يتم تأكيد وصول إجابتك. تم الاحتفاظ بها. يرجى المحاولة مجددًا.',
      clarifyDismiss: 'تجاهل',
 +
 +    clarifyCollapse: 'طي',
@@ -227,12 +229,12 @@ index 7ea47b828..accff3ac3 100644
      interactionCountdown: 'متبقٍ {time}',
      interactionCountdownElapsed: '00:00 · في انتظار تأكيد الخادم',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index d61da0c82..9faaa86cc 100644
+index e34384d08..8be919c78 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1352,6 +1352,9 @@ export default {
-     clarifyPlaceholder: 'Geben Sie Ihre Antwort ein...',
+@@ -1355,6 +1355,9 @@ export default {
      clarifySubmit: 'Antworten',
+     clarifySendFailed: 'Ihre Antwort wurde noch nicht bestätigt. Bitte versuchen Sie es erneut. Ihre Antwort bleibt erhalten.',
      clarifyDismiss: 'Schließen',
 +
 +    clarifyCollapse: 'Einklappen',
@@ -241,12 +243,12 @@ index d61da0c82..9faaa86cc 100644
      interactionCountdown: '{time} verbleibend',
      interactionCountdownElapsed: '00:00 · Serverbestätigung ausstehend',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index ad1dd858e..3e9a27e7e 100644
+index 07ffd5613..20e56f9a5 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1414,6 +1414,9 @@ export default {
-     clarifyPlaceholder: 'Type your answer...',
+@@ -1417,6 +1417,9 @@ export default {
      clarifySubmit: 'Reply',
+     clarifySendFailed: 'Your answer has not been confirmed. Please retry. Your answer has been kept.',
      clarifyDismiss: 'Dismiss',
 +
 +    clarifyCollapse: 'Collapse',
@@ -255,12 +257,12 @@ index ad1dd858e..3e9a27e7e 100644
      interactionCountdown: '{time} remaining',
      interactionCountdownElapsed: '00:00 · Awaiting server confirmation',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index a40766c3b..ba697aeec 100644
+index 267661cb6..6fcd3bc8e 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1352,6 +1352,9 @@ export default {
-     clarifyPlaceholder: 'Escriba su respuesta...',
+@@ -1355,6 +1355,9 @@ export default {
      clarifySubmit: 'Responder',
+     clarifySendFailed: 'No se ha confirmado la entrega. Tu respuesta se ha conservado. Vuelve a intentarlo.',
      clarifyDismiss: 'Descartar',
 +
 +    clarifyCollapse: 'Contraer',
@@ -269,12 +271,12 @@ index a40766c3b..ba697aeec 100644
      interactionCountdown: 'Quedan {time}',
      interactionCountdownElapsed: '00:00 · Esperando confirmación del servidor',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 19c9e598d..362a6bfe4 100644
+index 85b7bfcc0..d2b2d0596 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1352,6 +1352,9 @@ export default {
-     clarifyPlaceholder: 'Tapez votre réponse...',
+@@ -1355,6 +1355,9 @@ export default {
      clarifySubmit: 'Répondre',
+     clarifySendFailed: 'La réception de votre réponse reste à confirmer. Elle a été conservée. Veuillez réessayer.',
      clarifyDismiss: 'Ignorer',
 +
 +    clarifyCollapse: 'Réduire',
@@ -283,12 +285,12 @@ index 19c9e598d..362a6bfe4 100644
      interactionCountdown: '{time} restante',
      interactionCountdownElapsed: '00:00 · Confirmation du serveur en attente',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 891ea85d6..eeb9a450f 100644
+index b02a4b2a8..3593d377d 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1352,6 +1352,9 @@ export default {
-     clarifyPlaceholder: '回答を入力...',
+@@ -1355,6 +1355,9 @@ export default {
      clarifySubmit: '返信',
+     clarifySendFailed: '回答の送信を確認できませんでした。回答は保持されています。再試行してください。',
      clarifyDismiss: '閉じる',
 +
 +    clarifyCollapse: '折りたたむ',
@@ -297,12 +299,12 @@ index 891ea85d6..eeb9a450f 100644
      interactionCountdown: '残り {time}',
      interactionCountdownElapsed: '00:00 · サーバー確認待ち',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 75b6c5098..0a814d5a0 100644
+index 521965ca7..06f382fc5 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1352,6 +1352,9 @@ export default {
-     clarifyPlaceholder: '답변 입력...',
+@@ -1355,6 +1355,9 @@ export default {
      clarifySubmit: '답장',
+     clarifySendFailed: '답변 전달이 확인되지 않았습니다. 답변은 보관되어 있습니다. 다시 시도해 주세요.',
      clarifyDismiss: '무시',
 +
 +    clarifyCollapse: '접기',
@@ -311,12 +313,12 @@ index 75b6c5098..0a814d5a0 100644
      interactionCountdown: '{time} 남음',
      interactionCountdownElapsed: '00:00 · 서버 확인 대기 중',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 25133359c..fdf56985e 100644
+index 6e7b19b18..0d3f65963 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1352,6 +1352,9 @@ export default {
-     clarifyPlaceholder: 'Digite sua resposta...',
+@@ -1355,6 +1355,9 @@ export default {
      clarifySubmit: 'Responder',
+     clarifySendFailed: 'A entrega da resposta não foi confirmada. A resposta foi mantida. Tente novamente.',
      clarifyDismiss: 'Descartar',
 +
 +    clarifyCollapse: 'Recolher',
@@ -325,10 +327,10 @@ index 25133359c..fdf56985e 100644
      interactionCountdown: '{time} restante',
      interactionCountdownElapsed: '00:00 · Aguardando confirmação do servidor',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 86e6f2c39..00f061db6 100644
+index 252aacb29..cad00ad1a 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1305,6 +1305,8 @@ export default {
+@@ -1308,6 +1308,8 @@ export default {
      interactionExpired: 'Время ожидания запроса истекло, окно закрыто.',
      interactionCountdown: 'Осталось {time}',
      interactionCountdownElapsed: '00:00 · Ожидание подтверждения сервера',
@@ -338,12 +340,12 @@ index 86e6f2c39..00f061db6 100644
      deleteSession: 'Удалить этот сеанс?',
      sessionDeleted: 'Сеанс удалён',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 00519feca..dc754cd8c 100644
+index 901d841b0..3ec2eba4c 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1405,6 +1405,9 @@ export default {
-     clarifyPlaceholder: '輸入你的回答...',
+@@ -1408,6 +1408,9 @@ export default {
      clarifySubmit: '回覆',
+     clarifySendFailed: '回答尚未確認送達，請重試。已保留你的答案。',
      clarifyDismiss: '忽略',
 +
 +    clarifyCollapse: '收起',
@@ -352,12 +354,12 @@ index 00519feca..dc754cd8c 100644
      interactionCountdown: '剩餘 {time}',
      interactionCountdownElapsed: '00:00 · 等待伺服器確認',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 55399db9a..02ffbedfe 100644
+index dcff64097..dc09acc35 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1414,6 +1414,9 @@ export default {
-     clarifyPlaceholder: '输入你的回答...',
+@@ -1417,6 +1417,9 @@ export default {
      clarifySubmit: '回复',
+     clarifySendFailed: '回答尚未确认送达，请重试。已保留你的答案。',
      clarifyDismiss: '忽略',
 +
 +    clarifyCollapse: '收起',
@@ -365,6 +367,3 @@ index 55399db9a..02ffbedfe 100644
      interactionExpired: '该请求已超时，已关闭。',
      interactionCountdown: '剩余 {time}',
      interactionCountdownElapsed: '00:00 · 等待服务端确认',
--- 
-2.53.0
-

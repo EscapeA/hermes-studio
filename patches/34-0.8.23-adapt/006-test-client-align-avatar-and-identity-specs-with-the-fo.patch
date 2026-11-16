@@ -1,4 +1,4 @@
-From 8d33470dafd03296a298d1f8cbdf48117391f0ea Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 15 Nov 2026 15:54:20 +0800
 Subject: [PATCH] test(client): align avatar and identity specs with the fork's
@@ -26,7 +26,7 @@ index ef37315e9..6cd6debff 100644
  })
  
 diff --git a/tests/client/plugin-agent-identity.test.ts b/tests/client/plugin-agent-identity.test.ts
-index aec393f3f..4e6e65cee 100644
+index 947426b90..b6dec3e53 100644
 --- a/tests/client/plugin-agent-identity.test.ts
 +++ b/tests/client/plugin-agent-identity.test.ts
 @@ -3,7 +3,6 @@ import { computed } from 'vue'
@@ -64,6 +64,3 @@ index aec393f3f..4e6e65cee 100644
    expect(personTaskIdentity({ selection_json: JSON.stringify({ runtime: id }) }).avatar?.src).toBe(fallback)
    expect(chatSessionAgentAvatar({ agent: 'plugin:other/worker' }).src).not.toBe(fallback)
  })
--- 
-2.53.0
-

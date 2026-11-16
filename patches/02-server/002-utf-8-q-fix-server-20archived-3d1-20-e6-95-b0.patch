@@ -1,4 +1,4 @@
-From c55b936ba7bcdf6ea3baef408e2f28cce6e538f6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 6 Sep 2026 16:14:50 +0800
 Subject: [PATCH] =?UTF-8?q?fix(server):=20archived=3D1=20=E6=95=B0?=
@@ -37,6 +37,3 @@ index 82ec94a0b..92a6b6cd5 100644
      excludeSessionIds: [...getPendingDeletedSessionIds(), ...excludedIds],
    }
    const allSessions = localListSessions(profile, source, effectiveLimit + (paginated ? 1 : 0), {
--- 
-2.53.0
-

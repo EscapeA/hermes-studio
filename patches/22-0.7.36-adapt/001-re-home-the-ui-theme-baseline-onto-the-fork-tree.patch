@@ -1,4 +1,4 @@
-From e0f6d075c43ebbca055e2d3f059893a228be4f5e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 16 Oct 2026 01:30:19 +0800
 Subject: [PATCH] test(harness): re-home the ui-theme baseline onto the fork
@@ -382,6 +382,3 @@ index a7da9ab06..b5f95d247 100644
      }
    }
  }
--- 
-2.53.0
-

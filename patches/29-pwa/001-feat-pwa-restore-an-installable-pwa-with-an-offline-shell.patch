@@ -1,4 +1,4 @@
-From a57c6a36e8130e7b1d7a1030695f50c35e176fa6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 5 Nov 2026 22:30:27 +0800
 Subject: [PATCH] feat(pwa): restore installable PWA with an offline-capable
@@ -7164,10 +7164,10 @@ index 000000000..db026a021
 +  })())
 +})
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index fec3e4ebe..f5c134c18 100644
+index ea40adfe1..b37e099dc 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -27,6 +27,7 @@ import { useI18n } from "vue-i18n";
+@@ -29,6 +29,7 @@ import { useI18n } from "vue-i18n";
  import { getThemeOverrides } from "@/styles/theme";
  import { useTheme } from "@/composables/useTheme";
  import { useKeyboard } from "@/composables/useKeyboard";
@@ -7175,7 +7175,7 @@ index fec3e4ebe..f5c134c18 100644
  import { useSessionSearch } from "@/composables/useSessionSearch";
  import { watchServerTtsSettingsHydration } from "@/composables/useTtsSettingsHydration";
  import { useAppStore } from "@/stores/hermes/app";
-@@ -339,6 +340,7 @@ onUnmounted(() => {
+@@ -343,6 +344,7 @@ onUnmounted(() => {
  });
  
  useKeyboard();
@@ -7359,7 +7359,7 @@ index 99463a389..5bbb1b8c3 100644
      return true
    } catch (err) {
 diff --git a/packages/server/src/modules/studio/middleware/static-cache.ts b/packages/server/src/modules/studio/middleware/static-cache.ts
-index a36dd8bcb..597dba1f4 100644
+index a7fed598e..8ef32af84 100644
 --- a/packages/server/src/modules/studio/middleware/static-cache.ts
 +++ b/packages/server/src/modules/studio/middleware/static-cache.ts
 @@ -1,9 +1,35 @@
@@ -7389,7 +7389,7 @@ index a36dd8bcb..597dba1f4 100644
  
  export function getStaticCacheControl(relativePath: string): string | null {
    const normalizedPath = relativePath.replaceAll('\\', '/').replace(/^\.\//, '')
-   if (normalizedPath === 'index.html') return SPA_ENTRY_CACHE_CONTROL
+   if (normalizedPath === 'index.html' || normalizedPath === 'plugin-frame.html') return SPA_ENTRY_CACHE_CONTROL
 +  if (normalizedPath === 'sw.js') return SERVICE_WORKER_CACHE_CONTROL
 +  if (normalizedPath.endsWith('.webmanifest')) return SERVICE_WORKER_CACHE_CONTROL
    if (normalizedPath.startsWith('assets/')) return IMMUTABLE_ASSET_CACHE_CONTROL
@@ -7448,6 +7448,3 @@ index 000000000..cfad9f110
 +    expect(getStaticCacheControl('./sw.js')).toBe(SERVICE_WORKER_CACHE_CONTROL)
 +  })
 +})
--- 
-2.53.0
-

@@ -1,4 +1,4 @@
-From a54b40c379aa81e8b2f17af800600ad3ec1fa385 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Fri, 14 Aug 2026 18:54:27 +0800
 Subject: [PATCH] feat(chat): show session-lifetime token consumption in input
@@ -210,10 +210,10 @@ index 0bfd73824..90d1bde20 100644
    cursor: pointer;
    border-bottom: var(--border-width, 1px) dashed transparent;
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 6611de18c..c17863c77 100644
+index e6fedfa8c..d43ee7a46 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -1181,6 +1181,8 @@ export default {
+@@ -1183,6 +1183,8 @@ export default {
      runUsageEstimatedSpeedHint: "Ausgabetokens / (Laufzeit − Werkzeugzeit). Überlappungen zählen einmal. Enthält Start- und Netzwerkaufwand; kein gemessenes Modelltempo.",
  
      contextRemaining: 'übrig',
@@ -223,10 +223,10 @@ index 6611de18c..c17863c77 100644
      contextEditTitle: 'Kontextlänge bearbeiten',
      contextEditDesc: 'Kontextlängenlimit für aktuelles Modell festlegen (in Tokens)',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 40cb009b2..6291e3304 100644
+index 717845a17..9c12ceea7 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -1202,6 +1202,8 @@ export default {
+@@ -1204,6 +1204,8 @@ export default {
      runUsageEstimatedSpeedHint: "Output tokens / (run time − tool time). Overlapping tools count once. Includes startup and network overhead; not measured model speed.",
  
      contextRemaining: 'remaining',
@@ -236,10 +236,10 @@ index 40cb009b2..6291e3304 100644
      contextEditTitle: 'Edit Context Length',
      contextEditDesc: 'Set context length limit for current model (in tokens)',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 424dd3269..49c98875f 100644
+index 74d824da3..ce50ea485 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -1181,6 +1181,8 @@ export default {
+@@ -1183,6 +1183,8 @@ export default {
      runUsageEstimatedSpeedHint: "Tokens de salida / (duración total − herramientas). Los solapamientos cuentan una vez. Incluye inicio y red; no es la velocidad medida del modelo.",
  
      contextRemaining: 'restante',
@@ -249,10 +249,10 @@ index 424dd3269..49c98875f 100644
      contextEditTitle: 'Editar longitud del contexto',
      contextEditDesc: 'Establecer el límite de longitud del contexto para el modelo actual (en tokens)',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index e1c248522..d9f6e7e97 100644
+index 7cf416e20..46328d18f 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -1181,6 +1181,8 @@ export default {
+@@ -1183,6 +1183,8 @@ export default {
      runUsageEstimatedSpeedHint: "Tokens de sortie / (durée totale − outils). Les chevauchements comptent une fois. Inclut démarrage et réseau ; vitesse du modèle non mesurée.",
  
      contextRemaining: 'restant',
@@ -262,10 +262,10 @@ index e1c248522..d9f6e7e97 100644
      contextEditTitle: 'Modifier la longueur du contexte',
      contextEditDesc: 'Définir la limite de longueur du contexte pour le modèle actuel (en tokens)',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 436c14e77..12bd0bd9d 100644
+index 6625be298..042e246db 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -1181,6 +1181,8 @@ export default {
+@@ -1183,6 +1183,8 @@ export default {
      runUsageEstimatedSpeedHint: "出力トークン /（実行時間 − ツール時間）。並列ツールの重複時間は一度だけ除外。起動や通信の時間を含むため、モデルの実測速度ではありません。",
  
      contextRemaining: '残り',
@@ -275,10 +275,10 @@ index 436c14e77..12bd0bd9d 100644
      contextEditTitle: 'コンテキスト長を編集',
      contextEditDesc: '現在のモデルのコンテキスト長制限を設定（トークン数）',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 33e497056..3fc9d84f2 100644
+index 042919ecd..bc8f7592e 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -1181,6 +1181,8 @@ export default {
+@@ -1183,6 +1183,8 @@ export default {
      runUsageEstimatedSpeedHint: "출력 토큰 / (실행 시간 − 도구 시간). 병렬 도구의 겹치는 시간은 한 번만 제외합니다. 시작 및 네트워크 시간이 포함되어 모델 실측 속도는 아닙니다.",
  
      contextRemaining: '남음',
@@ -288,10 +288,10 @@ index 33e497056..3fc9d84f2 100644
      contextEditTitle: '컨텍스트 길이 편집',
      contextEditDesc: '현재 모델의 컨텍스트 길이 제한 설정 (토큰 수)',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 455404166..04d2b489a 100644
+index 0d6ec3982..91ad642d7 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -1181,6 +1181,8 @@ export default {
+@@ -1183,6 +1183,8 @@ export default {
      runUsageEstimatedSpeedHint: "Tokens de saída / (duração total − ferramentas). Sobreposições contam uma vez. Inclui inicialização e rede; não é a velocidade medida do modelo.",
  
      contextRemaining: 'restante',
@@ -301,10 +301,10 @@ index 455404166..04d2b489a 100644
      contextEditTitle: 'Editar tamanho do contexto',
      contextEditDesc: 'Definir o limite de tamanho do contexto para o modelo atual (em tokens)',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index ed42e56ca..dd9e4bbc2 100644
+index fd9444cdc..e4f53a9a3 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -1108,6 +1108,8 @@ export default {
+@@ -1111,6 +1111,8 @@ export default {
      runUsageEstimatedSpeedHint: "Выходные токены / (время запуска − время инструментов). Пересечения учитываются один раз. Включает запуск и сеть; это не измеренная скорость модели.",
  
      contextRemaining: 'Осталось',
@@ -314,10 +314,10 @@ index ed42e56ca..dd9e4bbc2 100644
      contextEditTitle: 'Изменить размер контекста',
      contextEditDesc: 'Установите лимит размера контекста для текущей модели (в токенах)',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index dff4c4f2b..5040c2c30 100644
+index 02ec22ca8..78a232036 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -1195,6 +1195,8 @@ export default {
+@@ -1197,6 +1197,8 @@ export default {
      runUsageEstimatedSpeedHint: "輸出 token /（本輪耗時 − 工具占用時間）。並行工具重疊時間只扣一次；仍包含啟動、網路等開銷，非實測模型速度。",
  
      contextRemaining: '剩餘',
@@ -327,10 +327,10 @@ index dff4c4f2b..5040c2c30 100644
      contextEditTitle: '編輯上下文長度',
      contextEditDesc: '設定目前模型的上下文長度限制（token 數量）',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 65ced4417..f131a64a5 100644
+index b97ecc3da..1591f3a40 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -1202,6 +1202,8 @@ export default {
+@@ -1204,6 +1204,8 @@ export default {
      runUsageEstimatedSpeedHint: "输出 token /（本轮耗时 − 工具占用时间）。并行工具重叠时间只扣一次；仍包含启动、网络等开销，非实测模型速度。",
  
      contextRemaining: '剩余',
@@ -413,6 +413,3 @@ index 72d046c0a..ce9b30284 100644
  export function getUsageBatch(sessionIds: string[]): Record<string, UsageRecord> {
    if (sessionIds.length === 0) return {}
    if (isSqliteAvailable()) {
--- 
-2.53.0
-

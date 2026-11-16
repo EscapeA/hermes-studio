@@ -1,4 +1,4 @@
-From 6abf83bd4574d1425937d736d0014266dbd83a52 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 31 Oct 2026 11:52:52 +0800
 Subject: [PATCH] fix(chat): default agent avatar is Hermes before a session
@@ -23,6 +23,3 @@ index 93037564a..ca77d95cc 100644
    const botType = session.botType || session.bot_type || (session.id?.startsWith('person-main-') ? DEFAULT_PERSON_BOT_TYPE : '')
    const bot = personBot(botType)
    if (bot) {
--- 
-2.53.0
-

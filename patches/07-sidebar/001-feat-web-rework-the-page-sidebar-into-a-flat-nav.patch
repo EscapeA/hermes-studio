@@ -1,4 +1,4 @@
-From 9f07e5bfeebab13c8de31b4c2588a1724a036e28 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 18:23:53 +0800
 Subject: [PATCH] feat(web): rework the page sidebar into a flat nav with a
@@ -179,10 +179,10 @@ index f6d34b836..eae1b5d3f 100644
 -}
  </style>
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 4ff17c6f1..1a7e2058b 100644
+index 20cff276a..fdd7c3f74 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -703,7 +703,6 @@ export default {
+@@ -705,7 +705,6 @@ export default {
      gateways: 'البوابات',
      terminal: 'الطرفية',
      browser: 'المتصفح',
@@ -191,10 +191,10 @@ index 4ff17c6f1..1a7e2058b 100644
      files: 'الملفات',
      devices: 'الأجهزة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 4121e1e92..ab71ef110 100644
+index be34e1eb6..506747e20 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -713,7 +713,6 @@ export default {
+@@ -715,7 +715,6 @@ export default {
      socialMessages: 'Nachrichten senden',
      terminal: 'Konsole',
      browser: 'Browser',
@@ -203,10 +203,10 @@ index 4121e1e92..ab71ef110 100644
      files: 'Dateien',
      devices: 'Gerate',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 6cf9fac6e..6278298fb 100644
+index 328de10b2..74291a505 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -703,7 +703,6 @@ export default {
+@@ -705,7 +705,6 @@ export default {
      gateways: 'Gateways',
      terminal: 'Terminal',
      browser: 'Browser',
@@ -215,10 +215,10 @@ index 6cf9fac6e..6278298fb 100644
      files: 'Files',
      devices: 'Devices',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 0da08da4e..9cb0b7932 100644
+index 32183bfd5..5755b4399 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -713,7 +713,6 @@ export default {
+@@ -715,7 +715,6 @@ export default {
      socialMessages: 'Enviar mensajes',
      terminal: 'Terminal',
      browser: 'Navegador',
@@ -227,10 +227,10 @@ index 0da08da4e..9cb0b7932 100644
      files: 'Archivos',
      devices: 'Dispositivos',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index c69b36b55..6c83327a6 100644
+index c4f6130c7..ece0d8fe6 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -713,7 +713,6 @@ export default {
+@@ -715,7 +715,6 @@ export default {
      socialMessages: 'Envoyer des messages',
      terminal: 'Terminal',
      browser: 'Navigateur',
@@ -239,10 +239,10 @@ index c69b36b55..6c83327a6 100644
      files: 'Fichiers',
      devices: 'Appareils',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 665d3a681..e864e462b 100644
+index c6795b57b..a414224c1 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -713,7 +713,6 @@ export default {
+@@ -715,7 +715,6 @@ export default {
      socialMessages: 'メッセージ送信',
      terminal: 'ターミナル',
      browser: 'ブラウザー',
@@ -251,10 +251,10 @@ index 665d3a681..e864e462b 100644
      files: 'ファイル',
      devices: 'デバイス',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 26fbebe44..83d70acee 100644
+index 80d81d666..005f56d16 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -713,7 +713,6 @@ export default {
+@@ -715,7 +715,6 @@ export default {
      socialMessages: '메시지 보내기',
      terminal: '터미널',
      browser: '브라우저',
@@ -263,10 +263,10 @@ index 26fbebe44..83d70acee 100644
      files: '파일',
      devices: '기기',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index f3d5d9652..02944462c 100644
+index 619f17630..0d569c6fb 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -713,7 +713,6 @@ export default {
+@@ -715,7 +715,6 @@ export default {
      socialMessages: 'Enviar mensagens',
      terminal: 'Terminal',
      browser: 'Navegador',
@@ -275,10 +275,10 @@ index f3d5d9652..02944462c 100644
      files: 'Arquivos',
      devices: 'Dispositivos',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 836d4dadf..8ade96a9c 100644
+index 9c9e15cb9..e4609b94f 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -627,7 +627,6 @@ export default {
+@@ -629,7 +629,6 @@ export default {
      gateways: 'Шлюзы',
      terminal: 'Терминал',
      browser: 'Браузер',
@@ -287,10 +287,10 @@ index 836d4dadf..8ade96a9c 100644
      files: 'Файлы',
      devices: 'Устройства',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 3ac16bf36..f5ce77f3c 100644
+index 145b6b894..74899b89f 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -703,7 +703,6 @@ export default {
+@@ -705,7 +705,6 @@ export default {
      gateways: '閘道',
      terminal: '終端機',
      browser: '瀏覽器',
@@ -299,10 +299,10 @@ index 3ac16bf36..f5ce77f3c 100644
      files: '檔案',
      devices: '裝置',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 120ee4c81..4f62ba42c 100644
+index 2d3d1be3c..e36f1eee4 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -703,7 +703,6 @@ export default {
+@@ -705,7 +705,6 @@ export default {
      gateways: '网关',
      terminal: '终端',
      browser: '浏览器',
@@ -310,6 +310,3 @@ index 120ee4c81..4f62ba42c 100644
      globalAgent: '全局',
      files: '文件',
      devices: '设备',
--- 
-2.53.0
-

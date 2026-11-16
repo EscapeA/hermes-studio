@@ -1,4 +1,4 @@
-From 9a42cf1b16c77f21e21e288551fbeaa055c4ec77 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 5 Nov 2026 23:37:22 +0800
 Subject: [PATCH] feat(auth): add passkey (WebAuthn) sign-in
@@ -63,8 +63,334 @@ Password login is untouched and remains the primary path.
  create mode 100644 tests/e2e/passkey-login.spec.ts
  create mode 100644 tests/server/webauthn-passkey.test.ts
 
+diff --git a/docs/openapi.json b/docs/openapi.json
+index 8a5d2d8b1..176688d66 100644
+--- a/docs/openapi.json
++++ b/docs/openapi.json
+@@ -1275,6 +1275,321 @@
+         ]
+       }
+     },
++    "/api/auth/webauthn/config": {
++      "get": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Get config",
++        "description": "GET /api/auth/webauthn/config",
++        "operationId": "webauthnGetConfig",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          },
++          "404": {
++            "description": "Not found"
++          }
++        }
++      },
++      "put": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Update config",
++        "description": "PUT /api/auth/webauthn/config",
++        "operationId": "webauthnUpdateConfig",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "400": {
++            "$ref": "#/components/responses/BadRequest"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        },
++        "requestBody": {
++          "required": true,
++          "content": {
++            "application/json": {
++              "schema": {
++                "type": "object",
++                "properties": {
++                  "origins": {
++                    "type": "object",
++                    "additionalProperties": true
++                  },
++                  "rpID": {
++                    "type": "object",
++                    "additionalProperties": true
++                  },
++                  "rpName": {
++                    "type": "object",
++                    "additionalProperties": true
++                  }
++                }
++              }
++            }
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/credentials": {
++      "get": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Get credentials",
++        "description": "GET /api/auth/webauthn/credentials",
++        "operationId": "webauthnListCredentials",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          },
++          "404": {
++            "description": "Not found"
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/credentials/{id}": {
++      "delete": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Delete :id",
++        "description": "DELETE /api/auth/webauthn/credentials/:id",
++        "operationId": "webauthnDeleteCredential",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        },
++        "parameters": [
++          {
++            "name": "id",
++            "in": "path",
++            "required": true,
++            "schema": {
++              "type": "integer"
++            }
++          }
++        ]
++      }
++    },
++    "/api/auth/webauthn/login/begin": {
++      "post": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Create begin",
++        "description": "POST /api/auth/webauthn/login/begin",
++        "operationId": "webauthnLoginBegin",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "400": {
++            "$ref": "#/components/responses/BadRequest"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/login/finish": {
++      "post": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Create finish",
++        "description": "POST /api/auth/webauthn/login/finish",
++        "operationId": "webauthnLoginFinish",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "400": {
++            "$ref": "#/components/responses/BadRequest"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        },
++        "requestBody": {
++          "required": true,
++          "content": {
++            "application/json": {
++              "schema": {
++                "type": "object",
++                "properties": {
++                  "response": {
++                    "type": "object",
++                    "additionalProperties": true
++                  },
++                  "sessionToken": {
++                    "type": "object",
++                    "additionalProperties": true
++                  }
++                },
++                "required": [
++                  "response",
++                  "sessionToken"
++                ]
++              }
++            }
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/register/begin": {
++      "post": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Create begin",
++        "description": "POST /api/auth/webauthn/register/begin",
++        "operationId": "webauthnRegisterBegin",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "400": {
++            "$ref": "#/components/responses/BadRequest"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/register/finish": {
++      "post": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Create finish",
++        "description": "POST /api/auth/webauthn/register/finish",
++        "operationId": "webauthnRegisterFinish",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "400": {
++            "$ref": "#/components/responses/BadRequest"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          }
++        },
++        "requestBody": {
++          "required": true,
++          "content": {
++            "application/json": {
++              "schema": {
++                "type": "object",
++                "properties": {
++                  "name": {
++                    "type": "object",
++                    "additionalProperties": true
++                  },
++                  "response": {
++                    "type": "object",
++                    "additionalProperties": true
++                  },
++                  "sessionToken": {
++                    "type": "object",
++                    "additionalProperties": true
++                  }
++                },
++                "required": [
++                  "response",
++                  "sessionToken"
++                ]
++              }
++            }
++          }
++        }
++      }
++    },
++    "/api/auth/webauthn/status": {
++      "get": {
++        "tags": [
++          "Auth"
++        ],
++        "summary": "Get status",
++        "description": "GET /api/auth/webauthn/status",
++        "operationId": "webauthnStatus",
++        "security": [
++          {
++            "BearerAuth": []
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Success"
++          },
++          "401": {
++            "$ref": "#/components/responses/Unauthorized"
++          },
++          "404": {
++            "description": "Not found"
++          }
++        }
++      }
++    },
+     "/api/coding-agents": {
+       "get": {
+         "tags": [
 diff --git a/package-lock.json b/package-lock.json
-index eca52c81d..2f13c595b 100644
+index 3c9957bad..00c3fae15 100644
 --- a/package-lock.json
 +++ b/package-lock.json
 @@ -13,6 +13,8 @@
@@ -76,7 +402,7 @@ index eca52c81d..2f13c595b 100644
          "@trycua/cua-driver": "0.35.4",
          "@typesafe-ai/sdk": "0.6.0",
          "@vscode/markdown-it-katex": "^1.1.2",
-@@ -1342,6 +1344,12 @@
+@@ -1332,6 +1334,12 @@
          "@hapi/hoek": "^11.0.2"
        }
      },
@@ -89,7 +415,7 @@ index eca52c81d..2f13c595b 100644
      "node_modules/@iconify/types": {
        "version": "2.0.0",
        "resolved": "https://registry.npmjs.org/@iconify/types/-/types-2.0.0.tgz",
-@@ -2146,6 +2154,12 @@
+@@ -2136,6 +2144,12 @@
        "integrity": "sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==",
        "license": "MIT"
      },
@@ -102,7 +428,7 @@ index eca52c81d..2f13c595b 100644
      "node_modules/@mermaid-js/parser": {
        "version": "1.2.1",
        "resolved": "https://registry.npmjs.org/@mermaid-js/parser/-/parser-1.2.1.tgz",
-@@ -2843,6 +2857,20 @@
+@@ -2833,6 +2847,20 @@
          "url": "https://github.com/sponsors/jonschlinkert"
        }
      },
@@ -123,7 +449,7 @@ index eca52c81d..2f13c595b 100644
      "node_modules/@peculiar/asn1-cms": {
        "version": "2.10.0",
        "resolved": "https://registry.npmjs.org/@peculiar/asn1-cms/-/asn1-cms-2.10.0.tgz",
-@@ -2956,9 +2984,9 @@
+@@ -2946,9 +2974,9 @@
        }
      },
      "node_modules/@peculiar/asn1-schema": {
@@ -136,7 +462,7 @@ index eca52c81d..2f13c595b 100644
        "license": "MIT",
        "dependencies": {
          "@peculiar/utils": "^2.0.2",
-@@ -3777,6 +3805,31 @@
+@@ -3767,6 +3795,31 @@
          "node": ">=6"
        }
      },
@@ -169,7 +495,7 @@ index eca52c81d..2f13c595b 100644
        "version": "3.1.2",
        "resolved": "https://registry.npmjs.org/@socket.io/component-emitter/-/component-emitter-3.1.2.tgz",
 diff --git a/package.json b/package.json
-index 1f71d7819..a71c7d24c 100644
+index 641b4934d..41da43ef0 100644
 --- a/package.json
 +++ b/package.json
 @@ -87,6 +87,8 @@
@@ -756,10 +1082,10 @@ index 000000000..05ea17fac
 +}
 +</style>
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index e37ea5a47..40be3c3a7 100644
+index 239a1adad..2ae2f3577 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -459,6 +459,14 @@ export default {
+@@ -461,6 +461,14 @@ export default {
    },
    // Login
    login: {
@@ -774,7 +1100,7 @@ index e37ea5a47..40be3c3a7 100644
      title: 'Ekko Studio',
      description: 'أدخل اسم المستخدم وكلمة المرور للمتابعة.',
      placeholder: 'رمز الوصول',
-@@ -2709,6 +2717,39 @@ export default {
+@@ -2712,6 +2720,39 @@ export default {
          pairing: 'إقران الجهاز',
        },
      },
@@ -815,10 +1141,10 @@ index e37ea5a47..40be3c3a7 100644
        title: 'صورة المستخدم',
        upload: 'رفع صورة',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 2f29be56e..6e5ec8955 100644
+index b92712a0f..605eea957 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -471,6 +471,14 @@ export default {
+@@ -473,6 +473,14 @@ export default {
    },
    // Login
    login: {
@@ -833,7 +1159,7 @@ index 2f29be56e..6e5ec8955 100644
      title: 'Ekko Studio',
      description: 'Geben Sie Benutzername und Passwort ein, um fortzufahren.',
      placeholder: 'Zugangs-Token',
-@@ -2810,6 +2818,39 @@ jobTriggered: 'Job ausgelost',
+@@ -2813,6 +2821,39 @@ jobTriggered: 'Job ausgelost',
          pairing: 'Device pairing',
        },
      },
@@ -874,10 +1200,10 @@ index 2f29be56e..6e5ec8955 100644
        title: 'Benutzeravatar',
        upload: 'Bild hochladen',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 07895a9cb..cc79765a4 100644
+index 0e4387307..bd66e04af 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -459,6 +459,14 @@ export default {
+@@ -461,6 +461,14 @@ export default {
    },
    // Login
    login: {
@@ -892,7 +1218,7 @@ index 07895a9cb..cc79765a4 100644
      title: 'Ekko Studio',
      description: 'Enter your username and password to continue.',
      placeholder: 'Access token',
-@@ -2766,6 +2774,39 @@ export default {
+@@ -2769,6 +2777,39 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -933,10 +1259,10 @@ index 07895a9cb..cc79765a4 100644
        title: 'User Avatar',
        upload: 'Upload Image',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index feb5ae069..789b36990 100644
+index 26bb6ced7..f20ecb2c8 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -471,6 +471,14 @@ export default {
+@@ -473,6 +473,14 @@ export default {
    },
    // Login
    login: {
@@ -951,7 +1277,7 @@ index feb5ae069..789b36990 100644
      title: 'Ekko Studio',
      description: 'Introduce tu nombre de usuario y contrasena para continuar.',
      placeholder: 'Token de acceso',
-@@ -2810,6 +2818,39 @@ jobTriggered: 'Job ejecutado',
+@@ -2813,6 +2821,39 @@ jobTriggered: 'Job ejecutado',
          pairing: 'Device pairing',
        },
      },
@@ -992,10 +1318,10 @@ index feb5ae069..789b36990 100644
        title: 'Avatar de usuario',
        upload: 'Subir imagen',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 8439ac2e6..843fcba7a 100644
+index 6acc8b981..acc3d056d 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -471,6 +471,14 @@ export default {
+@@ -473,6 +473,14 @@ export default {
    },
    // Login
    login: {
@@ -1010,7 +1336,7 @@ index 8439ac2e6..843fcba7a 100644
      title: 'Ekko Studio',
      description: 'Entrez votre nom d\'utilisateur et votre mot de passe pour continuer.',
      placeholder: 'Jeton d\'acces',
-@@ -2810,6 +2818,39 @@ jobTriggered: 'Job declenche',
+@@ -2813,6 +2821,39 @@ jobTriggered: 'Job declenche',
          pairing: 'Device pairing',
        },
      },
@@ -1051,10 +1377,10 @@ index 8439ac2e6..843fcba7a 100644
        title: 'Avatar utilisateur',
        upload: 'Importer une image',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index 9a30a8ccd..7fc9acaa3 100644
+index 7dc7d808d..afffcbf88 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -471,6 +471,14 @@ export default {
+@@ -473,6 +473,14 @@ export default {
    },
    // ログイン
    login: {
@@ -1069,7 +1395,7 @@ index 9a30a8ccd..7fc9acaa3 100644
      title: 'Ekko Studio',
      description: 'ユーザー名とパスワードを入力して続行してください。',
      placeholder: 'アクセストークン',
-@@ -2810,6 +2818,39 @@ export default {
+@@ -2813,6 +2821,39 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -1110,10 +1436,10 @@ index 9a30a8ccd..7fc9acaa3 100644
        title: 'ユーザーアバター',
        upload: '画像をアップロード',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 5a4ad9b84..16c751caa 100644
+index 12da1243e..122844f43 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -471,6 +471,14 @@ export default {
+@@ -473,6 +473,14 @@ export default {
    },
    // 로그인
    login: {
@@ -1128,7 +1454,7 @@ index 5a4ad9b84..16c751caa 100644
      title: 'Ekko Studio',
      description: '계속하려면 사용자 이름과 비밀번호를 입력하세요.',
      placeholder: '액세스 토큰',
-@@ -2810,6 +2818,39 @@ export default {
+@@ -2813,6 +2821,39 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -1169,10 +1495,10 @@ index 5a4ad9b84..16c751caa 100644
        title: '사용자 아바타',
        upload: '이미지 업로드',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 4abdfe6e2..e84ad7235 100644
+index c042baebc..2249ecce8 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -471,6 +471,14 @@ export default {
+@@ -473,6 +473,14 @@ export default {
    },
    // Login
    login: {
@@ -1187,7 +1513,7 @@ index 4abdfe6e2..e84ad7235 100644
      title: 'Ekko Studio',
      description: 'Insira seu nome de usuário e senha para continuar.',
      placeholder: 'Token de acesso',
-@@ -2810,6 +2818,39 @@ jobTriggered: 'Job acionado',
+@@ -2813,6 +2821,39 @@ jobTriggered: 'Job acionado',
          pairing: 'Device pairing',
        },
      },
@@ -1228,10 +1554,10 @@ index 4abdfe6e2..e84ad7235 100644
        title: 'Avatar do usuário',
        upload: 'Enviar imagem',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index d3c216bdb..d4c028d8e 100644
+index fee59d69c..d759ec9ed 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -459,6 +459,14 @@ export default {
+@@ -461,6 +461,14 @@ export default {
    },
  
    login: {
@@ -1246,7 +1572,7 @@ index d3c216bdb..d4c028d8e 100644
      title: 'Ekko Studio',
      description: 'Введите имя пользователя и пароль для продолжения.',
      placeholder: 'Токен доступа',
-@@ -2501,6 +2509,39 @@ export default {
+@@ -2504,6 +2512,39 @@ export default {
          pairing: 'Device pairing',
        },
      },
@@ -1287,10 +1613,10 @@ index d3c216bdb..d4c028d8e 100644
        title: 'Аватар пользователя',
        upload: 'Загрузить изображение',
 diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
-index f4f951028..5621be223 100644
+index 70a3ad697..8c9681fde 100644
 --- a/packages/client/src/i18n/locales/tr.ts
 +++ b/packages/client/src/i18n/locales/tr.ts
-@@ -428,6 +428,14 @@ export default {
+@@ -443,6 +443,14 @@ export default {
    },
  
    login: {
@@ -1305,7 +1631,7 @@ index f4f951028..5621be223 100644
      title: 'Ekko Studio',
      description: 'Devam etmek için kullanıcı adınızı ve parolanızı girin.',
      placeholder: 'Erişim belirteci',
-@@ -681,7 +689,40 @@ export default {
+@@ -697,7 +705,40 @@ export default {
      message: { taskArchived: 'Görev arşivlendi' },
    },
    journey: { nodeKinds: 'Düğüm türleri' },
@@ -1348,10 +1674,10 @@ index f4f951028..5621be223 100644
        policy: 'Gizlilik bildirimi',
      },
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 990a8f1c7..4975e337f 100644
+index aa712a65b..60213f24c 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -459,6 +459,14 @@ export default {
+@@ -461,6 +461,14 @@ export default {
    },
    // 登入
    login: {
@@ -1366,7 +1692,7 @@ index 990a8f1c7..4975e337f 100644
      title: 'Ekko Studio',
      description: '輸入使用者名稱和密碼以繼續。',
      placeholder: '存取權杖',
-@@ -2670,6 +2678,39 @@ export default {
+@@ -2673,6 +2681,39 @@ export default {
          pairing: '裝置配對',
        },
      },
@@ -1407,10 +1733,10 @@ index 990a8f1c7..4975e337f 100644
        title: '使用者頭像',
        upload: '上傳圖片',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index a9e7b70b8..dbaedd7a8 100644
+index 8495c2b4f..70507358a 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -459,6 +459,14 @@ export default {
+@@ -461,6 +461,14 @@ export default {
    },
    // 登录
    login: {
@@ -1425,7 +1751,7 @@ index a9e7b70b8..dbaedd7a8 100644
      title: 'Ekko Studio',
      description: '输入用户名和密码以继续。',
      placeholder: '访问令牌',
-@@ -2758,6 +2766,39 @@ export default {
+@@ -2761,6 +2769,39 @@ export default {
          pairing: '设备配对',
        },
      },
@@ -1466,7 +1792,7 @@ index a9e7b70b8..dbaedd7a8 100644
        title: '用户头像',
        upload: '上传图片',
 diff --git a/packages/client/src/views/LoginView.vue b/packages/client/src/views/LoginView.vue
-index 15311bffc..ee7ff2826 100644
+index 3906e2eec..f78f30eac 100644
 --- a/packages/client/src/views/LoginView.vue
 +++ b/packages/client/src/views/LoginView.vue
 @@ -5,6 +5,11 @@ import { useRoute, useRouter } from "vue-router";
@@ -1552,7 +1878,7 @@ index 15311bffc..ee7ff2826 100644
  }
 @@ -57,12 +115,7 @@ async function handlePasswordLogin() {
      activateUserTheme(session.userId, session.theme);
-     router.replace(resolveLoginRedirect(route.query.redirect));
+     await router.replace(resolveLoginRedirect(route.query.redirect));
    } catch (err: any) {
 -    if (err.status === 429 || err.status === 503) {
 -      errorMsg.value = t("login.tooManyAttempts");
@@ -1891,7 +2217,7 @@ index 000000000..53332ed17
 +  }
 +}
 diff --git a/packages/server/src/modules/studio/infrastructure/database/schemas.ts b/packages/server/src/modules/studio/infrastructure/database/schemas.ts
-index 549216031..922eff8ad 100644
+index 9dad9fe03..3c6cd55dc 100644
 --- a/packages/server/src/modules/studio/infrastructure/database/schemas.ts
 +++ b/packages/server/src/modules/studio/infrastructure/database/schemas.ts
 @@ -618,6 +618,36 @@ export const USER_PROFILES_INDEXES = {
@@ -1929,9 +2255,9 @@ index 549216031..922eff8ad 100644
 +}
 +
  export const USER_THEMES_TABLE = 'user_themes'
- export const USER_THEME_PRESETS_TABLE = 'user_theme_presets'
- 
-@@ -1830,6 +1860,10 @@ export function initAllHermesTables(): void {
+ export const USER_NAVIGATION_TABLE = 'user_navigation'
+ export const USER_NAVIGATION_SCHEMA: Record<string, string> = {
+@@ -1837,6 +1867,10 @@ export function initAllHermesTables(): void {
  
      // Users and profile access
      syncTable(USERS_TABLE, USERS_SCHEMA)
@@ -2949,6 +3275,3 @@ index 000000000..d4ef3c381
 +it('requires RP configuration before starting a registration', async () => {
 +  await expect(webauthn.beginRegistration(1)).rejects.toThrow(webauthn.WebAuthnConfigError)
 +})
--- 
-2.53.0
-

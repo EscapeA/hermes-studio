@@ -1,4 +1,4 @@
-From 745291d41e2b6d5edda9cdb9bb10561464f33604 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 12 Sep 2026 12:52:40 +0800
 Subject: [PATCH] feat(chat): drop the composer voice button
@@ -100,6 +100,3 @@ index 8e1e6f85c..7dfd09b9a 100644
      padding: 6px 8px calc(12px + env(safe-area-inset-bottom, 0px));
    }
  
--- 
-2.53.0
-

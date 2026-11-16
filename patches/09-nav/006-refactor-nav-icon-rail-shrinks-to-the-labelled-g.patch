@@ -1,4 +1,4 @@
-From abc2f32e8c517f06bf74b7a9fe6a23df5c8610d6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Fri, 2 Oct 2026 12:40:05 +0800
 Subject: [PATCH] refactor(nav): icon rail shrinks to the labelled glyph size
@@ -8,10 +8,9 @@ The icon-only rail rendered the svg's 22px attribute while the labelled rows for
 icon-only item goes 44x44 -> 36x36, and $navigation-rail-width 64 -> 52 (the drawer's
 RAIL_WIDTH collapses with it).
 ---
- .../layout/MobileNavigationDrawer.vue         |  5 ++-
- .../layout/StudioNavigationRail.vue           | 40 ++++++++++++++++---
- packages/client/src/styles/variables.scss     |  8 ++--
- 3 files changed, 41 insertions(+), 12 deletions(-)
+ .../src/components/layout/MobileNavigationDrawer.vue      | 5 +++--
+ packages/client/src/styles/variables.scss                 | 8 ++++----
+ 2 files changed, 7 insertions(+), 6 deletions(-)
 
 diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
 index 445814ab8..91fe1db5c 100644
@@ -69,6 +68,3 @@ index 885bf949a..e0306ae4f 100644
  $sidebar-width: var(--studio-sidebar-width, 240px);
  $sidebar-collapsed-width: 64px;
  $header-height: 60px;
--- 
-2.53.0
-

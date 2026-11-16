@@ -1,4 +1,4 @@
-From 2d2c6058c75280a08a18238763dd8ee951027f21 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sun, 23 Aug 2026 08:51:56 +0800
 Subject: [PATCH] fix(server): support archived=1 on GET /sessions (restore
@@ -47,6 +47,3 @@ index 3e3d21849..82ec94a0b 100644
    ctx.body = {
      sessions: paginated ? sessions.slice(0, effectiveLimit) : sessions,
      ...(paginated ? {
--- 
-2.53.0
-

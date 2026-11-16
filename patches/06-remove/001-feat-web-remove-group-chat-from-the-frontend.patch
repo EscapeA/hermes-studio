@@ -1,4 +1,4 @@
-From 80710ffd0e9e6dccc69641f22904242efc91e867 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 24 Sep 2026 13:02:23 +0800
 Subject: [PATCH] feat(web): remove group chat from the frontend
@@ -108,10 +108,10 @@ Drop the entire group chat surface from the SPA (server modules untouched):
  delete mode 100644 tests/e2e/group-chat-migration.spec.ts
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index 45a485d11..3fa04f7cf 100644
+index 449e0dd76..21cb89fca 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -192,8 +192,6 @@ const usesPageSidebar = computed(() =>
+@@ -196,8 +196,6 @@ const usesPageSidebar = computed(() =>
      "hermes.historySession",
      "hermes.globalAgent",
      "hermes.globalAgentSession",
@@ -120,7 +120,7 @@ index 45a485d11..3fa04f7cf 100644
      "hermes.workflow",
    ].includes(route.name as string),
  );
-@@ -277,9 +275,9 @@ function handleMobileMenuClick() {
+@@ -281,9 +279,9 @@ function handleMobileMenuClick() {
  }
  
  watch(
@@ -133,7 +133,7 @@ index 45a485d11..3fa04f7cf 100644
        appStore.stopHealthPolling();
        return;
      }
-@@ -294,9 +292,7 @@ watch(
+@@ -298,9 +296,7 @@ watch(
  onMounted(() => {
    window.addEventListener('resize', handleViewportResize);
    wideViewportQuery.addEventListener('change', handleWideViewportChange);
@@ -144,7 +144,7 @@ index 45a485d11..3fa04f7cf 100644
    const bridge = desktopBridge();
    if (
      !bridge?.isDesktop ||
-@@ -461,10 +457,10 @@ useKeyboard();
+@@ -467,10 +463,10 @@ useKeyboard();
              v-if="!isLoginPage && !isDesktopPetRoute && !isStandaloneChatPage && isStoredSuperAdmin()"
            />
            <ComputerUsePermissionPrompt
@@ -157,7 +157,7 @@ index 45a485d11..3fa04f7cf 100644
            />
          </NNotificationProvider>
        </NDialogProvider>
-@@ -730,8 +726,7 @@ useKeyboard();
+@@ -736,8 +732,7 @@ useKeyboard();
    .app-main--card,
    :deep(.chat-panel > .chat-main),
    :deep(.history-panel > .page-loading-content > .chat-main),
@@ -167,7 +167,7 @@ index 45a485d11..3fa04f7cf 100644
      margin: 0;
      border: none;
      border-radius: 0;
-@@ -798,7 +793,6 @@ useKeyboard();
+@@ -804,7 +799,6 @@ useKeyboard();
  
    :deep(.chat-panel),
    :deep(.history-panel),
@@ -175,7 +175,7 @@ index 45a485d11..3fa04f7cf 100644
    :deep(.workflow-view),
    :deep(.petdex-view) {
      background-color: transparent;
-@@ -806,8 +800,7 @@ useKeyboard();
+@@ -812,8 +806,7 @@ useKeyboard();
  
    .studio-frame-surface,
    :deep(.desktop-titlebar:not(.desktop-titlebar--flush)),
@@ -185,7 +185,7 @@ index 45a485d11..3fa04f7cf 100644
      background-color: var(--theme-chrome-bg, var(--glass-chrome-bg));
      -webkit-backdrop-filter: var(--theme-chrome-filter, blur(16px) saturate(110%));
      backdrop-filter: var(--theme-chrome-filter, blur(16px) saturate(110%));
-@@ -821,8 +814,6 @@ useKeyboard();
+@@ -827,8 +820,6 @@ useKeyboard();
    :deep(.chat-panel > .session-list),
    :deep(.person-layout > .person-sidebar),
    :deep(.history-panel > .page-loading-content > .session-list),
@@ -194,7 +194,7 @@ index 45a485d11..3fa04f7cf 100644
    :deep(.workflow-view > .page-loading-content > .workflow-sidebar) {
      background-color: var(--theme-sidebar-bg, var(--glass-sidebar-bg));
      -webkit-backdrop-filter: var(--theme-sidebar-filter, blur(12px) saturate(110%));
-@@ -839,8 +830,7 @@ useKeyboard();
+@@ -845,8 +836,7 @@ useKeyboard();
      backdrop-filter: var(--theme-content-filter, blur(8px) saturate(110%));
    }
  
@@ -204,7 +204,7 @@ index 45a485d11..3fa04f7cf 100644
      background-color: transparent;
      -webkit-backdrop-filter: none;
      backdrop-filter: none;
-@@ -851,15 +841,13 @@ useKeyboard();
+@@ -857,15 +847,13 @@ useKeyboard();
      background-color: transparent;
    }
  
@@ -222,7 +222,7 @@ index 45a485d11..3fa04f7cf 100644
      background-color: transparent;
      -webkit-backdrop-filter: none;
      backdrop-filter: none;
-@@ -917,8 +905,7 @@ useKeyboard();
+@@ -923,8 +911,7 @@ useKeyboard();
      .app-main--card,
      :deep(.chat-panel > .chat-main),
      :deep(.history-panel > .page-loading-content > .chat-main),
@@ -232,7 +232,7 @@ index 45a485d11..3fa04f7cf 100644
        margin-top: 50px;
      }
    }
-@@ -926,8 +913,7 @@ useKeyboard();
+@@ -932,8 +919,7 @@ useKeyboard();
    :deep(.chat-panel > .session-list > .page-sidebar-top),
    :deep(.person-layout > .person-sidebar > .page-sidebar-top),
    :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top),
@@ -242,7 +242,7 @@ index 45a485d11..3fa04f7cf 100644
      -webkit-app-region: drag;
  
      button,
-@@ -976,8 +962,7 @@ useKeyboard();
+@@ -982,8 +968,7 @@ useKeyboard();
    :deep(.chat-panel > .session-list > .page-sidebar-top),
    :deep(.person-layout > .person-sidebar > .page-sidebar-top),
    :deep(.history-panel > .page-loading-content > .session-list > .page-sidebar-top),
@@ -12284,7 +12284,7 @@ index d3f21ef85..000000000
 -    return { selecting, loading, deleting, selected, unavailable, groupFor, start, cancel, toggle, remove }
 -}
 diff --git a/packages/client/src/components/layout/GlobalPendingActions.vue b/packages/client/src/components/layout/GlobalPendingActions.vue
-index 4a2fb73b6..b4d3446b6 100644
+index c4da98260..534119c83 100644
 --- a/packages/client/src/components/layout/GlobalPendingActions.vue
 +++ b/packages/client/src/components/layout/GlobalPendingActions.vue
 @@ -4,7 +4,6 @@ import { NButton, NInput, useMessage, useNotification, type NotificationReactive
@@ -12425,11 +12425,11 @@ index 4a2fb73b6..b4d3446b6 100644
    if (!response || submitting[action.key]) return
    submitting[action.key] = true
    try {
--    if (action.kind === 'chat-clarify') chatStore.respondToClarifyFor(action.pending.sessionId, action.pending.clarifyId, response)
+-    if (action.kind === 'chat-clarify') await chatStore.respondToClarifyFor(action.pending.sessionId, action.pending.clarifyId, response)
 -    else await groupChatStore.respondClarifyFor(action.pending.roomId, action.pending.clarifyId, response)
-+    chatStore.respondToClarifyFor(action.pending.sessionId, action.pending.clarifyId, response)
++    await chatStore.respondToClarifyFor(action.pending.sessionId, action.pending.clarifyId, response)
    } catch (error) {
-     message.error(error instanceof Error ? error.message : String(error))
+     message.error(action.kind === 'chat-clarify' ? t('chat.clarifySendFailed') : error instanceof Error ? error.message : String(error))
    } finally {
 @@ -316,10 +291,6 @@ function openPendingSource(action: GlobalPendingAction) {
      })
@@ -12470,7 +12470,7 @@ index 4a2fb73b6..b4d3446b6 100644
    return notification.create({
      title: () => notificationTitle(action, clarify),
      content: clarify
-@@ -459,7 +427,6 @@ onMounted(() => {
+@@ -462,7 +430,6 @@ onMounted(() => {
    window.addEventListener(PENDING_INTERACTION_EXPIRED_EVENT, showPendingInteractionExpired)
    window.addEventListener('hermes:workflow-approval-visible', handleVisibleWorkflowApproval)
    resetWorkflowSubscriptions(profilesStore.activeProfileName)
@@ -12478,7 +12478,7 @@ index 4a2fb73b6..b4d3446b6 100644
    loadApprovalSoundSetting()
  })
  
-@@ -477,7 +444,6 @@ onUnmounted(() => {
+@@ -480,7 +447,6 @@ onUnmounted(() => {
    pendingNotificationKeys.clear()
    stopWorkflowStatus?.()
    disconnectWorkflowSocket()
@@ -12570,10 +12570,10 @@ index 3cae573ca..fe6fc7130 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 42f33a20a..3611c697b 100644
+index ba1a0d1a7..b657bb24b 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -706,7 +706,6 @@ export default {
+@@ -708,7 +708,6 @@ export default {
      browser: 'المتصفح',
      singleChat: 'محادثة',
      globalAgent: 'الوكيل العام',
@@ -12581,7 +12581,7 @@ index 42f33a20a..3611c697b 100644
      files: 'الملفات',
      devices: 'الأجهزة',
      connections: 'ترابط الأجهزة',
-@@ -3544,242 +3543,6 @@ export default {
+@@ -3547,242 +3546,6 @@ export default {
      connectionClosed: 'تم إغلاق اتصال الطرفية',
      connectionError: 'خطأ في اتصال الطرفية',
    },
@@ -12825,10 +12825,10 @@ index 42f33a20a..3611c697b 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 3885da6df..ffc8960bb 100644
+index ee7a952b0..9f015e64a 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -719,7 +719,6 @@ export default {
+@@ -721,7 +721,6 @@ export default {
      devices: 'Gerate',
      connections: 'Geräteverbindungen',
      agentManager: 'Agent-Verwaltung',
@@ -12836,7 +12836,7 @@ index 3885da6df..ffc8960bb 100644
      groupConversation: 'Konversation',
      groupConversationShort: 'Konv',
      groupAgent: 'Agent',
-@@ -3332,242 +3331,6 @@ jobTriggered: 'Job ausgelost',
+@@ -3335,242 +3334,6 @@ jobTriggered: 'Job ausgelost',
        idle: 'Inaktiv', queued: 'In Warteschlange', running: 'Wird ausgeführt', pending_approval: 'Wartet auf Freigabe', completed: 'Abgeschlossen', skipped: 'Übersprungen', failed: 'Fehlgeschlagen', approval_rejected: 'Freigabe abgelehnt', canceled: 'Abgebrochen',
      },
    },
@@ -13080,10 +13080,10 @@ index 3885da6df..ffc8960bb 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 0623cf12a..9c19dd449 100644
+index 311b6de23..1cb6abe22 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -706,7 +706,6 @@ export default {
+@@ -708,7 +708,6 @@ export default {
      browser: 'Browser',
      singleChat: 'Chat',
      globalAgent: 'Global Agent',
@@ -13091,7 +13091,7 @@ index 0623cf12a..9c19dd449 100644
      files: 'Files',
      devices: 'Devices',
      connections: 'Device connections',
-@@ -3568,242 +3567,6 @@ export default {
+@@ -3571,242 +3570,6 @@ export default {
      connectionClosed: 'Terminal connection closed',
      connectionError: 'Terminal connection error',
    },
@@ -13335,10 +13335,10 @@ index 0623cf12a..9c19dd449 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index c00684a4e..8c1cc4fe0 100644
+index 8a4b54d66..70957c323 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -719,7 +719,6 @@ export default {
+@@ -721,7 +721,6 @@ export default {
      devices: 'Dispositivos',
      connections: 'Conexiones de dispositivos',
      agentManager: 'Gestión de agentes',
@@ -13346,7 +13346,7 @@ index c00684a4e..8c1cc4fe0 100644
      groupConversation: 'Conversación',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3332,242 +3331,6 @@ jobTriggered: 'Job ejecutado',
+@@ -3335,242 +3334,6 @@ jobTriggered: 'Job ejecutado',
        idle: 'Inactivo', queued: 'En cola', running: 'En ejecución', pending_approval: 'Pendiente de aprobación', completed: 'Completado', skipped: 'Omitido', failed: 'Fallido', approval_rejected: 'Aprobación rechazada', canceled: 'Cancelado',
      },
    },
@@ -13590,10 +13590,10 @@ index c00684a4e..8c1cc4fe0 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 610562aa4..978a7b67d 100644
+index 9f6ea377a..58ba5d955 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -719,7 +719,6 @@ export default {
+@@ -721,7 +721,6 @@ export default {
      devices: 'Appareils',
      connections: 'Connexions des appareils',
      agentManager: 'Gestion des agents',
@@ -13601,7 +13601,7 @@ index 610562aa4..978a7b67d 100644
      groupConversation: 'Conversation',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agent',
-@@ -3332,242 +3331,6 @@ jobTriggered: 'Job declenche',
+@@ -3335,242 +3334,6 @@ jobTriggered: 'Job declenche',
        idle: 'Inactif', queued: 'En attente', running: 'En cours', pending_approval: 'En attente d\'approbation', completed: 'Terminé', skipped: 'Ignoré', failed: 'Échec', approval_rejected: 'Approbation refusée', canceled: 'Annulé',
      },
    },
@@ -13845,10 +13845,10 @@ index 610562aa4..978a7b67d 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index c1292ad52..2aab5e322 100644
+index a71f4d3cb..7d767c7dd 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -719,7 +719,6 @@ export default {
+@@ -721,7 +721,6 @@ export default {
      devices: 'デバイス',
      connections: 'デバイス接続',
      agentManager: 'エージェント管理',
@@ -13856,7 +13856,7 @@ index c1292ad52..2aab5e322 100644
      groupConversation: '会話',
      groupConversationShort: '会話',
      groupAgent: 'エージェント',
-@@ -3331,242 +3330,6 @@ export default {
+@@ -3334,242 +3333,6 @@ export default {
        idle: '待機中', queued: '待機列', running: '実行中', pending_approval: '承認待ち', completed: '完了', skipped: 'スキップ', failed: '失敗', approval_rejected: '承認拒否', canceled: 'キャンセル済み',
      },
    },
@@ -14100,10 +14100,10 @@ index c1292ad52..2aab5e322 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index cf50d9984..45cd7f7fa 100644
+index 1c5c2b407..414786dfe 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -719,7 +719,6 @@ export default {
+@@ -721,7 +721,6 @@ export default {
      devices: '기기',
      connections: '기기 연결',
      agentManager: '에이전트 관리',
@@ -14111,7 +14111,7 @@ index cf50d9984..45cd7f7fa 100644
      groupConversation: '대화',
      groupConversationShort: '대화',
      groupAgent: '에이전트',
-@@ -3331,242 +3330,6 @@ export default {
+@@ -3334,242 +3333,6 @@ export default {
        idle: '대기', queued: '대기열', running: '실행 중', pending_approval: '승인 대기', completed: '완료', skipped: '건너뜀', failed: '실패', approval_rejected: '승인 거부', canceled: '취소됨',
      },
    },
@@ -14355,10 +14355,10 @@ index cf50d9984..45cd7f7fa 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 7e56ca2de..1e7e4451c 100644
+index 3e8460fe3..091202ea6 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -719,7 +719,6 @@ export default {
+@@ -721,7 +721,6 @@ export default {
      devices: 'Dispositivos',
      connections: 'Conexões de dispositivos',
      agentManager: 'Gerenciamento de agentes',
@@ -14366,7 +14366,7 @@ index 7e56ca2de..1e7e4451c 100644
      groupConversation: 'Conversa',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3332,242 +3331,6 @@ jobTriggered: 'Job acionado',
+@@ -3335,242 +3334,6 @@ jobTriggered: 'Job acionado',
        idle: 'Inativo', queued: 'Na fila', running: 'Em execução', pending_approval: 'Aguardando aprovação', completed: 'Concluído', skipped: 'Ignorado', failed: 'Falhou', approval_rejected: 'Aprovação rejeitada', canceled: 'Cancelado',
      },
    },
@@ -14610,10 +14610,10 @@ index 7e56ca2de..1e7e4451c 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index f408d1d01..918502c52 100644
+index 2157dd9db..d0d5f4c25 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -630,7 +630,6 @@ export default {
+@@ -632,7 +632,6 @@ export default {
      browser: 'Браузер',
      singleChat: 'Чат',
      globalAgent: 'Global Agent',
@@ -14621,7 +14621,7 @@ index f408d1d01..918502c52 100644
      files: 'Файлы',
      devices: 'Устройства',
      connections: 'Подключение устройств',
-@@ -3179,239 +3178,6 @@ export default {
+@@ -3182,239 +3181,6 @@ export default {
      connectionError: 'Ошибка соединения с терминалом',
    },
  
@@ -14862,10 +14862,10 @@ index f408d1d01..918502c52 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 65f00f7a0..816c8dfd7 100644
+index ab65d86bb..ddadda853 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -706,7 +706,6 @@ export default {
+@@ -708,7 +708,6 @@ export default {
      browser: '瀏覽器',
      singleChat: '單聊',
      globalAgent: '全局',
@@ -14873,7 +14873,7 @@ index 65f00f7a0..816c8dfd7 100644
      files: '檔案',
      devices: '裝置',
      connections: '裝置互聯',
-@@ -3511,242 +3510,6 @@ export default {
+@@ -3514,242 +3513,6 @@ export default {
      connectionClosed: '終端機連線已關閉',
      connectionError: '終端機連線錯誤',
    },
@@ -15117,10 +15117,10 @@ index 65f00f7a0..816c8dfd7 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index e2420d86d..a1cc5e0de 100644
+index 8f4913296..cfcff0aec 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -706,7 +706,6 @@ export default {
+@@ -708,7 +708,6 @@ export default {
      browser: '浏览器',
      singleChat: '单聊',
      globalAgent: '全局',
@@ -15128,7 +15128,7 @@ index e2420d86d..a1cc5e0de 100644
      files: '文件',
      devices: '设备',
      connections: '设备互联',
-@@ -3616,242 +3615,6 @@ export default {
+@@ -3619,242 +3618,6 @@ export default {
      connectionClosed: '终端连接已关闭',
      connectionError: '终端连接错误',
    },
@@ -15372,10 +15372,10 @@ index e2420d86d..a1cc5e0de 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/router/index.ts b/packages/client/src/router/index.ts
-index 5e903dc51..91caef711 100644
+index 56f435b4d..4b4957844 100644
 --- a/packages/client/src/router/index.ts
 +++ b/packages/client/src/router/index.ts
-@@ -32,18 +32,6 @@ const router = createRouter({
+@@ -33,18 +33,6 @@ const router = createRouter({
        component: () => import('@/views/LoginView.vue'),
        meta: { public: true },
      },
@@ -15394,7 +15394,7 @@ index 5e903dc51..91caef711 100644
      {
        path: '/hermes/chat',
        name: 'hermes.chat',
-@@ -238,30 +226,6 @@ const router = createRouter({
+@@ -239,30 +227,6 @@ const router = createRouter({
        path: '/hermes/agents',
        redirect: { name: 'hermes.agentManager' },
      },
@@ -20386,7 +20386,7 @@ index 5c05b0412..000000000
 -  }
 -}
 diff --git a/packages/desktop/src/main/index.ts b/packages/desktop/src/main/index.ts
-index f6f5a962c..1d89321b1 100644
+index 78af74847..a034ad866 100644
 --- a/packages/desktop/src/main/index.ts
 +++ b/packages/desktop/src/main/index.ts
 @@ -44,8 +44,6 @@ import { cancelRegionScreenshot, captureRegionScreenshot, parseScreenshotRequest
@@ -20756,6 +20756,3 @@ index 613a4565d..000000000
 -  await page.getByRole('button', { name: 'فهمت', exact: true }).click()
 -  await expect(page.getByRole('dialog')).toHaveCount(0)
 -})
--- 
-2.53.0
-

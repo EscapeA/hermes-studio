@@ -1,4 +1,4 @@
-From 947944ed341e965c7e20e9804387484104666718 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 00:03:03 +0800
 Subject: [PATCH] fix(client): bound subagentStreams with LRU eviction
@@ -14,10 +14,10 @@ map reads/writes in a plain (non-reactive) side map.
  1 file changed, 42 insertions(+), 2 deletions(-)
 
 diff --git a/packages/client/src/stores/hermes/chat.ts b/packages/client/src/stores/hermes/chat.ts
-index 22b191753..59e8f2f22 100644
+index bbe23ade1..255e62429 100644
 --- a/packages/client/src/stores/hermes/chat.ts
 +++ b/packages/client/src/stores/hermes/chat.ts
-@@ -1424,6 +1424,42 @@ function createChatState(scopedSessionId?: string) {
+@@ -1426,6 +1426,42 @@ function createChatState(scopedSessionId?: string) {
    const completedUnreadSessions = ref<Set<string>>(new Set())
    /** UI-only live streams for Hermes background subagents. Never sent into parent context. */
    const subagentStreams = ref<Map<string, SubagentStream>>(new Map())
@@ -60,7 +60,7 @@ index 22b191753..59e8f2f22 100644
    const storedSessionProfileFilter = getItemBestEffort(SESSION_PROFILE_FILTER_STORAGE_KEY)?.trim()
    const sessionProfileFilter = ref<string | null>(
      storedSessionProfileFilter && storedSessionProfileFilter !== '__all__'
-@@ -2904,9 +2940,10 @@ function createChatState(scopedSessionId?: string) {
+@@ -2906,9 +2942,10 @@ function createChatState(scopedSessionId?: string) {
      const subagentId = String((evt as any).subagent_id || `${(evt as any).task_index ?? 0}`)
      const streamKey = `${sessionId}:${subagentId}`
      const currentStream = subagentStreams.value.get(streamKey)
@@ -72,7 +72,7 @@ index 22b191753..59e8f2f22 100644
      const toolCallId = `subagent:${subagentId}`
      const taskIndex = Number((evt as any).task_index ?? 0)
      const taskCount = Number((evt as any).task_count ?? 1)
-@@ -3013,7 +3050,10 @@ function createChatState(scopedSessionId?: string) {
+@@ -3015,7 +3052,10 @@ function createChatState(scopedSessionId?: string) {
    }
  
    function getSubagentStream(sessionId: string, subagentId: string): SubagentStream | null {
@@ -84,6 +84,3 @@ index 22b191753..59e8f2f22 100644
    }
  
    function handleMoaEvent(sessionId: string, evt: RunEvent) {
--- 
-2.53.0
-

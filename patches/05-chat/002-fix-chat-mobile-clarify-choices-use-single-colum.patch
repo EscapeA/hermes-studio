@@ -1,4 +1,4 @@
-From a88dcb72d510e45659c8ff4c6f551b1f6c9143e9 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Mon, 20 Jul 2026 19:06:09 +0800
 Subject: [PATCH] fix(chat): mobile clarify choices use single-column
@@ -13,13 +13,13 @@ and wrap text while approval stays two columns.
  1 file changed, 32 insertions(+), 1 deletion(-)
 
 diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
-index 22c354ccc..f69f9c064 100644
+index 45ff65e02..2a0f54b5f 100644
 --- a/packages/client/src/components/hermes/chat/MessageList.vue
 +++ b/packages/client/src/components/hermes/chat/MessageList.vue
-@@ -1235,7 +1235,10 @@ defineExpose({
-           </div>
+@@ -1241,7 +1241,10 @@ defineExpose({
            <div class="approval-float-title">{{ t("chat.clarifyTitle") }}</div>
            <div class="approval-float-desc">{{ visibleClarify.question }}</div>
+           <div v-if="visibleClarify.submissionFailed" role="alert">{{ t('chat.clarifySendFailed') }}</div>
 -          <div v-if="visibleClarify.choices && visibleClarify.choices.length" class="approval-float-actions">
 +          <div
 +            v-if="visibleClarify.choices && visibleClarify.choices.length"
@@ -28,7 +28,7 @@ index 22c354ccc..f69f9c064 100644
              <NButton
                v-for="choice in visibleClarify.choices"
                :key="choice"
-@@ -1513,6 +1516,24 @@ defineExpose({
+@@ -1521,6 +1524,24 @@ defineExpose({
    border-top: var(--border-width, 1px) solid $border-color;
  }
  
@@ -53,7 +53,7 @@ index 22c354ccc..f69f9c064 100644
  .clarify-float-input-row {
    display: flex;
    gap: calc(8px * var(--spacing-scale, 1));
-@@ -1745,6 +1766,16 @@ defineExpose({
+@@ -1753,6 +1774,16 @@ defineExpose({
      }
    }
  
@@ -70,6 +70,3 @@ index 22c354ccc..f69f9c064 100644
    .clarify-float-input-row {
      flex-direction: column;
  
--- 
-2.53.0
-

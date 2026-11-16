@@ -1,4 +1,4 @@
-From cbca47421d717f0c16d727c2d6d75da3a7252d55 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <EscapeA@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 14:27:20 +0800
 Subject: [PATCH] feat(chat): drop context progress bar, two-decimal usage
@@ -114,6 +114,3 @@ index 2f90d9dc1..0bfd73824 100644
  }
  
  .attachment-previews {
--- 
-2.53.0
-

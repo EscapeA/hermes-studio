@@ -1,4 +1,4 @@
-From 25086968d23ff134aaf6ad7244351419fb421c28 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 1 Oct 2026 12:39:49 +0800
 Subject: [PATCH] fix(mobile-nav): stop rendering the app-level list twice
@@ -15,10 +15,10 @@ kanban/petdex) are untouched because their panels list different things.
  1 file changed, 14 insertions(+)
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index f0c730af3..592bbd755 100644
+index 29c39932d..dbb595136 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -163,8 +163,22 @@ provide(mobileNavigationKey, {
+@@ -167,8 +167,22 @@ provide(mobileNavigationKey, {
    open: mobileNavigationOpen,
    target: computed(() => !isWideViewport.value && hasNavigationRail.value ? mobileSidebarHost.value : null),
  });
@@ -41,6 +41,3 @@ index f0c730af3..592bbd755 100644
  );
  watch([hasNavigationRail, isWideViewport], () => { mobileNavigationOpen.value = false; });
  watch(sessionSearchOpen, (open) => { if (open) mobileNavigationOpen.value = false; });
--- 
-2.53.0
-

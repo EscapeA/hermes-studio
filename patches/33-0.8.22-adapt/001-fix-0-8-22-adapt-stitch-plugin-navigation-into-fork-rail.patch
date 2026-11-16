@@ -1,4 +1,4 @@
-From b7b8a37fce886a761814d5375d2922e6dd99e8cd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 14 Nov 2026 12:22:11 +0800
 Subject: [PATCH] fix(0.8.22-adapt): stitch plugin navigation into fork rail,
@@ -15,27 +15,26 @@ Subject: [PATCH] fix(0.8.22-adapt): stitch plugin navigation into fork rail,
 - locales: drop the apiRelay top-level key the union merge resurrected
   in 11 locale files (view/controller/router already removed).
 ---
- packages/client/src/App.vue                   |   4 +-
- .../src/components/layout/PageSidebarNav.vue  |  41 ++--
- .../layout/StudioNavigationRail.vue           | 195 +++++-------------
- packages/client/src/i18n/locales/ar.ts        |  27 ---
- packages/client/src/i18n/locales/de.ts        |  27 ---
- packages/client/src/i18n/locales/en.ts        |  27 ---
- packages/client/src/i18n/locales/es.ts        |  27 ---
- packages/client/src/i18n/locales/fr.ts        |  27 ---
- packages/client/src/i18n/locales/ja.ts        |  27 ---
- packages/client/src/i18n/locales/ko.ts        |  27 ---
- packages/client/src/i18n/locales/pt.ts        |  27 ---
- packages/client/src/i18n/locales/ru.ts        |  27 ---
- packages/client/src/i18n/locales/zh-TW.ts     |  27 ---
- packages/client/src/i18n/locales/zh.ts        |  27 ---
- 14 files changed, 69 insertions(+), 468 deletions(-)
+ packages/client/src/App.vue                   |  4 +-
+ .../src/components/layout/PageSidebarNav.vue  | 41 ++++++++-----------
+ packages/client/src/i18n/locales/ar.ts        | 27 ------------
+ packages/client/src/i18n/locales/de.ts        | 27 ------------
+ packages/client/src/i18n/locales/en.ts        | 27 ------------
+ packages/client/src/i18n/locales/es.ts        | 27 ------------
+ packages/client/src/i18n/locales/fr.ts        | 27 ------------
+ packages/client/src/i18n/locales/ja.ts        | 27 ------------
+ packages/client/src/i18n/locales/ko.ts        | 27 ------------
+ packages/client/src/i18n/locales/pt.ts        | 27 ------------
+ packages/client/src/i18n/locales/ru.ts        | 27 ------------
+ packages/client/src/i18n/locales/zh-TW.ts     | 27 ------------
+ packages/client/src/i18n/locales/zh.ts        | 27 ------------
+ 13 files changed, 20 insertions(+), 322 deletions(-)
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
-index f5c134c18..3bbba45e8 100644
+index b37e099dc..ea5da52f7 100644
 --- a/packages/client/src/App.vue
 +++ b/packages/client/src/App.vue
-@@ -185,8 +185,8 @@ const APP_SIDEBAR_ROUTES = [
+@@ -189,8 +189,8 @@ const APP_SIDEBAR_ROUTES = [
    'hermes.settings',
  ];
  const hasMobileContextSidebar = computed(() =>
@@ -136,10 +135,10 @@ index eae1b5d3f..434541d6f 100644
      overflow: hidden;
      text-overflow: ellipsis;
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index 87e3dd597..bab156827 100644
+index b55e1a09b..d478bf1d8 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
-@@ -647,33 +647,6 @@ export default {
+@@ -649,33 +649,6 @@ export default {
    },
  
    // Sidebar
@@ -174,10 +173,10 @@ index 87e3dd597..bab156827 100644
    sidebar: {
      resize: 'تغيير عرض الشريط الجانبي',
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index 4752af108..a06a6af68 100644
+index e126815fe..c3aab0ec7 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
-@@ -659,33 +659,6 @@ export default {
+@@ -661,33 +661,6 @@ export default {
    },
  
    // Sidebar
@@ -212,10 +211,10 @@ index 4752af108..a06a6af68 100644
    sidebar: {
      resize: 'Seitenleistenbreite ändern',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 4a6c39ca4..6f090dfc1 100644
+index 1e740dcd1..54e454cd5 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
-@@ -647,33 +647,6 @@ export default {
+@@ -649,33 +649,6 @@ export default {
    },
  
    // Sidebar
@@ -250,10 +249,10 @@ index 4a6c39ca4..6f090dfc1 100644
    sidebar: {
      resize: 'Resize sidebar',
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 7642e780c..f30306268 100644
+index c391fc6be..82b01a0fa 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
-@@ -659,33 +659,6 @@ export default {
+@@ -661,33 +661,6 @@ export default {
    },
  
    // Sidebar
@@ -288,10 +287,10 @@ index 7642e780c..f30306268 100644
    sidebar: {
      resize: 'Cambiar el ancho de la barra lateral',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index b43169181..20303c191 100644
+index e1b3d1814..22234ecf6 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
-@@ -659,33 +659,6 @@ export default {
+@@ -661,33 +661,6 @@ export default {
    },
  
    // Sidebar
@@ -326,10 +325,10 @@ index b43169181..20303c191 100644
    sidebar: {
      resize: 'Redimensionner la barre latérale',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index ac3473c49..88fcbb4ac 100644
+index b1d2fb00e..ae2f9ba71 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
-@@ -659,33 +659,6 @@ export default {
+@@ -661,33 +661,6 @@ export default {
      toolsClearExcluded: '除外をクリア',
    },
  
@@ -364,10 +363,10 @@ index ac3473c49..88fcbb4ac 100644
    sidebar: {
      resize: 'サイドバーの幅を変更',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index c1c9bd3b9..1f40bd5db 100644
+index 51cc52d3e..a1f3a985b 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
-@@ -659,33 +659,6 @@ export default {
+@@ -661,33 +661,6 @@ export default {
      toolsClearExcluded: '제외 항목 지우기',
    },
  
@@ -402,10 +401,10 @@ index c1c9bd3b9..1f40bd5db 100644
    sidebar: {
      resize: '사이드바 너비 조절',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 17fa07bea..34a6539bc 100644
+index 61ff8cce7..7981b2c67 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
-@@ -659,33 +659,6 @@ export default {
+@@ -661,33 +661,6 @@ export default {
    },
  
    // Sidebar
@@ -440,10 +439,10 @@ index 17fa07bea..34a6539bc 100644
    sidebar: {
      resize: 'Redimensionar barra lateral',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index a003d4b7c..0bf1fd03d 100644
+index 41f283931..3f0651e9d 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
-@@ -572,33 +572,6 @@ export default {
+@@ -574,33 +574,6 @@ export default {
    },
  
  
@@ -478,10 +477,10 @@ index a003d4b7c..0bf1fd03d 100644
    sidebar: {
      resize: 'Изменить ширину боковой панели',
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index 5108851b0..1e594e526 100644
+index 1ac61d915..2cf2c8b88 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
-@@ -647,33 +647,6 @@ export default {
+@@ -649,33 +649,6 @@ export default {
      toolsClearExcluded: '清空排除',
    },
  
@@ -516,10 +515,10 @@ index 5108851b0..1e594e526 100644
    sidebar: {
      resize: '調整側邊欄寬度',
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index a80100244..e15537063 100644
+index ba64cec82..3b276fd5e 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
-@@ -647,33 +647,6 @@ export default {
+@@ -649,33 +649,6 @@ export default {
      toolsClearExcluded: '清空排除',
    },
  
@@ -553,6 +552,3 @@ index a80100244..e15537063 100644
  
    sidebar: {
      resize: '调整侧边栏宽度',
--- 
-2.53.0
-

@@ -1,4 +1,4 @@
-From 4392843d43695f5e61dba40eb7668f1418f70082 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Sat, 24 Oct 2026 15:51:09 +0800
 Subject: [PATCH] fix(mobile): keep drawer headers below the status bar
@@ -21,10 +21,10 @@ status bar bottom 78px. Desktop (rail) unchanged at 16px.
  1 file changed, 14 insertions(+)
 
 diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
-index 3c5657173..e39355926 100644
+index fc3064799..3bff47818 100644
 --- a/packages/client/src/styles/global.scss
 +++ b/packages/client/src/styles/global.scss
-@@ -159,6 +159,20 @@ body:has(.app-shell--navigation-rail) {
+@@ -160,6 +160,20 @@ body:has(.app-shell--navigation-rail) {
    }
  }
  
@@ -45,6 +45,3 @@ index 3c5657173..e39355926 100644
  .hermes-desktop-pet-window,
  .hermes-desktop-pet-window body,
  .hermes-desktop-pet-window #app {
--- 
-2.53.0
-
