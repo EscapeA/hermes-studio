@@ -125,6 +125,23 @@ while read n p; do git am --3way "patches/$p"; done < patches/ORDER
   `ActiveEnterTimestamp`/`MainPID` 未变 ⇒ 未重启服务。
 - ⚠️ 上游 0.8.18 重新往 `tests/` 加了 9 个用例文件；补丁串沿用「剥测试段」策略，不受影响。
 
+## 增量：0.8.25 升级（2026-11-17）
+
+- 上游 0.8.24 → 0.8.25：**8 提交 / 43 文件 / +1017 −90**，`main` 是上游直系祖先（线性轮）。主体是
+  审批/澄清**交付链修复**（profile 路由、可选宿主字段的插件事件投递、GlobalPendingActions 的 loading+disabled）、
+  Person 视角的网关投影 Bot 模型、压缩模型路由归一化、App 插件会话中继。
+- 依赖：`package.json` 只有 version 串变化（无依赖增删、`bin/` 零改动）⇒ 纯 dist 热替即可，但仍执行了 `npm i -g` 对齐基线。
+- 补丁串处置：`git rebase main` **94/94 全过**，1 处冲突就地解
+  （`GlobalPendingActions.vue`：上游给 `respondApprovalFor` 加了 `await`、fork 已删群聊分支 ⇒ 取 fork 结构 + 保留上游 `await`）。
+- 回写时 0.8.24 已清理过的两个历史脏点被 writeback 重新带入，已再次清理：
+  1. `34-0.8.23-adapt/001` 里重新出现 `.patch-stack-progress`（driver 游标，从不入库）与重复的 `MobileNavigationDrawer` hunk；
+  2. `34-0.8.23-adapt/002` 又被重生成成丢了 `apiRelay` catalog 删除 hunk 的版本 ⇒ 从 0.8.24 备份补回并剥掉补丁正文里夹带的 `-- ` 签名块。
+- 验证：`scripts/verify-patch-stack.sh` 79 补丁从 `main` 重放**逐字节一致**；`ORDER` 79 行 == 79 个 `.patch` 文件。
+- 部署：`npm i -g hermes-web-ui@0.8.25` + dist 热替（client / server bundle / openapi / agent-bridge/python / plugin-sdk/src）。
+  后端此前已由 0.8.24 装包落下 `dist/plugins/builtin/packages.json`，本轮包内文件数 732 == 工作区 732。
+- ⚠️ 用户要求本轮**不重启**：`ActiveEnterTimestamp` 仍是 2026-11-16 18:02:01、`MainPID` 3587372、`NRestarts=0`
+  ⇒ 前端刷新即换（入口 `app-qKG6QFJ2.js` → `app-DOpLECh-.js`），server bundle 待用户下次 restart 才加载。
+
 ## 增量：0.8.24 升级（2026-11-16）
 
 - 上游 0.8.23 → 0.8.24：**9 提交 / 181 文件 / +7470 −2003**，`main` 是上游直系祖先。主体是
