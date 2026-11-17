@@ -77,3 +77,4 @@
 099 34-0.8.23-adapt/004-feat-theme-import-the-style-material-layers.patch
 100 34-0.8.23-adapt/005-test-nav-pick-a-surviving-builtin-in-the-startup-order.patch
 101 34-0.8.23-adapt/006-test-client-align-avatar-and-identity-specs-with-the-fo.patch
+102 35-provider-refresh-guard/001-fix-server-keep-provider-model-refresh-alive-when-on.patch
