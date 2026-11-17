@@ -12284,7 +12284,7 @@ index d3f21ef85..000000000
 -    return { selecting, loading, deleting, selected, unavailable, groupFor, start, cancel, toggle, remove }
 -}
 diff --git a/packages/client/src/components/layout/GlobalPendingActions.vue b/packages/client/src/components/layout/GlobalPendingActions.vue
-index c4da98260..534119c83 100644
+index 8984f19d2..a3ac01eff 100644
 --- a/packages/client/src/components/layout/GlobalPendingActions.vue
 +++ b/packages/client/src/components/layout/GlobalPendingActions.vue
 @@ -4,7 +4,6 @@ import { NButton, NInput, useMessage, useNotification, type NotificationReactive
@@ -12391,7 +12391,7 @@ index c4da98260..534119c83 100644
    const pending = action.pending
    const choices: ApprovalChoice[] = pending.isMemoryWrite ? ['once', 'deny'] : pending.choices
    const labels: Record<ApprovalChoice, string> = {
-@@ -241,12 +218,11 @@ function approvalButtons(action: Extract<GlobalPendingAction, { kind: 'chat-appr
+@@ -242,12 +219,11 @@ function approvalButtons(action: Extract<GlobalPendingAction, { kind: 'chat-appr
    }, { default: () => labels[choice] })))
  }
  
@@ -12400,13 +12400,13 @@ index c4da98260..534119c83 100644
    if (submitting[action.key]) return
    submitting[action.key] = true
    try {
--    if (action.kind === 'chat-approval') chatStore.respondApprovalFor(action.pending.sessionId, action.pending.approvalId, choice)
+-    if (action.kind === 'chat-approval') await chatStore.respondApprovalFor(action.pending.sessionId, action.pending.approvalId, choice)
 -    else await groupChatStore.respondApprovalFor(action.pending.roomId, action.pending.approvalId, choice)
-+    chatStore.respondApprovalFor(action.pending.sessionId, action.pending.approvalId, choice)
++    await chatStore.respondApprovalFor(action.pending.sessionId, action.pending.approvalId, choice)
    } catch (error) {
-     message.error(error instanceof Error ? error.message : String(error))
+     message.error(action.kind === 'chat-approval' ? t('chat.approvalSendFailed') : error instanceof Error ? error.message : String(error))
    } finally {
-@@ -254,7 +230,7 @@ async function submitApproval(action: Extract<GlobalPendingAction, { kind: 'chat
+@@ -255,7 +231,7 @@ async function submitApproval(action: Extract<GlobalPendingAction, { kind: 'chat
    }
  }
  
@@ -12415,7 +12415,7 @@ index c4da98260..534119c83 100644
    return h('div', { class: 'global-clarify-content' }, [
      interactionCountdown(action),
      h('div', { class: 'global-clarify-question' }, action.pending.question),
-@@ -279,13 +255,12 @@ function clarifyContent(action: Extract<GlobalPendingAction, { kind: 'chat-clari
+@@ -280,13 +256,12 @@ function clarifyContent(action: Extract<GlobalPendingAction, { kind: 'chat-clari
    ])
  }
  
@@ -12431,7 +12431,7 @@ index c4da98260..534119c83 100644
    } catch (error) {
      message.error(action.kind === 'chat-clarify' ? t('chat.clarifySendFailed') : error instanceof Error ? error.message : String(error))
    } finally {
-@@ -316,10 +291,6 @@ function openPendingSource(action: GlobalPendingAction) {
+@@ -317,10 +292,6 @@ function openPendingSource(action: GlobalPendingAction) {
      })
      return
    }
@@ -12442,7 +12442,7 @@ index c4da98260..534119c83 100644
    void router.push({
      name: 'hermes.workflow',
      query: { workflowId: action.workflowId, runId: action.runId, nodeId: action.nodeId, executionId: action.executionId },
-@@ -327,7 +298,7 @@ function openPendingSource(action: GlobalPendingAction) {
+@@ -328,7 +299,7 @@ function openPendingSource(action: GlobalPendingAction) {
  }
  
  function systemNotificationCopy(action: GlobalPendingAction): { title: string; body: string } {
@@ -12451,7 +12451,7 @@ index c4da98260..534119c83 100644
    return {
      title: t(clarify ? 'settings.display.approvalNotificationClarifyTitle' : 'settings.display.approvalNotificationTitle'),
      body: t('settings.display.approvalNotificationBody'),
-@@ -344,9 +315,6 @@ function pendingSourceClickUrl(action: GlobalPendingAction): string {
+@@ -345,9 +316,6 @@ function pendingSourceClickUrl(action: GlobalPendingAction): string {
        ? `/hermes/global-agent/session/${sessionId}${profileQuery}`
        : `/hermes/session/${sessionId}${profileQuery}`
    }
@@ -12461,7 +12461,7 @@ index c4da98260..534119c83 100644
    const query = new URLSearchParams({
      profile: action.profile,
      workflowId: action.workflowId,
-@@ -380,7 +348,7 @@ function showPendingInteractionExpired() {
+@@ -381,7 +349,7 @@ function showPendingInteractionExpired() {
  }
  
  function createGlobalNotification(action: GlobalPendingAction): NotificationReactive {
@@ -12470,7 +12470,7 @@ index c4da98260..534119c83 100644
    return notification.create({
      title: () => notificationTitle(action, clarify),
      content: clarify
-@@ -462,7 +430,6 @@ onMounted(() => {
+@@ -463,7 +431,6 @@ onMounted(() => {
    window.addEventListener(PENDING_INTERACTION_EXPIRED_EVENT, showPendingInteractionExpired)
    window.addEventListener('hermes:workflow-approval-visible', handleVisibleWorkflowApproval)
    resetWorkflowSubscriptions(profilesStore.activeProfileName)
@@ -12478,7 +12478,7 @@ index c4da98260..534119c83 100644
    loadApprovalSoundSetting()
  })
  
-@@ -480,7 +447,6 @@ onUnmounted(() => {
+@@ -481,7 +448,6 @@ onUnmounted(() => {
    pendingNotificationKeys.clear()
    stopWorkflowStatus?.()
    disconnectWorkflowSocket()
@@ -12570,7 +12570,7 @@ index 3cae573ca..fe6fc7130 100644
    color: $accent-primary;
    box-shadow:
 diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
-index ba1a0d1a7..b657bb24b 100644
+index 3c9c3d5dd..d9061bedf 100644
 --- a/packages/client/src/i18n/locales/ar.ts
 +++ b/packages/client/src/i18n/locales/ar.ts
 @@ -708,7 +708,6 @@ export default {
@@ -12581,7 +12581,7 @@ index ba1a0d1a7..b657bb24b 100644
      files: 'الملفات',
      devices: 'الأجهزة',
      connections: 'ترابط الأجهزة',
-@@ -3547,242 +3546,6 @@ export default {
+@@ -3548,242 +3547,6 @@ export default {
      connectionClosed: 'تم إغلاق اتصال الطرفية',
      connectionError: 'خطأ في اتصال الطرفية',
    },
@@ -12825,7 +12825,7 @@ index ba1a0d1a7..b657bb24b 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
-index ee7a952b0..9f015e64a 100644
+index 54b9eaaae..5bc2b8b68 100644
 --- a/packages/client/src/i18n/locales/de.ts
 +++ b/packages/client/src/i18n/locales/de.ts
 @@ -721,7 +721,6 @@ export default {
@@ -12836,7 +12836,7 @@ index ee7a952b0..9f015e64a 100644
      groupConversation: 'Konversation',
      groupConversationShort: 'Konv',
      groupAgent: 'Agent',
-@@ -3335,242 +3334,6 @@ jobTriggered: 'Job ausgelost',
+@@ -3336,242 +3335,6 @@ jobTriggered: 'Job ausgelost',
        idle: 'Inaktiv', queued: 'In Warteschlange', running: 'Wird ausgeführt', pending_approval: 'Wartet auf Freigabe', completed: 'Abgeschlossen', skipped: 'Übersprungen', failed: 'Fehlgeschlagen', approval_rejected: 'Freigabe abgelehnt', canceled: 'Abgebrochen',
      },
    },
@@ -13080,7 +13080,7 @@ index ee7a952b0..9f015e64a 100644
      collapseTree: 'Dateibaum einklappen', expandTree: 'Dateibaum ausklappen',
      attachToChat: 'Zum Chat hinzufügen', attachFailed: 'Datei konnte nicht zum Chat hinzugefügt werden',
 diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
-index 311b6de23..1cb6abe22 100644
+index 9bedf10b1..44e71708c 100644
 --- a/packages/client/src/i18n/locales/en.ts
 +++ b/packages/client/src/i18n/locales/en.ts
 @@ -708,7 +708,6 @@ export default {
@@ -13091,7 +13091,7 @@ index 311b6de23..1cb6abe22 100644
      files: 'Files',
      devices: 'Devices',
      connections: 'Device connections',
-@@ -3571,242 +3570,6 @@ export default {
+@@ -3572,242 +3571,6 @@ export default {
      connectionClosed: 'Terminal connection closed',
      connectionError: 'Terminal connection error',
    },
@@ -13335,7 +13335,7 @@ index 311b6de23..1cb6abe22 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
-index 8a4b54d66..70957c323 100644
+index bdc8d7d4e..9b731fc3e 100644
 --- a/packages/client/src/i18n/locales/es.ts
 +++ b/packages/client/src/i18n/locales/es.ts
 @@ -721,7 +721,6 @@ export default {
@@ -13346,7 +13346,7 @@ index 8a4b54d66..70957c323 100644
      groupConversation: 'Conversación',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3335,242 +3334,6 @@ jobTriggered: 'Job ejecutado',
+@@ -3336,242 +3335,6 @@ jobTriggered: 'Job ejecutado',
        idle: 'Inactivo', queued: 'En cola', running: 'En ejecución', pending_approval: 'Pendiente de aprobación', completed: 'Completado', skipped: 'Omitido', failed: 'Fallido', approval_rejected: 'Aprobación rechazada', canceled: 'Cancelado',
      },
    },
@@ -13590,7 +13590,7 @@ index 8a4b54d66..70957c323 100644
      collapseTree: 'Contraer árbol de archivos', expandTree: 'Expandir árbol de archivos',
      attachToChat: 'Añadir al chat', attachFailed: 'No se pudo añadir el archivo al chat',
 diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
-index 9f6ea377a..58ba5d955 100644
+index 7dce48207..54018cf55 100644
 --- a/packages/client/src/i18n/locales/fr.ts
 +++ b/packages/client/src/i18n/locales/fr.ts
 @@ -721,7 +721,6 @@ export default {
@@ -13601,7 +13601,7 @@ index 9f6ea377a..58ba5d955 100644
      groupConversation: 'Conversation',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agent',
-@@ -3335,242 +3334,6 @@ jobTriggered: 'Job declenche',
+@@ -3336,242 +3335,6 @@ jobTriggered: 'Job declenche',
        idle: 'Inactif', queued: 'En attente', running: 'En cours', pending_approval: 'En attente d\'approbation', completed: 'Terminé', skipped: 'Ignoré', failed: 'Échec', approval_rejected: 'Approbation refusée', canceled: 'Annulé',
      },
    },
@@ -13845,7 +13845,7 @@ index 9f6ea377a..58ba5d955 100644
      collapseTree: 'Réduire l’arborescence des fichiers', expandTree: 'Développer l’arborescence des fichiers',
      attachToChat: 'Ajouter au chat', attachFailed: 'Impossible d’ajouter le fichier au chat',
 diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
-index a71f4d3cb..7d767c7dd 100644
+index dc17dd7b6..541c39871 100644
 --- a/packages/client/src/i18n/locales/ja.ts
 +++ b/packages/client/src/i18n/locales/ja.ts
 @@ -721,7 +721,6 @@ export default {
@@ -13856,7 +13856,7 @@ index a71f4d3cb..7d767c7dd 100644
      groupConversation: '会話',
      groupConversationShort: '会話',
      groupAgent: 'エージェント',
-@@ -3334,242 +3333,6 @@ export default {
+@@ -3335,242 +3334,6 @@ export default {
        idle: '待機中', queued: '待機列', running: '実行中', pending_approval: '承認待ち', completed: '完了', skipped: 'スキップ', failed: '失敗', approval_rejected: '承認拒否', canceled: 'キャンセル済み',
      },
    },
@@ -14100,7 +14100,7 @@ index a71f4d3cb..7d767c7dd 100644
      collapseTree: 'ファイルツリーを折りたたむ', expandTree: 'ファイルツリーを展開',
      attachToChat: 'チャットに追加', attachFailed: 'ファイルをチャットに追加できませんでした',
 diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
-index 1c5c2b407..414786dfe 100644
+index e8f429ffd..9a154f354 100644
 --- a/packages/client/src/i18n/locales/ko.ts
 +++ b/packages/client/src/i18n/locales/ko.ts
 @@ -721,7 +721,6 @@ export default {
@@ -14111,7 +14111,7 @@ index 1c5c2b407..414786dfe 100644
      groupConversation: '대화',
      groupConversationShort: '대화',
      groupAgent: '에이전트',
-@@ -3334,242 +3333,6 @@ export default {
+@@ -3335,242 +3334,6 @@ export default {
        idle: '대기', queued: '대기열', running: '실행 중', pending_approval: '승인 대기', completed: '완료', skipped: '건너뜀', failed: '실패', approval_rejected: '승인 거부', canceled: '취소됨',
      },
    },
@@ -14355,7 +14355,7 @@ index 1c5c2b407..414786dfe 100644
      collapseTree: '파일 트리 접기', expandTree: '파일 트리 펼치기',
      attachToChat: '채팅에 추가', attachFailed: '파일을 채팅에 추가하지 못했습니다',
 diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
-index 3e8460fe3..091202ea6 100644
+index 5e6b0baff..e10921ecc 100644
 --- a/packages/client/src/i18n/locales/pt.ts
 +++ b/packages/client/src/i18n/locales/pt.ts
 @@ -721,7 +721,6 @@ export default {
@@ -14366,7 +14366,7 @@ index 3e8460fe3..091202ea6 100644
      groupConversation: 'Conversa',
      groupConversationShort: 'Conv.',
      groupAgent: 'Agente',
-@@ -3335,242 +3334,6 @@ jobTriggered: 'Job acionado',
+@@ -3336,242 +3335,6 @@ jobTriggered: 'Job acionado',
        idle: 'Inativo', queued: 'Na fila', running: 'Em execução', pending_approval: 'Aguardando aprovação', completed: 'Concluído', skipped: 'Ignorado', failed: 'Falhou', approval_rejected: 'Aprovação rejeitada', canceled: 'Cancelado',
      },
    },
@@ -14610,7 +14610,7 @@ index 3e8460fe3..091202ea6 100644
      collapseTree: 'Recolher árvore de arquivos', expandTree: 'Expandir árvore de arquivos',
      attachToChat: 'Adicionar ao chat', attachFailed: 'Falha ao adicionar arquivo ao chat',
 diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
-index 2157dd9db..d0d5f4c25 100644
+index 8980b26eb..8da7400fd 100644
 --- a/packages/client/src/i18n/locales/ru.ts
 +++ b/packages/client/src/i18n/locales/ru.ts
 @@ -632,7 +632,6 @@ export default {
@@ -14621,7 +14621,7 @@ index 2157dd9db..d0d5f4c25 100644
      files: 'Файлы',
      devices: 'Устройства',
      connections: 'Подключение устройств',
-@@ -3182,239 +3181,6 @@ export default {
+@@ -3183,239 +3182,6 @@ export default {
      connectionError: 'Ошибка соединения с терминалом',
    },
  
@@ -14862,7 +14862,7 @@ index 2157dd9db..d0d5f4c25 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
-index ab65d86bb..ddadda853 100644
+index 111a776d5..90654c646 100644
 --- a/packages/client/src/i18n/locales/zh-TW.ts
 +++ b/packages/client/src/i18n/locales/zh-TW.ts
 @@ -708,7 +708,6 @@ export default {
@@ -14873,7 +14873,7 @@ index ab65d86bb..ddadda853 100644
      files: '檔案',
      devices: '裝置',
      connections: '裝置互聯',
-@@ -3514,242 +3513,6 @@ export default {
+@@ -3515,242 +3514,6 @@ export default {
      connectionClosed: '終端機連線已關閉',
      connectionError: '終端機連線錯誤',
    },
@@ -15117,7 +15117,7 @@ index ab65d86bb..ddadda853 100644
    usage: {
      origin: {
 diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
-index 8f4913296..cfcff0aec 100644
+index 07080ffea..8a153705b 100644
 --- a/packages/client/src/i18n/locales/zh.ts
 +++ b/packages/client/src/i18n/locales/zh.ts
 @@ -708,7 +708,6 @@ export default {
@@ -15128,7 +15128,7 @@ index 8f4913296..cfcff0aec 100644
      files: '文件',
      devices: '设备',
      connections: '设备互联',
-@@ -3619,242 +3618,6 @@ export default {
+@@ -3620,242 +3619,6 @@ export default {
      connectionClosed: '终端连接已关闭',
      connectionError: '终端连接错误',
    },
