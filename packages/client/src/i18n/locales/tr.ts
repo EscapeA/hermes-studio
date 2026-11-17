@@ -1033,8 +1033,10 @@ export default {
         monthly: 'Her ay',
         custom: 'Özel Cron ifadesi (gelişmiş)',
       },
+    },
+  },
   settings: {
-  settings: {    // >>> passkey settings i18n (generated) >>>
+    // >>> passkey settings i18n (generated) >>>
     passkey: {
       title: 'Passkey',
       description: 'Touch ID, Windows Hello veya telefonunuzla parolasız giriş yapın. Parola ile giriş çalışmaya devam eder.',
@@ -1064,6 +1066,8 @@ export default {
         alreadyRegistered: 'Bu kimlik doğrulayıcı zaten kayıtlı.',
         cancelled: 'Passkey işlemi iptal edildi.',
         failed: 'Passkey işlemi başarısız oldu.',
+      },
+    },
     // <<< passkey settings i18n <<<
 
     privacy: {

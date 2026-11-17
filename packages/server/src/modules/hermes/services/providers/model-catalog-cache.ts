@@ -578,12 +578,16 @@ async function collectRefreshCandidates(profiles = listProfileNamesFromDisk(), r
       // live `/v1/models` probe runs.
       const configuredModels = cp.models ? Object.keys(cp.models) : []
       let apiKey = resolveCustomProviderApiKey(cp, envContent)
+      // One provider without usable credentials must never abort the whole
+      // catalog refresh: collectRefreshCandidates() runs for every Provider
+      // (and for the startup refresh), so an unhandled throw here turned a
+      // single anonymous/no-OAuth Provider entry into a 500 for every other
+      // Provider's "refresh models" action.
       try {
         if (cp.auth_provider === 'copilot') apiKey = await resolveCopilotOAuthToken(await readFile(join(providerCredentialDir(cp.auth_scope), '.env'), 'utf8').catch(() => ''), false)
         else if (cp.auth_provider) apiKey = (await resolveAccountAuth({ profile, provider: cp.auth_provider, credentialScope: cp.auth_scope })).apiKey
-      } catch (error) {
-        if (requestedProvider) throw error
-        logger.warn(error, '[model-catalog-cache] skipping unavailable credentials provider=%s', provider)
+      } catch (err) {
+        logger.warn(err, '[model-catalog-cache] skipping provider with unresolved credentials profile=%s provider=%s auth=%s', profile, name, cp.auth_provider)
         continue
       }
       mergeCandidate(candidates, {

@@ -111,26 +111,14 @@ function openWorkflow() {
         </div>
       </div>
       <button
+        v-if="!hasNavigationRail"
         class="page-sidebar-tab"
+        :class="{ active: active === 'history' }"
         type="button"
+        :aria-current="active === 'history' ? 'page' : undefined"
         @click="openHistory"
       >
         <svg
-          v-if="active === 'history'"
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-        <svg
-          v-else
           width="15"
           height="15"
           viewBox="0 0 24 24"
@@ -144,7 +132,7 @@ function openWorkflow() {
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7v5l3 2" />
         </svg>
-        <span>{{ historyButtonLabel }}</span>
+        <span>{{ t('sidebar.history') }}</span>
       </button>
       <button
         v-if="canManageAgents && !hasNavigationRail"

@@ -10,7 +10,6 @@ const emit = defineEmits<{
   target: [element: HTMLElement | null]
 }>()
 const { t } = useI18n()
-||||||| constructed fake ancestor
 
 /** Rail widths — keep in sync with $rail-labeled-width in StudioNavigationRail.vue
  *  and $navigation-rail-width (styles/variables.scss) for the collapsed rail. */
