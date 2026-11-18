@@ -16,36 +16,35 @@ Guard the per-Provider credential resolution and skip only that Provider: the
 rest of the catalog refresh still runs, matching the per-candidate try/catch
 the refresh loop already had.
 ---
- .../services/providers/model-catalog-cache.ts |  14 ++-
+ .../services/providers/model-catalog-cache.ts |  10 +-
  .../provider-refresh-credential-guard.test.ts | 111 ++++++++++++++++++
- 2 files changed, 123 insertions(+), 2 deletions(-)
+ 2 files changed, 118 insertions(+), 3 deletions(-)
  create mode 100644 tests/server/provider-refresh-credential-guard.test.ts
 
 diff --git a/packages/server/src/modules/hermes/services/providers/model-catalog-cache.ts b/packages/server/src/modules/hermes/services/providers/model-catalog-cache.ts
-index a445c4041..59def670e 100644
+index 0ed381e52..9d42f169b 100644
 --- a/packages/server/src/modules/hermes/services/providers/model-catalog-cache.ts
 +++ b/packages/server/src/modules/hermes/services/providers/model-catalog-cache.ts
-@@ -577,8 +577,18 @@ async function collectRefreshCandidates(profiles = listProfileNamesFromDisk()):
+@@ -578,12 +578,16 @@ async function collectRefreshCandidates(profiles = listProfileNamesFromDisk(), r
        // live `/v1/models` probe runs.
        const configuredModels = cp.models ? Object.keys(cp.models) : []
-       let apiKey = cp.key_env ? env[cp.key_env] || '' : cp.api_key || ''
--      if (cp.auth_provider === 'copilot') apiKey = await resolveCopilotOAuthToken(await readFile(join(providerCredentialDir(cp.auth_scope), '.env'), 'utf8').catch(() => ''), false)
--      else if (cp.auth_provider) apiKey = (await resolveAccountAuth({ profile, provider: cp.auth_provider, credentialScope: cp.auth_scope })).apiKey
+       let apiKey = resolveCustomProviderApiKey(cp, envContent)
 +      // One provider without usable credentials must never abort the whole
 +      // catalog refresh: collectRefreshCandidates() runs for every Provider
 +      // (and for the startup refresh), so an unhandled throw here turned a
 +      // single anonymous/no-OAuth Provider entry into a 500 for every other
 +      // Provider's "refresh models" action.
-+      try {
-+        if (cp.auth_provider === 'copilot') apiKey = await resolveCopilotOAuthToken(await readFile(join(providerCredentialDir(cp.auth_scope), '.env'), 'utf8').catch(() => ''), false)
-+        else if (cp.auth_provider) apiKey = (await resolveAccountAuth({ profile, provider: cp.auth_provider, credentialScope: cp.auth_scope })).apiKey
+       try {
+         if (cp.auth_provider === 'copilot') apiKey = await resolveCopilotOAuthToken(await readFile(join(providerCredentialDir(cp.auth_scope), '.env'), 'utf8').catch(() => ''), false)
+         else if (cp.auth_provider) apiKey = (await resolveAccountAuth({ profile, provider: cp.auth_provider, credentialScope: cp.auth_scope })).apiKey
+-      } catch (error) {
+-        if (requestedProvider) throw error
+-        logger.warn(error, '[model-catalog-cache] skipping unavailable credentials provider=%s', provider)
 +      } catch (err) {
 +        logger.warn(err, '[model-catalog-cache] skipping provider with unresolved credentials profile=%s provider=%s auth=%s', profile, name, cp.auth_provider)
-+        continue
-+      }
+         continue
+       }
        mergeCandidate(candidates, {
-         provider,
-         label: name,
 diff --git a/tests/server/provider-refresh-credential-guard.test.ts b/tests/server/provider-refresh-credential-guard.test.ts
 new file mode 100644
 index 000000000..24d6b335f
