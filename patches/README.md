@@ -1,0 +1,202 @@
+# EscapeA/hermes-studio 补丁串（Patch Stack）管理
+
+本目录是 fork 的全部自定义内容的**权威来源**。分支模型：
+
+```
+main        = 纯上游同步（不含任何自定义）
+custom      = main + patches/*.patch 线性重放（旧集成分支，2026-10-14 前的 128 条补丁串）
+custom-next = 上一代集成分支（80 条 / 33 组，2026-11-19 起转为历史对照）
+custom-2    = main + patches/*.patch 线性重放（**当前唯一集成分支**，69 条 / 29 组）
+```
+
+⚠️ **以 `custom-2` 为唯一集成分支**：`custom` 与 `custom-next` 保留作历史对照，不再更新。
+
+> **2026-11-19 重梳（custom-next → custom-2）**：逐条确认 80 条取舍后**退役 11 条、保留 69 条**并入 29 组。
+> 退役主因是 fork 不再需要那项定制（群聊/工作流/语音按钮/页面侧栏扁平化/蓝图主题恢复上游行为），
+> 以及依附于它们的适配与测试补丁（`12-adapt/005`、`22-0.7.36-adapt/001`、`34-0.8.23-adapt/002|003|005`）。
+> 三道验证：纯 `git am`（无 `--3way`）69/69 零冲突、重放树与 `custom-2` 逐字节一致、
+> `scripts/verify-patch-stack.sh` OK、`npm run build` 通过。
+> 重放时踩到三个坑并已修正：① `git am --3way` 在「两侧都删/都加」时会产出**残缺冲突块**（只剩 `|||||||` 行），
+> 正则匹配不到就被原样写进文件；② `ui-theme-baseline.json` 的 blueprint 条目来自已退役的 `19-blueprint` 与
+> `22-0.7.36-adapt`，该文件应保持 main 原样；③ `historyButtonLabel` 由已退役的 `07-sidebar` 定义，
+> `33-0.8.22-adapt` 的模板引用它 ⇒ 必须改回上游 `t('sidebar.history')`。
+
+> **0.8.12 升级（2026-11-03）**：上游 #3645 一次性删掉整个旧测试树（1105 个文件，`tests/` 只剩
+> `README.md` 与 `e2e/README.md`）并简化 CI（`vitest.config.ts` 加 `passWithNoTests`,
+> `test:e2e` 改 `--pass-with-no-tests`, 删 `harness:memory` / `test:pi-rpc-real` / `test:workflow-live`）。
+> 因此补丁串做了「去测试化」：**退役 13 条 test-only 补丁**，并把其余补丁里的 `tests/**`
+> 文件段剥掉 ⇒ **25 组 / 67 条**（2026-11-05 增补 `28-exec-stream` 2 条 ⇒ 26 组 / 69 条；`29-pwa`、`30-passkey`、`31-brand` 各 1 条 ⇒ 28 组 / 72 条）。`scripts/verify-patch-stack.sh` 保留（它不依赖测试树）。
+> 上游删测试后 `harness:check` 也不再要求 `tests/client|server|e2e` 目录存在。
+
+## 分组总览（29 组 / 69 条）
+
+| 组 | 条数 | 内容 |
+|---|---|---|
+| 01-ci | 1 | push 触发分支 = custom-next（「去单测门禁」已由上游 #3645 吸收 ⇒ 退役） |
+| 02-server | 2 | GET /sessions `archived=1`（过滤分支 + 数据源放行，成对） |
+| 03-mobile-input | 1 | 移动端 Enter 换行而非发送 |
+| 04-usage | 11 | API prompt_tokens 接入、完整 in=、resume 轮询兜底、去进度条、会话累计、左上排版、去 cache-write、同排对齐、速率解码、当前/平均双读数 |
+| 05-chat | 12 | 隐藏未分类组、clarify 单列、多行流式思考、工具卡锚定、反闪烁工具条（4 条）、工具卡按用户轮、收紧间距、去语音按钮、移动端模型卡片 |
+| 08-agent-entry | 1 | 侧栏 Agent 管理可配置直达 |
+| 09-nav | 5 | 抽屉去自有关闭行+幽灵入口、0.7.26 导航外壳适配/材质、抽屉一级菜单合并、磨砂抽屉、图标栏尺寸 |
+| 10-reconnect | 1 | socket 重连对账 run 态 |
+| 11-perf | 4 | highlight 按需注册、i18n 构建期合并、启动光晕单请求、locale 同级 import 解析 |
+| 12-adapt | 1 | 0.7.38 ProviderImportModal 改用 models.profile；tr locale 清键 |
+| 13-memory | 1 | subagentStreams LRU 上限 |
+| 14-cleanup | 1 | 去 apikey.fun 推广（侧栏 + 13 个 locale + 组件，−701 行） |
+| 15-userwait | 2 | 压缩 timer per-session、parseThinking 缓存 |
+| 16-audit | 2 | 默认标签 Hermes、命名对齐（cacheHitRatePercent） |
+| 17-verify | 5 | 补丁串校验脚本 + CI 接入 + ORDER 支持 + 未跟踪落盘 + 指向 custom-2 |
+| 18-security | 3 | 头像 mime 白名单、meta.file 路径守卫、错误响应脱敏 |
+| 20-run-indicator | 1 | run 指示器窄屏排版（读数容器查询 440px，空间不足时放下「平均」避免孤儿行）+ 中文读数改名「当前速度」 |
+| 23-theme-contrast | 1 | 「正在思考」渐隐带与会话 live 点改走调色板 token + 思考头像内缩 |
+| 24-drawer-safe-top | 1 | 抽屉顶栏让开状态栏（`NDrawer` 是 body 级 portal，不吃 `env(safe-area-inset-top)`） |
+| 26-sidebar-recent-only | 1 | 会话侧栏拍平成「置顶 + 最近」两组；「最近」分页加载更多；分类标签 `max-width` 放开 |
+| 27-identity-cleanup | 1 | 去掉会话界面的身份噪音：列表副标题 profile 名与头像行、气泡作者行（`hideAuthor`），Person 视图仍保留身份行 |
+| 28-exec-stream | 2 | 「Agent 执行直播」只读面板：按会话 tool 消息流回放调用（解包 JSON 信封 / MCP `{"result"}` 嵌套 / `untrusted_tool_result` 包装，参数归一化，shell 结构化着色，Python 与白名单 highlightAuto，底部留白两行，缩放/格式化/高亮开关持久化）；调用行带 `⟨展开⟩` 入口，点开看完整参数） |
+| 29-pwa | 1 | 安装式 PWA + 离线外壳 |
+| 30-passkey | 1 | Passkey(WebAuthn) 登录：可发现凭证免密登录 + 账号内凭证管理 + 超管 RP 配置页；密码登录保留 |
+| 31-brand | 1 | 品牌资产换成 Hermes Studio 女孩图（图标/启动图/logo/群聊头像）+ 构建期 `?v=<hash>` 版本串绕过 CDN 边缘缓存 |
+| 32-login-throttle | 1 | 登录限流按真实客户端地址计数（`client-ip.ts` 解析可信代理链），health/MCU/TTS 同步取真实 IP |
+| 33-0.8.22-adapt | 1 | 0.8.22 适配：插件导航并入 fork rail、去掉 apiRelay locale key |
+| 34-0.8.23-adapt | 3 | 0.8.23 适配：rail 重植到上游 catalog+store 模型（保留 labeled 抽屉与 app 级入口）、样式材质层导入 |
+| 35-provider-refresh-guard | 1 | 服务端容错：单个 Provider 解析不了 OAuth 凭据时只跳过它，不再让整个模型目录刷新 500（Nous 仅 anonymous 凭据时必现） |
+
+## ORDER 的语义
+
+`ORDER` 是**唯一权威顺序**（`{序号} {组}/{文件名}`）。组目录只做归类，**跨组的依赖顺序由 ORDER 决定**。
+
+重放：
+
+```bash
+git checkout -B custom-next main
+git am patches/*/*.patch       # 顺序由 ORDER 定义，实际用：
+while read n p; do git am --3way "patches/$p"; done < patches/ORDER
+```
+
+## 增量：0.8.12 升级（2026-11-03）
+
+- 上游 0.8.11 → 0.8.12：**20 提交 / 1234 文件 / +2128 −266218**，全线性（first-parent = 20）。
+  体量几乎全部来自 #3645 的「清空旧测试并精简 CI」（1105 个 `tests/**` 删除）。
+- 依赖：`package.json` / `package-lock.json` 只有 version 串（0.8.11→0.8.12）与脚本删除，
+  **dependencies/devDependencies 零增删** ⇒ 不需 `npm ci`。
+- 补丁串处置：
+  - **退役 13 条 test-only 补丁**（`01-ci/002`、`05-chat/013`、`06-remove/002`+`004`、
+    `07-sidebar/002`、`04-usage/011`、`12-adapt/001`+`002`+`003`+`004`+`006`+`008`、`10-reconnect/002`），
+    它们的全部改动都在被上游删掉的测试文件里。
+  - **`01-ci/001`（去单测门禁）被上游吸收**：新版 `build.yml` 已无 `test:coverage` 步骤 ⇒ 退役。
+  - 其余 67 条剥掉 `tests/**` 文件段后重放：**8 处真实冲突**，其余 59 条零冲突。
+- 冲突与解法：
+  1. `14-cleanup/001`（去 apikey.fun 推广）：上游本版给 apiRelay 加了**双十一活动**（campaign 文案 /
+     `RelayCampaignBadge` 组件 / `aria-description`）⇒ 13 个 locale 与两个 nav 组件都是
+     「fork 整块删除 vs 上游在块内加行」。解法 = 取补丁侧（整块删除），
+     `ApiRelayView.vue` 走 `deleted file mode` 判据 `git rm`。
+     ⚠️ 连带：`PageSidebarNav.vue` / `StudioNavigationRail.vue` 里上游新增的
+     `import RelayCampaignBadge` 变成未使用 ⇒ `vue-tsc` 报 `TS6133`，必须一并删掉（已 fixup 进该补丁）。
+  2. `22-0.7.36-adapt/001`（ui-theme baseline 归属重排）：上游 baseline 里 `GroupChatLinkView.vue`
+     的 5 条键随群聊移除一起删（取补丁侧）。
+  3. `27-identity-cleanup/001`：两条**并集**语义 ——
+     `SessionListItem` 的 props 取「上游新增 `showTime`」+「fork 的 `showAgentAvatar`」，
+     defaults 同理（只保留 `showTime: true`）；`PersonView` 的 `SessionListItem` 传参取
+     `single-line show-agent-avatar :show-time="false"`（fork 身份行 + 上游时间开关）。
+- 验证：`git am` 重放 **67/67 零冲突**、重放树与集成分支**逐字节一致**
+  （独立 worktree 从 `upstream/main` 重放比对）、`npm run build` 通过、`harness:check` 通过。
+- 部署：`package.json` 仅 version ⇒ **纯 dist 热替**（不需 `npm i -g`），未重启服务。
+
+## 增量：0.8.14 升级（2026-11-03）
+
+- 上游 0.8.12 → 0.8.14：**10 提交 / 110 文件 / +5068 −290**，线性。主体是 Person 任务线的
+  「自动验收（acceptance）+ 任务重定向（redirection）+ 任务产物外置（task-artifacts）」。
+- 依赖：`package.json` / `package-lock.json` 只有 version 串（0.8.12→0.8.14）与三条新脚本，
+  **dependencies/devDependencies 零增删** ⇒ 不需 `npm ci`。
+- 补丁串处置：补丁数不变 **67**。真冲突面只有 15 个文件（12 个 locale、`PersonView.vue`、
+  `contracts/runs/session.ts`、`build.yml`），其余 95 个是上游纯新增 ⇒ `git rebase main` **71/71 零冲突**。
+- 回写：`scripts/writeback-conflict-patches.py --order patches/ORDER` 三档比较后
+  **1 条重写（`17-verify/002`，`build.yml` 上下文行变了）/ 5 条仅行号漂移 / 62 条未变**。
+- 验证：`scripts/verify-patch-stack.sh` 67 补丁从 main 重放**逐字节一致**、`harness:check`、
+  `artifacts:check`、`npm run build` 全通过。
+- 部署：`bin/` 与 deps 零实质改动 ⇒ **纯 dist 热替**（不需 `npm i -g`），未重启服务。
+
+## 增量：0.8.19 升级（2026-11-08）
+
+- 上游 0.8.17 → 0.8.19：**6 提交 / 54 文件 / +1651 −356**，`main` 是上游直系祖先 ⇒ `--ff-only` 快进。
+  主体是 Hermes 0.23 运行时兼容、Person 会话置顶、统一外壳圆角、copilot 授权 provider 恢复、
+  实时语音（`RealtimeVoiceStage.vue`）。
+- 依赖：`package.json` / `package-lock.json` 只有 version 串（0.8.17→0.8.19），
+  **dependencies/devDependencies 零增删** ⇒ 不需 `npm ci`。
+- 补丁串处置：`git rebase main` **79/79 零冲突**（0.8.17 已把冲突面收敛，本轮上游改动不碰 fork 定制点）。
+- 回写：`32-login-throttle` 组原先只有提交、没有对应 `.patch` 文件 ⇒ **补导出 1 条并登记进 ORDER**
+  （`scripts/verify-patch-stack.sh` 报「有源码改动未回写补丁」即为该缺口）⇒ 现有 **32 组 / 79 条**（2026-11-17 增补 `35-provider-refresh-guard` 1 条 ⇒ 33 组 / 80 条）。
+- 验证：`scripts/verify-patch-stack.sh` 73 补丁从 `main` 重放**逐字节一致**、`harness:check`
+  （含 `api:docs:check`）、`npm run build` 全通过；安装包内 12 项补丁特征字符串全命中。
+- 部署：**纯 dist 热替**（client + server bundle + openapi + ekko-skills + agent-bridge/python），
+  `ActiveEnterTimestamp`/`MainPID` 未变 ⇒ 未重启服务。
+- ⚠️ 上游 0.8.18 重新往 `tests/` 加了 9 个用例文件；补丁串沿用「剥测试段」策略，不受影响。
+
+## 增量：0.8.25 升级（2026-11-17）
+
+- 上游 0.8.24 → 0.8.25：**8 提交 / 43 文件 / +1017 −90**，`main` 是上游直系祖先（线性轮）。主体是
+  审批/澄清**交付链修复**（profile 路由、可选宿主字段的插件事件投递、GlobalPendingActions 的 loading+disabled）、
+  Person 视角的网关投影 Bot 模型、压缩模型路由归一化、App 插件会话中继。
+- 依赖：`package.json` 只有 version 串变化（无依赖增删、`bin/` 零改动）⇒ 纯 dist 热替即可，但仍执行了 `npm i -g` 对齐基线。
+- 补丁串处置：`git rebase main` **94/94 全过**，1 处冲突就地解
+  （`GlobalPendingActions.vue`：上游给 `respondApprovalFor` 加了 `await`、fork 已删群聊分支 ⇒ 取 fork 结构 + 保留上游 `await`）。
+- 回写时 0.8.24 已清理过的两个历史脏点被 writeback 重新带入，已再次清理：
+  1. `34-0.8.23-adapt/001` 里重新出现 `.patch-stack-progress`（driver 游标，从不入库）与重复的 `MobileNavigationDrawer` hunk；
+  2. `34-0.8.23-adapt/002` 又被重生成成丢了 `apiRelay` catalog 删除 hunk 的版本 ⇒ 从 0.8.24 备份补回并剥掉补丁正文里夹带的 `-- ` 签名块。
+- 验证：`scripts/verify-patch-stack.sh` 79 补丁从 `main` 重放**逐字节一致**；`ORDER` 79 行 == 79 个 `.patch` 文件。
+- 部署：`npm i -g hermes-web-ui@0.8.25` + dist 热替（client / server bundle / openapi / agent-bridge/python / plugin-sdk/src）。
+  后端此前已由 0.8.24 装包落下 `dist/plugins/builtin/packages.json`，本轮包内文件数 732 == 工作区 732。
+- ⚠️ 用户要求本轮**不重启**：`ActiveEnterTimestamp` 仍是 2026-11-16 18:02:01、`MainPID` 3587372、`NRestarts=0`
+  ⇒ 前端刷新即换（入口 `app-qKG6QFJ2.js` → `app-DOpLECh-.js`），server bundle 待用户下次 restart 才加载。
+
+## 增量：0.8.24 升级（2026-11-16）
+
+- 上游 0.8.23 → 0.8.24：**9 提交 / 181 文件 / +7470 −2003**，`main` 是上游直系祖先。主体是
+  **Provider 按账户管理 + 统一 Agent 模型网关**（新 `/api/ekko-studio/models/*` 一组路由）、
+  插件页统一 Studio 页面容器与主题、插件入站 HTTP 拦截、OMP 改为独立分发。
+- 依赖：运行时只增 `@simplewebauthn/browser|server`（fork 的 passkey 补丁自带，且已被打进
+  server bundle，安装包 `node_modules` 无需它）；dev 删 `@ekko-studio/plugin-omp`。
+- 补丁串处置：`git rebase main` **89/89 全过**，4 处冲突就地解（MessageList clarify 面板 2 处、
+  GlobalPendingActions 群聊残留、static-cache 的 `sw.js`/`plugin-frame.html` 缓存策略并集）。
+- 回写踩到 3 个历史脏点，已一并清掉：
+  1. `34-0.8.23-adapt/001` 里混进了 driver 的 `.patch-stack-progress`（该文件从不入库 ⇒ `git am` 永久冲突）；
+  2. 同一补丁对 `MobileNavigationDrawer.vue` 的 hunk 与 `09-nav` 组重复、重放后已无实际改动 ⇒ 剥掉该段；
+  3. `34-0.8.23-adapt/002` 在 writeback 重生成时丢了 `apiRelay` catalog 行的删除 hunk（14-cleanup 折进来的那段）⇒ 补回。
+- 验证：`scripts/verify-patch-stack.sh` 79 补丁从 `main` 重放**逐字节一致**；定向单测
+  （navigation ×3、static-cache、avatar、identity、passkey）7 文件 / 50 例全通过。
+- 部署：**`npm i -g hermes-web-ui@0.8.24` + dist 热替**（本次必须装包：`dist/plugins/builtin/packages.json`
+  由 `{"omp":…}` 变成 `{}`，纯热替会留下 OMP 内置快照与上游「不再捆绑」语义冲突）。
+- ⚠️ 用户要求本轮**不重启**；热替后 18:01:48 出现一次重启，经 journal 核实是 Aries 本人从 K80
+  SSH 执行 `sudo systemctl restart hermes-web-ui-client.service`，非 agent 触发。该重启晚于产物落地，
+  故后端实际已加载 0.8.24（`POST /api/ekko-studio/models/v1/messages` 有业务级响应为证）。
+
+## 增量：DSH 0.2.2 适配（2026-11-09）
+
+- 背景：Studio 用 7 处逐字源码锚点接管 `@deepseek-ai/dsh-acp` 的预设/权限。上游 0.2.2 重构会话工厂后
+  **6/7 锚点失效**，任何 DSH 运行都在建会话前失败（`expected 1 integration point(s), found 0`）——即
+  上游 #3713（open，无修复 PR）与 #3725（feature 诉求，作者明言无暇实现）。官方给的唯一建议是钉死 0.2.1-rc.5。
+- 处置：不降级 DSH，改适配器同时兼容两代形态（`hasComposeAgentSeam` 先探测再分支）：
+  1. `composeAgent` 吞并两个工厂且拿不到 `ctx` ⇒ 预设改在 `setup` 闭包里 `ctx.agentPresets.mount(scope, options.agentPreset)`，
+     这是 0.2.2 唯一能同时拿到 Agent scope 与 `ctx` 的地方。
+  2. `fallbackSelection` 从工厂签名消失 ⇒ 创建/恢复两条路径都改骑 `signal,` 兄弟行。
+  3. 恢复守卫丢掉 `parentSession` 谓词 ⇒ 用短守卫匹配，subagent 判定交回上游。
+  4. 模型控制移到构造函数 ⇒ 默认预设在两个工厂入口各自 `??=` 解析，沙箱/审批策略贴着构造赋值下发。
+  每组都保留 0.2.1 变体，两代皆可用；revision 标记 4 ⇒ 5。
+- 验证：对照真实 `dsh-acp` 源码，0.2.2-rc.1 上 7 锚点命中数全对（挂载处两处调用点）、7 条结构断言全绿、
+  产物 `vm.Script` 语法通过；0.2.1-rc.5 上同样全过（零回归）；`tsc --noEmit` 零错误。
+- 部署实测：纯 dist 热替 + 重启后，`POST /api/coding-agents/dsh/runs` 由 422 转 200，scoped/global
+  两种模式均起得来，真实指令在工作区生成文件并回读成功。
+- 补丁串：0.8.20 上游 #3730 自行实现了同一套 0.2.2 双形态适配（rev 5，含 `agentFactory` 判定、preflight
+  预检与单测）⇒ 本组**整组摘除**（`git am --skip` + 从 ORDER 删除），补丁串回落为 **29 组 / 73 条**；
+  适配能力由上游承载，无需再维护自定义补丁。
+
+## 修改补丁串的约定
+
+- **新增一个补丁组**：目录名 `NN-<slug>`，序号取现有末组 +1；同时更新本文件的分组总览与 ORDER。
+- **重写/重生成已上线的补丁**：用 `git format-patch -1 <sha>` 从 custom-next 上的对应提交导出，替换文件后
+  **必须**重跑校验（见 `scripts/verify-patch-stack.sh`），确认 `git am` 全量重放零冲突且树等效。
+- **改动 ORDER**：任何重排都要重跑一次全量 `git am` 干净重放；按主题重排会破坏依赖顺序（踩过：
+  04-usage 的速率补丁需要 `04-usage/005` 落下的中间状态）。
+- **上游删测试树这类变更**：不要逐条去「修」test-adapt 补丁，直接把它们退役 + 剥掉其余补丁的
+  `tests/**` 段；测试本身已不存在，保留补丁只会让 `git am` 永久停在 modify/delete 上。
