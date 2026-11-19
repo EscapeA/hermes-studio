@@ -1,0 +1,324 @@
+From 792f9d807d0b31184b48704efbb847606e5107ab Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Tue, 17 Nov 2026 12:04:38 +0800
+Subject: [PATCH] fix(server): keep provider model refresh alive when one
+ provider lacks credentials
+
+collectRefreshCandidates() resolves OAuth credentials for every configured
+Provider before any single refresh runs. A Provider entry that carries an
+`auth_provider` while its credential store entry has no OAuth material (real
+case: Nous Portal with only the anonymous `anon_token`) makes
+resolveAccountAuth() throw, and that throw escaped to the controller, so
+POST /api/hermes/config/providers/:id/models/refresh answered 500 for every
+Provider - including the ones with perfectly good API keys.
+
+Guard the per-Provider credential resolution and skip only that Provider: the
+rest of the catalog refresh still runs, matching the per-candidate try/catch
+the refresh loop already had.
+---
+ docs/openapi.json                             |  48 ++++----
+ .../layout/MobileNavigationDrawer.vue         |   1 -
+ .../src/components/layout/PageSidebarNav.vue  |  20 +---
+ packages/client/src/i18n/locales/tr.ts        |   6 +-
+ .../services/providers/model-catalog-cache.ts |  10 +-
+ .../provider-refresh-credential-guard.test.ts | 111 ++++++++++++++++++
+ 6 files changed, 149 insertions(+), 47 deletions(-)
+ create mode 100644 tests/server/provider-refresh-credential-guard.test.ts
+
+diff --git a/docs/openapi.json b/docs/openapi.json
+index ab52581c3..673e8d83e 100644
+--- a/docs/openapi.json
++++ b/docs/openapi.json
+@@ -5849,32 +5849,6 @@
+         }
+       }
+     },
+-    "/api/hermes/api-relay/usage": {
+-      "get": {
+-        "tags": [
+-          "Providers"
+-        ],
+-        "summary": "Get usage",
+-        "description": "Read APIKEY.FAN usage, deduplicated across the current user's accessible profiles.",
+-        "operationId": "getRelayUsage",
+-        "security": [
+-          {
+-            "BearerAuth": []
+-          }
+-        ],
+-        "responses": {
+-          "200": {
+-            "description": "Success"
+-          },
+-          "401": {
+-            "$ref": "#/components/responses/Unauthorized"
+-          },
+-          "404": {
+-            "description": "Not found"
+-          }
+-        }
+-      }
+-    },
+     "/api/hermes/auth/anthropic/start": {
+       "post": {
+         "tags": [
+@@ -24355,6 +24329,17 @@
+           }
+         },
+         "parameters": [
++          {
++            "name": "archived",
++            "in": "query",
++            "required": false,
++            "schema": {
++              "type": "boolean",
++              "enum": [
++                "1"
++              ]
++            }
++          },
+           {
+             "name": "category",
+             "in": "query",
+@@ -26637,6 +26622,17 @@
+             "schema": {
+               "type": "string"
+             }
++          },
++          {
++            "name": "scope",
++            "in": "query",
++            "required": false,
++            "schema": {
++              "type": "string",
++              "enum": [
++                "total"
++              ]
++            }
+           }
+         ],
+         "x-session-share-permission": "read"
+diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
+index 5bf32426f..a61f2291b 100644
+--- a/packages/client/src/components/layout/MobileNavigationDrawer.vue
++++ b/packages/client/src/components/layout/MobileNavigationDrawer.vue
+@@ -10,7 +10,6 @@ const emit = defineEmits<{
+   target: [element: HTMLElement | null]
+ }>()
+ const { t } = useI18n()
+-||||||| constructed fake ancestor
+ 
+ /** Rail widths — keep in sync with $rail-labeled-width in StudioNavigationRail.vue
+  *  and $navigation-rail-width (styles/variables.scss) for the collapsed rail. */
+diff --git a/packages/client/src/components/layout/PageSidebarNav.vue b/packages/client/src/components/layout/PageSidebarNav.vue
+index 8f5ed2e3d..3709ac877 100644
+--- a/packages/client/src/components/layout/PageSidebarNav.vue
++++ b/packages/client/src/components/layout/PageSidebarNav.vue
+@@ -111,26 +111,14 @@ function openWorkflow() {
+         </div>
+       </div>
+       <button
++        v-if="!hasNavigationRail"
+         class="page-sidebar-tab"
++        :class="{ active: active === 'history' }"
+         type="button"
++        :aria-current="active === 'history' ? 'page' : undefined"
+         @click="openHistory"
+       >
+         <svg
+-          v-if="active === 'history'"
+-          width="15"
+-          height="15"
+-          viewBox="0 0 24 24"
+-          fill="none"
+-          stroke="currentColor"
+-          stroke-width="1.8"
+-          stroke-linecap="round"
+-          stroke-linejoin="round"
+-          aria-hidden="true"
+-        >
+-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+-        </svg>
+-        <svg
+-          v-else
+           width="15"
+           height="15"
+           viewBox="0 0 24 24"
+@@ -144,7 +132,7 @@ function openWorkflow() {
+           <circle cx="12" cy="12" r="9" />
+           <path d="M12 7v5l3 2" />
+         </svg>
+-        <span>{{ historyButtonLabel }}</span>
++        <span>{{ t('sidebar.history') }}</span>
+       </button>
+       <button
+         v-if="canManageAgents && !hasNavigationRail"
+diff --git a/packages/client/src/i18n/locales/tr.ts b/packages/client/src/i18n/locales/tr.ts
+index 09aa333b8..444b20e41 100644
+--- a/packages/client/src/i18n/locales/tr.ts
++++ b/packages/client/src/i18n/locales/tr.ts
+@@ -1033,8 +1033,10 @@ export default {
+         monthly: 'Her ay',
+         custom: 'Özel Cron ifadesi (gelişmiş)',
+       },
++    },
++  },
+   settings: {
+-  settings: {    // >>> passkey settings i18n (generated) >>>
++    // >>> passkey settings i18n (generated) >>>
+     passkey: {
+       title: 'Passkey',
+       description: 'Touch ID, Windows Hello veya telefonunuzla parolasız giriş yapın. Parola ile giriş çalışmaya devam eder.',
+@@ -1064,6 +1066,8 @@ export default {
+         alreadyRegistered: 'Bu kimlik doğrulayıcı zaten kayıtlı.',
+         cancelled: 'Passkey işlemi iptal edildi.',
+         failed: 'Passkey işlemi başarısız oldu.',
++      },
++    },
+     // <<< passkey settings i18n <<<
+ 
+     privacy: {
+diff --git a/packages/server/src/modules/hermes/services/providers/model-catalog-cache.ts b/packages/server/src/modules/hermes/services/providers/model-catalog-cache.ts
+index 0ed381e52..9d42f169b 100644
+--- a/packages/server/src/modules/hermes/services/providers/model-catalog-cache.ts
++++ b/packages/server/src/modules/hermes/services/providers/model-catalog-cache.ts
+@@ -578,12 +578,16 @@ async function collectRefreshCandidates(profiles = listProfileNamesFromDisk(), r
+       // live `/v1/models` probe runs.
+       const configuredModels = cp.models ? Object.keys(cp.models) : []
+       let apiKey = resolveCustomProviderApiKey(cp, envContent)
++      // One provider without usable credentials must never abort the whole
++      // catalog refresh: collectRefreshCandidates() runs for every Provider
++      // (and for the startup refresh), so an unhandled throw here turned a
++      // single anonymous/no-OAuth Provider entry into a 500 for every other
++      // Provider's "refresh models" action.
+       try {
+         if (cp.auth_provider === 'copilot') apiKey = await resolveCopilotOAuthToken(await readFile(join(providerCredentialDir(cp.auth_scope), '.env'), 'utf8').catch(() => ''), false)
+         else if (cp.auth_provider) apiKey = (await resolveAccountAuth({ profile, provider: cp.auth_provider, credentialScope: cp.auth_scope })).apiKey
+-      } catch (error) {
+-        if (requestedProvider) throw error
+-        logger.warn(error, '[model-catalog-cache] skipping unavailable credentials provider=%s', provider)
++      } catch (err) {
++        logger.warn(err, '[model-catalog-cache] skipping provider with unresolved credentials profile=%s provider=%s auth=%s', profile, name, cp.auth_provider)
+         continue
+       }
+       mergeCandidate(candidates, {
+diff --git a/tests/server/provider-refresh-credential-guard.test.ts b/tests/server/provider-refresh-credential-guard.test.ts
+new file mode 100644
+index 000000000..24d6b335f
+--- /dev/null
++++ b/tests/server/provider-refresh-credential-guard.test.ts
+@@ -0,0 +1,111 @@
++/**
++ * Regression: collectRefreshCandidates() walks every Provider before any single
++ * Provider is refreshed, and it used to resolve custom-Provider OAuth
++ * credentials without a guard. A Provider entry whose credentials cannot be
++ * resolved (real case: a `nous` entry carrying only the anonymous `anon_token`,
++ * which is not an OAuth credential) threw out of the collection step and made
++ * every other Provider's "refresh models" action answer 500.
++ */
++import { afterEach, beforeEach, expect, it, vi } from 'vitest'
++
++const mocks = vi.hoisted(() => ({
++  home: '',
++  readConfig: vi.fn(),
++  readApp: vi.fn(),
++  resolveAccountAuth: vi.fn(),
++  copilotToken: vi.fn(),
++  fetchModels: vi.fn(),
++}))
++
++vi.mock('../../packages/server/src/modules/hermes/services/profiles/profile', () => ({
++  getProfileDir: (profile: string) => `${mocks.home}/${profile}`,
++  getActiveProfileName: () => 'default',
++  listProfileNamesFromDisk: () => ['default'],
++}))
++vi.mock('../../packages/server/src/modules/studio/public/provider-account', () => ({
++  providerAccountId: () => 1,
++  providerAccountHome: () => mocks.home,
++  providerCredentialDir: () => mocks.home,
++  providerScopeKey: (profile: string) => `account:${profile}`,
++  withProviderAccount: (_id: unknown, operation: () => unknown) => operation(),
++  importAccountProviders: async () => {},
++  listUsers: () => [],
++}))
++vi.mock('../../packages/server/src/modules/studio/public/users', () => ({ listUsers: () => [] }))
++vi.mock('../../packages/server/src/modules/studio/public/authorized-provider-runtime', () => ({
++  resolveAuthorizedProviderRuntimeCredentials: mocks.resolveAccountAuth,
++}))
++vi.mock('../../packages/server/src/modules/studio/public/provider-config', async () => {
++  const actual = await vi.importActual<any>('../../packages/server/src/modules/hermes/services/profiles/config')
++  return {
++    ...actual,
++    readConfigYamlForProfile: mocks.readConfig,
++    readAppConfig: mocks.readApp,
++  }
++})
++vi.mock('../../packages/server/src/modules/studio/public/app-config', () => ({
++  readAppConfig: mocks.readApp,
++}))
++vi.mock('../../packages/server/src/modules/hermes/services/providers/copilot-models', () => ({
++  fetchCopilotModelsWithOAuthToken: async () => [],
++  resolveCopilotOAuthToken: mocks.copilotToken,
++}))
++vi.mock('../../packages/server/src/modules/studio/public/provider-catalog', () => ({
++  fetchProviderModels: mocks.fetchModels,
++}))
++vi.mock('../../packages/server/src/modules/studio/public/logging', () => ({
++  logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
++}))
++
++import { resolveProviderCatalogRefreshTarget } from '../../packages/server/src/modules/hermes/services/providers/model-catalog-cache'
++
++beforeEach(() => {
++  vi.clearAllMocks()
++  mocks.home = '/tmp/studio-refresh-guard-fixture'
++  mocks.readApp.mockResolvedValue({ copilotEnabled: false })
++  mocks.copilotToken.mockResolvedValue(null)
++  mocks.fetchModels.mockResolvedValue([])
++  mocks.resolveAccountAuth.mockReset()
++})
++afterEach(() => { vi.clearAllMocks() })
++
++const providers = {
++  'custom:octopus': {
++    name: 'octopus',
++    base_url: 'https://octopus.invalid/v1',
++    api_key: 'fixture-octopus-key',
++    catalog_provider: 'custom:octopus',
++    runtime_provider: 'custom:octopus',
++    model: 'agent',
++    models: { 'deepseek-flash': {} },
++  },
++  nous: {
++    name: 'Nous Portal',
++    base_url: 'https://inference-api.nousresearch.com/v1',
++    models: {},
++    catalog_provider: 'nous',
++    runtime_provider: 'nous',
++    auth_provider: 'nous',
++  },
++}
++
++it('resolves a healthy Provider even when another Provider cannot resolve credentials', async () => {
++  mocks.readConfig.mockResolvedValue({ providers })
++  mocks.resolveAccountAuth.mockRejectedValue(new Error('No nous OAuth credentials were found in the Hermes credential store'))
++
++  const target = await resolveProviderCatalogRefreshTarget('default', 'custom:octopus')
++
++  expect(target).toMatchObject({
++    provider: 'custom:octopus',
++    base_url: 'https://octopus.invalid/v1',
++    api_key: 'fixture-octopus-key',
++    credential_kind: 'api_key',
++  })
++})
++
++it('skips only the credential-less Provider instead of failing resolution entirely', async () => {
++  mocks.readConfig.mockResolvedValue({ providers })
++  mocks.resolveAccountAuth.mockRejectedValue(new Error('No nous OAuth credentials were found in the Hermes credential store'))
++
++  await expect(resolveProviderCatalogRefreshTarget('default', 'nous')).resolves.toBeNull()
++})
+-- 
+2.53.0
+

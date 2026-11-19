@@ -1,0 +1,24 @@
+From f880717aee2320ea48859b8880e6c2c4c4cefa34 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 05:40:52 +0800
+Subject: [PATCH] feat(theme): import the style material layers
+
+---
+ packages/client/src/styles/global.scss | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/packages/client/src/styles/global.scss b/packages/client/src/styles/global.scss
+index 5828bec55..ce5b39452 100644
+--- a/packages/client/src/styles/global.scss
++++ b/packages/client/src/styles/global.scss
+@@ -2,6 +2,7 @@
+ @use 'code-block';
+ @use 'theme-surfaces';
+ @use 'scrollbars';
++@use 'style-layers';
+ 
+ @font-face {
+   font-family: 'Comic Neue';
+-- 
+2.53.0
+

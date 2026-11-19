@@ -1,0 +1,73 @@
+From c4aa02344342e60c18bb5103e692c3a30178ef95 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Fri, 2 Oct 2026 12:40:05 +0800
+Subject: [PATCH] refactor(nav): icon rail shrinks to the labelled glyph size
+
+The icon-only rail rendered the svg's 22px attribute while the labelled rows force
+18px, so the icons read oversized inside a 64px column. Both modes now use 18px, the
+icon-only item goes 44x44 -> 36x36, and $navigation-rail-width 64 -> 52 (the drawer's
+RAIL_WIDTH collapses with it).
+---
+ .../src/components/layout/MobileNavigationDrawer.vue      | 5 +++--
+ packages/client/src/styles/variables.scss                 | 8 ++++----
+ 2 files changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/packages/client/src/components/layout/MobileNavigationDrawer.vue b/packages/client/src/components/layout/MobileNavigationDrawer.vue
+index 22fc0ce43..5bf32426f 100644
+--- a/packages/client/src/components/layout/MobileNavigationDrawer.vue
++++ b/packages/client/src/components/layout/MobileNavigationDrawer.vue
+@@ -12,8 +12,9 @@ const emit = defineEmits<{
+ const { t } = useI18n()
+ ||||||| constructed fake ancestor
+ 
+-/** Rail widths — keep in sync with $rail-labeled-width in StudioNavigationRail.vue. */
+-const RAIL_WIDTH = { collapsed: 64, labeled: 140 } as const
++/** Rail widths — keep in sync with $rail-labeled-width in StudioNavigationRail.vue
++ *  and $navigation-rail-width (styles/variables.scss) for the collapsed rail. */
++const RAIL_WIDTH = { collapsed: 52, labeled: 140 } as const
+ const LABELS_STORAGE_KEY = 'hermes_mobile_drawer_labels'
+ 
+ function storedLabelsOpen(): boolean {
+diff --git a/packages/client/src/styles/variables.scss b/packages/client/src/styles/variables.scss
+index 885bf949a..e0306ae4f 100644
+--- a/packages/client/src/styles/variables.scss
++++ b/packages/client/src/styles/variables.scss
+@@ -52,7 +52,7 @@
+   --error: #c62828;
+   --warning: #f57f17;
+ 
+-  // Git explorer decorations (VS Code default light theme)
++  // Git explorer decorations (VS Code default light theme) {
+   --git-decoration-added: #587c0c;
+   --git-decoration-modified: #895503;
+   --git-decoration-deleted: #ad0707;
+@@ -73,7 +73,7 @@
+   --text-on-overlay: #ffffff;
+   --accent-info: #4a90d9;
+ 
+-  // RGB components (for rgba() usage)
++  // RGB components (for rgba() usage) {
+   --accent-primary-rgb: 51, 51, 51;
+   --accent-hover-rgb: 26, 26, 26;
+   --text-primary-rgb: 26, 26, 26;
+@@ -122,7 +122,7 @@
+   --error: #ef5350;
+   --warning: #ffb74d;
+ 
+-  // Git explorer decorations (VS Code default dark theme)
++  // Git explorer decorations (VS Code default dark theme) {
+   --git-decoration-added: #81b88b;
+   --git-decoration-modified: #e2c08d;
+   --git-decoration-deleted: #c74e39;
+@@ -221,7 +221,7 @@ $font-ui: var(--font-ui, 'Inter', system-ui, -apple-system, sans-serif);
+ $font-code: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+ 
+ // Layout
+-$navigation-rail-width: 64px;
++$navigation-rail-width: 52px;
+ $sidebar-width: var(--studio-sidebar-width, 240px);
+ $sidebar-collapsed-width: 64px;
+ $header-height: 60px;
+-- 
+2.53.0
+

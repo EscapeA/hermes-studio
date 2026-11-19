@@ -1,0 +1,69 @@
+From dba8c93cd64374668aa25b1da3fb4b7d37b7b46e Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 15:54:20 +0800
+Subject: [PATCH] test(client): align avatar and identity specs with the fork's
+ removals
+
+---
+ tests/client/chat-agent-avatar.test.ts     | 5 ++++-
+ tests/client/plugin-agent-identity.test.ts | 7 +------
+ 2 files changed, 5 insertions(+), 7 deletions(-)
+
+diff --git a/tests/client/chat-agent-avatar.test.ts b/tests/client/chat-agent-avatar.test.ts
+index ef37315e9..6cd6debff 100644
+--- a/tests/client/chat-agent-avatar.test.ts
++++ b/tests/client/chat-agent-avatar.test.ts
+@@ -59,7 +59,10 @@ it('keeps runtime names for ordinary chat and execution sessions instead of thei
+ })
+ 
+ it('retains missing-session and unknown-appearance fallbacks', () => {
+-  expect(chatSessionAgentAvatar(null).label).toBe('Ekko')
++  // The fork's default agent is Hermes, not upstream's Ekko (see chatSessionAgentAvatar's
++  // no-session branch), so an unloaded session must not flash the legacy Ekko label.
++  expect(chatSessionAgentAvatar(null).label).toBe('Hermes')
++  // An explicitly requested runtime still resolves to its own appearance.
+   expect(chatSessionAgentAvatar({ id: 'person-main-future', bot_type: 'unknown', agent: 'ekko-agent', title: '未来助手' }).label).toBe('Ekko')
+ })
+ 
+diff --git a/tests/client/plugin-agent-identity.test.ts b/tests/client/plugin-agent-identity.test.ts
+index 947426b90..b6dec3e53 100644
+--- a/tests/client/plugin-agent-identity.test.ts
++++ b/tests/client/plugin-agent-identity.test.ts
+@@ -3,7 +3,6 @@ import { computed } from 'vue'
+ vi.mock('../../packages/client/src/api/client', () => ({ request: vi.fn() }))
+ import { syncPluginAgentOptions } from '../../packages/client/src/utils/agent-options'
+ import { chatSessionAgentAvatar } from '../../packages/client/src/utils/chat-agent-avatar'
+-import { defaultGroupAgentAvatar, groupMessageAgent } from '../../packages/client/src/utils/group-agent-avatar'
+ import { sessionAgentFields, isExternalCodingAgentSession, isHermesSession } from '../../packages/client/src/utils/hermes/session-agent'
+ import { personTaskIdentity } from '../../packages/client/src/utils/person-task-identity'
+ import { loadNewChatFormPreferences } from '../../packages/client/src/utils/new-chat-form-preferences'
+@@ -14,7 +13,7 @@ afterEach(() => { syncPluginAgentOptions([]); vi.unstubAllGlobals() })
+ function register() {
+   syncPluginAgentOptions([{ id, name: 'Oh My Pi', icon, origin: 'plugin', vendor: 'Stencil Labs', description: '', modes: ['global', 'scoped'], surfaces: ['chat', 'group-chat', 'workflow'], actions: { settings: true, checkUpdate: true, upgrade: true }, status: { installed: true, version: '18' } }])
+ }
+-it('uses registered identity for new-chat cards, restored conversations, groups and Bot execution tasks', () => {
++it('uses registered identity for new-chat cards, restored conversations and Bot execution tasks', () => {
+   register()
+   expect(chatSessionAgentAvatar({ codingAgentId: id })).toEqual({ label: 'Oh My Pi', src: icon })
+   const fields = sessionAgentFields({ agent: id, agent_mode: 'global', source: 'coding_agent' } as any)
+@@ -22,9 +21,6 @@ it('uses registered identity for new-chat cards, restored conversations, groups
+   expect(chatSessionAgentAvatar(fields)).toEqual({ label: 'Oh My Pi', src: icon })
+   expect(isExternalCodingAgentSession({ agent: id })).toBe(true)
+   expect(isHermesSession({ agent: id })).toBe(false)
+-  expect(defaultGroupAgentAvatar(id)).toEqual({ type: 'image', dataUrl: icon })
+-  const historical = groupMessageAgent({ senderType: 'agent', senderId: 'old', senderAgentType: id } as any, [])!
+-  expect(historical.agent).toBe(id)
+   const identity = personTaskIdentity({ selection_json: JSON.stringify({ runtime: id, agentName: '开发者' }) })
+   expect(identity).toMatchObject({ name: '开发者', avatar: { label: 'Oh My Pi', src: icon } })
+ })
+@@ -38,7 +34,6 @@ it('updates reactive identities after discovery and never labels an unavailable
+   expect(avatar.value).toEqual({ label: 'Oh My Pi', src: icon })
+   syncPluginAgentOptions([])
+   expect(avatar.value).toEqual({ label: id, src: fallback })
+-  expect(defaultGroupAgentAvatar(id)).toEqual({ type: 'image', dataUrl: fallback })
+   expect(personTaskIdentity({ selection_json: JSON.stringify({ runtime: id }) }).avatar?.src).toBe(fallback)
+   expect(chatSessionAgentAvatar({ agent: 'plugin:other/worker' }).src).not.toBe(fallback)
+ })
+-- 
+2.53.0
+

@@ -1,0 +1,372 @@
+From e310052d4aa2adbf0b30fc2e55e67ef86abfae32 Mon Sep 17 00:00:00 2001
+From: EscapeA <escapea@users.noreply.github.com>
+Date: Sat, 5 Sep 2026 00:21:44 +0800
+Subject: [PATCH] feat(chat): collapsible clarify float panel
+
+Add a collapse/expand button to the clarify float panel (both
+MessageList and GroupChatPanel). When collapsed, the panel shrinks
+to a single header row so long multi-line choices no longer obscure
+chat messages; the message list bottom padding shrinks accordingly.
+New clarify resets to expanded. Adds clarifyCollapse/clarifyExpand
+i18n keys in all 11 locales.
+---
+ .../components/hermes/chat/MessageList.vue    | 68 ++++++++++++++++++-
+ .../hermes/group-chat/GroupChatPanel.vue      | 42 +++++++++++-
+ packages/client/src/i18n/locales/ar.ts        |  3 +
+ packages/client/src/i18n/locales/de.ts        |  3 +
+ packages/client/src/i18n/locales/en.ts        |  3 +
+ packages/client/src/i18n/locales/es.ts        |  3 +
+ packages/client/src/i18n/locales/fr.ts        |  3 +
+ packages/client/src/i18n/locales/ja.ts        |  3 +
+ packages/client/src/i18n/locales/ko.ts        |  3 +
+ packages/client/src/i18n/locales/pt.ts        |  3 +
+ packages/client/src/i18n/locales/ru.ts        |  2 +
+ packages/client/src/i18n/locales/zh-TW.ts     |  3 +
+ packages/client/src/i18n/locales/zh.ts        |  3 +
+ 13 files changed, 138 insertions(+), 4 deletions(-)
+
+diff --git a/packages/client/src/components/hermes/chat/MessageList.vue b/packages/client/src/components/hermes/chat/MessageList.vue
+index 613740926..b91496e7f 100644
+--- a/packages/client/src/components/hermes/chat/MessageList.vue
++++ b/packages/client/src/components/hermes/chat/MessageList.vue
+@@ -449,15 +449,21 @@ const canInsertQueuedMessages = computed(() => {
+ const visibleApproval = computed(() => chatStore.activePendingApproval);
+ const visibleClarify = computed(() => chatStore.activePendingClarify);
+ const clarifyResponse = ref("");
++const clarifyCollapsed = ref(false);
+ watch(
+   () => visibleClarify.value?.clarifyId,
+-  () => { clarifyResponse.value = visibleClarify.value?.initialResponse || ""; },
+-  { immediate: true },
++  () => {
++    clarifyResponse.value = visibleClarify.value?.initialResponse || "";
++    clarifyCollapsed.value = false;
++  },
++  { immediate: true }
+ );
+ const hasFloatingPrompt = computed(() => !!visibleApproval.value || !!visibleClarify.value);
++const clarifyCompact = computed(() => !!visibleClarify.value && clarifyCollapsed.value);
+ const virtualListPadding = computed(() => {
+   if (queuedMessages.value.length > 0 && hasFloatingPrompt.value) return "20px 20px 380px";
+-  if (queuedMessages.value.length > 0 || hasFloatingPrompt.value) return "20px 20px 260px";
++  if (queuedMessages.value.length > 0) return "20px 20px 260px";
++  if (hasFloatingPrompt.value) return clarifyCompact.value ? "20px 20px 80px" : "20px 20px 260px";
+   return "20px";
+ });
+ 
+@@ -1247,7 +1253,42 @@ defineExpose({
+             </span>
+             <span>{{ t("chat.clarifyKicker") }}</span>
+             <PendingInteractionCountdown :deadline="visibleClarify.countdownDeadline" />
++            <button
++              type="button"
++              class="clarify-collapse-btn"
++              :title="clarifyCollapsed ? t('chat.clarifyExpand') : t('chat.clarifyCollapse')"
++              :aria-label="clarifyCollapsed ? t('chat.clarifyExpand') : t('chat.clarifyCollapse')"
++              @click="clarifyCollapsed = !clarifyCollapsed"
++            >
++              <svg
++                v-if="clarifyCollapsed"
++                width="14"
++                height="14"
++                viewBox="0 0 24 24"
++                fill="none"
++                stroke="currentColor"
++                stroke-width="2"
++                stroke-linecap="round"
++                stroke-linejoin="round"
++              >
++                <path d="m6 9 6 6 6-6" />
++              </svg>
++              <svg
++                v-else
++                width="14"
++                height="14"
++                viewBox="0 0 24 24"
++                fill="none"
++                stroke="currentColor"
++                stroke-width="2"
++                stroke-linecap="round"
++                stroke-linejoin="round"
++              >
++                <path d="m18 15-6-6-6 6" />
++              </svg>
++            </button>
+           </div>
++          <template v-if="!clarifyCollapsed">
+           <div class="approval-float-title">{{ t("chat.clarifyTitle") }}</div>
+           <div class="approval-float-desc">{{ visibleClarify.question }}</div>
+           <div v-if="visibleClarify.submissionFailed" role="alert">{{ t('chat.clarifySendFailed') }}</div>
+@@ -1281,6 +1322,7 @@ defineExpose({
+               {{ t("chat.clarifySubmit") }}
+             </NButton>
+           </div>
++          </template>
+         </div>
+       </Transition>
+       <Transition name="queue-float">
+@@ -1475,6 +1517,26 @@ defineExpose({
+   text-transform: uppercase;
+ }
+ 
++.clarify-collapse-btn {
++  margin-inline-start: auto;
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  width: 22px;
++  height: 22px;
++  padding: 0;
++  border: none;
++  border-radius: 6px;
++  background: transparent;
++  color: currentColor;
++  cursor: pointer;
++  flex: 0 0 auto;
++
++  &:hover {
++    background: rgba(var(--accent-primary-rgb), 0.12);
++  }
++}
++
+ .approval-float-icon {
+   width: 18px;
+   height: 18px;
+diff --git a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
+index 57d5633da..d7fc4cc6a 100644
+--- a/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
++++ b/packages/client/src/components/hermes/group-chat/GroupChatPanel.vue
+@@ -181,6 +181,7 @@ const localRoomsCollapsed = ref(false)
+ const remoteRoomsCollapsed = ref(false)
+ const isDecidingAgentPairing = ref(false)
+ const clarifyResponse = ref('')
++const clarifyCollapsed = ref(false)
+ const allowGuestAgentsDraft = ref(false)
+ const maxGuestAgentsPerMemberDraft = ref(1)
+ const allowRemoteWorkspaceAccessDraft = ref(false)
+@@ -696,7 +697,10 @@ const visibleClarify = computed(() =>
+ )
+ watch(
+     () => visibleClarify.value?.clarifyId,
+-    () => { clarifyResponse.value = visibleClarify.value?.initialResponse || '' },
++    () => {
++        clarifyResponse.value = visibleClarify.value?.initialResponse || ''
++        clarifyCollapsed.value = false
++    },
+ )
+ const visibleAgentPairing = computed(() =>
+     currentRoomCanManage.value ? pendingAgentPairings.value[0] || null : null,
+@@ -2570,7 +2574,22 @@ function handleClarifyKeydown(event: KeyboardEvent) {
+                                     </span>
+                                     <span>{{ t('chat.clarifyKicker') }}</span>
+                                     <PendingInteractionCountdown :deadline="visibleClarify.countdownDeadline" />
++                                    <button
++                                        type="button"
++                                        class="clarify-collapse-btn"
++                                        :title="clarifyCollapsed ? t('chat.clarifyExpand') : t('chat.clarifyCollapse')"
++                                        :aria-label="clarifyCollapsed ? t('chat.clarifyExpand') : t('chat.clarifyCollapse')"
++                                        @click="clarifyCollapsed = !clarifyCollapsed"
++                                    >
++                                        <svg v-if="clarifyCollapsed" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
++                                            <path d="m6 9 6 6 6-6" />
++                                        </svg>
++                                        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
++                                            <path d="m18 15-6-6-6 6" />
++                                        </svg>
++                                    </button>
+                                 </div>
++                                <template v-if="!clarifyCollapsed">
+                                 <div class="approval-float-title">
+                                     <span v-if="visibleClarify.agentName">@{{ visibleClarify.agentName }} · </span>{{ t('chat.clarifyTitle') }}
+                                 </div>
+@@ -2589,6 +2608,7 @@ function handleClarifyKeydown(event: KeyboardEvent) {
+                                         {{ t('chat.clarifySubmit') }}
+                                     </NButton>
+                                 </div>
++                                </template>
+                             </div>
+                         </Transition>
+                     </div>
+@@ -3607,6 +3627,26 @@ export default defineComponent({ components: { CreateRoomForm } })
+     text-transform: uppercase;
+ }
+ 
++.clarify-collapse-btn {
++    margin-inline-start: auto;
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    width: 22px;
++    height: 22px;
++    padding: 0;
++    border: none;
++    border-radius: 6px;
++    background: transparent;
++    color: currentColor;
++    cursor: pointer;
++    flex: 0 0 auto;
++
++    &:hover {
++        background: rgba(var(--accent-primary-rgb), 0.12);
++    }
++}
++
+ .approval-float-icon {
+     width: 18px;
+     height: 18px;
+diff --git a/packages/client/src/i18n/locales/ar.ts b/packages/client/src/i18n/locales/ar.ts
+index 1d4c80d19..90948f499 100644
+--- a/packages/client/src/i18n/locales/ar.ts
++++ b/packages/client/src/i18n/locales/ar.ts
+@@ -1408,6 +1408,9 @@ export default {
+     clarifySendFailed: 'لم يتم تأكيد وصول إجابتك. تم الاحتفاظ بها. يرجى المحاولة مجددًا.',
+     approvalSendFailed: 'لم يتم تأكيد قرار الموافقة. يرجى المحاولة مجددًا.',
+     clarifyDismiss: 'تجاهل',
++
++    clarifyCollapse: 'طي',
++    clarifyExpand: 'توسيع',
+     interactionExpired: 'انتهت مهلة هذا الطلب وتم إغلاقه.',
+     interactionCountdown: 'متبقٍ {time}',
+     interactionCountdownElapsed: '00:00 · في انتظار تأكيد الخادم',
+diff --git a/packages/client/src/i18n/locales/de.ts b/packages/client/src/i18n/locales/de.ts
+index cbde126ca..dab926416 100644
+--- a/packages/client/src/i18n/locales/de.ts
++++ b/packages/client/src/i18n/locales/de.ts
+@@ -1355,6 +1355,9 @@ export default {
+     clarifySendFailed: 'Ihre Antwort wurde noch nicht bestätigt. Bitte versuchen Sie es erneut. Ihre Antwort bleibt erhalten.',
+     approvalSendFailed: 'Ihre Genehmigungsentscheidung wurde nicht bestätigt. Bitte versuchen Sie es erneut.',
+     clarifyDismiss: 'Schließen',
++
++    clarifyCollapse: 'Einklappen',
++    clarifyExpand: 'Aufklappen',
+     interactionExpired: 'Diese Anfrage ist abgelaufen und wurde geschlossen.',
+     interactionCountdown: '{time} verbleibend',
+     interactionCountdownElapsed: '00:00 · Serverbestätigung ausstehend',
+diff --git a/packages/client/src/i18n/locales/en.ts b/packages/client/src/i18n/locales/en.ts
+index 1d0f11aef..083798617 100644
+--- a/packages/client/src/i18n/locales/en.ts
++++ b/packages/client/src/i18n/locales/en.ts
+@@ -1417,6 +1417,9 @@ export default {
+     clarifySendFailed: 'Your answer has not been confirmed. Please retry. Your answer has been kept.',
+     approvalSendFailed: 'Your approval decision has not been confirmed. Please retry.',
+     clarifyDismiss: 'Dismiss',
++
++    clarifyCollapse: 'Collapse',
++    clarifyExpand: 'Expand',
+     interactionExpired: 'This request has timed out and was closed.',
+     interactionCountdown: '{time} remaining',
+     interactionCountdownElapsed: '00:00 · Awaiting server confirmation',
+diff --git a/packages/client/src/i18n/locales/es.ts b/packages/client/src/i18n/locales/es.ts
+index 31e042e3f..a7391d8ee 100644
+--- a/packages/client/src/i18n/locales/es.ts
++++ b/packages/client/src/i18n/locales/es.ts
+@@ -1355,6 +1355,9 @@ export default {
+     clarifySendFailed: 'No se ha confirmado la entrega. Tu respuesta se ha conservado. Vuelve a intentarlo.',
+     approvalSendFailed: 'No se ha confirmado tu decisión de aprobación. Vuelve a intentarlo.',
+     clarifyDismiss: 'Descartar',
++
++    clarifyCollapse: 'Contraer',
++    clarifyExpand: 'Expandir',
+     interactionExpired: 'La solicitud agotó el tiempo de espera y se cerró.',
+     interactionCountdown: 'Quedan {time}',
+     interactionCountdownElapsed: '00:00 · Esperando confirmación del servidor',
+diff --git a/packages/client/src/i18n/locales/fr.ts b/packages/client/src/i18n/locales/fr.ts
+index 2b2cb9624..0319d021a 100644
+--- a/packages/client/src/i18n/locales/fr.ts
++++ b/packages/client/src/i18n/locales/fr.ts
+@@ -1355,6 +1355,9 @@ export default {
+     clarifySendFailed: 'La réception de votre réponse reste à confirmer. Elle a été conservée. Veuillez réessayer.',
+     approvalSendFailed: 'Votre décision d’approbation n’a pas été confirmée. Veuillez réessayer.',
+     clarifyDismiss: 'Ignorer',
++
++    clarifyCollapse: 'Réduire',
++    clarifyExpand: 'Développer',
+     interactionExpired: 'Cette demande a expiré et a été fermée.',
+     interactionCountdown: '{time} restante',
+     interactionCountdownElapsed: '00:00 · Confirmation du serveur en attente',
+diff --git a/packages/client/src/i18n/locales/ja.ts b/packages/client/src/i18n/locales/ja.ts
+index d16c04181..759ffc3ec 100644
+--- a/packages/client/src/i18n/locales/ja.ts
++++ b/packages/client/src/i18n/locales/ja.ts
+@@ -1355,6 +1355,9 @@ export default {
+     clarifySendFailed: '回答の送信を確認できませんでした。回答は保持されています。再試行してください。',
+     approvalSendFailed: '承認の回答を確認できませんでした。再試行してください。',
+     clarifyDismiss: '閉じる',
++
++    clarifyCollapse: '折りたたむ',
++    clarifyExpand: '展開',
+     interactionExpired: 'このリクエストはタイムアウトしたため、閉じられました。',
+     interactionCountdown: '残り {time}',
+     interactionCountdownElapsed: '00:00 · サーバー確認待ち',
+diff --git a/packages/client/src/i18n/locales/ko.ts b/packages/client/src/i18n/locales/ko.ts
+index 30fa7ba16..89d02d83c 100644
+--- a/packages/client/src/i18n/locales/ko.ts
++++ b/packages/client/src/i18n/locales/ko.ts
+@@ -1355,6 +1355,9 @@ export default {
+     clarifySendFailed: '답변 전달이 확인되지 않았습니다. 답변은 보관되어 있습니다. 다시 시도해 주세요.',
+     approvalSendFailed: '승인 응답이 확인되지 않았습니다. 다시 시도해 주세요.',
+     clarifyDismiss: '무시',
++
++    clarifyCollapse: '접기',
++    clarifyExpand: '펼치기',
+     interactionExpired: '요청 시간이 초과되어 닫혔습니다.',
+     interactionCountdown: '{time} 남음',
+     interactionCountdownElapsed: '00:00 · 서버 확인 대기 중',
+diff --git a/packages/client/src/i18n/locales/pt.ts b/packages/client/src/i18n/locales/pt.ts
+index 4d864ffb7..346a0f52b 100644
+--- a/packages/client/src/i18n/locales/pt.ts
++++ b/packages/client/src/i18n/locales/pt.ts
+@@ -1355,6 +1355,9 @@ export default {
+     clarifySendFailed: 'A entrega da resposta não foi confirmada. A resposta foi mantida. Tente novamente.',
+     approvalSendFailed: 'Sua decisão de aprovação não foi confirmada. Tente novamente.',
+     clarifyDismiss: 'Descartar',
++
++    clarifyCollapse: 'Recolher',
++    clarifyExpand: 'Expandir',
+     interactionExpired: 'A solicitação expirou e foi fechada.',
+     interactionCountdown: '{time} restante',
+     interactionCountdownElapsed: '00:00 · Aguardando confirmação do servidor',
+diff --git a/packages/client/src/i18n/locales/ru.ts b/packages/client/src/i18n/locales/ru.ts
+index d86e8816f..1bcb7f687 100644
+--- a/packages/client/src/i18n/locales/ru.ts
++++ b/packages/client/src/i18n/locales/ru.ts
+@@ -1309,6 +1309,8 @@ export default {
+     interactionExpired: 'Время ожидания запроса истекло, окно закрыто.',
+     interactionCountdown: 'Осталось {time}',
+     interactionCountdownElapsed: '00:00 · Ожидание подтверждения сервера',
++    clarifyCollapse: 'Свернуть',
++    clarifyExpand: 'Развернуть',
+     newCliChat: 'Новый CLI',
+     deleteSession: 'Удалить этот сеанс?',
+     sessionDeleted: 'Сеанс удалён',
+diff --git a/packages/client/src/i18n/locales/zh-TW.ts b/packages/client/src/i18n/locales/zh-TW.ts
+index 5fc89d796..8517f439a 100644
+--- a/packages/client/src/i18n/locales/zh-TW.ts
++++ b/packages/client/src/i18n/locales/zh-TW.ts
+@@ -1408,6 +1408,9 @@ export default {
+     clarifySendFailed: '回答尚未確認送達，請重試。已保留你的答案。',
+     approvalSendFailed: '審批結果尚未確認，請重試。',
+     clarifyDismiss: '忽略',
++
++    clarifyCollapse: '收起',
++    clarifyExpand: '展開',
+     interactionExpired: '此請求已逾時，已關閉。',
+     interactionCountdown: '剩餘 {time}',
+     interactionCountdownElapsed: '00:00 · 等待伺服器確認',
+diff --git a/packages/client/src/i18n/locales/zh.ts b/packages/client/src/i18n/locales/zh.ts
+index 39a685d38..e2bacc3aa 100644
+--- a/packages/client/src/i18n/locales/zh.ts
++++ b/packages/client/src/i18n/locales/zh.ts
+@@ -1417,6 +1417,9 @@ export default {
+     clarifySendFailed: '回答尚未确认送达，请重试。已保留你的答案。',
+     approvalSendFailed: '审批结果尚未确认，请重试。',
+     clarifyDismiss: '忽略',
++
++    clarifyCollapse: '收起',
++    clarifyExpand: '展开',
+     interactionExpired: '该请求已超时，已关闭。',
+     interactionCountdown: '剩余 {time}',
+     interactionCountdownElapsed: '00:00 · 等待服务端确认',
+-- 
+2.53.0
+
