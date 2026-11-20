@@ -29,7 +29,6 @@ vi.mock('../../packages/server/src/modules/hermes/services/models/metadata', () 
 import { configureProviderSources, importAccountProviders, providerAccountHome, withProviderAccount } from '../../packages/server/src/modules/studio/public/provider-account'
 import { readConfigYamlForProfile, updateConfigYamlForProfile } from '../../packages/server/src/modules/studio/public/provider-config'
 import { configureAuthorizedProviderRuntime } from '../../packages/server/src/modules/studio/public/authorized-provider-runtime'
-import { configureProviderProjection, synchronizeHermesProvider } from '../../packages/server/src/modules/studio/public/provider-projection'
 import { refreshConfiguredProviderModelCatalogs, readProviderModelCatalogCache, resolveProviderCatalogRefreshTarget, writeProviderModelCatalogEntry } from '../../packages/server/src/modules/hermes/services/providers/model-catalog-cache'
 import { refreshProviderModels, restoreProviderModels } from '../../packages/server/src/modules/hermes/services/providers/provider-model-refresh'
 import { fetchProviderModelList, getAvailableModelGroupsForProfile } from '../../packages/server/src/modules/hermes/controllers/models'
@@ -53,7 +52,6 @@ beforeEach(async () => {
   fixture.resolveAuth.mockRejectedValue(new Error('No nous OAuth credentials were found in the Hermes credential store'))
   fixture.fetch.mockImplementation(async () => Response.json({ data: [{ id: 'new-model' }] }))
   vi.stubGlobal('fetch', fixture.fetch)
-  configureProviderProjection(getAvailableModelGroupsForProfile)
 })
 afterEach(async () => { vi.unstubAllGlobals(); await rm(fixture.home, { recursive: true, force: true }) })
 
@@ -249,15 +247,16 @@ it.each(['data', 'models'] as const)('shows and restores an authoritative %s ref
       config.providers.deepseek.models = { 'old-model': {}, 'removed-model': {} }
       return config
     })
-    await synchronizeHermesProvider('default')
+    const sourceBefore = await readFile(join(source, 'default/config.yaml'), 'utf8')
     const preview = await refreshProviderModels('default', 'deepseek')
     expect(preview.requires_confirmation).toBe(true)
     await refreshProviderModels('default', 'deepseek', { confirm: true })
     const models = (await getAvailableModelGroupsForProfile('work')).find(group => group.provider === 'deepseek')!.models
     expect(models).toContain('new-model')
     expect(models).not.toContain('removed-model')
-    await synchronizeHermesProvider('default')
-    expect(await readFile(join(source, 'default/config.yaml'), 'utf8')).toContain('new-model')
+    // Provider state is account-owned; refreshing the catalog never rewrites the
+    // user's source Profile configuration.
+    expect(await readFile(join(source, 'default/config.yaml'), 'utf8')).toBe(sourceBefore)
     await restoreProviderModels('work', 'deepseek')
     expect((await getAvailableModelGroupsForProfile('default')).find(group => group.provider === 'deepseek')!.models).toContain('removed-model')
   })

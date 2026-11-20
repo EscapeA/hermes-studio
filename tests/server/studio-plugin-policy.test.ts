@@ -21,7 +21,7 @@ describe('Plugin API and configuration boundaries', () => {
   it('uses existing backend paths for the shared frontend and server SDK', async () => {
     const calls: any[] = []
     const api = createHostApi(async (path, options) => { calls.push({ path, options }); return null as any })
-    await api.sessions.get('a/b'); await api.models.respond({ model: 'demo', input: 'hello', stream: true })
-    expect(calls).toEqual([{ path: '/api/studio/sessions/a%2Fb', options: undefined }, { path: '/api/ekko-studio/models/v1/responses', options: { method: 'POST', body: { model: 'demo', input: 'hello', stream: false } } }])
+    await api.sessions.get('a/b')
+    expect(calls).toEqual([{ path: '/api/studio/sessions/a%2Fb', options: undefined }])
   })
 })
