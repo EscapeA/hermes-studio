@@ -1,4 +1,4 @@
-import type { ReasoningCodec } from '../../../studio/public/model-reasoning-codec'
+import type { ReasoningCodec } from '../reasoning-codec'
 // Shared Responses payload translation for Coding Agent provider proxies.
 import { createHash } from 'node:crypto'
 import { imageUrlToAnthropicSource, openAiImageUrl } from './multimodal'

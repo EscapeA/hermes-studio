@@ -1,4 +1,3 @@
-import { resolveAgentGatewayRuntime, resolveAgentGatewayModelConfigs } from './provider-gateway-client'
 import { getCodingAgentManagedMcpServerConfigs, type CodingAgentId } from '../modules/coding-agents/services'
 import './agent-profile-adapter'
 import { AgentBridgeClient } from '../modules/hermes/services/bridge/client'
@@ -20,6 +19,7 @@ import { pendingEkkoClarificationEvents, respondToEkkoClarification, waitForEkko
 import { resolveEkkoMcpServers } from '../modules/ekko/services/mcp'
 import {
   createEkkoAuthorizedProviderFetch,
+  resolveEkkoProviderRuntimeConfig,
 } from '../modules/ekko/services/provider-runtime'
 import { configureChatAgentRuntime } from '../modules/studio/public/chat-agent-runtime'
 import {
@@ -28,6 +28,7 @@ import {
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
   normalizeAgentReasoning,
   projectBrowserHistory,
+  resolveModelProviderConfigs,
   serializeAgentReasoningDetails,
 } from '../../../ekko-agent/src'
 
@@ -45,7 +46,7 @@ configureChatAgentRuntime({
   abortEkkoBackgroundTasks: abortGlobalEkkoBackgroundTasks,
   hasEkkoBackgroundTasks: hasGlobalEkkoBackgroundTasks,
   createEkkoModelClient: createModelClient,
-  resolveEkkoModelProviderConfigs: resolveAgentGatewayModelConfigs,
+  resolveEkkoModelProviderConfigs: resolveModelProviderConfigs,
   ekkoModelRequestTimeoutMs: DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
   ekkoAgentReasoningText: agentReasoningText,
   normalizeEkkoAgentReasoning: normalizeAgentReasoning,
@@ -55,7 +56,7 @@ configureChatAgentRuntime({
   waitForEkkoClarification,
   getCodingAgentMcpServers: (id, profile) => getCodingAgentManagedMcpServerConfigs(id as CodingAgentId, profile),
   resolveEkkoMcpServers,
-  resolveEkkoProviderRuntimeConfig: resolveAgentGatewayRuntime,
+  resolveEkkoProviderRuntimeConfig,
   createEkkoAuthorizedProviderFetch,
   respondToEkkoToolApproval,
   respondToEkkoClarification,

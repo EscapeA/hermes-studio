@@ -2,7 +2,6 @@ import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { importLegacyProviderContexts } from '../modules/studio/public/provider-context'
-import { configureProviderProjection } from '../modules/studio/public/provider-projection'
 import { getAvailableModelGroupsForProfile } from '../modules/hermes/controllers/models'
 import { configureProviderSources } from '../modules/studio/public/provider-account'
 import { getProfileDir, listProfileNamesFromDisk } from '../modules/hermes/services/profiles/profile'
@@ -27,5 +26,3 @@ configureProviderSources({
   },
   environmentKeys: Object.values(PROVIDER_ENV_MAP).flatMap(mapping => [mapping.api_key_env, mapping.base_url_env]).filter(Boolean),
 })
-
-configureProviderProjection(getAvailableModelGroupsForProfile)

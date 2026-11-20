@@ -1,8 +1,6 @@
 import { desktopBrowserRoutes } from '../modules/studio/routes/desktop-browser'
 import { studioPluginRoutes } from '../modules/studio/routes/plugins'
 import './provider-store-adapter'
-import './model-gateway-adapter'
-import { modelGatewayMiddleware } from '../modules/studio/middleware/model-gateway'
 import { providerAccountMiddleware } from '../modules/studio/middleware/provider-account'
 import { legacyProviderCredentials } from '../modules/studio/middleware/legacy-provider-credentials'
 import './plugin-agent-adapter'
@@ -36,7 +34,6 @@ import { authPublicRoutes, authProtectedRoutes } from '../modules/studio/routes/
 import { mcuDevicePublicRoutes, mcuDeviceRoutes } from '../modules/studio/routes/mcu-devices'
 
 import { sessionRoutes } from '../modules/studio/routes/sessions'
-import { modelApiRoutes } from '../modules/studio/routes/model-api'
 import { sessionSharePublicRoutes, sessionShareRoutes } from '../modules/studio/routes/session-shares'
 import { profileRoutes } from '../modules/hermes/routes/profiles'
 import { skillRoutes } from '../modules/hermes/routes/skills'
@@ -92,7 +89,6 @@ export function registerRoutes(app: any, authMiddleware: Array<(ctx: Context, ne
   app.use(legacyAppApiCompatibility)
 
   // --- Public routes (no auth required) ---
-  app.use(modelGatewayMiddleware)
   app.use(healthRoutes.routes())
   app.use(authPublicRoutes.routes())
   app.use(mcuDevicePublicRoutes.routes())
@@ -126,7 +122,6 @@ export function registerRoutes(app: any, authMiddleware: Array<(ctx: Context, ne
   app.use(appRelayRoutes.routes())
   app.use(socialMessageRoutes.routes())
   app.use(sessionRoutes.routes())
-  app.use(modelApiRoutes.routes())
   app.use(personRoutes.routes())
   app.use(sessionShareRoutes.routes())
   app.use(profileRoutes.routes())

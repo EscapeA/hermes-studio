@@ -1,4 +1,4 @@
-import type { ReasoningCodec } from '../../../studio/public/model-reasoning-codec'
+import type { ReasoningCodec } from '../reasoning-codec'
 // Shared Responses stream translation for Coding Agent provider proxies.
 import { readSseFrameTexts } from '../sse'
 import { type McpToolRoutes, normalizeResponseFunctionCall, responseToolNamespaceForName } from './responses'

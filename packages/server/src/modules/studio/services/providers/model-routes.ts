@@ -57,13 +57,7 @@ export async function providerRouteNamespace(profile: string, provider: string):
 
 /** Strip only the gateway namespace; an upstream model may contain many slashes. */
 export function logicalModelSelection(profile: string, provider: string, model: string): { provider: string; model: string } {
-  if (provider !== 'ekkostudio' && provider !== 'custom:ekkostudio') return { provider: canonicalProviderId(profile, provider), model }
-  const route = splitModelRoute(model)
-  if (!route) throw new Error('Invalid Studio model route')
-  const routes: Routes = JSON.parse(readFileSync(join(providerAccountHome(), 'routes.json'), 'utf8'))
-  const source = routes[route.namespace]
-  if (!source) throw new Error('Studio model route is not available in this account')
-  return { provider: canonicalProviderId(profile, source.provider), model: route.model }
+  return { provider: canonicalProviderId(profile, provider), model }
 }
 
 /** Only bridge metadata containers are traversed; user text/tool payloads stay intact. */
@@ -71,15 +65,6 @@ export function logicalHermesMetadata(value: any, fallbackProfile = 'default'): 
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value
   let result = value
   const profile = value.profile || fallbackProfile
-  if (typeof value.model === 'string' && (['ekkostudio', 'custom:ekkostudio'].includes(value.provider)
-    || (value.provider === 'custom' && String(value.base_url || '').includes('/api/ekko-studio/models/')))) {
-    const route = splitModelRoute(value.model)
-    const routes: Routes = JSON.parse(readFileSync(join(providerAccountHome(), 'routes.json'), 'utf8'))
-    const source = route ? routes[route.namespace] : undefined
-    if (!source) throw new Error('Unknown Studio model metadata route')
-    const logical = logicalModelSelection(profile, 'ekkostudio', value.model)
-    result = { ...result, ...logical }
-  }
   for (const key of ['events', 'sessions']) if (Array.isArray(value[key])) result = { ...result, [key]: value[key].map((item: any) => logicalHermesMetadata(item, profile)) }
   for (const key of ['config', 'session', 'model_context']) if (value[key] && typeof value[key] === 'object') result = { ...result, [key]: logicalHermesMetadata(value[key], profile) }
   return result

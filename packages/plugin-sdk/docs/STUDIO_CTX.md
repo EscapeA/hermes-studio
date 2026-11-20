@@ -191,7 +191,6 @@ BOT 变化通过 person.updated 事件通知，可重新 get 权威配置、任�
 
 这些 HTTP 方法保留现有服务的 JSON 请求/返回、action、revision、幂等键、工作区和归属校验。
 其中 POST 查询也遵循 api.write 的现有方法授权规则；SDK 不代填 revision 或跳过业务确认。
-模型直接调用 host.models.respond 仍是非流式 JSON；单聊实时会话通过现有引擎保留流式体验。
 
 ## 桌面内置浏览器 CDP
 

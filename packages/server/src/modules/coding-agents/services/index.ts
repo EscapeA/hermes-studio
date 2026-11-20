@@ -1,7 +1,6 @@
 import { providerAccountHome, providerAccountId } from '../../studio/public/provider-account'
 import { canonicalProviderId, logicalModelSelection } from '../../studio/public/model-routing'
 import { migrateSessionRuntime } from './session-runtime-migration'
-import { saveModelTarget } from '../../studio/public/model-target-store'
 import { resolveProviderUpstream } from '../../studio/public/provider-upstream'
 import { lowestReasoningEffort } from '../../../../../shared/reasoning-effort'
 import { studioModelReasoningEffort } from '../../studio/public/model-reasoning-effort'
@@ -34,8 +33,6 @@ import { parse as parseToml, stringify as stringifyToml } from 'smol-toml'
 import { getWebUiHome } from '../../studio/public/config'
 import { getProfileDir, PROVIDER_ENV_MAP, readConfigYamlForProfile, safeReadFile } from '../../studio/public/provider-config'
 import { getCompatibleCustomProviders, resolveCustomProviderApiKey } from '../../studio/contracts/provider-compat'
-import { registerClaudeCodeProxyTarget } from './claude-code/proxy'
-import { registerCodexProxyTarget } from './codex/proxy'
 import { compactCodexThread } from './codex/compact'
 import { writeManagedPromptFile } from './prompt-file'
 import type { ApiMode, CodingAgentImageInput } from '../protocol/types'
@@ -86,16 +83,20 @@ const OFFICIAL_NPM_REGISTRY = 'https://registry.npmjs.org'
 const PI_PROVIDER_ID = 'hermes-studio'
 const PI_PROXY_TARGET_FILE = 'proxy-target.json'
 
-async function registerSavedCodexTarget(input: Parameters<typeof registerCodexProxyTarget>[0]) {
-  const target = registerCodexProxyTarget(input)
-  await saveModelTarget('codex_responses', input, target.token)
-  return target
-}
-async function registerSavedClaudeTarget(input: Parameters<typeof registerClaudeCodeProxyTarget>[0]) {
-  const target = registerClaudeCodeProxyTarget(input)
-  await saveModelTarget('anthropic_messages', { ...input, profile: input.profile || 'default' }, target.token)
-  return target
-}
+interface DirectTargetInput { baseUrl?: string; apiKey?: string; [key: string]: unknown }
+
+/**
+ * Scoped agents receive the provider endpoint directly. There is no local model
+ * gateway in front of them: whatever base URL and key the caller resolved is
+ * what the CLI talks to.
+ */
+const registerSavedCodexTarget = async (input: DirectTargetInput) => ({
+  baseUrl: String(input.baseUrl || ''),
+  token: String(input.apiKey || ''),
+  routeKey: '',
+})
+const registerSavedClaudeTarget = registerSavedCodexTarget
+
 const PI_DYNAMIC_PROMPT_FILE = 'dynamic-system-prompt.md'
 const PI_STUDIO_EXTENSION_FILE = 'hermes-studio-runtime.ts'
 const PI_PROXY_TARGET_KEY_FILE = '.pi-proxy-target.key'
@@ -1833,128 +1834,6 @@ function persistedPiRuntimeRoots(): string[] {
   return roots
 }
 
-export async function restorePersistedPiProxyTargets(options: { acceptProfile?: (profile: string) => boolean; persistOnly?: boolean } = {}): Promise<number> {
-  let restoredCount = 0
-  for (const root of persistedPiRuntimeRoots()) {
-    let savingCredential = false
-    const targetPath = join(root, PI_PROXY_TARGET_FILE)
-    let content = await safeReadFile(targetPath)
-    if (!content) {
-      const modelsContent = await safeReadFile(join(root, 'models.json'))
-      if (!modelsContent) continue
-      try {
-        const models = JSON.parse(modelsContent)
-        const providerConfig = models?.providers?.[PI_PROVIDER_ID]
-        const proxyBaseUrl = String(providerConfig?.baseUrl || '').trim()
-        const token = String(providerConfig?.apiKey || '').trim()
-        const routeKey = proxyBaseUrl.match(/\/api\/codex-proxy\/([^/]+)\/v1\/?$/)?.[1] || ''
-        if (!routeKey || !token) continue
-        const keyParts = JSON.parse(Buffer.from(routeKey, 'base64url').toString('utf-8'))
-        if (!Array.isArray(keyParts) || keyParts.length < 5) continue
-        const [profile, provider, model, apiMode, baseUrl, agentSessionId = '', chatSessionId = ''] = keyParts.map(value => String(value || ''))
-        if (options.acceptProfile && !options.acceptProfile(profile)) continue
-        const resolved = await resolveStoredProviderLaunchInput({
-          profile,
-          provider,
-          model,
-          apiMode: normalizeLaunchApiMode(apiMode, 'chat_completions'),
-          baseUrl,
-          sessionId: chatSessionId,
-        }, null)
-        const apiKey = String(resolved.apiKey || '').trim()
-        if (!apiKey || isRetiredProvider(provider)) continue
-        content = await serializePiProxyTarget({
-          profile,
-          provider,
-          model,
-          apiMode,
-          baseUrl,
-          agentId: 'pi',
-          agentSessionId,
-          chatSessionId,
-        }, apiKey, token)
-        await atomicWritePrivateFile(targetPath, content)
-      } catch {
-        continue
-      }
-    }
-    try {
-      const persisted = JSON.parse(content)
-      const input = persisted?.input
-      const token = String(persisted?.token || '').trim()
-      const legacyApiKey = String(input?.apiKey || '').trim()
-      if (!input || typeof input !== 'object' || !token) continue
-      const encryptedVersion = Number(persisted?.apiKeyEncrypted?.v || 0)
-      const decrypted = legacyApiKey || await decryptPiProxyApiKey(persisted?.apiKeyEncrypted, input, token)
-      if (decrypted === null) continue
-      const apiKey = decrypted.trim()
-      if (!String(input.profile || '').trim()
-        || !String(input.provider || '').trim()
-        || !String(input.model || '').trim()
-        || !String(input.baseUrl || '').trim()
-        || (!apiKey || isRetiredProvider(input.provider))) continue
-      const restoredInput = { ...input, apiKey }
-      delete restoredInput.apiKeyEncrypted
-      if (options.acceptProfile && !options.acceptProfile(input.profile)) continue
-      if (!options.persistOnly) registerCodexProxyTarget(restoredInput, { token })
-      if (options.persistOnly) {
-        savingCredential = true
-        await saveModelTarget('codex_responses', input, token)
-        savingCredential = false
-      }
-      if (legacyApiKey || encryptedVersion === 1) {
-        const migratedInput = { ...input }
-        delete migratedInput.apiKey
-        await atomicWritePrivateFile(
-          targetPath,
-          await serializePiProxyTarget(migratedInput, apiKey, token),
-        )
-      }
-      await chmod(targetPath, 0o600)
-      restoredCount += 1
-    } catch (error) {
-      if (savingCredential) throw error
-      // Ignore invalid or legacy files; preparing the launch rewrites them.
-    }
-  }
-  return restoredCount
-}
-
-function persistedCodexProxyConfigs(): Array<{ agentId: 'codex' | 'grok'; path: string }> {
-  const modelRoot = join(getWebUiHome(), CODING_AGENT_HOME_DIR, 'model')
-  if (!existsSync(modelRoot)) return []
-  const configs: Array<{ agentId: 'codex' | 'grok'; path: string }> = []
-  const visit = (path: string, agentId: 'codex' | 'grok') => {
-    let entries
-    try {
-      entries = readdirSync(path, { withFileTypes: true, encoding: 'utf8' })
-    } catch {
-      return
-    }
-    for (const entry of entries) {
-      const child = join(path, entry.name)
-      if (entry.isDirectory()) visit(child, agentId)
-      else if (entry.isFile() && entry.name === 'config.toml') configs.push({ agentId, path: child })
-    }
-  }
-  const directories = (path: string) => {
-    try {
-      return readdirSync(path, { withFileTypes: true, encoding: 'utf8' }).filter(entry => entry.isDirectory())
-    } catch {
-      return []
-    }
-  }
-  for (const profile of directories(modelRoot)) {
-    for (const provider of directories(join(modelRoot, profile.name))) {
-      for (const agentId of ['codex', 'grok'] as const) {
-        const agentRoot = join(modelRoot, profile.name, provider.name, agentId)
-        if (existsSync(agentRoot)) visit(agentRoot, agentId)
-      }
-    }
-  }
-  return configs
-}
-
 function tomlSectionString(content: string, sectionName: string, key: string): string {
   let section = ''
   for (const line of content.split(/\r?\n/)) {
@@ -1973,61 +1852,6 @@ function tomlSectionString(content: string, sectionName: string, key: string): s
     }
   }
   return ''
-}
-
-export async function restorePersistedCodexProxyTargets(options: { acceptProfile?: (profile: string) => boolean; persistOnly?: boolean } = {}): Promise<number> {
-  let restoredCount = 0
-  const restoredRouteKeys = new Set<string>()
-  for (const config of persistedCodexProxyConfigs()) {
-    let savingCredential = false
-    const content = await safeReadFile(config.path)
-    if (!content) continue
-    const proxyBaseUrl = tomlSectionString(content, 'model_providers.custom', 'base_url')
-    const token = tomlSectionString(content, 'model_providers.custom', 'experimental_bearer_token')
-    const routeKey = proxyBaseUrl.match(/\/api\/codex-proxy\/([^/]+)\/v1\/?$/)?.[1] || ''
-    if (!routeKey || !token || restoredRouteKeys.has(routeKey)) continue
-    try {
-      const keyParts = JSON.parse(Buffer.from(routeKey, 'base64url').toString('utf-8'))
-      if (!Array.isArray(keyParts) || keyParts.length < 5) continue
-      const [profile, provider, model, apiMode, baseUrl, agentSessionId = '', chatSessionId = ''] =
-        keyParts.map(value => String(value || ''))
-      if (options.acceptProfile && !options.acceptProfile(profile)) continue
-      const resolved = await resolveStoredProviderLaunchInput({
-        mode: 'scoped',
-        profile,
-        provider,
-        model,
-        apiMode: normalizeLaunchApiMode(apiMode, 'chat_completions'),
-        baseUrl,
-        sessionId: chatSessionId,
-      }, null)
-      const apiKey = String(resolved.apiKey || '').trim()
-      if (!profile || !provider || !model || !baseUrl || (!apiKey || isRetiredProvider(provider))) continue
-      const restoredInput = {
-        profile,
-        provider,
-        model,
-        baseUrl,
-        apiKey,
-        apiMode: normalizeLaunchApiMode(apiMode, 'chat_completions'),
-        agentId: config.agentId,
-        agentSessionId,
-        chatSessionId,
-      }
-      if (options.persistOnly) {
-        savingCredential = true
-        await saveModelTarget('codex_responses', restoredInput, token)
-        savingCredential = false
-      }
-      else registerCodexProxyTarget(restoredInput, { token })
-      restoredRouteKeys.add(routeKey)
-      restoredCount += 1
-    } catch (error) {
-      if (savingCredential) throw error
-      // Ignore stale or invalid runtime configs; preparing the next launch rewrites them.
-    }
-  }
-  return restoredCount
 }
 
 function piModelsConfig(input: {

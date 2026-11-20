@@ -1,5 +1,3 @@
-import { restoreStudioModelTarget } from '../modules/studio/public/model-target-store'
-import { gatewayToken } from '../modules/studio/public/model-gateway-adapters'
 import { registerDesktopBrowserRelay } from '../modules/studio/sockets/desktop-browser'
 import { registerPluginSessions } from '../modules/studio/sockets/plugin-sessions'
 import { getPluginManager, startPluginHost, stopPluginHost } from '../modules/studio/services/plugins/host'
@@ -73,7 +71,6 @@ import { createCodexProxyRequestBodyParser, createRequestBodyParser } from '../m
 import {
   getCodingAgentsStatus,
 } from './coding-agents'
-import { isAuthorizedCodexProxyRequest } from '../modules/coding-agents/public/model-gateway'
 import {
   configurePreferredHermesRuntime,
   readLockedDesktopHermesSelection,
@@ -468,14 +465,6 @@ export async function bootstrap() {
 
   app.use(securityHeaders())
   app.use(cors({ origin: createCorsOriginResolver(config.corsOrigins) }))
-  // Codex can replay inline images from its native thread. Accept a bounded,
-  // authenticated request here so the proxy can remove historical image data
-  // before dispatching to any provider API mode.
-  app.use(createCodexProxyRequestBodyParser(async ctx => {
-    if (isAuthorizedCodexProxyRequest(ctx)) return true
-    await restoreStudioModelTarget(gatewayToken(ctx))
-    return isAuthorizedCodexProxyRequest(ctx)
-  }))
   app.use(dshPluginUi.middleware)
   // Raise body limits above the default 1mb: profile avatars and MiMo voice-clone
   // reference audio are posted as base64 data URLs before reaching handlers.

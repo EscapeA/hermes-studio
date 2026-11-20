@@ -4,7 +4,7 @@ import { runStartupTasks, type StartupTask } from '../modules/studio/services/st
 import { config } from '../modules/studio/public/config'
 import { listUsers } from '../modules/studio/public/users'
 import { withProviderAccount } from '../modules/studio/public/provider-account'
-import { migratePersistedPiRuntimeMcpConfigs, restorePersistedCodexProxyTargets, restorePersistedPiProxyTargets } from './coding-agents'
+import { migratePersistedPiRuntimeMcpConfigs } from './coding-agents'
 
 /** Ordered, append-only list of one-time startup operations. See docs/harness/startup-tasks.md. */
 export function getStartupTasks(): StartupTask[] {
@@ -34,9 +34,6 @@ export function getStartupTasks(): StartupTask[] {
             const owners = users.filter(owner => owner.profiles.includes(profile))
             return owners.length === 1 && owners[0].id === user.id
           }
-          if (!user.profiles.some(acceptProfile)) return
-          await restorePersistedCodexProxyTargets({ acceptProfile, persistOnly: true })
-          await restorePersistedPiProxyTargets({ acceptProfile, persistOnly: true })
         })
       },
     },

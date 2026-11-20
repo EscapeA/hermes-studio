@@ -1,5 +1,4 @@
 import { logicalHermesMetadata } from '../../../studio/public/model-routing'
-import { hermesGatewaySelection } from '../../../studio/public/provider-projection'
 import { studioModelReasoningEffort } from '../../../studio/public/model-reasoning-effort'
 import { setTimeout as delay } from 'timers/promises'
 import { createConnection, type Socket } from 'net'
@@ -450,9 +449,6 @@ export class AgentBridgeClient {
       const timeoutMs = options.timeoutMs || this.timeoutMs
       const startedAt = Date.now()
       const action = String(payload.action || '')
-      if (['chat', 'context_estimate', 'switch_session_model'].includes(action) && payload.model && payload.provider) {
-        payload = { ...payload, ...await hermesGatewaySelection(String(payload.profile || 'default'), String(payload.provider), String(payload.model)) }
-      }
       const shouldLogRequest = action !== 'get_output' && action !== 'background_poll'
       const runtimeContext = shouldLogRequest ? this.runtimeContext(payload) : undefined
       if (shouldLogRequest) {

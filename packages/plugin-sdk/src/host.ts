@@ -21,7 +21,6 @@ export interface HostApi {
   bots: HostBots
 
   request<T = Json>(path: string, options?: ApiRequest): Promise<T>
-  models: { list(): Promise<Json>; respond(input: Record<string, Json>): Promise<Json> }
   sessions: {
     connect: SessionConnector
     list(query?: ApiQuery): Promise<Json>; get(id: string): Promise<Json>
@@ -105,9 +104,6 @@ export function createHostApi(request: HostApi['request'], browserRequest?: Brow
       events: (tabId, cursor = 0, limit = 32) => browser('cdp.events', { tab_id: tabId, cursor, limit }),
       release: tabId => browser('lease.release', { tab_id: tabId }),
     },
-  }, models: {
-    list: () => request('/api/ekko-studio/models/v1/models'),
-    respond: input => request('/api/ekko-studio/models/v1/responses', { method: 'POST', body: { ...input, stream: false } }),
   },
     sessions: {
       connect,

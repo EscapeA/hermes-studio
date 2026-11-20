@@ -276,12 +276,6 @@ async function upgradeAccountProviderPool(): Promise<void> {
     const dir = providerProfileDir(profile)
     snapshots.push({ profile, config: providerOnlyConfig(await text(join(dir, 'config.yaml'))), env: await text(join(dir, '.env')),
       auth: JSON.parse(await text(join(dir, 'auth.json')) || '{}'), anthropic: await text(join(dir, '.anthropic_oauth.json')), qwen: await text(join(dir, 'qwen-oauth.json')) })
-    const selection = snapshots.at(-1)!.config.model
-    if (selection && typeof selection === 'object' && ['ekkostudio', 'custom:ekkostudio'].includes(selection.provider) && typeof selection.default === 'string') {
-      const slash = selection.default.indexOf('/')
-      const route = existingRoutes[decodeURIComponent(selection.default.slice(0, slash))]
-      if (route) snapshots.at(-1)!.config.model = { ...selection, provider: route.provider, default: selection.default.slice(slash + 1) }
-    }
     // Recover the shared original seed for users imported by the earlier layout.
     const backup = JSON.parse(await text(join(dir, 'source-backup.json')) || '{}')
     const seedPath = join(root(), 'import-sources', digest(sources!.profileDir(profile)) + '.json')

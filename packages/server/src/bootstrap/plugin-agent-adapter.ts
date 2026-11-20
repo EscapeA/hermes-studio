@@ -2,8 +2,6 @@ import { withProviderAccount } from '../modules/studio/public/provider-account'
 import { configureBuiltinAgents } from '../modules/studio/services/agents/registry'
 import { getCodingAgentDefinition, getCodingAgentDefinitions, getCodingAgentStatus, getCodingAgentModels, getPluginAgentManagedMcpServerConfigs, deleteCodingAgent } from '../modules/coding-agents/services'
 import { checkAgentUpdateAndPublish, installAgentAndPublish, getAgentUpdateManager } from '../modules/coding-agents/services/update-manager'
-import { registerCodexProxyTarget, revokeCodexProxyTarget } from '../modules/coding-agents/services/codex/proxy'
-import { registerClaudeCodeProxyTarget, revokeClaudeCodeProxyTarget } from '../modules/coding-agents/services/claude-code/proxy'
 import { resolveEkkoProviderRuntimeConfig } from '../modules/ekko/services/provider-runtime'
 import { getModelRuntimeCapabilities } from '../modules/studio/public/provider-runtime'
 import { PluginError } from '../modules/studio/services/plugins/errors'
@@ -53,26 +51,11 @@ configureBuiltinAgents({
     const runtime = await resolveEkkoProviderRuntimeConfig({ profile: input.identity.profile, provider: input.provider, model: input.model, apiMode: input.apiMode })
     input.signal.throwIfAborted()
     const protocol = input.protocols.includes(input.apiMode) ? input.apiMode : input.protocols[0]
-    const targetInput = { ownerUserId: input.identity.userId, profile: input.identity.profile, provider: input.provider, model: input.model, baseUrl: runtime.baseUrl || '', apiKey: runtime.apiKey || '', apiMode: runtime.apiMode as 'chat_completions',
-      reasoningEffort: input.reasoningEffort, agentId: input.agentId, agentSessionId: input.identity.runId, chatSessionId: input.identity.sessionId,
-      onUsageEvent: (event: { type: string; data: any }, apiDuration?: number, baseUrl?: string) => {
-        if (input.signal.aborted || !['response.completed', 'response.failed', 'response.incomplete'].includes(event.type)) return
-        const final = event.data?.response || event.data
-        if (!final?.usage) return
-        const usage = normalizeTokenUsage(final.usage, {}, { inputIncludesCache: runtime.apiMode !== 'anthropic_messages' })
-        if (usage.isEstimated) return
-        recordSessionUsage({ sessionId: input.identity.sessionId!, parentRunId: input.identity.runId, runId: final.id,
-          source: 'coding_agent', agent: input.agentId as `plugin:${string}/${string}`, usageScope: 'model_call', apiCalls: 1,
-          apiDuration, usage, profile: input.identity.profile, provider: input.provider, model: final.model || input.model,
-          baseUrl, cost: normalizeUsageCost(final), isEstimated: false })
-      } }
-    const anthropic = protocol === 'anthropic_messages'
-    const target = anthropic ? registerClaudeCodeProxyTarget(targetInput) : registerCodexProxyTarget(targetInput)
     const capabilities = getModelRuntimeCapabilities({ profile: input.identity.profile, provider: input.provider, model: input.model })
-    const dispose = () => { input.signal.removeEventListener('abort', dispose); if (anthropic) revokeClaudeCodeProxyTarget(target.routeKey); else revokeCodexProxyTarget(target.routeKey) }
+    const dispose = () => { input.signal.removeEventListener('abort', dispose) }
     input.signal.addEventListener('abort', dispose, { once: true })
     if (input.signal.aborted) { dispose(); input.signal.throwIfAborted() }
-    return { model: { provider: input.provider, model: input.model, apiMode: protocol as 'chat_completions', baseUrl: target.baseUrl, token: target.token,
+    return { model: { provider: input.provider, model: input.model, apiMode: protocol as 'chat_completions', baseUrl: runtime.baseUrl || '', token: runtime.apiKey || '',
       reasoningEffort: input.reasoningEffort, contextWindow: capabilities.contextWindow || null, outputLimit: capabilities.outputLimit || null }, dispose }
   }, input.identity.profile),
 })

@@ -1,4 +1,4 @@
-import type { ReasoningCodec } from '../../studio/public/model-reasoning-codec'
+import type { ReasoningCodec } from './reasoning-codec'
 import { assertProviderAvailable } from '../../studio/contracts/providers'
 import { createHash, randomBytes } from 'crypto'
 import { providerAccountId, providerRequestProfile } from '../../studio/public/provider-account'

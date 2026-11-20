@@ -102,7 +102,7 @@ export function mergeProviderSnapshot(input: {
   const selected = typeof snapshot.config.model === 'object' ? snapshot.config.model : {}
 
   const add = (identity: string, runtime: string, raw: Record<string, any>, oldNames: string[]) => {
-    if (!raw.base_url || ['ekkostudio', 'custom:ekkostudio'].includes(identity)) return
+    if (!raw.base_url) return
     const mapping = environmentMap[runtime]
     const apiKey = String(raw.api_key || (raw.key_env ? incomingEnv[raw.key_env] : '') || '')
     const storedAuth = snapshot.auth.providers?.[runtime] || (runtime === 'claude-oauth' ? snapshot.auth.providers?.anthropic : undefined)
