@@ -1,4 +1,4 @@
-From 03a33de62d09a843a7c1e2f115182323d6495a75 Mon Sep 17 00:00:00 2001
+From f1a6ad7f6d3a88c39d0a72c1f214a3d36726e5a2 Mon Sep 17 00:00:00 2001
 From: EscapeA <escapea@users.noreply.github.com>
 Date: Thu, 1 Oct 2026 12:05:54 +0800
 Subject: [PATCH] feat(theme): cover the 0.7.26 navigation chrome with the
@@ -10,8 +10,8 @@ as unthemed next to the styled cards. Add the hairline + accent glow per style
 custom-background glass group.
 ---
  packages/client/src/App.vue                  |   2 +
- packages/client/src/styles/style-layers.scss | 342 +++++++++++++++++++
- 2 files changed, 344 insertions(+)
+ packages/client/src/styles/style-layers.scss | 284 +++++++++++++++++++
+ 2 files changed, 286 insertions(+)
  create mode 100644 packages/client/src/styles/style-layers.scss
 
 diff --git a/packages/client/src/App.vue b/packages/client/src/App.vue
@@ -29,10 +29,10 @@ index 449e0dd76..1ebef1aba 100644
    :deep(.history-panel > .page-loading-content > .session-list),
 diff --git a/packages/client/src/styles/style-layers.scss b/packages/client/src/styles/style-layers.scss
 new file mode 100644
-index 000000000..6eb391b37
+index 000000000..a5f3c6368
 --- /dev/null
 +++ b/packages/client/src/styles/style-layers.scss
-@@ -0,0 +1,342 @@
+@@ -0,0 +1,284 @@
 +// Style material layers — the part of a theme that cannot be expressed as
 +// colour variables: ambient backgrounds, glass surfaces and accent glows.
 +//
@@ -172,46 +172,6 @@ index 000000000..6eb391b37
 +  100% { background-position: 8% 6%, 92% 10%, 46% 94%; }
 +}
 +
-+// ─── 蓝图 (blueprint) ───────────────────────────────────────────
-+// Drafting grid: a fine 16px mesh plus a heavier 80px module grid in ink blue.
-+// Light and dark variants differ only in line alpha.
-+html.blueprint {
-+  .app-layout {
-+    background-image:
-+      linear-gradient(rgba(11, 107, 203, 0.10) 1px, transparent 1px),
-+      linear-gradient(90deg, rgba(11, 107, 203, 0.10) 1px, transparent 1px),
-+      linear-gradient(rgba(11, 107, 203, 0.20) 1px, transparent 1px),
-+      linear-gradient(90deg, rgba(11, 107, 203, 0.20) 1px, transparent 1px);
-+    background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
-+    background-attachment: fixed, fixed, fixed, fixed;
-+  }
-+
-+  .app-main {
-+    background-color: transparent;
-+  }
-+
-+  .chat-main,
-+  .session-list {
-+    border-color: rgba(11, 107, 203, 0.28);
-+    box-shadow: 0 10px 28px -20px rgba(16, 35, 58, 0.35);
-+  }
-+}
-+
-+html.dark.blueprint .app-layout {
-+  background-image:
-+    linear-gradient(rgba(125, 200, 255, 0.09) 1px, transparent 1px),
-+    linear-gradient(90deg, rgba(125, 200, 255, 0.09) 1px, transparent 1px),
-+    linear-gradient(rgba(125, 200, 255, 0.18) 1px, transparent 1px),
-+    linear-gradient(90deg, rgba(125, 200, 255, 0.18) 1px, transparent 1px);
-+}
-+
-+html.dark.blueprint {
-+  .chat-main,
-+  .session-list {
-+    border-color: rgba(56, 189, 248, 0.26);
-+  }
-+}
-+
 +// ─── 冷峻工程 (graphite) ────────────────────────────────────────
 +// Deliberately nothing ambient: this style IS the "no decoration" register
 +// (its reference sites ship no shadows, no gradients, no glow). Separation
@@ -266,7 +226,6 @@ index 000000000..6eb391b37
 +html.tech,
 +html.neon,
 +html.aurora,
-+html.blueprint,
 +html.graphite,
 +html.warm {
 +  .studio-navigation-rail {
@@ -320,23 +279,6 @@ index 000000000..6eb391b37
 +    radial-gradient(58% 38% at 50% 100%, rgba(59, 130, 246, 0.16), transparent 72%);
 +  background-repeat: no-repeat;
 +  background-size: 100% 100%;
-+}
-+
-+html.blueprint body::after {
-+  background-image:
-+    linear-gradient(rgba(11, 107, 203, 0.07) 1px, transparent 1px),
-+    linear-gradient(90deg, rgba(11, 107, 203, 0.07) 1px, transparent 1px),
-+    linear-gradient(rgba(11, 107, 203, 0.14) 1px, transparent 1px),
-+    linear-gradient(90deg, rgba(11, 107, 203, 0.14) 1px, transparent 1px);
-+  background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
-+}
-+
-+html.dark.blueprint body::after {
-+  background-image:
-+    linear-gradient(rgba(125, 200, 255, 0.07) 1px, transparent 1px),
-+    linear-gradient(90deg, rgba(125, 200, 255, 0.07) 1px, transparent 1px),
-+    linear-gradient(rgba(125, 200, 255, 0.13) 1px, transparent 1px),
-+    linear-gradient(90deg, rgba(125, 200, 255, 0.13) 1px, transparent 1px);
 +}
 +
 +// warm carries only the vignette at page level (see its block above); graphite
