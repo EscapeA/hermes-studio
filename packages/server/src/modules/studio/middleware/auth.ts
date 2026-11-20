@@ -1,4 +1,3 @@
-import { authenticateInternalModelCredential } from '../public/provider-account'
 import { ownedPersonTaskSession } from '../services/person/task-chat'
 import { isPersonSession, isPrivatePersonSession, ownsPersonSession } from '../contracts/person-session'
 import { getSession } from '../repositories/session-store'

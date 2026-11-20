@@ -97,7 +97,6 @@ class BridgeServer:
                 source,
                 reasoning_effort,
                 background_delegation_enabled,
-                gateway_runtime=req.get("gateway_runtime"),
             )
             if req.get("wait"):
                 timeout = float(req.get("timeout", 0) or 0)
@@ -129,7 +128,6 @@ class BridgeServer:
                 provider=req.get("provider"),
                 workspace=req.get("workspace"),
                 background_delegation_enabled=background_delegation_enabled,
-                gateway_runtime=req.get("gateway_runtime"),
             )
 
         if action == "provider_credentials":
@@ -276,7 +274,6 @@ class BridgeServer:
                 model,
                 str(req.get("provider") or "").strip(),
                 req.get("profile"),
-                gateway_runtime=req.get("gateway_runtime"),
             )
 
         if action == "goal_evaluate":
