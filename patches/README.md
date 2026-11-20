@@ -20,6 +20,12 @@ custom-2    = main + patches/*.patch 线性重放（**当前唯一集成分支**
 > 正则匹配不到就被原样写进文件；② `ui-theme-baseline.json` 的 blueprint 条目来自已退役的 `19-blueprint` 与
 > `22-0.7.36-adapt`，该文件应保持 main 原样；③ `historyButtonLabel` 由已退役的 `07-sidebar` 定义，
 > `33-0.8.22-adapt` 的模板引用它 ⇒ 必须改回上游 `t('sidebar.history')`。
+>
+> **重梳后的孤儿样式收尾（2026-11-20）**：`09-nav/002` 创建 `style-layers.scss` 时把 `html.blueprint` 整段（7 处、58 行）
+> 也一起带了进来，蓝图主题退役后这段失去归属，构建出的 CSS 里仍有 7 处 `blueprint`。
+> 处置：源码删段 → `fixup` 回该补丁对应的提交 → **`git format-patch -1` 重导出并提交该 `.patch` 文件** → 重跑三道验证。
+> ⚠️ 只改源码不重导出，`verify-patch-stack.sh` 必报「重放树与分支存在差异」——它比的是 `patches/` 重放树 vs 分支源码树，
+> 分支源码干净但补丁还是旧的就一定红。
 
 > **0.8.12 升级（2026-11-03）**：上游 #3645 一次性删掉整个旧测试树（1105 个文件，`tests/` 只剩
 > `README.md` 与 `e2e/README.md`）并简化 CI（`vitest.config.ts` 加 `passWithNoTests`,
